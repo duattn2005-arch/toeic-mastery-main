@@ -483,13 +483,12 @@ export function QuestionGroupForm({
           <ImportGuideCallout>
             <p className="font-medium">Định dạng cần dán</p>
             <p className="text-muted-foreground">
-              Toàn bộ nội dung phía trên dòng &quot;Câu N.&quot; đầu tiên được coi là đoạn hội thoại/bài đọc chung (điền vào ô{" "}
               {isReadingPart ? "Nội dung bài đọc" : "Transcript"} bên trái — kể cả dòng mở đầu kiểu &quot;Questions 135-137 refer to...&quot;
               nếu có, dòng đó không bị tính là một câu hỏi). Từ đó trở đi, mỗi câu bắt đầu bằng &quot;Câu N.&quot; (hoặc &quot;Question
               N.&quot;), theo sau là 2-4 dòng lựa chọn, mỗi dòng bắt đầu bằng A., B., C. hoặc D. — đánh dấu đáp án đúng bằng dấu <b>*</b> trước
-              chữ cái hoặc{" "}
-              <b>in đậm</b>. Với bài đọc đôi/ba (Part 7), hệ thống chỉ gộp thành 1 đoạn — dùng &quot;+ Thêm đoạn văn&quot; để tách thủ công sau khi
-              nhập. Bấm &quot;Điền ví dụ&quot; bên dưới để xem mẫu.
+              chữ cái (VD: <code className="rounded bg-background px-1.5 py-0.5">*B. by</code>) hoặc <b>in đậm</b> (VD:{" "}
+              <code className="rounded bg-background px-1.5 py-0.5">**by**</code>). Với bài đọc đôi/ba (Part 7), hệ thống chỉ gộp thành 1
+              đoạn — dùng &quot;+ Thêm đoạn văn&quot; để tách thủ công sau khi nhập. Bấm &quot;Điền ví dụ&quot; bên dưới để xem mẫu.
             </p>
           </ImportGuideCallout>
 
