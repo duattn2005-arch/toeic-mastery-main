@@ -6,7 +6,8 @@
  *
  * Convention (see the reference screenshot): one or more question blocks,
  * each starting with a "Câu N." / "Question N." line (the prompt), followed
- * by 2-4 lettered option lines (A./B./C./D. or A)/B)/...). The correct
+ * by 2-4 lettered option lines (each starting with A./B./C./D. or
+ * A)/B)/...). The correct
  * option is marked either with a leading `*` before the letter (`*D. ...`)
  * or by wrapping its text in `**bold**` markdown (`D. **...**` or the whole
  * line `**D. ...**`) — either convention, or both, work.
@@ -25,7 +26,19 @@ export interface AzotaParseResult {
   skippedCount: number;
 }
 
-const QUESTION_START = /^(c[âa]u|question)\s*\d*\s*[.:)]?\s*/i;
+/**
+ * `\b` right after the word is deliberate: without it, "Questions 135-137
+ * refer to the following conversation." (the standard header a real Part
+ * 3/4/6/7 group starts with) matched too — "question" is a literal prefix
+ * of "Questions" — so that descriptive header got misread as an actual
+ * question block, ate the real shared passage/transcript above it, and
+ * threw off every block boundary after it (bug report 2026-09-26). "\b"
+ * requires the char right after "question"/"câu" to NOT be another word
+ * character, so "Questions" (word char "s" follows, no boundary) no
+ * longer matches, while "Question 5." / "Question:" (space/colon follows)
+ * still does.
+ */
+const QUESTION_START = /^(c[âa]u|question)\b\s*\d*\s*[.:)]?\s*/i;
 const OPTION_LINE = /^(\*)?\s*([A-Da-d])[.)]\s*(.*)$/;
 const BOLD_WRAP = /^\*\*(.+)\*\*$/;
 

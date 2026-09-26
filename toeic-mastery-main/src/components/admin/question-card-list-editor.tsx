@@ -327,8 +327,9 @@ export function QuestionCardListEditor({
           <ImportGuideCallout>
             <p className="font-medium">Định dạng cần dán</p>
             <p className="text-muted-foreground">
-              Mỗi câu bắt đầu bằng dòng &quot;Câu N.&quot; (hoặc &quot;Question N.&quot;), theo sau là 2-4 dòng lựa chọn A./B./C./D. — đánh dấu
-              đáp án đúng bằng dấu <b>*</b> trước chữ cái (VD: <code className="rounded bg-background px-1.5 py-0.5">*B. by</code>) hoặc{" "}
+              Mỗi câu bắt đầu bằng dòng &quot;Câu N.&quot; (hoặc &quot;Question N.&quot;), theo sau là 2-4 dòng lựa chọn, mỗi dòng bắt đầu bằng
+              A., B., C. hoặc D. — đánh dấu đáp án đúng bằng dấu <b>*</b> trước chữ cái (VD:{" "}
+              <code className="rounded bg-background px-1.5 py-0.5">*B. by</code>) hoặc{" "}
               <b>in đậm</b> (VD: <code className="rounded bg-background px-1.5 py-0.5">**by**</code>). Bấm &quot;Điền ví dụ&quot; bên dưới để xem
               mẫu.
             </p>
