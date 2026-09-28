@@ -1,7 +1,8 @@
 "use client";
 
 import { Suspense } from "react";
-import { Sparkles, X } from "lucide-react";
+import Image from "next/image";
+import { X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
@@ -44,18 +45,27 @@ export function AuthDialog({
       <DialogContent className="max-w-md gap-0 overflow-hidden p-0" showCloseButton={false}>
         <DialogTitle className="sr-only">{COPY[tab].title}</DialogTitle>
 
-        <div className="relative bg-gradient-to-br from-pink-600 via-fuchsia-600 to-rose-500 px-6 pt-6 pb-8 text-center text-white">
+        <div className="relative overflow-hidden bg-gradient-to-br from-pink-600 via-fuchsia-600 to-rose-500 px-6 pt-7 pb-8 text-center text-white">
+          {/* Two soft blurred glows for a "chill", airy depth behind the
+              mascot instead of a flat gradient block — purely decorative,
+              clipped by the header's own overflow-hidden. */}
+          <div className="pointer-events-none absolute -top-10 -left-10 size-32 rounded-full bg-white/20 blur-2xl" aria-hidden />
+          <div className="pointer-events-none absolute -right-8 -bottom-12 size-36 rounded-full bg-white/15 blur-2xl" aria-hidden />
+
           <DialogClose
-            className="absolute top-3 right-3 flex size-7 items-center justify-center rounded-full bg-white/20 text-white transition-colors hover:bg-white/30"
+            className="absolute top-3 right-3 z-10 flex size-7 items-center justify-center rounded-full bg-white/20 text-white transition-colors hover:bg-white/30"
             aria-label="Đóng"
           >
             <X className="size-4" />
           </DialogClose>
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-medium">
-            <Sparkles className="size-3.5" /> TOEIC Mastery
-          </span>
-          <h2 className="mt-3 text-2xl font-bold">{COPY[tab].title}</h2>
-          <p className="mt-1 text-sm text-white/85">{COPY[tab].subtitle}</p>
+
+          <div className="relative flex flex-col items-center">
+            <span className="flex size-16 items-center justify-center rounded-full bg-white/15 ring-2 ring-white/40">
+              <Image src="/mascot-avatar.png" alt="" width={48} height={48} className="rounded-full" priority />
+            </span>
+            <h2 className="mt-3 text-2xl font-bold">{COPY[tab].title}</h2>
+            <p className="mt-1 text-sm text-white/85">{COPY[tab].subtitle}</p>
+          </div>
         </div>
 
         <div className="flex flex-col gap-6 px-6 py-6">
