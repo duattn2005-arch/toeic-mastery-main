@@ -10,6 +10,13 @@ import { GoogleAuthButton } from "@/app/(auth)/google-auth-button";
 import { AuthDivider } from "@/app/(auth)/auth-inputs";
 import { EmailLoginForm } from "@/app/(auth)/login/login-form";
 import { EmailRegisterForm } from "@/app/(auth)/register/register-form";
+import { getSiteTheme, DEFAULT_SITE_THEME_ID } from "@/lib/constants/site-themes";
+
+/** Header gradient now matches the site's default background theme (mèo
+ * đen bên hồ sen — see site-themes.ts) instead of a fixed pink/fuchsia,
+ * so the popup and the landing page it opens on top of read as one
+ * consistent look rather than two different color languages. */
+const HEADER_THEME = getSiteTheme(DEFAULT_SITE_THEME_ID);
 
 export type AuthDialogTab = "login" | "register";
 
@@ -45,7 +52,10 @@ export function AuthDialog({
       <DialogContent className="max-w-md gap-0 overflow-hidden p-0" showCloseButton={false}>
         <DialogTitle className="sr-only">{COPY[tab].title}</DialogTitle>
 
-        <div className="relative overflow-hidden bg-gradient-to-br from-pink-600 via-fuchsia-600 to-rose-500 px-6 pt-7 pb-8 text-center text-white">
+        <div
+          className="relative overflow-hidden px-6 pt-7 pb-8 text-center text-white"
+          style={{ backgroundImage: `linear-gradient(135deg, ${HEADER_THEME.swatchFrom}, ${HEADER_THEME.swatchTo})` }}
+        >
           {/* Two soft blurred glows for a "chill", airy depth behind the
               mascot instead of a flat gradient block — purely decorative,
               clipped by the header's own overflow-hidden. */}
@@ -77,7 +87,7 @@ export function AuthDialog({
                 onClick={() => onTabChange(t)}
                 className={cn(
                   "flex-1 rounded-full py-2.5 text-center text-sm font-semibold transition-colors",
-                  tab === t ? "bg-card text-pink-600 shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  tab === t ? "bg-card text-emerald-700 shadow-sm" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 {t === "login" ? "Đăng Nhập" : "Đăng Ký"}
@@ -99,14 +109,14 @@ export function AuthDialog({
             {tab === "login" ? (
               <>
                 Chưa có tài khoản?{" "}
-                <button type="button" onClick={() => onTabChange("register")} className="font-semibold text-pink-600 hover:underline">
+                <button type="button" onClick={() => onTabChange("register")} className="font-semibold text-emerald-700 hover:underline">
                   Đăng ký ngay tại đây
                 </button>
               </>
             ) : (
               <>
                 Đã có tài khoản?{" "}
-                <button type="button" onClick={() => onTabChange("login")} className="font-semibold text-pink-600 hover:underline">
+                <button type="button" onClick={() => onTabChange("login")} className="font-semibold text-emerald-700 hover:underline">
                   Đăng nhập ngay tại đây
                 </button>
               </>
