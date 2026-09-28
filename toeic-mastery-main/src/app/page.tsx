@@ -2,6 +2,8 @@ import { BarChart3, BookA, Headphones, Layers, ShieldCheck, Sparkles } from "luc
 import { getCurrentProfile } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { HeaderAuthButtons, HeroAuthButtons } from "@/components/marketing/landing-auth-buttons";
+import { SiteThemeBackground } from "@/components/layout/site-theme-background";
+import { DEFAULT_SITE_THEME_ID } from "@/lib/constants/site-themes";
 
 const FEATURES = [
   {
@@ -31,7 +33,11 @@ export default async function LandingPage() {
   if (profile) redirect("/dashboard");
 
   return (
-    <div className="flex min-h-svh flex-col bg-background">
+    <div className="flex min-h-svh flex-col">
+      {/* Same ambient wallpaper the logged-in app shell shows by default
+          (mèo đen bên hồ sen) — landing page reuses it so a visitor sees
+          the same look the app itself has, not a plain dark page. */}
+      <SiteThemeBackground themeId={DEFAULT_SITE_THEME_ID} />
       <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
         <div className="flex items-center gap-2.5">
           <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
