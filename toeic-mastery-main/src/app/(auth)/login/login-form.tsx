@@ -47,7 +47,7 @@ export function EmailLoginForm() {
       <div className="flex flex-col gap-1.5">
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Mật khẩu</Label>
-          <Link href="/forgot-password" className="text-xs font-medium text-pink-600 hover:underline">
+          <Link href="/forgot-password" className="text-xs font-medium text-emerald-700 hover:underline">
             Quên mật khẩu?
           </Link>
         </div>
@@ -58,7 +58,7 @@ export function EmailLoginForm() {
       <Button
         type="submit"
         disabled={isSubmitting}
-        className="h-12 w-full rounded-full bg-gradient-to-r from-pink-600 to-rose-500 text-base font-semibold text-white shadow-md hover:opacity-95 disabled:opacity-60"
+        className="h-12 w-full rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 text-base font-semibold text-white shadow-md hover:opacity-95 disabled:opacity-60"
       >
         {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
         Đăng Nhập Ngay
@@ -85,7 +85,7 @@ export function LoginForm() {
 
       <p className="text-center text-xs text-muted-foreground">
         Chưa có tài khoản?{" "}
-        <Link href="/register" className="font-semibold text-pink-600 hover:underline">
+        <Link href="/register" className="font-semibold text-emerald-700 hover:underline">
           Đăng ký ngay tại đây
         </Link>
       </p>

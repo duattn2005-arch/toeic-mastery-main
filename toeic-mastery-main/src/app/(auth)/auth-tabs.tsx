@@ -24,7 +24,7 @@ export function AuthTabs() {
             href={tab.href}
             className={cn(
               "flex-1 rounded-full py-2.5 text-center text-sm font-semibold transition-colors",
-              active ? "bg-card text-pink-600 shadow-sm" : "text-muted-foreground hover:text-foreground"
+              active ? "bg-card text-emerald-700 shadow-sm" : "text-muted-foreground hover:text-foreground"
             )}
           >
             {tab.label}
