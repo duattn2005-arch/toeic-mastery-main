@@ -570,7 +570,7 @@ in-memory... swap for Redis khi chạy nhiều instance"). Giữ nguyên tinh th
   được nộp — cùng pattern `touchStudyStreak` đang dùng.
 - Đồng bộ embedding khi tài liệu (GrammarLesson/VocabularyWord/Question) được
   thêm/sửa: thêm 1 cron endpoint mới `/api/cron/mentor/reembed-content`,
-  cùng pattern với `/api/cron/daily-reminders` đã có trong `vercel.json` —
+  cùng pattern với `/api/cron/daily-reminders` đã có trong crontab của VPS —
   quét các dòng có `updatedAt` mới hơn `ContentEmbedding.sourceUpdatedAt`
   tương ứng rồi re-embed. Đây chính là phần "AI liên tục cập nhật tài liệu
   được tải lên" anh/chị yêu cầu.
@@ -666,7 +666,7 @@ hành trước (xem comment cuối file migration).
 (+ `[id]/messages` phân trang cursor), `messages` (SSE, PRO), `next-steps`
 (FREE/PRO), `learning-path` (+ `items/[id]/complete`), `tests/[id]/submit`.
 Cron mới: `src/app/api/cron/mentor/reembed-content` (đăng ký trong
-`vercel.json`, chạy mỗi 30 phút).
+crontab của VPS, chạy mỗi 30 phút).
 
 **Tích hợp vào code có sẵn**: `src/app/api/attempts/[attemptId]/submit/route.ts`
 được nối thêm (fire-and-forget, không chặn response nộp bài):
@@ -756,7 +756,7 @@ viên đã hoặc đang thấy — không bao giờ bị đổi nội dung dư�
 | Lớp | Khi nào chạy | File |
 |---|---|---|
 | **Phản ứng tức thời** | Ngay sau khi một `LearningPathDay` hoàn tất (`completeLearningPathItem`), và ngay sau khi bất kỳ `Attempt` nào được nộp (kể cả không thuộc lộ trình hôm nay — luyện tập tự do vẫn cập nhật `SkillMastery`) | `learning-path-progress.ts`, `attempts/[attemptId]/submit/route.ts` — cả hai gọi fire-and-forget, không chặn response |
-| **Quét nền hằng ngày** | Cron 1:30 sáng mỗi ngày, quét mọi user có `LearningPath` đang `ACTIVE` | `src/app/api/cron/mentor/replan-learning-paths/route.ts` (đăng ký trong `vercel.json`) — lưới an toàn cho học viên không kích hoạt lớp phản ứng tức thời hôm đó |
+| **Quét nền hằng ngày** | Cron 1:30 sáng mỗi ngày, quét mọi user có `LearningPath` đang `ACTIVE` | `src/app/api/cron/mentor/replan-learning-paths/route.ts` (đăng ký trong crontab của VPS) — lưới an toàn cho học viên không kích hoạt lớp phản ứng tức thời hôm đó |
 
 Cả hai lớp gọi chung `refreshLearningPathForUser()`
 (`learning-path-replanner.ts`), làm 2 việc:

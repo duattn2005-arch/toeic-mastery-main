@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
 
 /**
- * Vercel Cron hits this once a day (see vercel.json) — a 10-day PENDING
+ * The VPS crontab hits this once a day — a 10-day PENDING
  * window doesn't need per-minute precision. Flips any Commission whose
  * confirmAt has passed to WITHDRAWABLE, unless the underlying Payment was
  * refunded in the meantime (markPaymentRefundedAction normally cancels the

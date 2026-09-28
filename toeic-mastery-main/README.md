@@ -211,15 +211,20 @@ and uploaded files all live on one server you control.
    }
    ```
    Then get HTTPS via [Certbot](https://certbot.eff.org/) (`certbot --nginx`).
-5. **Cron jobs**: `vercel.json`'s two cron entries have no Vercel-specific
-   code — replicate them with a plain crontab hitting the same routes:
+5. **Cron jobs**: every `/api/cron/*` route checks
+   `Authorization: Bearer $CRON_SECRET`. Schedule them with a plain crontab:
    ```bash
    # crontab -e
-   0 1 * * * curl -fsS https://your-domain/api/cron/confirm-commissions
-   0 12 * * * curl -fsS https://your-domain/api/cron/daily-reminders
+   0 1 * * *    curl -fsS -H "Authorization: Bearer <CRON_SECRET>" http://127.0.0.1:3000/api/cron/confirm-commissions
+   0 12 * * *   curl -fsS -H "Authorization: Bearer <CRON_SECRET>" http://127.0.0.1:3000/api/cron/daily-reminders
+   */30 * * * * curl -fsS -H "Authorization: Bearer <CRON_SECRET>" http://127.0.0.1:3000/api/cron/mentor/reembed-content
+   30 1 * * *   curl -fsS -H "Authorization: Bearer <CRON_SECRET>" http://127.0.0.1:3000/api/cron/mentor/replan-learning-paths
    ```
-   (add whatever auth header those routes expect, if any).
-6. To ship a code change later: `git pull && npm ci && npm run build && pm2 restart toeic-mastery`.
+6. **Shipping changes**: the server auto-deploys. A crontab entry runs
+   `/usr/local/bin/toeic-deploy.sh` every 2 minutes; when `origin/main` has
+   moved it resets to it, runs `npm ci` only if `package-lock.json` changed,
+   applies Prisma migrations, rebuilds and `pm2 restart toeic-mastery`
+   (log: `/var/log/toeic-deploy.log`). So pushing to `main` is all it takes.
 
 ## Project structure
 

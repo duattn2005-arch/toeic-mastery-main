@@ -3,16 +3,16 @@ import { db } from "@/lib/db";
 import { sendPush } from "@/lib/services/web-push";
 
 /** A subscription only gets one reminder per run of this window — running
- * daily (see vercel.json) that's just "not already sent today", but the
+ * daily (from the VPS crontab) that's just "not already sent today", but the
  * margin under 24h keeps this correct even if the cron fires a bit early
  * or late on a given day. */
 const RESEND_THROTTLE_HOURS = 20;
 
 /**
- * Vercel Hobby allows only one cron run per day, so every user who has
- * `dailyReminderEnabled` gets pushed in this single daily run, ignoring
- * their personal `dailyReminderTime`.
- * TODO: once the project is on a paid Vercel plan, switch this cron's
+ * Runs once a day, so every user who has `dailyReminderEnabled` gets
+ * pushed in this single daily run, ignoring their personal
+ * `dailyReminderTime`.
+ * TODO: the VPS crontab has no per-day run limit — switch this cron's
  * schedule to every ~15 minutes and filter recipients by whether their
  * `dailyReminderTime` falls in the current window, instead of blasting
  * everyone at one fixed hour.

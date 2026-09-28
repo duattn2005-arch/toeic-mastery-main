@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { syncAllContentEmbeddings } from "@/lib/services/mentor/content-sync";
 
 /**
- * Incremental RAG re-indexing — run on a schedule (see vercel.json) so any
+ * Incremental RAG re-indexing — run on a schedule (VPS crontab) so any
  * grammar lesson, vocabulary word/topic, or newly published question shows
  * up in AI Mentor's retrieval within one run, without a full re-embed.
  */
