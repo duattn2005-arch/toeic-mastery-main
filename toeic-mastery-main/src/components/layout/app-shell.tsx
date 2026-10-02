@@ -8,6 +8,7 @@ import { CommandPalette } from "@/components/layout/command-palette";
 import { SiteThemeBackground } from "@/components/layout/site-theme-background";
 import { WelcomeOfferModal } from "@/components/billing/welcome-offer-modal";
 import { UpgradeNudgeModal } from "@/components/billing/upgrade-nudge-modal";
+import { QuestionMentorDock } from "@/components/mentor/question-mentor-dock";
 import { getSiteTheme } from "@/lib/constants/site-themes";
 import type { VocabularyReminder } from "@/lib/data/vocabulary";
 
@@ -45,6 +46,7 @@ export function AppShell({
       </div>
       <MobileBottomNav />
       <CommandPalette open={searchOpen} onOpenChange={setSearchOpen} />
+      <QuestionMentorDock />
       {newMemberOfferDeadline ? (
         <WelcomeOfferModal deadline={newMemberOfferDeadline} />
       ) : (

@@ -38,9 +38,12 @@ async function requestNextSteps(conversationId: string): Promise<{ conversationI
 export function MentorComposer({
   conversationId,
   nextStepsRemainingToday,
+  showNextSteps = true,
 }: {
   conversationId: string;
   nextStepsRemainingToday: number | null;
+  /** Hidden in the compact question dock (question-mentor-dock.tsx). */
+  showNextSteps?: boolean;
 }) {
   const [value, setValue] = React.useState("");
   const { send, isSending } = useMentorSend(conversationId);
@@ -61,23 +64,25 @@ export function MentorComposer({
 
   return (
     <div className="flex flex-col gap-2 border-t border-border pt-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <Button size="sm" variant="outline" onClick={() => nextStepsMutation.mutate()} disabled={nextStepsMutation.isPending}>
-          <Sparkles className="size-3.5" />
-          Gợi ý học tiếp
-          {nextStepsRemainingToday !== null && ` (còn ${nextStepsRemainingToday} hôm nay)`}
-        </Button>
-        {nextStepsMutation.isError && (
-          <span className="flex items-center gap-2 text-xs text-destructive">
-            {nextStepsError?.message}
-            {nextStepsError?.upgradeRequired && (
-              <Link href="/pricing" className="font-medium underline">
-                Nâng cấp Pro
-              </Link>
-            )}
-          </span>
-        )}
-      </div>
+      {showNextSteps && (
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" variant="outline" onClick={() => nextStepsMutation.mutate()} disabled={nextStepsMutation.isPending}>
+            <Sparkles className="size-3.5" />
+            Gợi ý học tiếp
+            {nextStepsRemainingToday !== null && ` (còn ${nextStepsRemainingToday} hôm nay)`}
+          </Button>
+          {nextStepsMutation.isError && (
+            <span className="flex items-center gap-2 text-xs text-destructive">
+              {nextStepsError?.message}
+              {nextStepsError?.upgradeRequired && (
+                <Link href="/pricing" className="font-medium underline">
+                  Nâng cấp Pro
+                </Link>
+              )}
+            </span>
+          )}
+        </div>
+      )}
 
       <div className="flex items-end gap-2">
         <Textarea

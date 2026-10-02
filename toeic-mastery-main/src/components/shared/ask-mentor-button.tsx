@@ -1,23 +1,30 @@
-import Link from "next/link";
+"use client";
+
 import { Bot } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useQuestionMentorStore } from "@/store/question-mentor-store";
 
 /**
  * Entry point into the "Tôi không hiểu câu hỏi này" flow (see
- * docs/ai-mentor-architecture.md §2) — deep-links into /mentor with this
- * question (and, when known, the attempt it was answered in) as the new
- * conversation's origin, so the first reply has full context without
- * asking the learner to repeat it.
+ * docs/ai-mentor-architecture.md §2) — opens the floating QuestionMentorDock
+ * scoped to this question (and, when known, the attempt it was answered in
+ * and the learner's pick), which auto-asks for an explanation so the first
+ * reply arrives without the learner leaving the page or typing anything.
  */
-export function AskMentorButton({ questionId, attemptId }: { questionId: string; attemptId?: string }) {
-  const params = new URLSearchParams({ questionId });
-  if (attemptId) params.set("attemptId", attemptId);
+export function AskMentorButton({
+  questionId,
+  attemptId,
+  selectedLabel,
+}: {
+  questionId: string;
+  attemptId?: string;
+  selectedLabel?: string | null;
+}) {
+  const ask = useQuestionMentorStore((s) => s.ask);
 
   return (
-    <Button size="sm" variant="outline" asChild>
-      <Link href={`/mentor?${params.toString()}`}>
-        <Bot className="size-3.5" /> Hỏi AI Mentor
-      </Link>
+    <Button size="sm" variant="outline" type="button" onClick={() => ask({ questionId, attemptId, selectedLabel })}>
+      <Bot className="size-3.5" /> Hỏi AI Mentor
     </Button>
   );
 }

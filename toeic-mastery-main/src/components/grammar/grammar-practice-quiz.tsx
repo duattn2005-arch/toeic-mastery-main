@@ -49,7 +49,7 @@ export function GrammarPracticeQuiz({ questions }: { questions: QuizQuestion[] }
             {selected && (
               <div className="mt-3 flex flex-col gap-2 rounded-lg bg-accent/50 p-3">
                 <p className="text-xs text-foreground/90">{q.explanationVi}</p>
-                <AskMentorButton questionId={q.id} />
+                <AskMentorButton questionId={q.id} selectedLabel={selected} />
               </div>
             )}
           </div>

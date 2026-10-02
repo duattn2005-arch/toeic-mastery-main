@@ -157,7 +157,7 @@ export function QuestionReviewCard({ review, index, attemptId }: { review: Quest
             <Button size="sm" variant="outline" disabled={vocabPending} onClick={handleSaveVocabulary}>
               <Star className="size-3.5" /> Lưu từ vựng
             </Button>
-            <AskMentorButton questionId={review.id} attemptId={attemptId} />
+            <AskMentorButton questionId={review.id} attemptId={attemptId} selectedLabel={review.selectedLabel} />
             <ReportQuestionDialog questionId={review.id} />
           </div>
         </div>

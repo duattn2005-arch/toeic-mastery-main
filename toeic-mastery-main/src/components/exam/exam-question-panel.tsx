@@ -179,7 +179,7 @@ export function ExamQuestionPanel({
                       {reveal.evidenceText}
                     </p>
                   )}
-                  <AskMentorButton questionId={question.id} attemptId={attemptId} />
+                  <AskMentorButton questionId={question.id} attemptId={attemptId} selectedLabel={selectedLabel} />
                 </div>
               )}
               {revealError && revealError !== "LIMIT_REACHED" && <p className="mt-2 text-xs text-destructive">{revealError}</p>}
