@@ -10,6 +10,7 @@ import type { MascotState } from "@/components/mascot/types";
 import { XpShopItemVisual } from "@/components/shop/xp-shop-item-visual";
 import { XP_SHOP_ITEMS } from "@/lib/constants/xp-shop";
 import { cn } from "@/lib/utils";
+import { useQuestionMentorStore } from "@/store/question-mentor-store";
 
 const BADGE_ICON: Record<MascotState, LucideIcon | null> = {
   idle: null,
@@ -40,7 +41,7 @@ const STATE_MOTION: Record<MascotState, string> = {
   reminder: "mascot-shake",
 };
 
-function MascotAvatar({
+export function MascotAvatar({
   state,
   size,
   equippedShopItemId,
@@ -103,6 +104,12 @@ export function StudyMascot({
   equippedShopItemId?: string | null;
 }) {
   const [minimized, setMinimized] = useMascotMinimized();
+  // While a "Hỏi AI Mentor" explanation is on screen, QuestionMentorDock
+  // *is* the mascot (same avatar, same corner) — stepping aside here keeps
+  // it to one study buddy instead of two stacked in the corner.
+  const questionDockActive = useQuestionMentorStore((s) => s.view !== "closed");
+
+  if (questionDockActive) return null;
 
   if (minimized) {
     return (

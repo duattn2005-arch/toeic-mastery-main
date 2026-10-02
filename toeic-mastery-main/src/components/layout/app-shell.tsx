@@ -46,7 +46,7 @@ export function AppShell({
       </div>
       <MobileBottomNav />
       <CommandPalette open={searchOpen} onOpenChange={setSearchOpen} />
-      <QuestionMentorDock />
+      <QuestionMentorDock equippedShopItemId={profile.equippedShopItemId} />
       {newMemberOfferDeadline ? (
         <WelcomeOfferModal deadline={newMemberOfferDeadline} />
       ) : (

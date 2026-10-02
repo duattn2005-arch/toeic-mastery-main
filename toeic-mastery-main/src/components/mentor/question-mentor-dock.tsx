@@ -2,10 +2,11 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Bot, Loader2, Maximize2, Minus, X } from "lucide-react";
+import { Loader2, Maximize2, Minus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MentorChatThread } from "@/components/mentor/mentor-chat-thread";
 import { MentorComposer } from "@/components/mentor/mentor-composer";
+import { MascotAvatar } from "@/components/mascot/study-mascot";
 import { useMentorSend } from "@/hooks/use-mentor-send";
 import { questionMentorKey, useQuestionMentorStore, type QuestionMentorTarget } from "@/store/question-mentor-store";
 import type { MentorMessagesPage } from "@/components/mentor/types";
@@ -36,8 +37,13 @@ async function createQuestionConversation(target: QuestionMentorTarget): Promise
  * pick into the system prompt — see mentor-context.ts) and immediately
  * sends an "explain this question" turn, so the explanation starts
  * streaming without the learner typing anything.
+ *
+ * Wears the study mascot's own avatar (and StudyMascot hides itself while
+ * this is up) so there's only ever one study buddy in the corner. Sits a
+ * bit higher than the mascot's usual spot so it never covers the exam's
+ * bottom "Nhóm tiếp" navigation.
  */
-export function QuestionMentorDock() {
+export function QuestionMentorDock({ equippedShopItemId }: { equippedShopItemId: string | null }) {
   const target = useQuestionMentorStore((s) => s.target);
   const view = useQuestionMentorStore((s) => s.view);
   const setView = useQuestionMentorStore((s) => s.setView);
@@ -69,9 +75,9 @@ export function QuestionMentorDock() {
         type="button"
         onClick={() => setView("open")}
         aria-label="Mở AI Mentor"
-        className="fixed bottom-20 right-4 z-50 flex size-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-soft transition-transform hover:scale-105 lg:bottom-5 lg:right-5"
+        className="mascot-float fixed bottom-36 right-4 z-50 flex size-16 items-center justify-center rounded-full border border-border bg-card shadow-soft lg:bottom-24 lg:right-5"
       >
-        <Bot className="size-6" />
+        <MascotAvatar state="studying" size={48} equippedShopItemId={equippedShopItemId} className="size-12" />
       </button>
     );
   }
@@ -80,12 +86,10 @@ export function QuestionMentorDock() {
     <div
       role="dialog"
       aria-label="AI Mentor"
-      className="fixed bottom-20 right-4 z-50 flex h-[min(560px,calc(100svh-7rem))] w-[min(400px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-soft lg:bottom-5 lg:right-5"
+      className="fixed bottom-36 right-4 z-50 flex h-[min(560px,calc(100svh-12rem))] w-[min(400px,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-soft lg:bottom-24 lg:right-5"
     >
       <div className="flex items-center gap-2.5 border-b border-border px-4 py-3">
-        <span className="flex size-8 items-center justify-center rounded-full bg-accent text-accent-foreground">
-          <Bot className="size-4" />
-        </span>
+        <MascotAvatar state="idle" size={32} equippedShopItemId={equippedShopItemId} className="size-8" />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold">AI Mentor</p>
           <p className="truncate text-xs text-muted-foreground">Đang giải thích câu hỏi bạn vừa hỏi</p>
