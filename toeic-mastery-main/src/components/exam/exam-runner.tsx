@@ -48,17 +48,24 @@ export function ExamRunner({ data }: { data: ExamData }) {
     hydratedRef.current = true;
 
     const local = loadLocalSnapshot(data.attemptId);
+    // Only answers for questions actually in this attempt — a retry attempt
+    // covers a subset of the test, and nothing outside it should count.
+    const questionIds = new Set(data.questions.map((q) => q.id));
+    const localAnswers = local ? Object.fromEntries(Object.entries(local.answers).filter(([id]) => questionIds.has(id))) : null;
     store.hydrate({
       attemptId: data.attemptId,
       questions: data.questions,
-      answers: local?.answers ?? data.answers,
+      answers: localAnswers ?? data.answers,
       currentIndex: local?.currentIndex ?? data.currentQuestionIndex,
       remainingSec: local ? Math.min(local.remainingSec, data.remainingSec) : data.remainingSec,
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.attemptId]);
 
-  const hydrated = useExamStore((s) => s.hydrated);
+  // Store is shared across attempts — until this attempt's hydrate() runs it
+  // still holds the previous attempt's state (possibly remainingSec 0), which
+  // must not drive the timer or the auto-submit below.
+  const hydrated = useExamStore((s) => s.hydrated && s.attemptId === data.attemptId);
   const remainingSec = useExamStore((s) => s.remainingSec);
   const currentIndex = useExamStore((s) => s.currentIndex);
   const questions = useExamStore((s) => s.questions);
@@ -69,7 +76,7 @@ export function ExamRunner({ data }: { data: ExamData }) {
   const goTo = useExamStore((s) => s.goTo);
 
   const currentQuestion = questions[currentIndex];
-  const answeredCount = Object.values(answers).filter((a) => a.selectedLabel).length;
+  const answeredCount = questions.filter((q) => answers[q.id]?.selectedLabel).length;
 
   // Groups consecutive questions sharing one passageId (one shared audio/
   // reading passage) so they can render as a single screen — see

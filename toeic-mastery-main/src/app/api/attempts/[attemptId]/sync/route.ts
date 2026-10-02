@@ -47,7 +47,28 @@ export async function POST(request: Request, { params }: { params: Promise<{ att
     return NextResponse.json({ error: "Attempt already finished" }, { status: 409 });
   }
 
-  const { remainingSec, currentQuestionIndex, answers } = body.data;
+  const { remainingSec, currentQuestionIndex } = body.data;
+
+  // Only accept answers for questions inside this attempt's scope (same
+  // rule as getExamData) — a client holding another attempt's state must
+  // never be able to write answers outside it.
+  const submittedIds = body.data.answers.map((a) => a.questionId);
+  const inScopeIds =
+    attempt.questionIds.length > 0
+      ? new Set(attempt.questionIds)
+      : new Set(
+          (
+            await db.question.findMany({
+              where: {
+                id: { in: submittedIds },
+                testId: attempt.testId,
+                ...(attempt.parts.length > 0 ? { part: { in: attempt.parts } } : {}),
+              },
+              select: { id: true },
+            })
+          ).map((q) => q.id)
+        );
+  const answers = body.data.answers.filter((a) => inScopeIds.has(a.questionId));
 
   // Real wall-clock delta since the last checkpoint, not derived from the
   // countdown — see MAX_STUDY_SYNC_GAP_SEC for why.

@@ -4,6 +4,10 @@ import * as React from "react";
 import { useExamStore, type ExamAnswerState } from "@/store/exam-store";
 
 interface LocalSnapshot {
+  /** Which attempt wrote this — loadLocalSnapshot rejects a mismatch (and
+   * any legacy snapshot without one). See useExamSync's `ready` for the bug
+   * this guards against. */
+  attemptId: string;
   answers: Record<string, ExamAnswerState>;
   remainingSec: number;
   currentIndex: number;
@@ -22,6 +26,7 @@ export function loadLocalSnapshot(attemptId: string): LocalSnapshot | null {
     const raw = localStorage.getItem(localKey(attemptId));
     if (!raw) return null;
     const parsed = JSON.parse(raw) as LocalSnapshot;
+    if (parsed.attemptId !== attemptId) return null;
     // Backfill answers saved by an older build that predates the decision-
     // log/timing fields — a stale snapshot must never crash hydration or
     // turn answerChangeCount into NaN.
@@ -57,6 +62,16 @@ const SYNC_INTERVAL_MS = 8000;
  */
 export function useExamSync(attemptId: string) {
   const hydrated = useExamStore((s) => s.hydrated);
+  // The exam store is a global singleton that isn't reset between attempts,
+  // so when a new attempt mounts (e.g. "Luyện tập lại câu sai" right after
+  // finishing one) it still holds the PREVIOUS attempt's answers/timer with
+  // hydrated=true until ExamRunner's hydrate effect runs — which is after
+  // this hook's effects. Without this check that stale state got written
+  // into the new attempt's local snapshot and then read straight back as
+  // its starting state (answers pre-filled, "29/15 câu", timer at "Hết
+  // giờ"), and synced to the server under the new attempt.
+  const storeAttemptId = useExamStore((s) => s.attemptId);
+  const ready = hydrated && storeAttemptId === attemptId;
   const answers = useExamStore((s) => s.answers);
   const remainingSec = useExamStore((s) => s.remainingSec);
   const currentIndex = useExamStore((s) => s.currentIndex);
@@ -68,14 +83,14 @@ export function useExamSync(attemptId: string) {
     // snapshot a brand-new attempt reads back on its very next mount —
     // `Math.min(0, realRemainingSec)` in the hydration effect always wins,
     // permanently zeroing the timer for an attempt that never actually ran out.
-    if (!hydrated) return;
+    if (!ready) return;
     try {
-      const snapshot: LocalSnapshot = { answers, remainingSec, currentIndex, savedAt: Date.now() };
+      const snapshot: LocalSnapshot = { attemptId, answers, remainingSec, currentIndex, savedAt: Date.now() };
       localStorage.setItem(localKey(attemptId), JSON.stringify(snapshot));
     } catch {
       // localStorage unavailable (private mode / quota) — server sync still runs.
     }
-  }, [attemptId, hydrated, answers, remainingSec, currentIndex]);
+  }, [attemptId, ready, answers, remainingSec, currentIndex]);
 
   const settleCurrentQuestionTime = useExamStore((s) => s.settleCurrentQuestionTime);
 
@@ -85,6 +100,7 @@ export function useExamSync(attemptId: string) {
     // Fold in live time on whatever question is currently open before
     // reading state — otherwise the question being actively viewed never
     // reports its growing timeSpentMs until the learner navigates away.
+    if (useExamStore.getState().attemptId !== attemptId) return;
     settleCurrentQuestionTime();
     const state = useExamStore.getState();
     // A question needs syncing if its answer/flag changed (isSynced) OR
@@ -120,7 +136,7 @@ export function useExamSync(attemptId: string) {
   }, [attemptId, markSynced, settleCurrentQuestionTime]);
 
   React.useEffect(() => {
-    if (!hydrated) return;
+    if (!ready) return;
     const interval = setInterval(flush, SYNC_INTERVAL_MS);
     window.addEventListener("online", flush);
     window.addEventListener("beforeunload", flush);
@@ -129,7 +145,7 @@ export function useExamSync(attemptId: string) {
       window.removeEventListener("online", flush);
       window.removeEventListener("beforeunload", flush);
     };
-  }, [hydrated, flush]);
+  }, [ready, flush]);
 
   return { flushNow: flush };
 }
