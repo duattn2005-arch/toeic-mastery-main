@@ -1,15 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { BookOpenCheck, Layers, Link2, ListChecks, Trophy } from "lucide-react";
+import { BookOpenCheck, GraduationCap, Layers, Link2, ListChecks, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CATEGORY_ORDER, TopicGrid, groupTopicsByCategory, type VocabularyTopicRow } from "@/components/vocabulary/topic-section-grid";
 import { PathOverviewContent } from "@/components/vocabulary/path/path-overview-content";
+import { IigVocabGrid } from "@/components/vocabulary/iig-vocab-grid";
 import type { getVocabularyPathOverview } from "@/lib/data/vocabulary-path";
 
 type PathOverview = Awaited<ReturnType<typeof getVocabularyPathOverview>>;
 
 const PATH_TAB = "20-ngay";
+const IIG_TAB = "iig-vocab";
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   [CATEGORY_ORDER[0]]: Layers,
@@ -29,6 +31,7 @@ export function VocabularyTabs({ topics, pathOverview }: { topics: VocabularyTop
   const tabs = [
     { key: PATH_TAB, label: "Từ vựng 20 ngày", icon: BookOpenCheck },
     ...orderedKeys.map((key) => ({ key, label: key, icon: CATEGORY_ICONS[key] ?? Layers })),
+    { key: IIG_TAB, label: "IIG Vocab", icon: GraduationCap },
   ];
 
   return (
@@ -52,6 +55,8 @@ export function VocabularyTabs({ topics, pathOverview }: { topics: VocabularyTop
 
       {activeTab === PATH_TAB ? (
         <PathOverviewContent data={pathOverview} />
+      ) : activeTab === IIG_TAB ? (
+        <IigVocabGrid />
       ) : (
         <TopicGrid topics={sections.get(activeTab) ?? []} />
       )}
