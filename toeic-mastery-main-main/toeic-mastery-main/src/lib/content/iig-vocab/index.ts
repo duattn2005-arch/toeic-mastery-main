@@ -1,0 +1,33 @@
+import { OFFICES } from "./offices";
+import { GENERAL_BUSINESS } from "./general-business";
+import { PERSONNEL } from "./personnel";
+import { MANUFACTURING } from "./manufacturing";
+import { PURCHASING } from "./purchasing";
+import { TECHNOLOGY } from "./technology";
+import { TRAVEL } from "./travel";
+import { diningOut } from "./dining-out";
+import { entertainment } from "./entertainment";
+import type { IigTopic } from "./types";
+
+export type { IigTopic, IigWord } from "./types";
+
+/** All IIG vocabulary topics in display order. */
+export const IIG_TOPICS: IigTopic[] = [
+  OFFICES,
+  GENERAL_BUSINESS,
+  PERSONNEL,
+  MANUFACTURING,
+  PURCHASING,
+  TECHNOLOGY,
+  TRAVEL,
+  diningOut,
+  entertainment,
+];
+
+export function getIigTopic(slug: string): IigTopic | null {
+  return IIG_TOPICS.find((t) => t.slug === slug) ?? null;
+}
+
+export function getIigTopicIndex(slug: string): number {
+  return IIG_TOPICS.findIndex((t) => t.slug === slug);
+}

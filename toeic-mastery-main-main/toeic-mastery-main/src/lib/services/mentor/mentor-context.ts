@@ -1,0 +1,151 @@
+import "server-only";
+import { db } from "@/lib/db";
+import { PART_META, MENTOR_LEVEL_LABEL_VI } from "@/lib/constants/toeic";
+import { getWeakestDimensions } from "./skill-mastery";
+import { searchRelevantContent, type RetrievedChunk } from "./mentor-rag";
+import type { MentorChatMessage } from "./llm-client";
+import type { TestPart } from "@/generated/prisma/enums";
+
+export interface MentorContextInput {
+  userId: string;
+  conversationId: string;
+  questionId?: string | null;
+  attemptId?: string | null;
+  /** Latest user turn — used as the RAG query, not stored again here (the
+   * caller already persisted it as a MentorMessage before calling this). */
+  latestUserMessage: string;
+}
+
+export interface MentorContext {
+  systemPrompt: string;
+  /** Prior turns, oldest first, ready to hand to streamMentorReply
+   * alongside the new user turn. */
+  history: MentorChatMessage[];
+}
+
+const HISTORY_WINDOW = 10;
+const RAG_TOP_K = 5;
+
+/**
+ * Assembles everything one chat turn needs: student profile + goal, weak
+ * SkillMastery dimensions, today's LearningPathDay, the long-term
+ * MentorMemory summary, the question the conversation may have opened
+ * from, and RAG chunks relevant to what the learner just asked. RAG is
+ * best-effort — an embeddings-provider outage degrades the mentor to
+ * "no citations" rather than failing the whole turn.
+ */
+export async function buildMentorContext(input: MentorContextInput): Promise<MentorContext> {
+  const [profile, weakDimensions, memory, recentMessages, originQuestion, todayDay, ragChunks] = await Promise.all([
+    db.profile.findUniqueOrThrow({
+      where: { id: input.userId },
+      select: { currentScore: true, targetScore: true, examDate: true, mentorLevel: true },
+    }),
+    getWeakestDimensions(input.userId, 5),
+    db.mentorMemory.findUnique({ where: { userId: input.userId }, select: { summary: true } }),
+    db.mentorMessage.findMany({
+      where: { conversationId: input.conversationId, role: { not: "SYSTEM" } },
+      orderBy: { createdAt: "desc" },
+      take: HISTORY_WINDOW,
+      select: { role: true, content: true },
+    }),
+    input.questionId
+      ? db.question.findUnique({
+          where: { id: input.questionId },
+          select: {
+            prompt: true,
+            part: true,
+            correctLabel: true,
+            explanationVi: true,
+            evidenceText: true,
+            options: { select: { label: true, content: true } },
+          },
+        })
+      : Promise.resolve(null),
+    db.learningPathDay.findFirst({
+      where: {
+        path: { userId: input.userId, status: "ACTIVE" },
+        scheduledDate: { lte: new Date() },
+        status: { in: ["UNLOCKED", "IN_PROGRESS"] },
+      },
+      orderBy: { dayNumber: "desc" },
+      select: { dayNumber: true, focusParts: true, summary: true },
+    }),
+    searchRelevantContent(input.latestUserMessage, RAG_TOP_K).catch((): RetrievedChunk[] => []),
+  ]);
+
+  const selectedAnswer =
+    input.attemptId && input.questionId
+      ? await db.attemptAnswer.findUnique({
+          where: { attemptId_questionId: { attemptId: input.attemptId, questionId: input.questionId } },
+          select: { selectedLabel: true, isCorrect: true },
+        })
+      : null;
+
+  const partLabel = (part: TestPart) => PART_META[part].shortLabel;
+
+  const lines: string[] = [
+    "Bạn là AI Mentor của TOEIC Mastery — một giáo viên TOEIC ảo luôn hoạt động như một chatbot bình thường: trả lời MỌI câu hỏi học viên đưa ra (ngữ pháp, từ vựng, chiến thuật làm bài, cách học, tâm lý ôn thi, hay bất cứ điều gì khác), không giới hạn riêng một câu hỏi cụ thể nào. Nói tiếng Việt, giải thích rõ ràng, ngắn gọn, khích lệ người học.",
+    'CÁ NHÂN HÓA CÁCH XƯNG HÔ: luôn quan sát cách học viên xưng hô ở tin nhắn GẦN NHẤT của họ và đáp lại đúng theo cặp xưng hô tương ứng trong tiếng Việt (ví dụ học viên gọi bạn là "con"/xưng "mẹ" hoặc "bố" → bạn xưng "con", gọi lại họ là "mẹ"/"bố"; học viên xưng "em" gọi bạn "anh/chị" → bạn xưng "anh/chị", gọi họ là "em"; xưng "tôi"/gọi "bạn" → giữ "tôi"/"bạn"; thân mật "tớ"/"cậu" → đáp lại bằng "tớ"/"cậu"). Không mặc định dùng "bạn" khi học viên rõ ràng đã chọn một cách xưng hô khác. Nếu học viên đổi cách xưng hô giữa chừng, chuyển theo ngay ở câu trả lời kế tiếp. Đây là cách bạn thể hiện sự gần gũi, không phải lời khuyên chuyên môn — vẫn giữ nội dung học thuật chính xác, chỉ đổi giọng điệu/xưng hô cho phù hợp.',
+    "Bạn chủ động theo dõi tiến độ, điểm yếu và lộ trình học của học viên (xem phần hồ sơ/điểm yếu/lộ trình bên dưới, được cập nhật hằng ngày từ dữ liệu luyện tập thật) để đề xuất bước học tiếp theo phù hợp với mục tiêu của họ — không chỉ chờ được hỏi mới gợi ý.",
+    'QUAN TRỌNG: Không tự đặt ra câu hỏi TOEIC hay đáp án mới, không tự liệt kê danh sách câu hỏi trong câu trả lời. Khi cần trích dẫn kiến thức, chỉ dùng nội dung trong "Tài liệu liên quan" dưới đây.',
+    'CHỈ đề xuất bài kiểm tra nhanh khi CẢ HAI điều kiện sau đều đúng: (1) học viên vừa hỏi về một kiến thức/kỹ năng TOEIC cụ thể (một điểm ngữ pháp, chiến thuật một Part...), VÀ (2) bạn vừa giải thích xong đúng nội dung đó trong câu trả lời này. Đây là gợi ý HIẾM — TUYỆT ĐỐI không đề xuất khi học viên chỉ chào hỏi, trò chuyện phiếm, đùa giỡn, hỏi về tiến độ/lộ trình/điểm số, hay bất cứ nội dung nào không phải bạn vừa dạy một điểm kiến thức rõ ràng; không đề xuất ở nhiều lượt trả lời liên tiếp nhau kể cả khi đủ điều kiện — mỗi lần đề xuất cần cách nhau, không phải phần đuôi mặc định của mọi câu trả lời. Khi đủ điều kiện và muốn đề xuất, kết thúc toàn bộ câu trả lời bằng đúng MỘT dòng theo định dạng sau, không thêm gì sau đó: [[RECOMMEND_TEST:PART:PART5]] (thay PART5 bằng Part liên quan) hoặc [[RECOMMEND_TEST:GRAMMAR_TOPIC:slug-chu-de]] (thay bằng đúng dimensionKey điểm yếu được liệt kê bên dưới). CHỈ được dùng đúng 2 từ khóa PART hoặc GRAMMAR_TOPIC ở vị trí đó — không tự bịa ra loại khác (ví dụ không có VOCAB_TOPIC/VOCABULARY_TOPIC hay bất kỳ từ nào khác ở đây, kể cả khi học viên hỏi về từ vựng). Hệ thống sẽ tự chọn câu hỏi thật từ ngân hàng đề đã được admin duyệt — bạn không cần và không được tự soạn câu hỏi.',
+    "Nếu học viên muốn luyện thêm từ vựng, KHÔNG dùng marker RECOMMEND_TEST cho việc này (từ vựng có hàng đợi ôn tập giãn cách riêng, không phải bài kiểm tra sinh từ ngân hàng đề) — thay vào đó, trả lời bằng lời và gợi ý học viên vào trang \"Từ vựng\" hoặc \"Đã lưu\" trong menu để ôn tập.",
+    "Khi học viên hỏi kiểu \"tiếp theo tôi nên học gì\", \"hôm nay nên học gì\", hoặc bất cứ lúc nào bạn thấy nên đề xuất bước đi tiếp theo trong lộ trình cá nhân hóa của họ, kết thúc toàn bộ câu trả lời bằng đúng MỘT dòng, không thêm gì sau đó: [[RECOMMEND_NEXT_STEPS]]. Hệ thống sẽ tự chọn gợi ý cụ thể dựa trên dữ liệu thật của học viên (có thể bị giới hạn số lần/ngày với tài khoản Free) — bạn không cần tự liệt kê danh sách bài học, chỉ cần chèn đúng dòng marker này.",
+    "",
+    `Hồ sơ học viên: đang ở ${MENTOR_LEVEL_LABEL_VI[profile.mentorLevel]}, điểm hiện tại ${profile.currentScore ?? "chưa có"}, mục tiêu ${
+      profile.targetScore ?? "chưa đặt"
+    }, ngày thi ${profile.examDate ? profile.examDate.toISOString().slice(0, 10) : "chưa đặt"}.`,
+  ];
+
+  if (memory?.summary) {
+    lines.push(`Trí nhớ dài hạn (tóm tắt các lần trao đổi trước): ${memory.summary}`);
+  }
+
+  if (todayDay) {
+    lines.push(
+      `Lộ trình hôm nay: Ngày ${todayDay.dayNumber}, trọng tâm ${todayDay.focusParts.map(partLabel).join(", ") || "chưa xác định"}.${
+        todayDay.summary ? ` ${todayDay.summary}` : ""
+      }`
+    );
+  }
+
+  if (weakDimensions.length > 0) {
+    const weakList = weakDimensions
+      .map((d) => {
+        const label = d.dimensionType === "PART" ? partLabel(d.dimensionKey as TestPart) : d.dimensionKey;
+        return `${label} (${Math.round(d.masteryScore * 100)}% đúng / ${d.attemptedCount} câu)`;
+      })
+      .join("; ");
+    lines.push(`Điểm yếu hiện tại: ${weakList}`);
+  }
+
+  if (originQuestion) {
+    lines.push(
+      "",
+      "Câu hỏi học viên đang hỏi:",
+      `Part: ${PART_META[originQuestion.part].label}`,
+      `Đề bài: ${originQuestion.prompt}`,
+      `Các lựa chọn: ${originQuestion.options.map((o) => `${o.label}. ${o.content}`).join(" | ")}`,
+      `Đáp án đúng: ${originQuestion.correctLabel}`,
+      ...(selectedAnswer
+        ? [`Học viên đã chọn: ${selectedAnswer.selectedLabel ?? "(bỏ qua)"} — ${selectedAnswer.isCorrect ? "ĐÚNG" : "SAI"}`]
+        : []),
+      `Giải thích chuẩn: ${originQuestion.explanationVi}`,
+      ...(originQuestion.evidenceText ? [`Bằng chứng trong bài: ${originQuestion.evidenceText}`] : []),
+      "Khi học viên nhờ giải thích câu này: dịch/tóm tắt nghĩa câu, chỉ ra vì sao đáp án đúng là đúng (điểm ngữ pháp/từ vựng/cấu trúc then chốt), vì sao từng lựa chọn còn lại sai, và nếu học viên chọn sai thì nói rõ họ nhầm ở đâu. Nếu phần \"Giải thích chuẩn\" trống hoặc chỉ là ghi chú chưa bổ sung, tự giải thích dựa trên đề bài và đáp án đúng ở trên — không được nói là chưa có giải thích."
+    );
+  }
+
+  if (ragChunks.length > 0) {
+    lines.push("", "Tài liệu liên quan (dùng để trích dẫn, không tự bịa thêm ngoài đây):");
+    for (const chunk of ragChunks) {
+      lines.push(`- [${chunk.sourceType}] ${chunk.content.slice(0, 500)}`);
+    }
+  }
+
+  const history: MentorChatMessage[] = [...recentMessages]
+    .reverse()
+    .map((m) => ({ role: m.role === "ASSISTANT" ? ("assistant" as const) : ("user" as const), content: m.content }));
+
+  return { systemPrompt: lines.filter(Boolean).join("\n"), history };
+}
