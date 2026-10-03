@@ -13,6 +13,14 @@ const KIND_CONFIG = {
     maxSizeBytes: 20 * 1024 * 1024,
     acceptedTypes: ["audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/ogg", "audio/mp4", "audio/x-m4a", "audio/aac"],
   },
+  /** Full-test/per-Part listening transcript audio — much longer than a
+   * single question's clip, so a higher cap (kept under Nginx's 60MB
+   * client_max_body_size). */
+  transcriptAudio: {
+    bucket: "transcripts/audio",
+    maxSizeBytes: 55 * 1024 * 1024,
+    acceptedTypes: ["audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/ogg", "audio/mp4", "audio/x-m4a", "audio/aac"],
+  },
 } as const;
 
 export async function POST(request: Request) {
@@ -24,7 +32,7 @@ export async function POST(request: Request) {
   const file = formData.get("file");
   const kind = formData.get("kind");
   if (!(file instanceof File)) return NextResponse.json({ error: "Thiếu file" }, { status: 400 });
-  if (kind !== "image" && kind !== "audio") return NextResponse.json({ error: "Thiếu tham số kind" }, { status: 400 });
+  if (kind !== "image" && kind !== "audio" && kind !== "transcriptAudio") return NextResponse.json({ error: "Thiếu tham số kind" }, { status: 400 });
 
   const config = KIND_CONFIG[kind];
   try {

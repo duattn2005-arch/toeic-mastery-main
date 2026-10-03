@@ -184,21 +184,29 @@ enum SkillDimensionType {
   PART
   GRAMMAR_TOPIC
   VOCAB_TOPIC
-  /** A composite, all-Parts diagnostic (see generatePlacementTest) rather
-   * than one specific skill dimension — dimensionKey is always "ALL". */
+  /**
+   * A composite, all-Parts diagnostic (see generatePlacementTest) rather
+   * than one specific skill dimension — dimensionKey is always "ALL".
+   */
   PLACEMENT
-  /** The Beginner→Intermediate/Intermediate→Advanced level-up exam (see
+  /**
+   * The Beginner→Intermediate/Intermediate→Advanced level-up exam (see
    * level-gate.ts) — dimensionKey is the target MentorLevel being tested
-   * for ("INTERMEDIATE"/"ADVANCED"), not a real skill dimension. */
+   * for ("INTERMEDIATE"/"ADVANCED"), not a real skill dimension.
+   */
   LEVEL_GATE
-  /** A "học bù" mini-test auto-generated right after a REMEDIATE/RESTART
+  /**
+   * A "học bù" mini-test auto-generated right after a REMEDIATE/RESTART
    * LEVEL_GATE result, pooled across the specific weak/hổng labels it's
    * meant to fix (see MentorTest.remediationLabels) — dimensionKey is just
-   * a display string ("BEGINNER->INTERMEDIATE"), not a real dimension. */
+   * a display string ("BEGINNER->INTERMEDIATE"), not a real dimension.
+   */
   REMEDIATION
-  /** Cấp A "nhãn chiến lược" (see StrategicLabel) — the dual-label signal
+  /**
+   * Cấp A "nhãn chiến lược" (see StrategicLabel) — the dual-label signal
    * layered on top of PART/GRAMMAR_TOPIC for Intermediate→Advanced gating
-   * and internal Advanced-readiness classification. */
+   * and internal Advanced-readiness classification.
+   */
   STRATEGIC_LABEL
 }
 
@@ -263,35 +271,37 @@ enum EmbeddingSourceType {
 // ---------------------------------------------------------------------------
 
 model Profile {
-  id                      String    @id @default(uuid()) @db.Uuid
-  email                   String    @unique
+  id                      String           @id @default(uuid()) @db.Uuid
+  email                   String           @unique
   /**
    * Google account's stable `sub` claim — secondary link kept alongside the
    * email-based lookup used at sign-in (see src/app/auth/callback/route.ts),
    * as insurance if a user's Google account email ever changes.
    */
-  googleId                String?   @unique @map("google_id")
+  googleId                String?          @unique @map("google_id")
   /**
    * scrypt hash of the account's password (see src/lib/auth/password.ts) —
    * null for accounts that have only ever signed in with Google. Email
    * login (src/app/(auth)/actions.ts) rejects with a clear "use Google"
    * error rather than a generic "wrong password" when this is null.
    */
-  passwordHash            String?   @map("password_hash")
-  /** Hash (not the raw code) of the most recently issued forgot-password
+  passwordHash            String?          @map("password_hash")
+  /**
+   * Hash (not the raw code) of the most recently issued forgot-password
    * OTP, plus its expiry — see requestPasswordResetAction /
    * resetPasswordAction in src/app/(auth)/actions.ts. Both null once
-   * unused/consumed/expired. */
-  resetCodeHash           String?   @map("reset_code_hash")
-  resetCodeExpiresAt      DateTime? @map("reset_code_expires_at")
-  fullName                String?   @map("full_name")
-  avatarUrl               String?   @map("avatar_url")
-  role                    Role      @default(STUDENT)
-  plan                    PlanTier  @default(FREE)
-  proExpiresAt            DateTime? @map("pro_expires_at")
-  currentScore            Int?      @map("current_score")
-  targetScore             Int?      @map("target_score")
-  examDate                DateTime? @map("exam_date") @db.Date
+   * unused/consumed/expired.
+   */
+  resetCodeHash           String?          @map("reset_code_hash")
+  resetCodeExpiresAt      DateTime?        @map("reset_code_expires_at")
+  fullName                String?          @map("full_name")
+  avatarUrl               String?          @map("avatar_url")
+  role                    Role             @default(STUDENT)
+  plan                    PlanTier         @default(FREE)
+  proExpiresAt            DateTime?        @map("pro_expires_at")
+  currentScore            Int?             @map("current_score")
+  targetScore             Int?             @map("target_score")
+  examDate                DateTime?        @map("exam_date") @db.Date
   /**
    * Drives whether AI Mentor opens with the goal/placement-test onboarding
    * chat or goes straight to today's LearningPathDay — see
@@ -300,23 +310,25 @@ model Profile {
    * score baseline exists yet; READY once a LearningPath can be generated.
    */
   onboardingStatus        OnboardingStatus @default(NOT_STARTED) @map("onboarding_status")
-  onboardingCompletedAt   DateTime? @map("onboarding_completed_at")
-  /** Beginner→Intermediate→Advanced tier from the AI Mentor level gate (see
+  onboardingCompletedAt   DateTime?        @map("onboarding_completed_at")
+  /**
+   * Beginner→Intermediate→Advanced tier from the AI Mentor level gate (see
    * level-gate.ts) — independent of the per-dimension SkillUnlock ladder.
    * Every learner starts BEGINNER regardless of onboardingStatus/placement
-   * score; only a passed LEVEL_GATE MentorTest advances it. */
+   * score; only a passed LEVEL_GATE MentorTest advances it.
+   */
   mentorLevel             MentorLevel      @default(BEGINNER) @map("mentor_level")
-  dailyStudyTargetMinutes Int       @default(30) @map("daily_study_target_minutes")
-  streakCount             Int       @default(0) @map("streak_count")
-  longestStreak           Int       @default(0) @map("longest_streak")
-  lastStudyDate           DateTime? @map("last_study_date") @db.Date
+  dailyStudyTargetMinutes Int              @default(30) @map("daily_study_target_minutes")
+  streakCount             Int              @default(0) @map("streak_count")
+  longestStreak           Int              @default(0) @map("longest_streak")
+  lastStudyDate           DateTime?        @map("last_study_date") @db.Date
   /**
    * Cumulative XP spent in the XP shop — never applied to the lifetime XP
    * total itself (see src/lib/services/xp.ts's computeXp), just subtracted
    * from it when computing spendable balance, so redeeming an item can
    * never lower the account's rank/level.
    */
-  xpSpent                 Int       @default(0) @map("xp_spent")
+  xpSpent                 Int              @default(0) @map("xp_spent")
   /**
    * Id of the XP_SHOP_ITEMS entry (src/lib/constants/xp-shop.ts) currently
    * shown as this account's avatar frame in the header/sidebar — null means
@@ -324,9 +336,9 @@ model Profile {
    * Deliberately not a foreign key: shop items are a static catalog, not a
    * DB table, same as UserShopItem.itemId.
    */
-  equippedShopItemId      String?   @map("equipped_shop_item_id")
-  createdAt               DateTime  @default(now()) @map("created_at")
-  updatedAt               DateTime  @updatedAt @map("updated_at")
+  equippedShopItemId      String?          @map("equipped_shop_item_id")
+  createdAt               DateTime         @default(now()) @map("created_at")
+  updatedAt               DateTime         @updatedAt @map("updated_at")
 
   referralCode            String?            @unique @map("referral_code")
   referredByProfileId     String?            @map("referred_by_profile_id") @db.Uuid
@@ -347,27 +359,27 @@ model Profile {
   isFlaggedFraud          Boolean            @default(false) @map("is_flagged_fraud")
   fraudNote               String?            @map("fraud_note")
 
-  settings          UserSettings?
-  attempts          Attempt[]
-  bookmarks         Bookmark[]
-  userVocabulary    UserVocabulary[]
-  studySessions     StudySession[]
-  scoreHistory      ScoreHistory[]
-  dictionaryHistory DictionaryHistory[]
-  answerRevealLogs  AnswerRevealLog[]
-  savedWords        SavedWord[]
-  questionReports   QuestionReport[]
-  createdTests      Test[]                          @relation("TestAuthor")
-  pathDayProgress   UserVocabularyPathDayProgress[]
-  payments          Payment[]
-  redeemedCodes     ActivationCode[]
-  shopItems         UserShopItem[]
+  settings            UserSettings?
+  attempts            Attempt[]
+  bookmarks           Bookmark[]
+  userVocabulary      UserVocabulary[]
+  studySessions       StudySession[]
+  scoreHistory        ScoreHistory[]
+  dictionaryHistory   DictionaryHistory[]
+  answerRevealLogs    AnswerRevealLog[]
+  savedWords          SavedWord[]
+  questionReports     QuestionReport[]
+  createdTests        Test[]                          @relation("TestAuthor")
+  pathDayProgress     UserVocabularyPathDayProgress[]
+  payments            Payment[]
+  redeemedCodes       ActivationCode[]
+  shopItems           UserShopItem[]
   mentorConversations MentorConversation[]
-  mentorMemory      MentorMemory?
-  skillMastery      SkillMastery[]
-  skillUnlocks      SkillUnlock[]
-  learningPaths     LearningPath[]
-  mentorTests       MentorTest[]
+  mentorMemory        MentorMemory?
+  skillMastery        SkillMastery[]
+  skillUnlocks        SkillUnlock[]
+  learningPaths       LearningPath[]
+  mentorTests         MentorTest[]
 
   referredBy        Profile?           @relation("Referrals", fields: [referredByProfileId], references: [id], onDelete: SetNull)
   referrals         Profile[]          @relation("Referrals")
@@ -505,12 +517,14 @@ model Passage {
   title      String?
   texts      Json          @default("[]") // [{ label: string, content: string }]
   audioUrl   String?       @map("audio_url")
-  /** Up to 3 images (some Part 6/7 sets reference more than one figure —
+  /**
+   * Up to 3 images (some Part 6/7 sets reference more than one figure —
    * e.g. a form plus a schedule). `imageUrl` always mirrors `imageUrls[0]`
    * on every write, kept only for the several read-only surfaces (bookmark
    * previews, mistake/quick-study review cards) that only ever show one
    * preview image and have no reason to handle the full array. The admin
-   * form and the real exam-taking passage view use `imageUrls`. */
+   * form and the real exam-taking passage view use `imageUrls`.
+   */
   imageUrl   String?       @map("image_url")
   imageUrls  String[]      @default([]) @map("image_urls")
   transcript String?
@@ -526,41 +540,43 @@ model Passage {
 }
 
 model Question {
-  id               String        @id @default(uuid()) @db.Uuid
-  testId           String?       @map("test_id") @db.Uuid
-  testSectionId    String?       @map("test_section_id") @db.Uuid
-  passageId        String?       @map("passage_id") @db.Uuid
-  grammarTopicId   String?       @map("grammar_topic_id") @db.Uuid
-  part             TestPart
-  orderIndex       Int           @default(0) @map("order_index")
-  prompt           String
-  imageUrl         String?       @map("image_url")
-  audioUrl         String?       @map("audio_url")
-  transcript       String?
-  correctLabel     String        @map("correct_label") @db.VarChar(1)
-  explanationVi    String        @map("explanation_vi")
-  grammarTopicSlug String?       @map("grammar_topic_slug")
-  vocabularyFocus  String[]      @default([]) @map("vocabulary_focus")
-  /** Cấp A "nhãn chiến lược" (see StrategicLabel) — denormalized slug array,
+  id                  String        @id @default(uuid()) @db.Uuid
+  testId              String?       @map("test_id") @db.Uuid
+  testSectionId       String?       @map("test_section_id") @db.Uuid
+  passageId           String?       @map("passage_id") @db.Uuid
+  grammarTopicId      String?       @map("grammar_topic_id") @db.Uuid
+  part                TestPart
+  orderIndex          Int           @default(0) @map("order_index")
+  prompt              String
+  imageUrl            String?       @map("image_url")
+  audioUrl            String?       @map("audio_url")
+  transcript          String?
+  correctLabel        String        @map("correct_label") @db.VarChar(1)
+  explanationVi       String        @map("explanation_vi")
+  grammarTopicSlug    String?       @map("grammar_topic_slug")
+  vocabularyFocus     String[]      @default([]) @map("vocabulary_focus")
+  /**
+   * Cấp A "nhãn chiến lược" (see StrategicLabel) — denormalized slug array,
    * same pattern as vocabularyFocus, so a question can carry zero to many
    * strategic labels alongside its one PART/GRAMMAR_TOPIC label. Only
-   * Part 3/6/7-style inference questions are expected to have any. */
-  strategicLabelSlugs String[]    @default([]) @map("strategic_label_slugs")
-  evidenceText     String?       @map("evidence_text")
-  difficulty       Difficulty    @default(MEDIUM)
-  status           ContentStatus @default(PUBLISHED)
-  createdAt        DateTime      @default(now()) @map("created_at")
-  updatedAt        DateTime      @updatedAt @map("updated_at")
+   * Part 3/6/7-style inference questions are expected to have any.
+   */
+  strategicLabelSlugs String[]      @default([]) @map("strategic_label_slugs")
+  evidenceText        String?       @map("evidence_text")
+  difficulty          Difficulty    @default(MEDIUM)
+  status              ContentStatus @default(PUBLISHED)
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
 
-  test         Test?             @relation(fields: [testId], references: [id], onDelete: Cascade)
-  testSection  TestSection?      @relation(fields: [testSectionId], references: [id], onDelete: SetNull)
-  passage      Passage?          @relation(fields: [passageId], references: [id], onDelete: SetNull)
-  grammarTopic GrammarTopic?     @relation(fields: [grammarTopicId], references: [id], onDelete: SetNull)
-  options      QuestionOption[]
-  answers      AttemptAnswer[]
-  bookmarks    Bookmark[]
-  reports      QuestionReport[]
-  revealLogs   AnswerRevealLog[]
+  test                      Test?                @relation(fields: [testId], references: [id], onDelete: Cascade)
+  testSection               TestSection?         @relation(fields: [testSectionId], references: [id], onDelete: SetNull)
+  passage                   Passage?             @relation(fields: [passageId], references: [id], onDelete: SetNull)
+  grammarTopic              GrammarTopic?        @relation(fields: [grammarTopicId], references: [id], onDelete: SetNull)
+  options                   QuestionOption[]
+  answers                   AttemptAnswer[]
+  bookmarks                 Bookmark[]
+  reports                   QuestionReport[]
+  revealLogs                AnswerRevealLog[]
   mentorConversationOrigins MentorConversation[]
   mentorTestAppearances     MentorTestQuestion[]
 
@@ -630,11 +646,11 @@ model Attempt {
   createdAt            DateTime      @default(now()) @map("created_at")
   updatedAt            DateTime      @updatedAt @map("updated_at")
 
-  user         Profile         @relation(fields: [userId], references: [id], onDelete: Cascade)
-  test         Test            @relation(fields: [testId], references: [id], onDelete: Cascade)
-  answers      AttemptAnswer[]
-  scoreHistory ScoreHistory[]
-  studySession StudySession?
+  user                      Profile              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  test                      Test                 @relation(fields: [testId], references: [id], onDelete: Cascade)
+  answers                   AttemptAnswer[]
+  scoreHistory              ScoreHistory[]
+  studySession              StudySession?
   mentorConversationOrigins MentorConversation[]
 
   @@index([userId, status])
@@ -643,34 +659,42 @@ model Attempt {
 }
 
 model AttemptAnswer {
-  id            String    @id @default(uuid()) @db.Uuid
-  attemptId     String    @map("attempt_id") @db.Uuid
-  questionId    String    @map("question_id") @db.Uuid
-  selectedLabel String?   @map("selected_label") @db.VarChar(1)
-  isCorrect     Boolean?  @map("is_correct")
-  isFlagged     Boolean   @default(false) @map("is_flagged")
-  /** Real accumulated active-viewing time, now actually written by
+  id                   String    @id @default(uuid()) @db.Uuid
+  attemptId            String    @map("attempt_id") @db.Uuid
+  questionId           String    @map("question_id") @db.Uuid
+  selectedLabel        String?   @map("selected_label") @db.VarChar(1)
+  isCorrect            Boolean?  @map("is_correct")
+  isFlagged            Boolean   @default(false) @map("is_flagged")
+  /**
+   * Real accumulated active-viewing time, now actually written by
    * /api/attempts/[attemptId]/sync (client-tracked per-question stopwatch,
    * see exam-store.ts) — previously present in schema but never populated
-   * by any route. */
-  timeSpentSec  Int       @default(0) @map("time_spent_sec")
-  /** Set once, the first time this question is answered — unlike
+   * by any route.
+   */
+  timeSpentSec         Int       @default(0) @map("time_spent_sec")
+  /**
+   * Set once, the first time this question is answered — unlike
    * `answeredAt` below (which keeps moving to "now" on every sync/change),
-   * this is immutable so a performance-curve block lookup can trust it. */
-  firstAnsweredAt DateTime? @map("first_answered_at")
-  /** The very first label the learner picked for this question — paired
+   * this is immutable so a performance-curve block lookup can trust it.
+   */
+  firstAnsweredAt      DateTime? @map("first_answered_at")
+  /**
+   * The very first label the learner picked for this question — paired
    * with `selectedLabel` (the final one) and `answerChangeCount`, this is
    * the Cấp A "nhật ký quyết định" (decision log) signal used to detect
-   * answer-switching (see advanced-readiness.ts). Immutable once set. */
-  initialSelectedLabel String? @map("initial_selected_label") @db.VarChar(1)
-  /** How many times selectedLabel changed to a different non-null value
-   * after the first pick. */
-  answerChangeCount Int @default(0) @map("answer_change_count")
-  answeredAt    DateTime? @map("answered_at")
-  updatedAt     DateTime  @updatedAt @map("updated_at")
+   * answer-switching (see advanced-readiness.ts). Immutable once set.
+   */
+  initialSelectedLabel String?   @map("initial_selected_label") @db.VarChar(1)
+  /**
+   * How many times selectedLabel changed to a different non-null value
+   * after the first pick.
+   */
+  answerChangeCount    Int       @default(0) @map("answer_change_count")
+  answeredAt           DateTime? @map("answered_at")
+  updatedAt            DateTime  @updatedAt @map("updated_at")
 
-  attempt  Attempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
-  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  attempt           Attempt          @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question          Question         @relation(fields: [questionId], references: [id], onDelete: Cascade)
   flaggedVocabulary UserVocabulary[]
 
   @@unique([attemptId, questionId])
@@ -849,15 +873,15 @@ model UserVocabularyPathDayProgress {
 }
 
 model UserVocabulary {
-  id               String    @id @default(uuid()) @db.Uuid
-  userId           String    @map("user_id") @db.Uuid
-  vocabularyWordId String    @map("vocabulary_word_id") @db.Uuid
-  repetitions      Int       @default(0)
-  intervalDays     Int       @default(0) @map("interval_days")
-  easeFactor       Float     @default(2.5) @map("ease_factor")
-  nextReviewDate   DateTime  @default(now()) @map("next_review_date") @db.Date
-  lastReviewedAt   DateTime? @map("last_reviewed_at")
-  isLearned        Boolean   @default(false) @map("is_learned")
+  id                    String      @id @default(uuid()) @db.Uuid
+  userId                String      @map("user_id") @db.Uuid
+  vocabularyWordId      String      @map("vocabulary_word_id") @db.Uuid
+  repetitions           Int         @default(0)
+  intervalDays          Int         @default(0) @map("interval_days")
+  easeFactor            Float       @default(2.5) @map("ease_factor")
+  nextReviewDate        DateTime    @default(now()) @map("next_review_date") @db.Date
+  lastReviewedAt        DateTime?   @map("last_reviewed_at")
+  isLearned             Boolean     @default(false) @map("is_learned")
   /**
    * MANUAL (user saved it themselves) vs AI_DETECTED_WEAKNESS (AI Mentor
    * auto-enrolled it after a wrong Reading/Listening answer touched this
@@ -867,13 +891,13 @@ model UserVocabulary {
    */
   origin                VocabOrigin @default(MANUAL) @map("origin")
   sourceAttemptAnswerId String?     @map("source_attempt_answer_id") @db.Uuid
-  createdAt        DateTime  @default(now()) @map("created_at")
-  updatedAt        DateTime  @updatedAt @map("updated_at")
+  createdAt             DateTime    @default(now()) @map("created_at")
+  updatedAt             DateTime    @updatedAt @map("updated_at")
 
-  user           Profile            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  vocabularyWord VocabularyWord     @relation(fields: [vocabularyWordId], references: [id], onDelete: Cascade)
-  reviews        VocabularyReview[]
-  sourceAttemptAnswer AttemptAnswer? @relation(fields: [sourceAttemptAnswerId], references: [id], onDelete: SetNull)
+  user                Profile            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  vocabularyWord      VocabularyWord     @relation(fields: [vocabularyWordId], references: [id], onDelete: Cascade)
+  reviews             VocabularyReview[]
+  sourceAttemptAnswer AttemptAnswer?     @relation(fields: [sourceAttemptAnswerId], references: [id], onDelete: SetNull)
 
   @@unique([userId, vocabularyWordId])
   @@index([userId, nextReviewDate])
@@ -926,13 +950,13 @@ model GrammarTopic {
  * wouldn't fit.
  */
 model StrategicLabel {
-  id              String     @id @default(uuid()) @db.Uuid
-  slug            String     @unique
-  title           String
-  category        String?
-  appliesToParts  TestPart[] @map("applies_to_parts")
-  orderIndex      Int        @default(0) @map("order_index")
-  createdAt       DateTime   @default(now()) @map("created_at")
+  id             String     @id @default(uuid()) @db.Uuid
+  slug           String     @unique
+  title          String
+  category       String?
+  appliesToParts TestPart[] @map("applies_to_parts")
+  orderIndex     Int        @default(0) @map("order_index")
+  createdAt      DateTime   @default(now()) @map("created_at")
 
   @@map("strategic_labels")
 }
@@ -1249,8 +1273,8 @@ model UserShopItem {
 // a learner sees backed by reviewed content.
 
 model MentorConversation {
-  id     String                    @id @default(uuid()) @db.Uuid
-  userId String                    @map("user_id") @db.Uuid
+  id     String                   @id @default(uuid()) @db.Uuid
+  userId String                   @map("user_id") @db.Uuid
   title  String?
   status MentorConversationStatus @default(ACTIVE)
 
@@ -1268,9 +1292,9 @@ model MentorConversation {
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
 
-  user           Profile             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  originQuestion Question?           @relation(fields: [originQuestionId], references: [id], onDelete: SetNull)
-  originAttempt  Attempt?            @relation(fields: [originAttemptId], references: [id], onDelete: SetNull)
+  user           Profile         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  originQuestion Question?       @relation(fields: [originQuestionId], references: [id], onDelete: SetNull)
+  originAttempt  Attempt?        @relation(fields: [originAttemptId], references: [id], onDelete: SetNull)
   messages       MentorMessage[]
   generatedTests MentorTest[]
 
@@ -1292,10 +1316,12 @@ model MentorMessage {
    */
   attachments Json?
 
-  /** Null until the stream finishes — used for cost tracking and context
-   * budgeting, not for anything user-facing. */
-  tokenCount Int?    @map("token_count")
-  modelId    String? @map("model_id")
+  /**
+   * Null until the stream finishes — used for cost tracking and context
+   * budgeting, not for anything user-facing.
+   */
+  tokenCount Int?     @map("token_count")
+  modelId    String?  @map("model_id")
   createdAt  DateTime @default(now()) @map("created_at")
 
   conversation MentorConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -1334,12 +1360,16 @@ model SkillMastery {
   id              String             @id @default(uuid()) @db.Uuid
   userId          String             @map("user_id") @db.Uuid
   dimensionType   SkillDimensionType @map("dimension_type")
-  /** TestPart value for PART, GrammarTopic.slug for GRAMMAR_TOPIC,
-   * VocabularyTopic.slug for VOCAB_TOPIC. */
+  /**
+   * TestPart value for PART, GrammarTopic.slug for GRAMMAR_TOPIC,
+   * VocabularyTopic.slug for VOCAB_TOPIC.
+   */
   dimensionKey    String             @map("dimension_key")
   attemptedCount  Int                @default(0) @map("attempted_count")
   correctCount    Int                @default(0) @map("correct_count")
-  /** Exponentially-weighted accuracy (recent attempts count more), 0-1. */
+  /**
+   * Exponentially-weighted accuracy (recent attempts count more), 0-1.
+   */
   masteryScore    Float              @default(0) @map("mastery_score")
   lastPracticedAt DateTime?          @map("last_practiced_at")
   updatedAt       DateTime           @updatedAt @map("updated_at")
@@ -1374,7 +1404,6 @@ model SkillUnlock {
  * (grammar, vocab, listening/reading practice, mini-tests) — distinct from
  * the existing `VocabularyPath`, which is a single static 20-day
  * vocabulary-only curriculum shared by every learner.
- *
  * `userId` is deliberately NOT unique: a learner can go through several
  * paths over the life of an account (finishes one, sets a new target score
  * after a placement retest, etc). App code enforces "at most one ACTIVE
@@ -1387,8 +1416,10 @@ model LearningPath {
   status      LearningPathStatus @default(ACTIVE)
   targetScore Int                @map("target_score")
   examDate    DateTime?          @map("exam_date") @db.Date
-  /** Why the AI structured the path this way — shown in a "Vì sao lộ trình
-   * này?" tooltip and fed back into the next regeneration prompt. */
+  /**
+   * Why the AI structured the path this way — shown in a "Vì sao lộ trình
+   * này?" tooltip and fed back into the next regeneration prompt.
+   */
   rationale   String?
   createdAt   DateTime           @default(now()) @map("created_at")
   updatedAt   DateTime           @updatedAt @map("updated_at")
@@ -1411,7 +1442,7 @@ model LearningPathDay {
   completedAt   DateTime?         @map("completed_at")
   createdAt     DateTime          @default(now()) @map("created_at")
 
-  path  LearningPath        @relation(fields: [pathId], references: [id], onDelete: Cascade)
+  path  LearningPath       @relation(fields: [pathId], references: [id], onDelete: Cascade)
   items LearningPathItem[]
 
   @@unique([pathId, dayNumber])
@@ -1426,13 +1457,13 @@ model LearningPathDay {
  * queue", already computable from user_vocabulary).
  */
 model LearningPathItem {
-  id         String              @id @default(uuid()) @db.Uuid
-  dayId      String              @map("day_id") @db.Uuid
-  itemType   LearningItemType    @map("item_type")
-  refId      String?             @map("ref_id") @db.Uuid
-  orderIndex Int                 @default(0) @map("order_index")
-  status     LearningItemStatus  @default(PENDING)
-  createdAt  DateTime            @default(now()) @map("created_at")
+  id         String             @id @default(uuid()) @db.Uuid
+  dayId      String             @map("day_id") @db.Uuid
+  itemType   LearningItemType   @map("item_type")
+  refId      String?            @map("ref_id") @db.Uuid
+  orderIndex Int                @default(0) @map("order_index")
+  status     LearningItemStatus @default(PENDING)
+  createdAt  DateTime           @default(now()) @map("created_at")
 
   day LearningPathDay @relation(fields: [dayId], references: [id], onDelete: Cascade)
 
@@ -1446,60 +1477,68 @@ model LearningPathItem {
  * (see the design note at the top of this section).
  */
 model MentorTest {
-  id             String             @id @default(uuid()) @db.Uuid
-  userId         String             @map("user_id") @db.Uuid
-  conversationId String?            @map("conversation_id") @db.Uuid
-  dimensionType  SkillDimensionType @map("dimension_type")
-  dimensionKey   String             @map("dimension_key")
-  /** Difficulty tier this test was generated at — see
+  id                    String             @id @default(uuid()) @db.Uuid
+  userId                String             @map("user_id") @db.Uuid
+  conversationId        String?            @map("conversation_id") @db.Uuid
+  dimensionType         SkillDimensionType @map("dimension_type")
+  dimensionKey          String             @map("dimension_key")
+  /**
+   * Difficulty tier this test was generated at — see
    * mentor-test-generator.ts's generateMentorTest, which always resolves
    * this from SkillUnlock rather than letting a caller guess it. Passing
    * this test unlocks exactly this tier via skill-mastery.ts's
    * unlockNextDifficulty; storing it here means submit-time never has to
-   * re-derive (and risk a race with) what was actually being tested. */
-  difficulty     Difficulty         @default(EASY)
-  status         MentorTestStatus   @default(PENDING)
-  passThreshold  Float              @default(0.8) @map("pass_threshold")
-  score          Float?
-  startedAt      DateTime?          @map("started_at")
-  completedAt    DateTime?          @map("completed_at")
-  createdAt      DateTime           @default(now()) @map("created_at")
-  /** REMEDIATION only — the exact {dimensionType, dimensionKey}[] this test
+   * re-derive (and risk a race with) what was actually being tested.
+   */
+  difficulty            Difficulty         @default(EASY)
+  status                MentorTestStatus   @default(PENDING)
+  passThreshold         Float              @default(0.8) @map("pass_threshold")
+  score                 Float?
+  startedAt             DateTime?          @map("started_at")
+  completedAt           DateTime?          @map("completed_at")
+  createdAt             DateTime           @default(now()) @map("created_at")
+  /**
+   * REMEDIATION only — the exact {dimensionType, dimensionKey}[] this test
    * covers (weakLabels/hongLabels from the gate it followed). dimensionKey
    * alone can't hold a multi-label list, so the real label set lives here;
-   * see generateRemediationTest in level-gate.ts. */
-  remediationLabels    Json?   @map("remediation_labels")
-  /** REMEDIATION only — the LEVEL_GATE MentorTest that produced the
+   * see generateRemediationTest in level-gate.ts.
+   */
+  remediationLabels     Json?              @map("remediation_labels")
+  /**
+   * REMEDIATION only — the LEVEL_GATE MentorTest that produced the
    * weak/hổng labels this test bù's. Lets the UI offer "làm lại Gate Test"
-   * once every remediationLabels entry clears WEAK_THRESHOLD. */
-  sourceLevelGateTestId String? @map("source_level_gate_test_id") @db.Uuid
+   * once every remediationLabels entry clears WEAK_THRESHOLD.
+   */
+  sourceLevelGateTestId String?            @map("source_level_gate_test_id") @db.Uuid
 
-  user             Profile              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  conversation     MentorConversation?  @relation(fields: [conversationId], references: [id], onDelete: SetNull)
-  questions        MentorTestQuestion[]
-  sourceLevelGateTest    MentorTest?  @relation("LevelGateRemediation", fields: [sourceLevelGateTestId], references: [id], onDelete: SetNull)
-  remediationTests       MentorTest[] @relation("LevelGateRemediation")
+  user                Profile              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  conversation        MentorConversation?  @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  questions           MentorTestQuestion[]
+  sourceLevelGateTest MentorTest?          @relation("LevelGateRemediation", fields: [sourceLevelGateTestId], references: [id], onDelete: SetNull)
+  remediationTests    MentorTest[]         @relation("LevelGateRemediation")
 
   @@index([userId, status])
   @@map("mentor_tests")
 }
 
 model MentorTestQuestion {
-  id            String    @id @default(uuid()) @db.Uuid
-  mentorTestId  String    @map("mentor_test_id") @db.Uuid
-  questionId    String    @map("question_id") @db.Uuid
-  orderIndex    Int       @default(0) @map("order_index")
-  selectedLabel String?   @map("selected_label") @db.VarChar(1)
-  isCorrect     Boolean?  @map("is_correct")
-  /** Same decision-log/timing signals as AttemptAnswer (see its doc
+  id                   String    @id @default(uuid()) @db.Uuid
+  mentorTestId         String    @map("mentor_test_id") @db.Uuid
+  questionId           String    @map("question_id") @db.Uuid
+  orderIndex           Int       @default(0) @map("order_index")
+  selectedLabel        String?   @map("selected_label") @db.VarChar(1)
+  isCorrect            Boolean?  @map("is_correct")
+  /**
+   * Same decision-log/timing signals as AttemptAnswer (see its doc
    * comments) — MentorTest questions (Gate Test, Mock Test's own retries
    * don't apply here but a Gate/Remediation test does) need the same
-   * instrumentation for advanced-readiness.ts's answer-switching check. */
-  timeSpentSec  Int       @default(0) @map("time_spent_sec")
-  firstAnsweredAt DateTime? @map("first_answered_at")
-  initialSelectedLabel String? @map("initial_selected_label") @db.VarChar(1)
-  answerChangeCount Int @default(0) @map("answer_change_count")
-  answeredAt    DateTime? @map("answered_at")
+   * instrumentation for advanced-readiness.ts's answer-switching check.
+   */
+  timeSpentSec         Int       @default(0) @map("time_spent_sec")
+  firstAnsweredAt      DateTime? @map("first_answered_at")
+  initialSelectedLabel String?   @map("initial_selected_label") @db.VarChar(1)
+  answerChangeCount    Int       @default(0) @map("answer_change_count")
+  answeredAt           DateTime? @map("answered_at")
 
   mentorTest MentorTest @relation(fields: [mentorTestId], references: [id], onDelete: Cascade)
   question   Question   @relation(fields: [questionId], references: [id], onDelete: Cascade)
@@ -1517,18 +1556,44 @@ model MentorTestQuestion {
  * and mentor-rag.ts's use of $queryRaw for similarity search.
  */
 model ContentEmbedding {
-  id              String              @id @default(uuid()) @db.Uuid
-  sourceType      EmbeddingSourceType @map("source_type")
-  sourceId        String              @map("source_id") @db.Uuid
-  chunkIndex      Int                 @default(0) @map("chunk_index")
+  id              String                      @id @default(uuid()) @db.Uuid
+  sourceType      EmbeddingSourceType         @map("source_type")
+  sourceId        String                      @map("source_id") @db.Uuid
+  chunkIndex      Int                         @default(0) @map("chunk_index")
   content         String
   embedding       Unsupported("vector(1024)")
-  embeddingModel  String              @map("embedding_model")
-  /** Source row's `updatedAt` at embed time — a background job re-embeds
-   * whenever the live row is newer than this. */
-  sourceUpdatedAt DateTime            @map("source_updated_at")
-  createdAt       DateTime            @default(now()) @map("created_at")
+  embeddingModel  String                      @map("embedding_model")
+  /**
+   * Source row's `updatedAt` at embed time — a background job re-embeds
+   * whenever the live row is newer than this.
+   */
+  sourceUpdatedAt DateTime                    @map("source_updated_at")
+  createdAt       DateTime                    @default(now()) @map("created_at")
 
   @@unique([sourceType, sourceId, chunkIndex])
   @@map("content_embeddings")
+}
+
+// ---------------------------------------------------------------------------
+// Listening transcripts (nghe điền từ) — the transcript text itself is
+// static content (src/lib/content/transcripts); only the admin-uploaded
+// audio lives in the DB, so it can be added after deploy.
+// ---------------------------------------------------------------------------
+
+model TranscriptAudio {
+  id         String   @id @default(uuid()) @db.Uuid
+  /**
+   * TranscriptSet.key, e.g. "ets-2026".
+   */
+  setKey     String   @map("set_key")
+  testNumber Int      @map("test_number")
+  /**
+   * 0 = audio for the whole test, 1–4 = audio for that Part only.
+   */
+  part       Int
+  audioUrl   String   @map("audio_url")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([setKey, testNumber, part])
+  @@map("transcript_audio")
 }
