@@ -3,13 +3,13 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { toDateOnlyUTC } from "@/lib/utils";
 import type { StudyItem } from "@/lib/services/study-game";
-import { IIG_CATEGORY } from "@/lib/content/iig-vocab/sync";
+import { VOCAB_COLLECTION_CATEGORIES } from "@/lib/content/vocab-collections";
 
-/** Excludes the DB mirror of IIG topics — those have their own IIG Vocab
- * tab and pages (see ensureIigContentSynced). */
+/** Excludes the DB mirror of collection topics (IIG Vocab, ETS 2026) —
+ * those have their own tabs and pages (see ensureCollectionSynced). */
 export async function getVocabularyTopics() {
   return db.vocabularyTopic.findMany({
-    where: { OR: [{ category: null }, { category: { not: IIG_CATEGORY } }] },
+    where: { OR: [{ category: null }, { category: { notIn: VOCAB_COLLECTION_CATEGORIES } }] },
     orderBy: { orderIndex: "asc" },
     include: { _count: { select: { words: true } } },
   });

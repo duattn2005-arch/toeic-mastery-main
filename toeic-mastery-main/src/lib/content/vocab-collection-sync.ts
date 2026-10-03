@@ -1,54 +1,44 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { IIG_TOPICS, IIG_WORDS_PER_DAY } from "@/lib/content/iig-vocab";
+import { IIG_WORDS_PER_DAY } from "@/lib/content/iig-vocab";
 import type { IigTopic } from "@/lib/content/iig-vocab/types";
+import { collectionDayCount, collectionDbSlug, type VocabCollection } from "@/lib/content/vocab-collections";
 
-/** Category of the DB VocabularyTopic rows mirrored from IIG content —
- * excluded from the regular "Theo chủ đề"/band/Part topic tabs, since IIG
- * has its own tab and pages. */
-export const IIG_CATEGORY = "IIG Vocab";
+const syncPromises = new Map<string, Promise<void>>();
 
-/** Slug shared by the mirrored VocabularyTopic and its VocabularyPath. */
-export function iigDbSlug(slug: string) {
-  return `iig-${slug}`;
-}
-
-export function iigDayCount(topic: IigTopic) {
-  return Math.ceil(topic.words.length / IIG_WORDS_PER_DAY);
-}
-
-let syncPromise: Promise<void> | null = null;
-
-/** IIG content is static TypeScript (deploy = available, no db:seed needed),
- * but the daily path, SRS review and study games all run on the DB
- * vocabulary tables. This mirrors every IIG topic into those tables —
- * a VocabularyTopic + VocabularyWords, and a VocabularyPath of
- * IIG_WORDS_PER_DAY-word days — idempotently, once per server process
- * (i.e. once after each deploy), the first time an IIG page is opened.
- * Word ids stay stable across syncs, so users' SRS/day progress is kept. */
-export function ensureIigContentSynced(): Promise<void> {
-  if (!syncPromise) {
-    syncPromise = syncAll().catch((error) => {
-      syncPromise = null;
+/** Collection content (IIG, ETS 2026, ...) is static TypeScript (deploy =
+ * available, no db:seed needed), but the daily path, SRS review and study
+ * games all run on the DB vocabulary tables. This mirrors every topic of a
+ * collection into those tables — a VocabularyTopic + VocabularyWords, and a
+ * VocabularyPath of IIG_WORDS_PER_DAY-word days — idempotently, once per
+ * server process (i.e. once after each deploy), the first time one of its
+ * pages is opened. Word ids stay stable across syncs, so users' SRS/day
+ * progress is kept. */
+export function ensureCollectionSynced(collection: VocabCollection): Promise<void> {
+  let promise = syncPromises.get(collection.key);
+  if (!promise) {
+    promise = syncCollection(collection).catch((error) => {
+      syncPromises.delete(collection.key);
       throw error;
     });
+    syncPromises.set(collection.key, promise);
   }
-  return syncPromise;
+  return promise;
 }
 
-async function syncAll() {
-  for (const [index, topic] of IIG_TOPICS.entries()) {
-    await syncTopic(topic, index);
+async function syncCollection(collection: VocabCollection) {
+  for (const [index, topic] of collection.topics.entries()) {
+    await syncTopic(collection, topic, index);
   }
 }
 
-async function syncTopic(topic: IigTopic, index: number) {
-  const slug = iigDbSlug(topic.slug);
+async function syncTopic(collection: VocabCollection, topic: IigTopic, index: number) {
+  const slug = collectionDbSlug(collection, topic.slug);
   const topicFields = {
-    name: `IIG · ${topic.title}`,
+    name: `${collection.shortLabel} · ${topic.title}`,
     description: `${topic.titleVi} — ${topic.summary}`,
-    category: IIG_CATEGORY,
-    orderIndex: 1000 + index,
+    category: collection.category,
+    orderIndex: collection.orderBase + index,
   };
   const dbTopic = await db.vocabularyTopic.upsert({
     where: { slug },
@@ -65,10 +55,10 @@ async function syncTopic(topic: IigTopic, index: number) {
       data: missing.map(([word, pos, ipa, meaning, example]) => ({
         topicId: dbTopic.id,
         word,
-        partOfSpeech: pos,
+        partOfSpeech: pos || null,
         ipa: ipa || null,
         meaningVi: meaning,
-        exampleEn: example,
+        exampleEn: example || null,
       })),
       skipDuplicates: true,
     });
@@ -77,11 +67,11 @@ async function syncTopic(topic: IigTopic, index: number) {
   for (const [word, pos, ipa, meaning, example] of topic.words) {
     const row = byWord.get(word);
     if (!row) continue;
-    const ipaValue = ipa || null;
-    if (row.partOfSpeech !== pos || row.ipa !== ipaValue || row.meaningVi !== meaning || row.exampleEn !== example) {
+    const data = { partOfSpeech: pos || null, ipa: ipa || null, meaningVi: meaning, exampleEn: example || null };
+    if (row.partOfSpeech !== data.partOfSpeech || row.ipa !== data.ipa || row.meaningVi !== data.meaningVi || row.exampleEn !== data.exampleEn) {
       await db.vocabularyWord.update({
         where: { id: row.id },
-        data: { partOfSpeech: pos, ipa: ipaValue, meaningVi: meaning, exampleEn: example },
+        data,
       });
     }
   }
@@ -90,10 +80,10 @@ async function syncTopic(topic: IigTopic, index: number) {
   const idByWord = new Map(words.map((w) => [w.word, w.id]));
   const orderedIds = topic.words.map(([word]) => idByWord.get(word)).filter((id): id is string => Boolean(id));
 
-  const dayCount = iigDayCount(topic);
+  const dayCount = collectionDayCount(topic);
   const pathFields = {
     title: `Lộ trình ${topic.title} (${dayCount} ngày)`,
-    description: `Học ${topic.words.length} từ IIG chủ đề ${topic.titleVi}, mỗi ngày ${IIG_WORDS_PER_DAY} từ.`,
+    description: `Học ${topic.words.length} từ ${collection.label} — ${topic.titleVi}, mỗi ngày ${IIG_WORDS_PER_DAY} từ.`,
   };
   const path = await db.vocabularyPath.upsert({
     where: { slug },

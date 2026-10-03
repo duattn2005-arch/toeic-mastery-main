@@ -11,7 +11,7 @@ import type { IigTopic } from "./types";
 
 export type { IigTopic, IigWord } from "./types";
 
-/** Words per day in each IIG topic's daily path (see iig-vocab/sync.ts). */
+/** Words per day in each IIG topic's daily path (see vocab-collection-sync.ts). */
 export const IIG_WORDS_PER_DAY = 10;
 
 /** All IIG vocabulary topics in display order. */
@@ -26,11 +26,3 @@ export const IIG_TOPICS: IigTopic[] = [
   diningOut,
   entertainment,
 ];
-
-export function getIigTopic(slug: string): IigTopic | null {
-  return IIG_TOPICS.find((t) => t.slug === slug) ?? null;
-}
-
-export function getIigTopicIndex(slug: string): number {
-  return IIG_TOPICS.findIndex((t) => t.slug === slug);
-}

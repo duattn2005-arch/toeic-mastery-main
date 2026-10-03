@@ -3,8 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BrainCircuit, ChevronLeft, ChevronRight, Gamepad2, GraduationCap } from "lucide-react";
 import { requireUser } from "@/lib/auth";
-import { IIG_TOPICS, getIigTopic, getIigTopicIndex } from "@/lib/content/iig-vocab";
-import { ensureIigContentSynced, iigDbSlug } from "@/lib/content/iig-vocab/sync";
+import { collectionBasePath, collectionDbSlug, getCollectionTopic, getVocabCollection } from "@/lib/content/vocab-collections";
+import { ensureCollectionSynced } from "@/lib/content/vocab-collection-sync";
 import { getVocabularyPathOverview } from "@/lib/data/vocabulary-path";
 import { getTopicSrsStats, getTopicWithWords } from "@/lib/data/vocabulary";
 import { Button } from "@/components/ui/button";
@@ -14,29 +14,34 @@ import { StartLearningButton } from "@/components/vocabulary/start-learning-butt
 import { MasteryBlocks } from "@/components/mastery/mastery-blocks";
 import { MasteryQuiz } from "@/components/mastery/mastery-quiz";
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
-  const topic = getIigTopic(slug);
-  return { title: topic ? `IIG Vocab: ${topic.title}` : "IIG Vocab" };
+type Params = Promise<{ collection: string; slug: string }>;
+
+export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
+  const { collection: key, slug } = await params;
+  const collection = getVocabCollection(key);
+  const found = collection && getCollectionTopic(collection, slug);
+  return { title: collection && found ? `${collection.label}: ${found.topic.title}` : "Từ vựng" };
 }
 
-export default async function IigTopicPage({ params }: { params: Promise<{ slug: string }> }) {
-  const { slug } = await params;
+/** Topic page shared by every static word collection (IIG Vocab, ETS 2026). */
+export default async function CollectionTopicPage({ params }: { params: Params }) {
+  const { collection: key, slug } = await params;
+  const collection = getVocabCollection(key);
+  const found = collection && getCollectionTopic(collection, slug);
+  if (!collection || !found) notFound();
+  const { topic, index, prev, next } = found;
   const profile = await requireUser();
-  const topic = getIigTopic(slug);
-  if (!topic) notFound();
-  const index = getIigTopicIndex(slug);
-  const prev = index > 0 ? IIG_TOPICS[index - 1] : null;
-  const next = index < IIG_TOPICS.length - 1 ? IIG_TOPICS[index + 1] : null;
 
-  await ensureIigContentSynced();
-  const dbSlug = iigDbSlug(slug);
+  await ensureCollectionSynced(collection);
+  const dbSlug = collectionDbSlug(collection, slug);
+  const collectionPath = collectionBasePath(collection);
   const [pathOverview, srs, { words: dbWords }] = await Promise.all([
     getVocabularyPathOverview(profile.id, dbSlug),
     getTopicSrsStats(dbSlug, profile.id),
     getTopicWithWords(dbSlug, profile.id),
   ]);
-  const basePath = `/vocabulary/iig/${slug}`;
+  const basePath = `${collectionPath}/${slug}`;
+  const hasDetails = topic.words.some(([, , , , example]) => example);
 
   return (
     <div className="flex flex-col gap-8">
@@ -45,7 +50,7 @@ export default async function IigTopicPage({ params }: { params: Promise<{ slug:
           <Link href="/vocabulary" className="hover:text-foreground">Từ vựng</Link>
           <ChevronRight className="size-3" />
           <span className="flex items-center gap-1 font-medium text-primary">
-            <GraduationCap className="size-3" /> IIG Vocab
+            <GraduationCap className="size-3" /> {collection.label}
           </span>
         </div>
 
@@ -84,16 +89,16 @@ export default async function IigTopicPage({ params }: { params: Promise<{ slug:
         <h2 className="mb-3 text-sm font-semibold uppercase text-muted-foreground">
           Danh sách từ <span className="font-normal normal-case">({topic.words.length} từ)</span>
         </h2>
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className={cn("grid gap-3", hasDetails ? "md:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3")}>
           {topic.words.map(([word, pos, ipa, meaning, example, note]) => (
-            <div key={word} className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-4 shadow-soft">
+            <div key={word} className={cn("flex flex-col rounded-2xl border border-border bg-card shadow-soft", hasDetails ? "gap-2 p-4" : "gap-1 p-3")}>
               <div className="flex flex-wrap items-baseline gap-x-2">
                 <span className="text-base font-semibold">{word}</span>
-                <span className="text-xs italic text-muted-foreground">({pos})</span>
+                {pos && <span className="text-xs italic text-muted-foreground">({pos})</span>}
                 {ipa && <span className="text-xs text-muted-foreground">{ipa}</span>}
               </div>
               <p className="text-sm font-medium text-primary">{meaning}</p>
-              <p className="text-sm text-muted-foreground">E.g. {example}</p>
+              {example && <p className="text-sm text-muted-foreground">E.g. {example}</p>}
               {note && <p className="rounded-xl bg-accent/50 p-3 text-xs leading-relaxed">{note}</p>}
             </div>
           ))}
@@ -124,14 +129,14 @@ export default async function IigTopicPage({ params }: { params: Promise<{ slug:
 
       <nav className="flex flex-wrap justify-between gap-3 border-t border-border pt-4">
         {prev ? (
-          <Link href={`/vocabulary/iig/${prev.slug}`} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+          <Link href={`${collectionPath}/${prev.slug}`} className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
             <ChevronLeft className="size-4" /> {prev.title}
           </Link>
         ) : (
           <span />
         )}
         {next ? (
-          <Link href={`/vocabulary/iig/${next.slug}`} className="flex items-center gap-1 text-right text-sm font-medium text-primary hover:underline">
+          <Link href={`${collectionPath}/${next.slug}`} className="flex items-center gap-1 text-right text-sm font-medium text-primary hover:underline">
             {next.title} <ChevronRight className="size-4" />
           </Link>
         ) : (

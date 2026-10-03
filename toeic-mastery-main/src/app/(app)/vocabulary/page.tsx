@@ -7,6 +7,7 @@ import { getVocabularyOverview, getVocabularyTopics } from "@/lib/data/vocabular
 import { getVocabularyPathOverview } from "@/lib/data/vocabulary-path";
 import { Button } from "@/components/ui/button";
 import { VocabularyTabs } from "@/components/vocabulary/vocabulary-tabs";
+import { VOCAB_COLLECTIONS, summarizeCollection } from "@/lib/content/vocab-collections";
 import { VocabularyTour } from "@/components/vocabulary/vocabulary-tour";
 
 export const metadata: Metadata = { title: "Từ vựng" };
@@ -59,7 +60,7 @@ export default async function VocabularyPage() {
         <ChevronRight className="size-5 text-muted-foreground" />
       </Link>
 
-      <VocabularyTabs topics={topics} pathOverview={pathOverview} />
+      <VocabularyTabs topics={topics} pathOverview={pathOverview} collections={VOCAB_COLLECTIONS.map(summarizeCollection)} />
       <VocabularyTour />
     </div>
   );

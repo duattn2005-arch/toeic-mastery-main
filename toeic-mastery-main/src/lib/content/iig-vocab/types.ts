@@ -7,6 +7,8 @@ export interface IigTopic {
   slug: string;
   title: string;
   titleVi: string;
+  /** Optional section heading on the collection grid, e.g. "Đọc (RC)". */
+  group?: string;
   summary: string;
   words: IigWord[];
   /** Câu trắc nghiệm (chọn đáp án, tìm từ sai, đúng/sai). */
