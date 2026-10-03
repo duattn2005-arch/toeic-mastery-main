@@ -50,7 +50,7 @@ export function QuestionDetailDialog({ question, onClose }: { question: MistakeQ
 
           <AnswerOptionList options={question.options} selectedLabel={null} correctLabel={question.correctLabel} onSelect={() => {}} disabled />
 
-          <p className="text-xs text-muted-foreground">{question.explanationVi}</p>
+          <p className="whitespace-pre-line text-xs text-muted-foreground">{question.explanationVi}</p>
         </div>
       </DialogContent>
     </Dialog>

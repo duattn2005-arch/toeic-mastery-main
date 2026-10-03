@@ -139,7 +139,7 @@ export function MistakePracticeRunner({
 
         {selected && (
           <div className="flex flex-col items-start gap-2">
-            <p className="text-xs text-muted-foreground">{current.explanationVi}</p>
+            <p className="whitespace-pre-line text-xs text-muted-foreground">{current.explanationVi}</p>
             <AskMentorButton questionId={current.id} selectedLabel={selected} />
           </div>
         )}

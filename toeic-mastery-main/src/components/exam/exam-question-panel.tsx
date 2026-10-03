@@ -166,7 +166,7 @@ export function ExamQuestionPanel({
                   <p>
                     <span className="font-semibold text-success">Đáp án đúng: {reveal.correctLabel}</span>
                   </p>
-                  <p className="text-foreground/90">{reveal.explanationVi}</p>
+                  <p className="whitespace-pre-line text-foreground/90">{reveal.explanationVi}</p>
                   {reveal.transcript && (
                     <details className="mt-1">
                       <summary className="cursor-pointer text-xs font-medium text-muted-foreground">Xem transcript</summary>

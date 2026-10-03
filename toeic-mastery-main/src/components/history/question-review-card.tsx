@@ -120,7 +120,7 @@ export function QuestionReviewCard({ review, index, attemptId }: { review: Quest
 
           <div className="rounded-xl bg-accent/50 p-4 text-sm">
             <p className="font-semibold text-foreground">Giải thích</p>
-            <p className="mt-1 text-foreground/90">{review.explanationVi}</p>
+            <p className="mt-1 whitespace-pre-line text-foreground/90">{review.explanationVi}</p>
             {review.options.some((o) => o.distractorExplanation) && (
               <ul className="mt-2 flex flex-col gap-1 text-xs text-muted-foreground">
                 {review.options
