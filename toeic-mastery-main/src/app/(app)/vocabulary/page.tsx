@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Star } from "lucide-react";
+import { ChevronRight, Crown, Star } from "lucide-react";
+import { MASTERY_BASE_PATH, MASTERY_FOLDER_TITLE } from "@/lib/content/mastery";
 import { requireUser } from "@/lib/auth";
 import { getVocabularyOverview, getVocabularyTopics } from "@/lib/data/vocabulary";
 import { getVocabularyPathOverview } from "@/lib/data/vocabulary-path";
@@ -43,6 +44,20 @@ export default async function VocabularyPage() {
           </Button>
         </div>
       )}
+
+      <Link
+        href={MASTERY_BASE_PATH}
+        className="group flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-4 transition-colors hover:border-primary/60"
+      >
+        <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+          <Crown className="size-5" />
+        </span>
+        <div className="flex-1">
+          <p className="text-sm font-semibold">{MASTERY_FOLDER_TITLE}</p>
+          <p className="text-xs text-muted-foreground">Ngữ pháp &amp; Từ vựng TOEIC Part 5-6: nghĩa danh từ, động từ, tính từ, trạng từ, giới từ kèm bài tập.</p>
+        </div>
+        <ChevronRight className="size-5 text-muted-foreground" />
+      </Link>
 
       <VocabularyTabs topics={topics} pathOverview={pathOverview} />
       <VocabularyTour />
