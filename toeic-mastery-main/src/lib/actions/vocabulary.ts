@@ -112,3 +112,30 @@ export async function logStudySessionAction(durationSec: number): Promise<Action
   revalidatePath("/dashboard");
   return {};
 }
+
+/** "Học lại từ đầu" — wipes the signed-in user's own vocabulary learning
+ * state: SRS rows (+ their review history, via cascade), 20-day/IIG path
+ * day progress, and the AI Mentor's per-vocab-topic mastery/unlocks. With
+ * `includeSaved`, also clears Đã lưu (SavedWord + vocabulary bookmarks).
+ * Study time (StudySession) and exam history are left untouched. One
+ * transaction, so it either fully resets or not at all. */
+export async function resetVocabularyProgressAction(includeSaved: boolean): Promise<ActionResult & { deletedWords?: number }> {
+  const profile = await getCurrentProfile();
+  if (!profile) return { error: "Vui lòng đăng nhập" };
+  const userId = profile.id;
+
+  const [srs] = await db.$transaction([
+    db.userVocabulary.deleteMany({ where: { userId } }),
+    db.userVocabularyPathDayProgress.deleteMany({ where: { userId } }),
+    db.skillMastery.deleteMany({ where: { userId, dimensionType: "VOCAB_TOPIC" } }),
+    db.skillUnlock.deleteMany({ where: { userId, dimensionType: "VOCAB_TOPIC" } }),
+    ...(includeSaved
+      ? [db.savedWord.deleteMany({ where: { userId } }), db.bookmark.deleteMany({ where: { userId, type: "VOCABULARY" } })]
+      : []),
+  ]);
+
+  revalidatePath("/vocabulary");
+  revalidatePath("/dashboard");
+  revalidatePath("/bookmarks");
+  return { deletedWords: srs.count };
+}

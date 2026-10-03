@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { requireUser } from "@/lib/auth";
 import { db } from "@/lib/db";
 import { SettingsForm } from "@/components/settings/settings-form";
+import { ResetVocabularyCard } from "@/components/settings/reset-vocabulary-card";
 
 export const metadata: Metadata = { title: "Cài đặt" };
 
@@ -29,6 +30,8 @@ export default async function SettingsPage() {
           }}
         />
       </div>
+
+      <ResetVocabularyCard />
     </div>
   );
 }
