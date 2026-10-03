@@ -6,9 +6,13 @@ import { ReviewSession } from "@/components/vocabulary/review-session";
 
 export const metadata: Metadata = { title: "Ôn tập từ vựng" };
 
-export default async function VocabularyReviewPage() {
+export default async function VocabularyReviewPage({ searchParams }: { searchParams: Promise<{ topic?: string }> }) {
+  const { topic: topicSlug } = await searchParams;
   const profile = await requireUser();
-  const due = await getDueReviewQueue(profile.id);
+  const [due, topic] = await Promise.all([
+    getDueReviewQueue(profile.id, 30, topicSlug),
+    topicSlug ? db.vocabularyTopic.findUnique({ where: { slug: topicSlug }, select: { name: true } }) : Promise.resolve(null),
+  ]);
 
   const items = due.map((d) => ({
     vocabularyWordId: d.vocabularyWordId,
@@ -31,7 +35,7 @@ export default async function VocabularyReviewPage() {
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Ôn tập từ vựng</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Ôn tập từ vựng{topic ? ` — ${topic.name}` : ""}</h1>
         <p className="mt-1 text-sm text-muted-foreground">Flashcard theo lịch lặp lại ngắt quãng (spaced repetition).</p>
       </div>
       <ReviewSession items={items} starredTerms={starredMatches.map((s) => s.word)} />

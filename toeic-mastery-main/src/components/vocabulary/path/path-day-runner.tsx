@@ -30,6 +30,10 @@ export function PathDayRunner({
   initialStars,
   items,
   starredTerms,
+  dayBasePath = "/vocabulary/path/day",
+  backHref = "/vocabulary",
+  backLabel = "Lộ trình 20 ngày",
+  title,
 }: {
   dayId: string;
   dayNumber: number;
@@ -39,6 +43,12 @@ export function PathDayRunner({
   initialStars: number;
   items: StudyItem[];
   starredTerms: string[];
+  /** Next-day link is `${dayBasePath}/N` — lets IIG topic paths reuse this runner. */
+  dayBasePath?: string;
+  backHref?: string;
+  backLabel?: string;
+  /** Shown above the day number, e.g. the IIG topic name. */
+  title?: string;
 }) {
   const router = useRouter();
   const [activeStep, setActiveStep] = React.useState<1 | 2 | 3 | null>(
@@ -114,9 +124,10 @@ export function PathDayRunner({
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <Link href="/vocabulary" className="flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="size-4" /> Lộ trình 20 ngày
+        <Link href={backHref} className="flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="size-4" /> {backLabel}
         </Link>
+        {title && <p className="mt-2 text-xs font-semibold uppercase tracking-wide text-primary">{title}</p>}
         <h1 className="mt-2 text-xl font-semibold tracking-tight">
           Ngày {dayNumber} <span className="text-muted-foreground">/ {totalDays}</span>
         </h1>
@@ -162,11 +173,11 @@ export function PathDayRunner({
               <RotateCcw className="size-4" /> Ôn tập lại
             </Button>
             <Button asChild variant="outline">
-              <Link href="/vocabulary">Về lộ trình</Link>
+              <Link href={backHref}>Về lộ trình</Link>
             </Button>
             {dayNumber < totalDays && (
               <Button asChild>
-                <Link href={`/vocabulary/path/day/${dayNumber + 1}`}>Ngày tiếp theo →</Link>
+                <Link href={`${dayBasePath}/${dayNumber + 1}`}>Ngày tiếp theo →</Link>
               </Button>
             )}
           </div>

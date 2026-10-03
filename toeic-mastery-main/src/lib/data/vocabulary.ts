@@ -3,9 +3,13 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { toDateOnlyUTC } from "@/lib/utils";
 import type { StudyItem } from "@/lib/services/study-game";
+import { IIG_CATEGORY } from "@/lib/content/iig-vocab/sync";
 
+/** Excludes the DB mirror of IIG topics — those have their own IIG Vocab
+ * tab and pages (see ensureIigContentSynced). */
 export async function getVocabularyTopics() {
   return db.vocabularyTopic.findMany({
+    where: { OR: [{ category: null }, { category: { not: IIG_CATEGORY } }] },
     orderBy: { orderIndex: "asc" },
     include: { _count: { select: { words: true } } },
   });
@@ -78,9 +82,10 @@ export async function getTopicStudyItems(
   };
 }
 
-export async function getDueReviewQueue(userId: string, limit = 30) {
+/** `topicSlug` narrows the queue to one topic (e.g. an IIG topic's own review). */
+export async function getDueReviewQueue(userId: string, limit = 30, topicSlug?: string) {
   return db.userVocabulary.findMany({
-    where: { userId, nextReviewDate: { lte: new Date() } },
+    where: { userId, nextReviewDate: { lte: new Date() }, ...(topicSlug ? { vocabularyWord: { topic: { slug: topicSlug } } } : {}) },
     include: { vocabularyWord: true },
     orderBy: { nextReviewDate: "asc" },
     take: limit,
@@ -110,4 +115,16 @@ export async function getVocabularyReminder(userId: string): Promise<VocabularyR
   ]);
 
   return { dueTodayCount, dueTomorrowCount };
+}
+
+/** Per-topic SRS snapshot: how many of the topic's words the user is
+ * tracking, has learned, and has due for review today. */
+export async function getTopicSrsStats(slug: string, userId: string) {
+  const where = { userId, vocabularyWord: { topic: { slug } } };
+  const [tracked, learned, due] = await Promise.all([
+    db.userVocabulary.count({ where }),
+    db.userVocabulary.count({ where: { ...where, isLearned: true } }),
+    db.userVocabulary.count({ where: { ...where, nextReviewDate: { lte: new Date() } } }),
+  ]);
+  return { tracked, learned, due };
 }

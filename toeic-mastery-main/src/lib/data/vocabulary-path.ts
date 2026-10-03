@@ -24,9 +24,9 @@ export interface PathDaySummary {
  * completion) grouped by tier, which day is "today"'s target, and the same
  * XP/rank the dashboard shows — this path doesn't have its own separate XP
  * pool, it's just another view onto the account's real XP. */
-export async function getVocabularyPathOverview(userId: string) {
+export async function getVocabularyPathOverview(userId: string, pathSlug: string = PATH_SLUG) {
   const path = await db.vocabularyPath.findUnique({
-    where: { slug: PATH_SLUG },
+    where: { slug: pathSlug },
     include: {
       days: {
         orderBy: { dayNumber: "asc" },
@@ -116,8 +116,8 @@ export interface PathDayDetail {
  * of thing that turns "a bit slow" into "several seconds" once each round
  * trip alone costs real latency (as it does from this dev machine to the
  * remote Supabase instance). */
-export async function getPathDayDetail(dayNumber: number, userId: string): Promise<PathDayDetail> {
-  const path = await db.vocabularyPath.findUnique({ where: { slug: PATH_SLUG }, select: { id: true } });
+export async function getPathDayDetail(dayNumber: number, userId: string, pathSlug: string = PATH_SLUG): Promise<PathDayDetail> {
+  const path = await db.vocabularyPath.findUnique({ where: { slug: pathSlug }, select: { id: true } });
   if (!path) notFound();
 
   const [currentDay, totalDays, previousDayProgress, currentDayProgress] = await Promise.all([

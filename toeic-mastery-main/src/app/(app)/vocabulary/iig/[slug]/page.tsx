@@ -1,9 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ChevronRight, GraduationCap } from "lucide-react";
+import { BrainCircuit, ChevronLeft, ChevronRight, Gamepad2, GraduationCap } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { IIG_TOPICS, getIigTopic, getIigTopicIndex } from "@/lib/content/iig-vocab";
+import { ensureIigContentSynced, iigDbSlug } from "@/lib/content/iig-vocab/sync";
+import { getVocabularyPathOverview } from "@/lib/data/vocabulary-path";
+import { getTopicSrsStats, getTopicWithWords } from "@/lib/data/vocabulary";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { PathOverviewContent } from "@/components/vocabulary/path/path-overview-content";
+import { StartLearningButton } from "@/components/vocabulary/start-learning-button";
 import { MasteryBlocks } from "@/components/mastery/mastery-blocks";
 import { MasteryQuiz } from "@/components/mastery/mastery-quiz";
 
@@ -15,30 +22,63 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
 export default async function IigTopicPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  await requireUser();
+  const profile = await requireUser();
   const topic = getIigTopic(slug);
   if (!topic) notFound();
   const index = getIigTopicIndex(slug);
   const prev = index > 0 ? IIG_TOPICS[index - 1] : null;
   const next = index < IIG_TOPICS.length - 1 ? IIG_TOPICS[index + 1] : null;
 
+  await ensureIigContentSynced();
+  const dbSlug = iigDbSlug(slug);
+  const [pathOverview, srs, { words: dbWords }] = await Promise.all([
+    getVocabularyPathOverview(profile.id, dbSlug),
+    getTopicSrsStats(dbSlug, profile.id),
+    getTopicWithWords(dbSlug, profile.id),
+  ]);
+  const basePath = `/vocabulary/iig/${slug}`;
+
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
-        <Link href="/vocabulary" className="hover:text-foreground">Từ vựng</Link>
-        <ChevronRight className="size-3" />
-        <span className="flex items-center gap-1 font-medium text-primary">
-          <GraduationCap className="size-3" /> IIG Vocab
-        </span>
+    <div className="flex flex-col gap-8">
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+          <Link href="/vocabulary" className="hover:text-foreground">Từ vựng</Link>
+          <ChevronRight className="size-3" />
+          <span className="flex items-center gap-1 font-medium text-primary">
+            <GraduationCap className="size-3" /> IIG Vocab
+          </span>
+        </div>
+
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-wide text-primary">Chủ đề #{index + 1}</p>
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {topic.title} <span className="text-muted-foreground">· {topic.titleVi}</span>
+          </h1>
+          <p className="mt-1 text-sm text-muted-foreground">{topic.summary}</p>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3">
+          <Stat label="Đang học" value={`${srs.tracked}/${topic.words.length}`} />
+          <Stat label="Đã thuộc" value={srs.learned} />
+          <Stat label="Cần ôn hôm nay" value={srs.due} highlight={srs.due > 0} />
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline">
+            <Link href={`${basePath}/study`}>
+              <Gamepad2 className="size-4" /> Học & Chơi
+            </Link>
+          </Button>
+          <Button asChild variant={srs.due > 0 ? "default" : "outline"}>
+            <Link href={`/vocabulary/review?topic=${dbSlug}`}>
+              <BrainCircuit className="size-4" /> Ôn tập ghi nhớ{srs.due > 0 ? ` (${srs.due})` : ""}
+            </Link>
+          </Button>
+          <StartLearningButton vocabularyWordIds={dbWords.map((w) => w.id)} />
+        </div>
       </div>
 
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wide text-primary">Chủ đề #{index + 1}</p>
-        <h1 className="text-2xl font-semibold tracking-tight">
-          {topic.title} <span className="text-muted-foreground">· {topic.titleVi}</span>
-        </h1>
-        <p className="mt-1 text-sm text-muted-foreground">{topic.summary}</p>
-      </div>
+      <PathOverviewContent data={pathOverview} dayBasePath={`${basePath}/day`} showXp={false} />
 
       <section>
         <h2 className="mb-3 text-sm font-semibold uppercase text-muted-foreground">
@@ -63,9 +103,9 @@ export default async function IigTopicPage({ params }: { params: Promise<{ slug:
       {topic.quiz.length > 0 && (
         <section>
           <h2 className="mb-3 text-sm font-semibold uppercase text-muted-foreground">
-            Bài tập trắc nghiệm <span className="font-normal normal-case">({topic.quiz.length} câu)</span>
+            Kiểm tra tổng hợp <span className="font-normal normal-case">({topic.quiz.length} câu)</span>
           </h2>
-          <MasteryQuiz exercise={{ title: "Bài tập trắc nghiệm", kind: "practice", questions: topic.quiz }} />
+          <MasteryQuiz exercise={{ title: "Kiểm tra tổng hợp", kind: "test", questions: topic.quiz }} />
         </section>
       )}
 
@@ -100,6 +140,15 @@ export default async function IigTopicPage({ params }: { params: Promise<{ slug:
           </Link>
         )}
       </nav>
+    </div>
+  );
+}
+
+function Stat({ label, value, highlight = false }: { label: string; value: string | number; highlight?: boolean }) {
+  return (
+    <div className={cn("rounded-2xl border p-3 shadow-soft", highlight ? "border-warning/40 bg-warning/10" : "border-border bg-card")}>
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-lg font-semibold">{value}</p>
     </div>
   );
 }

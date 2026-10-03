@@ -10,7 +10,16 @@ type PathOverview = Awaited<ReturnType<typeof getVocabularyPathOverview>>;
  * fetched once in the /vocabulary page and passed down), so it can be
  * rendered inside the client-side tab switcher without itself needing to be
  * a Client Component. */
-export function PathOverviewContent({ data }: { data: PathOverview }) {
+export function PathOverviewContent({
+  data,
+  dayBasePath = "/vocabulary/path/day",
+  showXp = true,
+}: {
+  data: PathOverview;
+  /** Day N links to `${dayBasePath}/N` — lets IIG topic paths reuse this view. */
+  dayBasePath?: string;
+  showXp?: boolean;
+}) {
   const { xpProgress } = data;
 
   return (
@@ -21,10 +30,11 @@ export function PathOverviewContent({ data }: { data: PathOverview }) {
           <span>
             {data.daysCompleted}/{data.totalDays} ngày · {data.totalWords} từ
           </span>
-          <span className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold text-accent-foreground">{xpProgress.level.name}</span>
+          {showXp && <span className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold text-accent-foreground">{xpProgress.level.name}</span>}
         </div>
       </div>
 
+      {showXp && (
       <div className="rounded-2xl border border-border bg-card p-4 shadow-soft">
         <div className="h-2 w-full overflow-hidden rounded-full bg-accent">
           <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${xpProgress.percentToNext}%` }} />
@@ -33,6 +43,7 @@ export function PathOverviewContent({ data }: { data: PathOverview }) {
           {xpProgress.nextLevel ? `→ ${xpProgress.nextLevel.name} (còn ${xpProgress.xpToNext} XP)` : "Đã đạt cấp cao nhất"}
         </p>
       </div>
+      )}
 
       {data.currentDay && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/10 p-5">
@@ -48,7 +59,7 @@ export function PathOverviewContent({ data }: { data: PathOverview }) {
             </div>
           </div>
           <Link
-            href={`/vocabulary/path/day/${data.currentDay.dayNumber}`}
+            href={`${dayBasePath}/${data.currentDay.dayNumber}`}
             className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90"
           >
             Học ngay →
@@ -68,7 +79,7 @@ export function PathOverviewContent({ data }: { data: PathOverview }) {
           </div>
           <div className="flex gap-4 overflow-x-auto pb-2">
             {tier.days.map((day) => (
-              <DayCard key={day.dayNumber} day={day} />
+              <DayCard key={day.dayNumber} day={day} href={`${dayBasePath}/${day.dayNumber}`} />
             ))}
           </div>
         </section>
@@ -79,7 +90,9 @@ export function PathOverviewContent({ data }: { data: PathOverview }) {
 
 function DayCard({
   day,
+  href,
 }: {
+  href: string;
   day: {
     dayNumber: number;
     wordCount: number;
@@ -146,5 +159,5 @@ function DayCard({
     </div>
   );
 
-  return day.isUnlocked ? <Link href={`/vocabulary/path/day/${day.dayNumber}`}>{content}</Link> : <div aria-disabled>{content}</div>;
+  return day.isUnlocked ? <Link href={href}>{content}</Link> : <div aria-disabled>{content}</div>;
 }

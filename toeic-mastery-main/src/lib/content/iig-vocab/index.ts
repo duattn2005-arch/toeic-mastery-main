@@ -11,6 +11,9 @@ import type { IigTopic } from "./types";
 
 export type { IigTopic, IigWord } from "./types";
 
+/** Words per day in each IIG topic's daily path (see iig-vocab/sync.ts). */
+export const IIG_WORDS_PER_DAY = 10;
+
 /** All IIG vocabulary topics in display order. */
 export const IIG_TOPICS: IigTopic[] = [
   OFFICES,
