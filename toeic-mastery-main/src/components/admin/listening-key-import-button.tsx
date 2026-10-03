@@ -8,9 +8,20 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { importListeningKeysAction } from "@/lib/actions/admin-listening-keys";
 
-export function ListeningKeyImportButton({ testId, keyTest, mismatchCount }: { testId: string; keyTest: number; mismatchCount: number }) {
+export function ListeningKeyImportButton({
+  testId,
+  keyTest,
+  mismatchCount,
+  fixAnswersByDefault,
+}: {
+  testId: string;
+  keyTest: number;
+  mismatchCount: number;
+  /** Pre-tick "fix answers" when the preview raised no warnings. */
+  fixAnswersByDefault: boolean;
+}) {
   const router = useRouter();
-  const [updateAnswers, setUpdateAnswers] = React.useState(false);
+  const [updateAnswers, setUpdateAnswers] = React.useState(fixAnswersByDefault);
   const [pending, startTransition] = React.useTransition();
 
   function handleImport() {

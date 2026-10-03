@@ -28,8 +28,8 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
         <h1 className="text-2xl font-semibold tracking-tight">Giải thích ETS 2026 (Listening)</h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Ghép transcript tiếng Anh và giải thích/dịch nghĩa tiếng Việt từ file “ETS 2026 Listening — Script &amp; Đáp án” (Test {KEY_TESTS[0]}–
-          {KEY_TESTS[KEY_TESTS.length - 1]}) vào 100 câu Listening của một đề trên web. Câu được đánh số theo thứ tự Part 1 → 4. Xem trước bảng đối chiếu
-          rồi mới bấm áp dụng; có thể áp dụng lại nhiều lần.
+          {KEY_TESTS[KEY_TESTS.length - 1]}) vào 100 câu Listening của một đề trên web. Câu được ghép theo nội dung (câu hỏi + đáp án) khi câu trên web có chữ, câu chỉ có audio ghép theo thứ tự hiển thị trên web.
+          Xem trước bảng đối chiếu rồi mới bấm áp dụng; có thể áp dụng lại nhiều lần.
         </p>
       </div>
 
@@ -69,6 +69,13 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
               <strong>{plan.testTitle}</strong> ↔ ETS 2026 Test {keyTest}: {plan.rows.length} câu ghép được
               {mismatches.length > 0 && <>, <span className="font-medium text-warning">{mismatches.length} câu đáp án khác nhau</span></>}.
             </p>
+            {plan.warnings.length > 0 && (
+              <ul className="list-disc pl-5 text-sm text-warning">
+                {plan.warnings.map((w) => (
+                  <li key={w}>{w}</li>
+                ))}
+              </ul>
+            )}
             {plan.errors.length > 0 ? (
               <ul className="list-disc pl-5 text-sm text-destructive">
                 {plan.errors.slice(0, 8).map((e) => (
@@ -76,7 +83,13 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
                 ))}
               </ul>
             ) : (
-              <ListeningKeyImportButton testId={testId} keyTest={keyTest} mismatchCount={mismatches.length} />
+              <ListeningKeyImportButton
+                key={`${testId}-${keyTest}`}
+                testId={testId}
+                keyTest={keyTest}
+                mismatchCount={mismatches.length}
+                fixAnswersByDefault={plan.warnings.length === 0}
+              />
             )}
           </section>
 
@@ -84,21 +97,35 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-left text-xs text-muted-foreground">
-                  <th className="px-4 py-3 font-medium">Câu</th>
+                  <th className="px-4 py-3 font-medium">Câu (file)</th>
+                  <th className="px-4 py-3 font-medium">Câu trên web</th>
                   <th className="px-4 py-3 font-medium">Part</th>
                   <th className="px-4 py-3 font-medium">Đáp án web</th>
                   <th className="px-4 py-3 font-medium">Đáp án file</th>
-                  <th className="px-4 py-3 font-medium">Transcript (đầu)</th>
+                  <th className="px-4 py-3 font-medium">Ghép theo</th>
+                  <th className="px-4 py-3 font-medium">Nội dung câu trên web</th>
+                  <th className="px-4 py-3 font-medium">Nội dung trong file</th>
                 </tr>
               </thead>
               <tbody>
                 {plan.rows.map((row) => (
-                  <tr key={row.number} className={cn("border-b border-border/60", row.dbAnswer !== row.key.answer && "bg-warning/10")}>
+                  <tr
+                    key={row.number}
+                    className={cn(
+                      "border-b border-border/60",
+                      row.method === "content" && (row.score ?? 0) < 0.5 ? "bg-destructive/10" : row.dbAnswer !== row.key.answer && "bg-warning/10"
+                    )}
+                  >
                     <td className="px-4 py-2 font-medium">{row.number}</td>
+                    <td className={cn("px-4 py-2", row.webNumber !== row.number && "font-semibold text-warning")}>{row.webNumber}</td>
                     <td className="px-4 py-2">{row.part}</td>
                     <td className="px-4 py-2">{row.dbAnswer}</td>
-                    <td className="px-4 py-2">{row.key.answer}</td>
-                    <td className="max-w-md truncate px-4 py-2 text-xs text-muted-foreground">{row.key.transcript.split("\n")[0] || "—"}</td>
+                    <td className="px-4 py-2 font-semibold">{row.key.answer}</td>
+                    <td className="whitespace-nowrap px-4 py-2 text-xs">
+                      {row.method === "content" ? `Nội dung ${Math.round((row.score ?? 0) * 100)}%` : "Thứ tự"}
+                    </td>
+                    <td className="max-w-xs truncate px-4 py-2 text-xs text-muted-foreground">{row.dbText || "— (chỉ có audio)"}</td>
+                    <td className="max-w-xs truncate px-4 py-2 text-xs text-muted-foreground">{row.key.textEn}</td>
                   </tr>
                 ))}
               </tbody>
