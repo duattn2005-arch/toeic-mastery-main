@@ -1,13 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { ClipboardList, ListX } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardList, ListX } from "lucide-react";
 
 import { getCurrentProfile } from "@/lib/auth";
 import { getTestList, type TestListFilters } from "@/lib/data/tests";
 import { getMistakeCount } from "@/lib/data/mistakes";
 import { PracticeFilters } from "@/components/practice/practice-filters";
 import { TestCard } from "@/components/practice/test-card";
+import { TestFolderCard } from "@/components/practice/test-folder-card";
+import { groupTestsIntoFolders } from "@/lib/test-folders";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PracticeTour } from "@/components/practice/practice-tour";
 import { LoginRequiredGate } from "@/components/practice/login-required-gate";
@@ -46,6 +48,42 @@ export default async function PracticePage({
 
   const [tests, mistakeCount] = await Promise.all([getTestList(profile.id, filters), getMistakeCount(profile.id)]);
 
+  // Tests titled "<series> Test N" are grouped into one folder per series;
+  // the list opens on the folders, and ?folder=<series> shows its tests.
+  const { folders, loose } = groupTestsIntoFolders(tests);
+  const openFolderName = typeof params.folder === "string" ? params.folder : null;
+  const openFolder = openFolderName ? folders.find((f) => f.name === openFolderName) ?? { name: openFolderName, tests: [] } : null;
+
+  function folderHref(name: string | null) {
+    const next = new URLSearchParams();
+    for (const [key, value] of Object.entries(params)) if (key !== "folder" && typeof value === "string") next.set(key, value);
+    if (name) next.set("folder", name);
+    const query = next.toString();
+    return query ? `/practice?${query}` : "/practice";
+  }
+
+  function renderTests(list: typeof tests) {
+    return (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {list.map((test) => (
+          <TestCard
+            key={test.id}
+            title={test.title}
+            difficulty={test.difficulty}
+            totalQuestions={test.totalQuestions}
+            durationMinutes={test.durationMinutes}
+            usersCompleted={test.usersCompleted}
+            bestScore={test.bestScore}
+            progressPercent={test.progressPercent}
+            href={test.resumeAttemptId ? `/exam/${test.resumeAttemptId}` : `/practice/${test.id}`}
+            ctaLabel={test.resumeAttemptId ? "Tiếp tục" : test.isCompleted ? "Làm lại" : "Bắt đầu"}
+            isPro={test.isPro}
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -75,26 +113,46 @@ export default async function PracticePage({
         <PracticeFilters />
       </Suspense>
 
-      {tests.length === 0 ? (
+      {openFolder ? (
+        <section className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-1 text-sm">
+            <Link href={folderHref(null)} className="flex items-center gap-1 text-muted-foreground hover:text-foreground">
+              <ChevronLeft className="size-4" /> Tất cả bộ đề
+            </Link>
+            <ChevronRight className="size-4 text-muted-foreground" />
+            <span className="font-semibold">{openFolder.name}</span>
+            <span className="text-muted-foreground">· {openFolder.tests.length} đề</span>
+          </div>
+          {openFolder.tests.length === 0 ? (
+            <EmptyState icon={ClipboardList} title="Không có đề phù hợp trong bộ này" description="Hãy thử thay đổi bộ lọc." />
+          ) : (
+            renderTests(openFolder.tests)
+          )}
+        </section>
+      ) : tests.length === 0 ? (
         <EmptyState icon={ClipboardList} title="Không tìm thấy đề thi phù hợp" description="Hãy thử thay đổi bộ lọc." />
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {tests.map((test) => (
-            <TestCard
-              key={test.id}
-              title={test.title}
-              difficulty={test.difficulty}
-              totalQuestions={test.totalQuestions}
-              durationMinutes={test.durationMinutes}
-              usersCompleted={test.usersCompleted}
-              bestScore={test.bestScore}
-              progressPercent={test.progressPercent}
-              href={test.resumeAttemptId ? `/exam/${test.resumeAttemptId}` : `/practice/${test.id}`}
-              ctaLabel={test.resumeAttemptId ? "Tiếp tục" : test.isCompleted ? "Làm lại" : "Bắt đầu"}
-              isPro={test.isPro}
-            />
-          ))}
-        </div>
+        <>
+          {folders.length > 0 && (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {folders.map((folder) => (
+                <TestFolderCard
+                  key={folder.name}
+                  name={folder.name}
+                  href={folderHref(folder.name)}
+                  total={folder.tests.length}
+                  completed={folder.tests.filter((t) => t.isCompleted).length}
+                />
+              ))}
+            </div>
+          )}
+          {loose.length > 0 && (
+            <section className="flex flex-col gap-3">
+              {folders.length > 0 && <h2 className="text-sm font-semibold text-muted-foreground">ĐỀ KHÁC</h2>}
+              {renderTests(loose)}
+            </section>
+          )}
+        </>
       )}
 
       <PracticeTour />
