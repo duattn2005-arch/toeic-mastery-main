@@ -49,18 +49,20 @@ export function QuestionMentorDock({ equippedShopItemId }: { equippedShopItemId:
   const setView = useQuestionMentorStore((s) => s.setView);
   const conversationId = useQuestionMentorStore((s) => (s.target ? s.conversations[questionMentorKey(s.target)] : undefined));
   const rememberConversation = useQuestionMentorStore((s) => s.rememberConversation);
-  const [error, setError] = React.useState<string | null>(null);
+  // Keyed by question so a failure for one question doesn't stick around
+  // when the learner asks about another (no reset-in-effect needed).
+  const [failure, setFailure] = React.useState<{ key: string; message: string } | null>(null);
+  const error = target && failure?.key === questionMentorKey(target) ? failure.message : null;
 
   React.useEffect(() => {
     if (!target || conversationId || view === "closed") return;
     let cancelled = false;
-    setError(null);
     createQuestionConversation(target)
       .then((id) => {
         if (!cancelled) rememberConversation(questionMentorKey(target), id);
       })
       .catch((err: Error) => {
-        if (!cancelled) setError(err.message);
+        if (!cancelled) setFailure({ key: questionMentorKey(target), message: err.message });
       });
     return () => {
       cancelled = true;
@@ -109,14 +111,14 @@ export function QuestionMentorDock({ equippedShopItemId }: { equippedShopItemId:
         </Button>
       </div>
 
-      {error ? (
+      {conversationId ? (
+        <QuestionMentorChat key={conversationId} conversationId={conversationId} target={target} />
+      ) : error ? (
         <div className="flex flex-1 items-center justify-center px-4 text-center text-sm text-muted-foreground">{error}</div>
-      ) : !conversationId ? (
+      ) : (
         <div className="flex flex-1 items-center justify-center">
           <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
-      ) : (
-        <QuestionMentorChat key={conversationId} conversationId={conversationId} target={target} />
       )}
     </div>
   );
