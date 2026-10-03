@@ -57,6 +57,16 @@ export function VocabularyTabs({ topics, pathOverview }: { topics: VocabularyTop
         <PathOverviewContent data={pathOverview} />
       ) : activeTab === IIG_TAB ? (
         <IigVocabGrid />
+      ) : activeTab === CATEGORY_ORDER[0] ? (
+        <div className="flex flex-col gap-8">
+          <TopicGrid topics={sections.get(activeTab) ?? []} />
+          <section className="flex flex-col gap-3">
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
+              <GraduationCap className="size-5 text-primary" /> IIG Vocab
+            </h2>
+            <IigVocabGrid />
+          </section>
+        </div>
       ) : (
         <TopicGrid topics={sections.get(activeTab) ?? []} />
       )}
