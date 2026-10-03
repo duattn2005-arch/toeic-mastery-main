@@ -194,3 +194,32 @@ export async function applyListeningKeyImport(plan: ImportPlan, updateAnswers: b
   await db.$transaction(writes);
   return { updatedQuestions: plan.rows.length, updatedPassages: passagesDone.size, updatedAnswers };
 }
+
+export interface KeyFileFit {
+  keyTest: number;
+  /** Average content similarity over content-matched questions, 0–1. */
+  avgScore: number;
+  contentMatched: number;
+  answerMismatches: number;
+  blocked: boolean;
+}
+
+/** How well one DB test fits each ETS 2026 key file, best fit first — so
+ * a web test numbered differently from the files ("Test 02" holding the
+ * file's Test 3) is caught before anything is written. */
+export async function rankKeyFilesForTest(testId: string): Promise<KeyFileFit[]> {
+  const fits: KeyFileFit[] = [];
+  for (const keyTest of Object.keys(ETS_2026_LISTENING_KEYS).map(Number)) {
+    const plan = await buildListeningKeyImportPlan(testId, keyTest);
+    if (!plan) continue;
+    const scored = plan.rows.filter((r) => r.score !== null);
+    fits.push({
+      keyTest,
+      avgScore: scored.length ? scored.reduce((s, r) => s + r.score!, 0) / scored.length : 0,
+      contentMatched: scored.length,
+      answerMismatches: plan.rows.filter((r) => r.dbAnswer !== r.key.answer).length,
+      blocked: plan.errors.length > 0,
+    });
+  }
+  return fits.sort((a, b) => Number(a.blocked) - Number(b.blocked) || b.avgScore - a.avgScore || a.answerMismatches - b.answerMismatches);
+}

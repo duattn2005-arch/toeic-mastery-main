@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import { ETS_2026_LISTENING_KEYS } from "@/lib/content/ets-2026-listening-keys";
-import { buildListeningKeyImportPlan } from "@/lib/data/listening-key-import";
+import { buildListeningKeyImportPlan, rankKeyFilesForTest } from "@/lib/data/listening-key-import";
 import { ListeningKeyImportButton } from "@/components/admin/listening-key-import-button";
 
 export const metadata: Metadata = { title: "Giải thích ETS 2026" };
@@ -16,9 +16,13 @@ function guessTestId(tests: { id: string; title: string }[], keyTest: number) {
 
 export default async function AdminExplanationsPage({ searchParams }: { searchParams: Promise<{ key?: string; test?: string }> }) {
   const params = await searchParams;
-  const keyTest = KEY_TESTS.includes(Number(params.key)) ? Number(params.key) : KEY_TESTS[0];
   const tests = await db.test.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, title: true } });
-  const testId = params.test ?? guessTestId(tests, keyTest) ?? "";
+  const requestedKey = KEY_TESTS.includes(Number(params.key)) ? Number(params.key) : null;
+  const testId = params.test ?? guessTestId(tests, requestedKey ?? KEY_TESTS[0]) ?? "";
+  // Which file fits this web test best — a web "Test 02" may hold a
+  // different ETS test than the file numbered 2.
+  const fits = testId ? await rankKeyFilesForTest(testId) : [];
+  const keyTest = requestedKey ?? fits[0]?.keyTest ?? KEY_TESTS[0];
   const plan = testId ? await buildListeningKeyImportPlan(testId, keyTest) : null;
   const mismatches = plan?.rows.filter((r) => r.dbAnswer !== r.key.answer) ?? [];
 
@@ -36,7 +40,8 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
       <form className="flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-card p-5 shadow-soft">
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-xs font-medium text-muted-foreground">File giải thích</span>
-          <select name="key" defaultValue={keyTest} className="h-9 rounded-lg border border-input bg-background px-3">
+          <select name="key" defaultValue={requestedKey ?? ""} className="h-9 rounded-lg border border-input bg-background px-3">
+            <option value="">Tự chọn file khớp nhất</option>
             {KEY_TESTS.map((n) => (
               <option key={n} value={n}>
                 ETS 2026 — Test {n}
@@ -59,6 +64,43 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
           Xem trước
         </button>
       </form>
+
+      {fits.length > 0 && (
+        <section className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-5 shadow-soft">
+          <h2 className="text-sm font-semibold">Đề này khớp với file nào?</h2>
+          <p className="text-xs text-muted-foreground">
+            So nội dung câu hỏi/đáp án của đề trên web với cả {KEY_TESTS.length} file. File khớp nhất được chọn sẵn khi bạn chưa chọn file.
+          </p>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border text-left text-xs text-muted-foreground">
+                  <th className="py-2 pr-4 font-medium">File</th>
+                  <th className="py-2 pr-4 font-medium">Khớp nội dung</th>
+                  <th className="py-2 pr-4 font-medium">Số câu khác đáp án</th>
+                  <th className="py-2 font-medium"></th>
+                </tr>
+              </thead>
+              <tbody>
+                {fits.map((fit, i) => (
+                  <tr key={fit.keyTest} className={cn("border-b border-border/60", fit.keyTest === keyTest && "bg-primary/10")}>
+                    <td className="py-2 pr-4 font-medium">
+                      ETS 2026 — Test {fit.keyTest} {i === 0 && !fit.blocked && <span className="text-xs text-success">(khớp nhất)</span>}
+                    </td>
+                    <td className="py-2 pr-4">{fit.blocked ? "Không khớp số câu" : fit.contentMatched ? `${Math.round(fit.avgScore * 100)}% (${fit.contentMatched} câu)` : "Đề chỉ có audio"}</td>
+                    <td className="py-2 pr-4">{fit.blocked ? "—" : fit.answerMismatches}</td>
+                    <td className="py-2">
+                      <a href={`?test=${testId}&key=${fit.keyTest}`} className="text-xs font-medium text-primary hover:underline">
+                        Xem trước
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {!plan ? (
         <p className="text-sm text-muted-foreground">Chọn đề trên web tương ứng để xem bảng đối chiếu.</p>
