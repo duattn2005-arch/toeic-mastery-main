@@ -20,7 +20,7 @@ const ADMIN_NAV = [
   { label: "Câu hỏi", href: "/admin/questions", icon: BookOpen },
   { label: "Từ vựng", href: "/admin/vocabulary", icon: Layers },
   { label: "Transcript nghe", href: "/admin/transcripts", icon: Headphones },
-  { label: "Giải thích ETS 2026", href: "/admin/explanations", icon: FileText },
+  { label: "Giải thích ETS", href: "/admin/explanations", icon: FileText },
   { label: "Người dùng", href: "/admin/users", icon: Users },
   { label: "Thanh toán", href: "/admin/payments", icon: CreditCard },
   { label: "Rút tiền", href: "/admin/withdrawals", icon: Wallet },

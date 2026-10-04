@@ -29,7 +29,7 @@ export function ListeningKeyImportButton({
   const router = useRouter();
   const [updateAnswers, setUpdateAnswers] = React.useState(fixAnswersByDefault);
   const [pending, setPending] = React.useState<"apply" | "fix" | null>(null);
-  const script = section === "listening" ? "transcript, giải thích" : "giải thích, dịch đoạn văn";
+  const script = section !== "reading" ? "transcript, giải thích" : "giải thích, dịch đoạn văn";
 
   async function run(mode: "apply" | "fix") {
     setPending(mode);

@@ -1,32 +1,32 @@
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
-import { buildListeningKeyImportPlan, KEY_TEST_NUMBERS, rankKeyFilesForTest, type KeySection } from "@/lib/data/listening-key-import";
+import { buildListeningKeyImportPlan, KEY_SECTIONS, keyTestNumbers, rankKeyFilesForTest, type KeySection } from "@/lib/data/listening-key-import";
 import { ListeningKeyImportButton } from "@/components/admin/listening-key-import-button";
 
-export const metadata: Metadata = { title: "Giải thích ETS 2026" };
+export const metadata: Metadata = { title: "Giải thích ETS" };
 
-const KEY_TESTS = KEY_TEST_NUMBERS;
-
-const SECTION_META: Record<KeySection, { label: string; range: string; source: string; count: number }> = {
-  listening: { label: "Listening", range: "Part 1–4", source: "ETS 2026 Listening — Script & Đáp án", count: 100 },
-  reading: { label: "Reading", range: "Part 5–7", source: "ETS 2026 Reading — Đề, Đáp án & Giải thích", count: 100 },
+const SECTION_META: Record<KeySection, { label: string; year: number; range: string; source: string; count: number; listening: boolean }> = {
+  listening: { label: "Listening", year: 2026, range: "Part 1–4", source: "ETS 2026 Listening — Script & Đáp án", count: 100, listening: true },
+  reading: { label: "Reading", year: 2026, range: "Part 5–7", source: "ETS 2026 Reading — Đề, Đáp án & Giải thích", count: 100, listening: false },
+  "listening-2024": { label: "Listening", year: 2024, range: "Part 1–4", source: "ETS 2024 — Script (sách đáp án) & Giải chi tiết Dr. English", count: 100, listening: true },
 };
 
 /** Best-guess DB test for an ETS key number, from titles like "ETS 2026 - Test 3". */
-function guessTestId(tests: { id: string; title: string }[], keyTest: number) {
-  return tests.find((t) => /ets/i.test(t.title) && /2026/.test(t.title) && new RegExp(`(test|đề)\\s*0?${keyTest}\\b`, "i").test(t.title))?.id;
+function guessTestId(tests: { id: string; title: string }[], keyTest: number, year: number) {
+  return tests.find((t) => /ets/i.test(t.title) && t.title.includes(String(year)) && new RegExp(`(test|đề)\\s*0?${keyTest}\\b`, "i").test(t.title))?.id;
 }
 
 export default async function AdminExplanationsPage({ searchParams }: { searchParams: Promise<{ key?: string; test?: string; section?: string }> }) {
   const params = await searchParams;
-  const section: KeySection = params.section === "reading" ? "reading" : "listening";
+  const section: KeySection = KEY_SECTIONS.includes(params.section as KeySection) ? (params.section as KeySection) : "listening";
   const meta = SECTION_META[section];
+  const KEY_TESTS = keyTestNumbers(section);
   const qs = (extra: Record<string, string | number>) =>
     "?" + new URLSearchParams({ section, ...Object.fromEntries(Object.entries(extra).map(([k, v]) => [k, String(v)])) }).toString();
   const tests = await db.test.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, title: true } });
   const requestedKey = KEY_TESTS.includes(Number(params.key)) ? Number(params.key) : null;
-  const testId = params.test ?? guessTestId(tests, requestedKey ?? KEY_TESTS[0]) ?? "";
+  const testId = params.test ?? guessTestId(tests, requestedKey ?? KEY_TESTS[0], meta.year) ?? "";
   // Which file fits this web test best — a web "Test 02" may hold a
   // different ETS test than the file numbered 2.
   const fits = testId ? await rankKeyFilesForTest(testId, section) : [];
@@ -38,22 +38,22 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
   const chosenFit = fits.find((f) => f.keyTest === keyTest);
   const wrongPair = Boolean(bestFit && chosenFit && bestFit.keyTest !== keyTest && bestFit.avgScore - chosenFit.avgScore >= 0.2);
   const testTitle = tests.find((t) => t.id === testId)?.title;
-  const webTestForKey = guessTestId(tests, keyTest);
+  const webTestForKey = guessTestId(tests, keyTest, meta.year);
   const mismatches = plan?.rows.filter((r) => r.dbAnswer !== r.key.answer) ?? [];
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Giải thích ETS 2026 ({meta.label})</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Giải thích ETS {meta.year} ({meta.label})</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Ghép {section === "listening" ? "transcript tiếng Anh và " : ""}giải thích/dịch nghĩa tiếng Việt từ file “{meta.source}” (Test {KEY_TESTS[0]}–
+          Ghép {meta.listening ? "transcript tiếng Anh và " : ""}giải thích/dịch nghĩa tiếng Việt từ file “{meta.source}” (Test {KEY_TESTS[0]}–
           {KEY_TESTS[KEY_TESTS.length - 1]}) vào {meta.count} câu {meta.label} ({meta.range}) của một đề trên web. Câu được ghép theo nội dung (câu hỏi + đáp án) khi câu trên web có chữ riêng, câu chỉ có audio/lời dẫn chung ghép theo thứ tự hiển thị trên web.
           Xem trước bảng đối chiếu rồi mới bấm áp dụng; có thể áp dụng lại nhiều lần.
         </p>
       </div>
 
       <nav className="flex w-fit gap-1 rounded-full bg-card p-1 shadow-soft">
-        {(Object.keys(SECTION_META) as KeySection[]).map((s) => (
+        {KEY_SECTIONS.map((s) => (
           <a
             key={s}
             href={`?section=${s}${testId ? `&test=${testId}` : ""}`}
@@ -62,7 +62,7 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
               s === section ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
             )}
           >
-            {SECTION_META[s].label} ({SECTION_META[s].range})
+            {SECTION_META[s].label} ETS {SECTION_META[s].year} ({SECTION_META[s].range})
           </a>
         ))}
       </nav>
@@ -75,7 +75,7 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
             <option value="">Tự chọn file khớp nhất</option>
             {KEY_TESTS.map((n) => (
               <option key={n} value={n}>
-                ETS 2026 — Test {n}
+                ETS {meta.year} — Test {n}
               </option>
             ))}
           </select>
@@ -125,7 +125,7 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
                 {fits.map((fit, i) => (
                   <tr key={fit.keyTest} className={cn("border-b border-border/60", fit.keyTest === keyTest && "bg-primary/10")}>
                     <td className="py-2 pr-4 font-medium">
-                      ETS 2026 — Test {fit.keyTest} {i === 0 && !fit.blocked && <span className="text-xs text-success">(khớp nhất)</span>}
+                      ETS {meta.year} — Test {fit.keyTest} {i === 0 && !fit.blocked && <span className="text-xs text-success">(khớp nhất)</span>}
                     </td>
                     <td className="py-2 pr-4">{fit.blocked ? "Không khớp số câu" : fit.contentMatched ? `${Math.round(fit.avgScore * 100)}% (${fit.contentMatched} câu)` : "Đề chỉ có audio"}</td>
                     <td className="py-2 pr-4">{fit.blocked ? "—" : fit.answerMismatches}</td>
@@ -168,7 +168,7 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
         <>
           <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 shadow-soft">
             <p className="text-sm">
-              <strong>{plan.testTitle}</strong> ↔ ETS 2026 Test {keyTest}: {plan.rows.length} câu ghép được
+              <strong>{plan.testTitle}</strong> ↔ ETS {meta.year} Test {keyTest}: {plan.rows.length} câu ghép được
               {mismatches.length > 0 && <>, <span className="font-medium text-warning">{mismatches.length} câu đáp án khác nhau</span></>}.
             </p>
             {plan.warnings.length > 0 && (
@@ -228,7 +228,7 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
                     <td className="whitespace-nowrap px-4 py-2 text-xs">
                       {row.method === "content" ? `Nội dung ${Math.round((row.score ?? 0) * 100)}%` : "Thứ tự"}
                     </td>
-                    <td className="max-w-xs truncate px-4 py-2 text-xs text-muted-foreground">{row.dbText || (section === "listening" ? "— (chỉ có audio)" : "—")}</td>
+                    <td className="max-w-xs truncate px-4 py-2 text-xs text-muted-foreground">{row.dbText || (meta.listening ? "— (chỉ có audio)" : "—")}</td>
                     <td className="max-w-xs truncate px-4 py-2 text-xs text-muted-foreground">{row.key.textEn}</td>
                   </tr>
                 ))}

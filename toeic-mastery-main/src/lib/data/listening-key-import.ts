@@ -2,20 +2,28 @@ import "server-only";
 import { db } from "@/lib/db";
 import { ETS_2026_LISTENING_KEYS, type KeyQuestion } from "@/lib/content/ets-2026-listening-keys";
 import { ETS_2026_READING_KEYS } from "@/lib/content/ets-2026-reading-keys";
+import { ETS_2024_LISTENING_KEYS } from "@/lib/content/ets-2024-listening-keys";
 import { matchSection, questionText } from "@/lib/listening-key-match";
 import type { TestPart } from "@/generated/prisma/enums";
 
-export type KeySection = "listening" | "reading";
+export type KeySection = "listening" | "reading" | "listening-2024";
+export const KEY_SECTIONS: KeySection[] = ["listening", "reading", "listening-2024"];
 
 const SECTIONS = {
   listening: { parts: ["PART1", "PART2", "PART3", "PART4"], firstNumber: 1, keys: ETS_2026_LISTENING_KEYS as Record<number, KeyQuestion[]> },
+  // ETS 2024 web tests may only have audio for Part 1–2 (no text), so those
+  // fall back to exam order; Part 3/4 questions match by their printed text.
+  "listening-2024": { parts: ["PART1", "PART2", "PART3", "PART4"], firstNumber: 1, keys: ETS_2024_LISTENING_KEYS as Record<number, KeyQuestion[]> },
   // Reading prompts are distinct sentences, so a content match below this
   // is more likely a wrong guess (e.g. a key whose printed question is in
   // Vietnamese) than a real one — those fall back to exam order instead.
   reading: { parts: ["PART5", "PART6", "PART7"], firstNumber: 101, keys: ETS_2026_READING_KEYS, minScore: 0.3 },
 } as const;
 
-export const KEY_TEST_NUMBERS = Object.keys(ETS_2026_LISTENING_KEYS).map(Number);
+/** Key file numbers available for a section (Test 1–5 for every set). */
+export function keyTestNumbers(section: KeySection) {
+  return Object.keys(SECTIONS[section].keys).map(Number);
+}
 /** Below this content similarity a content match is flagged for review. */
 const LOW_MATCH = 0.5;
 

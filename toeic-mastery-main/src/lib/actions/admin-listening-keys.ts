@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
-import { applyListeningKeyImport, buildListeningKeyImportPlan, type KeySection } from "@/lib/data/listening-key-import";
+import { applyListeningKeyImport, buildListeningKeyImportPlan, KEY_SECTIONS, type KeySection } from "@/lib/data/listening-key-import";
 
 export interface ImportResult {
   error?: string;
@@ -25,7 +25,7 @@ export async function importListeningKeysAction(
   fixStructure = false
 ): Promise<ImportResult> {
   await requireAdmin();
-  if (section !== "listening" && section !== "reading") return { error: "Phần đề không hợp lệ" };
+  if (!KEY_SECTIONS.includes(section)) return { error: "Phần đề không hợp lệ" };
   const plan = await buildListeningKeyImportPlan(testId, keyTest, section);
   if (!plan) return { error: "Không tìm thấy đề hoặc file giải thích" };
   if (plan.errors.length > 0) return { error: plan.errors[0] };
