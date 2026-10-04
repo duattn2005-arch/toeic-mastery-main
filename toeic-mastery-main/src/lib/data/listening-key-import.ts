@@ -1,12 +1,11 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { ETS_2026_LISTENING_KEYS, type ListeningKeyQuestion } from "@/lib/content/ets-2026-listening-keys";
+import { matchListeningPart, questionText } from "@/lib/listening-key-match";
 
 const LISTENING_PARTS = ["PART1", "PART2", "PART3", "PART4"] as const;
 /** Below this content similarity a content match is flagged for review. */
 const LOW_MATCH = 0.5;
-/** A DB question needs at least this many words to be matched by content. */
-const MIN_WORDS = 4;
 
 export interface ImportRow {
   number: number;
@@ -33,36 +32,19 @@ export interface ImportPlan {
   errors: string[];
   /** Non-blocking things worth checking in the preview. */
   warnings: string[];
-}
-
-function words(text: string) {
-  return new Set(
-    text
-      .toLowerCase()
-      .replace(/^\s*\d+\s*\./, "")
-      .replace(/\([a-d]\)/g, " ")
-      .replace(/[^a-z0-9]+/g, " ")
-      .split(" ")
-      .filter((w) => w.length > 1)
-  );
-}
-
-/** Dice overlap of two word sets, 0–1. */
-function similarity(a: Set<string>, b: Set<string>) {
-  if (a.size === 0 || b.size === 0) return 0;
-  let shared = 0;
-  for (const w of a) if (b.has(w)) shared++;
-  return (2 * shared) / (a.size + b.size);
+  /** Web questions under a Listening part that match nothing in the file
+   * (left untouched by the import). */
+  extras: { webNumber: number; part: number; text: string }[];
 }
 
 /** Lines a DB test's Listening questions up with one ETS 2026 key file.
  *
  * Within each Part, questions are matched by content (question + option
- * text vs. the file's printed text) whenever the DB questions carry text —
- * so a test whose orderIndex is missing or duplicated (older imports left
- * it at 0) still maps each file question onto the right DB question.
- * Audio-only questions (no text to compare) fall back to exam order: the
- * same orderIndex sort the exam uses, ties broken by creation order. */
+ * text vs. the file's printed text) whenever the DB questions carry
+ * distinct text — so a reordered Part, or one padded with a stray
+ * question, still maps each file question onto the right DB question.
+ * Audio-only questions fall back to exam order: the same orderIndex sort
+ * the exam uses, ties broken by creation order. */
 export async function buildListeningKeyImportPlan(testId: string, keyTest: number): Promise<ImportPlan | null> {
   const keys = ETS_2026_LISTENING_KEYS[keyTest];
   const test = await db.test.findUnique({ where: { id: testId }, select: { title: true } });
@@ -92,38 +74,22 @@ export async function buildListeningKeyImportPlan(testId: string, keyTest: numbe
   }
 
   const rows: ImportRow[] = [];
+  const extras: ImportPlan["extras"] = [];
   LISTENING_PARTS.forEach((partName, partIndex) => {
     const part = partIndex + 1;
     const dbPart = questions.filter((q) => q.part === partName);
     const keyPart = keys.filter((k) => k.part === part);
-    if (dbPart.length !== keyPart.length) {
-      errors.push(`Part ${part}: đề trên web có ${dbPart.length} câu, file có ${keyPart.length} câu.`);
+
+    const match = matchListeningPart(dbPart, keyPart.map((k) => k.textEn));
+    if (match.error) {
+      errors.push(`Part ${part}: ${match.error}`);
       return;
     }
-
-    const dbTexts = dbPart.map((q) => [q.prompt, ...q.options.map((o) => o.content)].join(" "));
-    const dbWords = dbTexts.map(words);
-    const keyWords = keyPart.map((k) => words(k.textEn));
-    const textual = dbWords.filter((w) => w.size >= MIN_WORDS).length >= Math.ceil(dbPart.length / 2);
-
-    const assigned = new Map<number, { dbIndex: number; score: number | null; method: ImportRow["method"] }>();
-    const usedDb = new Set<number>();
-
-    if (textual) {
-      const pairs: { k: number; d: number; s: number }[] = [];
-      keyWords.forEach((kw, k) => dbWords.forEach((dw, d) => dw.size >= MIN_WORDS && pairs.push({ k, d, s: similarity(kw, dw) })));
-      pairs.sort((a, b) => b.s - a.s);
-      for (const { k, d, s } of pairs) {
-        if (assigned.has(k) || usedDb.has(d) || s <= 0) continue;
-        assigned.set(k, { dbIndex: d, score: s, method: "content" });
-        usedDb.add(d);
-      }
+    const dbTexts = dbPart.map(questionText);
+    for (const d of match.extras) {
+      extras.push({ webNumber: webNumberOf.get(dbPart[d].id)!, part, text: dbTexts[d].replace(/\s+/g, " ").trim().slice(0, 90) });
     }
-    // Whatever content matching couldn't place keeps exam order.
-    const freeDb = dbPart.map((_, d) => d).filter((d) => !usedDb.has(d));
-    keyPart.forEach((_, k) => {
-      if (!assigned.has(k)) assigned.set(k, { dbIndex: freeDb.shift()!, score: null, method: "order" });
-    });
+    const { assigned } = match;
 
     keyPart.forEach((key, k) => {
       const { dbIndex, score, method } = assigned.get(k)!;
@@ -153,8 +119,12 @@ export async function buildListeningKeyImportPlan(testId: string, keyTest: numbe
   const mixed = [...groupsByPassage.values()].filter((g) => g.size > 1).map((g) => [...g].join(" + "));
   if (mixed.length > 0) warnings.push(`Một nhóm hội thoại trên web đang nhận câu của nhiều nhóm trong file (${mixed.join("; ")}) — transcript nhóm đó có thể không khớp.`);
 
+  if (extras.length > 0) {
+    warnings.push(`${extras.length} câu trên web không có trong file (câu ${extras.map((e) => e.webNumber).join(", ")}) — có thể bị nhập nhầm vào phần Listening; import sẽ bỏ qua các câu này.`);
+  }
+
   rows.sort((a, b) => a.number - b.number);
-  return { testTitle: test.title, rows, errors, warnings };
+  return { testTitle: test.title, rows, errors, warnings, extras };
 }
 
 /** Writes a plan's transcripts and Vietnamese explanations into the DB in
