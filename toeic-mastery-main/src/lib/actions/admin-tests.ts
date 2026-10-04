@@ -128,3 +128,32 @@ export async function deleteTestAction(testId: string): Promise<ActionResult> {
   revalidatePath("/admin/tests");
   return {};
 }
+
+const LISTENING_PARTS: TestPart[] = ["PART1", "PART2", "PART3", "PART4"];
+
+/** Deletes every Part 1–4 question of one test (with their options,
+ * answers and bookmarks via cascade) plus the test's Part 1–4 passages, so
+ * the Listening section can be rebuilt from scratch. Reading (Part 5–7) is
+ * not touched. */
+export async function deleteListeningQuestionsAction(testId: string): Promise<ActionResult> {
+  await requireAdmin();
+  const test = await db.test.findUnique({ where: { id: testId }, select: { slug: true } });
+  if (!test) return { error: "Không tìm thấy đề thi" };
+  if (test.slug.startsWith("practice-pool-")) return { error: "Không áp dụng cho ngân hàng câu hỏi luyện tập." };
+
+  const doomed = await db.question.findMany({ where: { testId, part: { in: LISTENING_PARTS } }, select: { id: true } });
+  if (doomed.length === 0) return { error: "Đề này không còn câu Listening nào." };
+
+  await db.$transaction([
+    db.question.deleteMany({ where: { testId, part: { in: LISTENING_PARTS } } }),
+    // Only passages no remaining question still points at.
+    db.passage.deleteMany({ where: { testId, part: { in: LISTENING_PARTS }, questions: { none: {} } } }),
+  ]);
+
+  void deleteEmbeddingsForSources("QUESTION_EXPLANATION", doomed.map((q) => q.id)).catch((err) =>
+    console.error("deleteEmbeddingsForSources failed", err)
+  );
+
+  revalidatePath(`/admin/tests/${testId}`);
+  return {};
+}

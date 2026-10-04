@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { TestForm } from "@/components/admin/test-form";
 import { DeleteButton } from "@/components/admin/delete-button";
 import { TestQuestionsFilterBar } from "@/components/admin/test-questions-filter-bar";
-import { deleteTestAction } from "@/lib/actions/admin-tests";
+import { deleteListeningQuestionsAction, deleteTestAction } from "@/lib/actions/admin-tests";
 import { deleteQuestionAction } from "@/lib/actions/admin-questions";
 import { clusterQuestionsByPassage } from "@/lib/services/question-grouping";
 import { PART_META } from "@/lib/constants/toeic";
@@ -29,7 +29,7 @@ export default async function EditTestPage({
   const part = TEST_PART_VALUES.find((p) => p === partParam) as TestPart | undefined;
   const status = STATUS_VALUES.find((s) => s === statusParam);
 
-  const [test, allQuestionsCount] = await Promise.all([
+  const [test, allQuestionsCount, listeningCount] = await Promise.all([
     db.test.findUnique({
       where: { id },
       include: {
@@ -41,6 +41,7 @@ export default async function EditTestPage({
       },
     }),
     db.question.count({ where: { testId: id } }),
+    db.question.count({ where: { testId: id, part: { in: ["PART1", "PART2", "PART3", "PART4"] } } }),
   ]);
   if (!test) notFound();
 
@@ -92,6 +93,17 @@ export default async function EditTestPage({
         <div className="mb-3">
           <TestQuestionsFilterBar />
         </div>
+
+        {listeningCount > 0 && (
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/30 px-3 py-2 text-sm">
+            <span className="text-muted-foreground">{listeningCount} câu Listening (Part 1–4) — phần Reading không bị ảnh hưởng.</span>
+            <DeleteButton
+              label="Xóa toàn bộ câu Listening"
+              description={`Xóa vĩnh viễn ${listeningCount} câu Part 1–4 của đề này (kèm lựa chọn, audio gắn trong câu, nhóm hội thoại, đáp án đã làm và dấu trang của các câu đó). Phần Reading (Part 5–7) giữ nguyên. Không thể hoàn tác.`}
+              action={deleteListeningQuestionsAction.bind(null, test.id)}
+            />
+          </div>
+        )}
 
         {test.questions.length === 0 ? (
           <p className="text-sm text-muted-foreground">
