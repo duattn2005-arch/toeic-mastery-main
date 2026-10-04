@@ -72,6 +72,15 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
         </button>
       </form>
 
+      {testId && (
+        <a
+          href={`/api/admin/tests/${testId}/listening-export`}
+          className="w-fit rounded-lg border border-input bg-card px-3 py-2 text-sm font-medium hover:bg-muted"
+        >
+          ⬇ Tải dữ liệu 100 câu Listening của đề này (JSON)
+        </a>
+      )}
+
       {fits.length > 0 && (
         <section className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-5 shadow-soft">
           <h2 className="text-sm font-semibold">Đề này khớp với file nào?</h2>
