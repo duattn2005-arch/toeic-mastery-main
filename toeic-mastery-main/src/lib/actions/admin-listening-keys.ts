@@ -11,6 +11,7 @@ export interface ImportResult {
   updatedAnswers?: number;
   movedParts?: number;
   reordered?: number;
+  createdQuestions?: number;
 }
 
 /** Admin entry point for applyListeningKeyImport — refuses while the

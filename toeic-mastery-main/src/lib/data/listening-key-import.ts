@@ -1,4 +1,5 @@
 import "server-only";
+import { randomUUID } from "node:crypto";
 import { db } from "@/lib/db";
 import { ETS_2026_LISTENING_KEYS, type KeyQuestion } from "@/lib/content/ets-2026-listening-keys";
 import { ETS_2026_READING_KEYS } from "@/lib/content/ets-2026-reading-keys";
@@ -60,6 +61,9 @@ export interface ImportPlan {
   /** Web questions in this section that match nothing in the file (left
    * untouched by the import). */
   extras: { webNumber: number; part: number; text: string }[];
+  /** File questions with no web question at all — "Sửa toàn bộ theo file"
+   * creates them; the explanation-only import skips them. */
+  missing: KeyQuestion[];
 }
 
 const partNumber = (part: string) => Number(part.slice(4));
@@ -141,8 +145,15 @@ export async function buildListeningKeyImportPlan(testId: string, keyTest: numbe
     warnings.push(`${extras.length} câu trên web không có trong file (câu ${extras.map((e) => e.webNumber).join(", ")}) — có thể bị nhập nhầm phần; import sẽ bỏ qua các câu này.`);
   }
 
+  const missing = match.missing.map((k) => keys[k]).sort((a, b) => a.number - b.number);
+  if (missing.length > 0) {
+    warnings.push(
+      `${missing.length} câu trong file chưa có trên web (câu ${missing.map((k) => k.number).join(", ")}) — “Sửa toàn bộ theo file” sẽ tạo mới các câu này từ file (câu hỏi, đáp án, transcript, giải thích; dùng chung audio với nhóm câu nếu nhóm đã có trên web). “Chỉ chèn giải thích” sẽ bỏ qua.`
+    );
+  }
+
   rows.sort((a, b) => a.number - b.number);
-  return { testId, testTitle: test.title, rows, errors: match.errors, warnings, extras };
+  return { testId, testTitle: test.title, rows, errors: match.errors, warnings, extras, missing };
 }
 
 export interface ApplyOptions {
@@ -205,6 +216,9 @@ export async function applyListeningKeyImport(plan: ImportPlan, { updateAnswers,
     }
   }
 
+  // File questions absent on the web, created by "Sửa toàn bộ theo file".
+  const created = fixStructure ? plan.missing.map((key) => ({ id: randomUUID(), key, ...splitKeyText(key) })) : [];
+
   if (fixStructure) {
     // The exam lists a test's questions by orderIndex alone, so renumber
     // the whole test: Part by Part, this section's questions in the file's
@@ -220,16 +234,56 @@ export async function applyListeningKeyImport(plan: ImportPlan, { updateAnswers,
       const row = fileNumber.get(q.id);
       return { id: q.id, current: q.orderIndex, part: row ? row.part : partNumber(q.part), rank: row ? row.number : 10_000 + i };
     });
+    for (const c of created) sortKey.push({ id: c.id, current: -1, part: c.key.part, rank: c.key.number });
     sortKey.sort((a, b) => a.part - b.part || a.rank - b.rank);
+    const newOrder = new Map<string, number>();
     sortKey.forEach((q, i) => {
-      if (q.current === i) return;
+      newOrder.set(q.id, i);
+      if (q.current === i || q.current === -1) return;
       reordered++;
       writes.push(db.question.update({ where: { id: q.id }, data: { orderIndex: i } }));
     });
+
+    // A created question joins its group's passage (and audio) when the
+    // group is on the web; a group missing entirely gets a new passage
+    // carrying the transcript.
+    const passageByGroup = new Map<string, string>();
+    for (const r of plan.rows) if (r.key.group && r.passageId && !passageByGroup.has(r.key.group)) passageByGroup.set(r.key.group, r.passageId);
+    for (const c of created) {
+      const { key } = c;
+      const part = `PART${key.part}` as TestPart;
+      const orderIndex = newOrder.get(c.id)!;
+      let passageId: string | null = null;
+      if (key.group && key.part >= 3) {
+        passageId = passageByGroup.get(key.group) ?? null;
+        if (!passageId) {
+          passageId = randomUUID();
+          passageByGroup.set(key.group, passageId);
+          writes.push(db.passage.create({ data: { id: passageId, testId: plan.testId, part, transcript: key.transcript || null, orderIndex } }));
+        }
+      }
+      writes.push(
+        db.question.create({
+          data: {
+            id: c.id,
+            testId: plan.testId,
+            testSectionId: sectionIdByPart.get(part) ?? null,
+            passageId,
+            part,
+            orderIndex,
+            prompt: c.prompt,
+            transcript: passageId ? null : key.transcript || null,
+            correctLabel: key.answer,
+            explanationVi: key.explanationVi,
+            options: { create: c.options.map((o) => ({ label: o.label, content: o.content, isCorrect: o.label === key.answer })) },
+          },
+        })
+      );
+    }
   }
 
   await db.$transaction(writes);
-  return { updatedQuestions: plan.rows.length, updatedPassages: passagesDone.size, updatedAnswers, movedParts, reordered };
+  return { updatedQuestions: plan.rows.length, updatedPassages: passagesDone.size, updatedAnswers, movedParts, reordered, createdQuestions: created.length };
 }
 
 export interface KeyFileFit {
@@ -259,4 +313,19 @@ export async function rankKeyFilesForTest(testId: string, section: KeySection = 
     });
   }
   return fits.sort((a, b) => Number(a.blocked) - Number(b.blocked) || b.avgScore - a.avgScore || a.answerMismatches - b.answerMismatches);
+}
+
+/** A file question's printed text as a DB prompt + options. Part 1/2 are
+ * audio-only in the exam, so like the other web questions they get no
+ * visible prompt and "." options (the script goes in the transcript). */
+function splitKeyText(key: KeyQuestion) {
+  const labels = key.part === 2 ? ["A", "B", "C"] : ["A", "B", "C", "D"];
+  if (key.part <= 2) return { prompt: "", options: labels.map((label) => ({ label, content: "." })) };
+  const text = key.textEn.replace(/^\s*\d+\.\s*/, "");
+  const pieces = text.split(/\s*\(([A-D])\)\s*/);
+  const options = labels.map((label) => {
+    const i = pieces.indexOf(label);
+    return { label, content: i >= 0 ? (pieces[i + 1] ?? "").trim() : "" };
+  });
+  return { prompt: pieces[0].trim(), options };
 }

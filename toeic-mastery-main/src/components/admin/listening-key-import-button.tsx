@@ -46,6 +46,7 @@ export function ListeningKeyImportButton({
           result.updatedAnswers ? `sửa ${result.updatedAnswers} đáp án` : "",
           result.movedParts ? `chuyển ${result.movedParts} câu về đúng Part` : "",
           result.reordered ? `xếp lại thứ tự ${result.reordered} câu` : "",
+          result.createdQuestions ? `tạo mới ${result.createdQuestions} câu còn thiếu` : "",
         ]
           .filter(Boolean)
           .join(", ")

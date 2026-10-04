@@ -21,6 +21,9 @@ export interface SectionMatch {
   /** DB indexes no file question was matched to (e.g. a stray Reading
    * question stored under a Listening part). */
   extras: number[];
+  /** Key indexes whose Part has no DB question left at all — the question
+   * simply isn't on the web (e.g. a whole Part 3 group never entered). */
+  missing: number[];
   /** Blocking problems, one per Part that can't be matched safely. */
   errors: string[];
 }
@@ -60,7 +63,9 @@ export function questionText(q: { prompt: string; options: { content: string }[]
  *    with "." options) never counts.
  * 2. Order: within each Part, file questions still unplaced take the
  *    remaining DB questions of that Part in exam order. Leftover DB
- *    questions are extras; missing ones are an error. */
+ *    questions are extras. File questions with no DB question left in
+ *    their Part are `missing`; fewer left than needed is an error (which
+ *    one is absent can't be told). */
 export function matchSection(db: MatchableQuestion[], keys: MatchableKey[], minScore = 0): SectionMatch {
   const assigned: SectionMatch["assigned"] = new Map();
   const dbWords = db.map((q) => words(questionText(q)));
@@ -89,11 +94,20 @@ export function matchSection(db: MatchableQuestion[], keys: MatchableKey[], minS
   }
 
   const extras: number[] = [];
+  const missing: number[] = [];
   const errors: string[] = [];
   const bestScore = (d: number) => Math.max(0, ...keyWords.map((kw) => similarity(kw, dbWords[d])));
   for (const part of [...new Set(keys.map((k) => k.part))]) {
     const keyLeft = keys.map((_, k) => k).filter((k) => keys[k].part === part && !assigned.has(k));
     const dbLeft = db.map((_, d) => d).filter((d) => db[d].part === part && !usedDb.has(d));
+    // Too few web questions left, and each one left has its own text yet
+    // matched nothing: those are strays, and the unplaced file questions are
+    // absent on the web (not ambiguous) — they can be created from the file.
+    if (dbLeft.length < keyLeft.length && dbLeft.every((d) => matchable[d])) {
+      extras.push(...dbLeft);
+      missing.push(...keyLeft);
+      continue;
+    }
     if (dbLeft.length < keyLeft.length) {
       const dbCount = db.filter((q) => q.part === part).length;
       const keyCount = keys.filter((k) => k.part === part).length;
@@ -116,5 +130,5 @@ export function matchSection(db: MatchableQuestion[], keys: MatchableKey[], minS
   db.forEach((q, d) => {
     if (!usedDb.has(d) && !keys.some((k) => k.part === q.part)) extras.push(d);
   });
-  return { assigned, extras: extras.sort((a, b) => a - b), errors };
+  return { assigned, extras: extras.sort((a, b) => a - b), missing, errors };
 }
