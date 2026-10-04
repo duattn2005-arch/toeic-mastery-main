@@ -1,9 +1,20 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { ETS_2026_LISTENING_KEYS, type ListeningKeyQuestion } from "@/lib/content/ets-2026-listening-keys";
+import { ETS_2026_LISTENING_KEYS, type KeyQuestion } from "@/lib/content/ets-2026-listening-keys";
+import { ETS_2026_READING_KEYS } from "@/lib/content/ets-2026-reading-keys";
 import { matchListeningPart, questionText } from "@/lib/listening-key-match";
 
-const LISTENING_PARTS = ["PART1", "PART2", "PART3", "PART4"] as const;
+export type KeySection = "listening" | "reading";
+
+const SECTIONS = {
+  listening: { parts: ["PART1", "PART2", "PART3", "PART4"], firstNumber: 1, keys: ETS_2026_LISTENING_KEYS as Record<number, KeyQuestion[]> },
+  // Reading prompts are distinct sentences, so a content match below this
+  // is more likely a wrong guess (e.g. a key whose printed question is in
+  // Vietnamese) than a real one — those fall back to exam order instead.
+  reading: { parts: ["PART5", "PART6", "PART7"], firstNumber: 101, keys: ETS_2026_READING_KEYS, minScore: 0.3 },
+} as const;
+
+export const KEY_TEST_NUMBERS = Object.keys(ETS_2026_LISTENING_KEYS).map(Number);
 /** Below this content similarity a content match is flagged for review. */
 const LOW_MATCH = 0.5;
 
@@ -22,7 +33,7 @@ export interface ImportRow {
   method: "content" | "order";
   /** 0–1 word overlap with the file's text; null for order matches. */
   score: number | null;
-  key: ListeningKeyQuestion;
+  key: KeyQuestion;
 }
 
 export interface ImportPlan {
@@ -45,13 +56,14 @@ export interface ImportPlan {
  * question, still maps each file question onto the right DB question.
  * Audio-only questions fall back to exam order: the same orderIndex sort
  * the exam uses, ties broken by creation order. */
-export async function buildListeningKeyImportPlan(testId: string, keyTest: number): Promise<ImportPlan | null> {
-  const keys = ETS_2026_LISTENING_KEYS[keyTest];
+export async function buildListeningKeyImportPlan(testId: string, keyTest: number, section: KeySection = "listening"): Promise<ImportPlan | null> {
+  const config = SECTIONS[section];
+  const keys = config.keys[keyTest];
   const test = await db.test.findUnique({ where: { id: testId }, select: { title: true } });
   if (!keys || !test) return null;
 
   const questions = await db.question.findMany({
-    where: { testId, part: { in: [...LISTENING_PARTS] } },
+    where: { testId, part: { in: [...config.parts] } },
     orderBy: [{ orderIndex: "asc" }, { createdAt: "asc" }, { id: "asc" }],
     select: {
       id: true,
@@ -66,7 +78,7 @@ export async function buildListeningKeyImportPlan(testId: string, keyTest: numbe
 
   const errors: string[] = [];
   const warnings: string[] = [];
-  const webNumberOf = new Map(questions.map((q, i) => [q.id, i + 1]));
+  const webNumberOf = new Map(questions.map((q, i) => [q.id, config.firstNumber + i]));
 
   const indexes = questions.map((q) => q.orderIndex);
   if (new Set(indexes).size !== indexes.length) {
@@ -75,12 +87,12 @@ export async function buildListeningKeyImportPlan(testId: string, keyTest: numbe
 
   const rows: ImportRow[] = [];
   const extras: ImportPlan["extras"] = [];
-  LISTENING_PARTS.forEach((partName, partIndex) => {
-    const part = partIndex + 1;
+  config.parts.forEach((partName) => {
+    const part = Number(partName.slice(4));
     const dbPart = questions.filter((q) => q.part === partName);
     const keyPart = keys.filter((k) => k.part === part);
 
-    const match = matchListeningPart(dbPart, keyPart.map((k) => k.textEn));
+    const match = matchListeningPart(dbPart, keyPart.map((k) => k.textEn), "minScore" in config ? config.minScore : 0);
     if (match.error) {
       errors.push(`Part ${part}: ${match.error}`);
       return;
@@ -120,7 +132,7 @@ export async function buildListeningKeyImportPlan(testId: string, keyTest: numbe
   if (mixed.length > 0) warnings.push(`Một nhóm hội thoại trên web đang nhận câu của nhiều nhóm trong file (${mixed.join("; ")}) — transcript nhóm đó có thể không khớp.`);
 
   if (extras.length > 0) {
-    warnings.push(`${extras.length} câu trên web không có trong file (câu ${extras.map((e) => e.webNumber).join(", ")}) — có thể bị nhập nhầm vào phần Listening; import sẽ bỏ qua các câu này.`);
+    warnings.push(`${extras.length} câu trên web không có trong file (câu ${extras.map((e) => e.webNumber).join(", ")}) — có thể bị nhập nhầm phần; import sẽ bỏ qua các câu này.`);
   }
 
   rows.sort((a, b) => a.number - b.number);
@@ -139,13 +151,15 @@ export async function applyListeningKeyImport(plan: ImportPlan, updateAnswers: b
 
   for (const row of plan.rows) {
     const { key } = row;
-    const sharedTranscript = row.part >= 3 && row.passageId;
+    // Reading keys have no transcript — never touch transcripts then.
+    const hasTranscript = key.transcript !== undefined;
+    const sharedTranscript = hasTranscript && row.part >= 3 && row.passageId;
     writes.push(
       db.question.update({
         where: { id: row.questionId },
         data: {
           explanationVi: key.explanationVi,
-          ...(sharedTranscript ? {} : { transcript: key.transcript || null }),
+          ...(hasTranscript && !sharedTranscript ? { transcript: key.transcript || null } : {}),
           ...(updateAnswers && row.dbAnswer !== key.answer ? { correctLabel: key.answer } : {}),
         },
       })
@@ -177,10 +191,10 @@ export interface KeyFileFit {
 /** How well one DB test fits each ETS 2026 key file, best fit first — so
  * a web test numbered differently from the files ("Test 02" holding the
  * file's Test 3) is caught before anything is written. */
-export async function rankKeyFilesForTest(testId: string): Promise<KeyFileFit[]> {
+export async function rankKeyFilesForTest(testId: string, section: KeySection = "listening"): Promise<KeyFileFit[]> {
   const fits: KeyFileFit[] = [];
-  for (const keyTest of Object.keys(ETS_2026_LISTENING_KEYS).map(Number)) {
-    const plan = await buildListeningKeyImportPlan(testId, keyTest);
+  for (const keyTest of Object.keys(SECTIONS[section].keys).map(Number)) {
+    const plan = await buildListeningKeyImportPlan(testId, keyTest, section);
     if (!plan) continue;
     const scored = plan.rows.filter((r) => r.score !== null);
     fits.push({

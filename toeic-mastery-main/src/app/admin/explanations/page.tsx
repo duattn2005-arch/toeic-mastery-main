@@ -1,29 +1,37 @@
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
-import { ETS_2026_LISTENING_KEYS } from "@/lib/content/ets-2026-listening-keys";
-import { buildListeningKeyImportPlan, rankKeyFilesForTest } from "@/lib/data/listening-key-import";
+import { buildListeningKeyImportPlan, KEY_TEST_NUMBERS, rankKeyFilesForTest, type KeySection } from "@/lib/data/listening-key-import";
 import { ListeningKeyImportButton } from "@/components/admin/listening-key-import-button";
 
 export const metadata: Metadata = { title: "Giải thích ETS 2026" };
 
-const KEY_TESTS = Object.keys(ETS_2026_LISTENING_KEYS).map(Number);
+const KEY_TESTS = KEY_TEST_NUMBERS;
+
+const SECTION_META: Record<KeySection, { label: string; range: string; source: string; count: number }> = {
+  listening: { label: "Listening", range: "Part 1–4", source: "ETS 2026 Listening — Script & Đáp án", count: 100 },
+  reading: { label: "Reading", range: "Part 5–7", source: "ETS 2026 Reading — Đề, Đáp án & Giải thích", count: 100 },
+};
 
 /** Best-guess DB test for an ETS key number, from titles like "ETS 2026 - Test 3". */
 function guessTestId(tests: { id: string; title: string }[], keyTest: number) {
   return tests.find((t) => /ets/i.test(t.title) && /2026/.test(t.title) && new RegExp(`(test|đề)\\s*0?${keyTest}\\b`, "i").test(t.title))?.id;
 }
 
-export default async function AdminExplanationsPage({ searchParams }: { searchParams: Promise<{ key?: string; test?: string }> }) {
+export default async function AdminExplanationsPage({ searchParams }: { searchParams: Promise<{ key?: string; test?: string; section?: string }> }) {
   const params = await searchParams;
+  const section: KeySection = params.section === "reading" ? "reading" : "listening";
+  const meta = SECTION_META[section];
+  const qs = (extra: Record<string, string | number>) =>
+    "?" + new URLSearchParams({ section, ...Object.fromEntries(Object.entries(extra).map(([k, v]) => [k, String(v)])) }).toString();
   const tests = await db.test.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, title: true } });
   const requestedKey = KEY_TESTS.includes(Number(params.key)) ? Number(params.key) : null;
   const testId = params.test ?? guessTestId(tests, requestedKey ?? KEY_TESTS[0]) ?? "";
   // Which file fits this web test best — a web "Test 02" may hold a
   // different ETS test than the file numbered 2.
-  const fits = testId ? await rankKeyFilesForTest(testId) : [];
+  const fits = testId ? await rankKeyFilesForTest(testId, section) : [];
   const keyTest = requestedKey ?? fits[0]?.keyTest ?? KEY_TESTS[0];
-  const plan = testId ? await buildListeningKeyImportPlan(testId, keyTest) : null;
+  const plan = testId ? await buildListeningKeyImportPlan(testId, keyTest, section) : null;
   // Picking a file that clearly isn't this test (e.g. web Test 01 with file
   // Test 4) must not look like "80 wrong answers" — say so and block it.
   const bestFit = fits.find((f) => !f.blocked);
@@ -36,15 +44,31 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Giải thích ETS 2026 (Listening)</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Giải thích ETS 2026 ({meta.label})</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Ghép transcript tiếng Anh và giải thích/dịch nghĩa tiếng Việt từ file “ETS 2026 Listening — Script &amp; Đáp án” (Test {KEY_TESTS[0]}–
-          {KEY_TESTS[KEY_TESTS.length - 1]}) vào 100 câu Listening của một đề trên web. Câu được ghép theo nội dung (câu hỏi + đáp án) khi câu trên web có chữ, câu chỉ có audio ghép theo thứ tự hiển thị trên web.
+          Ghép {section === "listening" ? "transcript tiếng Anh và " : ""}giải thích/dịch nghĩa tiếng Việt từ file “{meta.source}” (Test {KEY_TESTS[0]}–
+          {KEY_TESTS[KEY_TESTS.length - 1]}) vào {meta.count} câu {meta.label} ({meta.range}) của một đề trên web. Câu được ghép theo nội dung (câu hỏi + đáp án) khi câu trên web có chữ riêng, câu chỉ có audio/lời dẫn chung ghép theo thứ tự hiển thị trên web.
           Xem trước bảng đối chiếu rồi mới bấm áp dụng; có thể áp dụng lại nhiều lần.
         </p>
       </div>
 
+      <nav className="flex w-fit gap-1 rounded-full bg-card p-1 shadow-soft">
+        {(Object.keys(SECTION_META) as KeySection[]).map((s) => (
+          <a
+            key={s}
+            href={`?section=${s}${testId ? `&test=${testId}` : ""}`}
+            className={cn(
+              "rounded-full px-4 py-1.5 text-sm font-medium",
+              s === section ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            {SECTION_META[s].label} ({SECTION_META[s].range})
+          </a>
+        ))}
+      </nav>
+
       <form className="flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-card p-5 shadow-soft">
+        <input type="hidden" name="section" value={section} />
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-xs font-medium text-muted-foreground">File giải thích</span>
           <select name="key" defaultValue={requestedKey ?? ""} className="h-9 rounded-lg border border-input bg-background px-3">
@@ -74,10 +98,10 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
 
       {testId && (
         <a
-          href={`/api/admin/tests/${testId}/listening-export`}
+          href={`/api/admin/tests/${testId}/listening-export?section=${section}`}
           className="w-fit rounded-lg border border-input bg-card px-3 py-2 text-sm font-medium hover:bg-muted"
         >
-          ⬇ Tải dữ liệu 100 câu Listening của đề này (JSON)
+          ⬇ Tải dữ liệu {meta.count} câu {meta.label} của đề này (JSON)
         </a>
       )}
 
@@ -106,7 +130,7 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
                     <td className="py-2 pr-4">{fit.blocked ? "Không khớp số câu" : fit.contentMatched ? `${Math.round(fit.avgScore * 100)}% (${fit.contentMatched} câu)` : "Đề chỉ có audio"}</td>
                     <td className="py-2 pr-4">{fit.blocked ? "—" : fit.answerMismatches}</td>
                     <td className="py-2">
-                      <a href={`?test=${testId}&key=${fit.keyTest}`} className="text-xs font-medium text-primary hover:underline">
+                      <a href={qs({ test: testId, key: fit.keyTest })} className="text-xs font-medium text-primary hover:underline">
                         Xem trước
                       </a>
                     </td>
@@ -126,11 +150,11 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
             Test {keyTest} ({Math.round((chosenFit?.avgScore ?? 0) * 100)}%). Các “câu khác đáp án” bên dưới là do so hai đề khác nhau, không phải đáp án sai.
           </p>
           <div className="flex flex-wrap gap-3">
-            <a href={`?test=${testId}&key=${bestFit.keyTest}`} className="font-medium text-primary hover:underline">
+            <a href={qs({ test: testId, key: bestFit.keyTest })} className="font-medium text-primary hover:underline">
               → Xem {testTitle} với file Test {bestFit.keyTest}
             </a>
             {webTestForKey && webTestForKey !== testId && (
-              <a href={`?test=${webTestForKey}&key=${keyTest}`} className="font-medium text-primary hover:underline">
+              <a href={qs({ test: webTestForKey, key: keyTest })} className="font-medium text-primary hover:underline">
                 → Xem file Test {keyTest} với {tests.find((t) => t.id === webTestForKey)?.title}
               </a>
             )}
@@ -162,9 +186,10 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
               </ul>
             ) : (
               <ListeningKeyImportButton
-                key={`${testId}-${keyTest}`}
+                key={`${section}-${testId}-${keyTest}`}
                 testId={testId}
                 keyTest={keyTest}
+                section={section}
                 mismatchCount={mismatches.length}
                 fixAnswersByDefault={plan.warnings.length === 0}
               />
@@ -202,7 +227,7 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
                     <td className="whitespace-nowrap px-4 py-2 text-xs">
                       {row.method === "content" ? `Nội dung ${Math.round((row.score ?? 0) * 100)}%` : "Thứ tự"}
                     </td>
-                    <td className="max-w-xs truncate px-4 py-2 text-xs text-muted-foreground">{row.dbText || "— (chỉ có audio)"}</td>
+                    <td className="max-w-xs truncate px-4 py-2 text-xs text-muted-foreground">{row.dbText || (section === "listening" ? "— (chỉ có audio)" : "—")}</td>
                     <td className="max-w-xs truncate px-4 py-2 text-xs text-muted-foreground">{row.key.textEn}</td>
                   </tr>
                 ))}

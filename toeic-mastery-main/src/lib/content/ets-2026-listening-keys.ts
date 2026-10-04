@@ -21,6 +21,9 @@ export interface ListeningKeyQuestion {
   explanationVi: string;
 }
 
+/** A key from either ETS 2026 set — Reading keys carry no transcript. */
+export type KeyQuestion = Omit<ListeningKeyQuestion, "transcript"> & { transcript?: string };
+
 export const ETS_2026_LISTENING_KEYS: Record<number, ListeningKeyQuestion[]> = {
  "1": [
   {

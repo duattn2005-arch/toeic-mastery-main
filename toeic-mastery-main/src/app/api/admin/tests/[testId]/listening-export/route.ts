@@ -2,20 +2,23 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getAuthedProfileOrNull } from "@/lib/auth";
 
-/** Admin-only JSON dump of one test's Listening questions exactly as
+/** Admin-only JSON dump of one test's Listening (or, with
+ * ?section=reading, Reading) questions exactly as
  * stored (exam order, prompt, options, correctLabel, passage, current
  * explanation) — for checking the ETS 2026 explanation import against the
  * real data. */
-export async function GET(_request: Request, { params }: { params: Promise<{ testId: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ testId: string }> }) {
   const profile = await getAuthedProfileOrNull();
   if (!profile || profile.role !== "ADMIN") return NextResponse.json({ error: "Chỉ quản trị viên" }, { status: 403 });
   const { testId } = await params;
+  const reading = new URL(request.url).searchParams.get("section") === "reading";
+  const parts = reading ? (["PART5", "PART6", "PART7"] as const) : (["PART1", "PART2", "PART3", "PART4"] as const);
 
   const test = await db.test.findUnique({ where: { id: testId }, select: { id: true, title: true } });
   if (!test) return NextResponse.json({ error: "Không tìm thấy đề" }, { status: 404 });
 
   const questions = await db.question.findMany({
-    where: { testId, part: { in: ["PART1", "PART2", "PART3", "PART4"] } },
+    where: { testId, part: { in: [...parts] } },
     orderBy: [{ orderIndex: "asc" }, { createdAt: "asc" }, { id: "asc" }],
     select: {
       id: true,
@@ -35,7 +38,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ tes
     test,
     exportedAt: new Date().toISOString(),
     questions: questions.map((q, i) => ({
-      webNumber: i + 1,
+      webNumber: (reading ? 101 : 1) + i,
       ...q,
       explanationVi: q.explanationVi.slice(0, 120),
     })),
@@ -43,7 +46,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ tes
   return new NextResponse(JSON.stringify(body, null, 1), {
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Content-Disposition": `attachment; filename="${test.title.replace(/[^\w\- ]+/g, "").trim() || "test"}-listening.json"`,
+      "Content-Disposition": `attachment; filename="${test.title.replace(/[^\w\- ]+/g, "").trim() || "test"}-${reading ? "reading" : "listening"}.json"`,
     },
   });
 }

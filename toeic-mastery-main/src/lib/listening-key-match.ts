@@ -45,7 +45,7 @@ export function questionText(q: MatchableQuestion) {
  * content, so a reordered or padded Part still lines up and leftover DB
  * questions are reported as extras. Parts without it (1–2: audio plus
  * shared directions) match by order and need equal counts. */
-export function matchListeningPart(dbPart: MatchableQuestion[], keyTexts: string[]): PartMatch {
+export function matchListeningPart(dbPart: MatchableQuestion[], keyTexts: string[], minScore = 0): PartMatch {
   const assigned: PartMatch["assigned"] = new Map();
   const dbWords = dbPart.map((q) => words(questionText(q)));
   const keyWords = keyTexts.map(words);
@@ -68,7 +68,7 @@ export function matchListeningPart(dbPart: MatchableQuestion[], keyTexts: string
     keyWords.forEach((kw, k) => dbWords.forEach((dw, d) => matchable[d] && pairs.push({ k, d, s: similarity(kw, dw) })));
     pairs.sort((a, b) => b.s - a.s);
     for (const { k, d, s } of pairs) {
-      if (assigned.has(k) || usedDb.has(d) || s <= 0) continue;
+      if (assigned.has(k) || usedDb.has(d) || s <= 0 || s < minScore) continue;
       assigned.set(k, { dbIndex: d, score: s, method: "content" });
       usedDb.add(d);
     }

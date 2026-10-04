@@ -7,15 +7,18 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { importListeningKeysAction } from "@/lib/actions/admin-listening-keys";
+import type { KeySection } from "@/lib/data/listening-key-import";
 
 export function ListeningKeyImportButton({
   testId,
   keyTest,
+  section,
   mismatchCount,
   fixAnswersByDefault,
 }: {
   testId: string;
   keyTest: number;
+  section: KeySection;
   mismatchCount: number;
   /** Pre-tick "fix answers" when the preview raised no warnings. */
   fixAnswersByDefault: boolean;
@@ -26,13 +29,14 @@ export function ListeningKeyImportButton({
 
   function handleImport() {
     startTransition(async () => {
-      const result = await importListeningKeysAction(testId, keyTest, updateAnswers);
+      const result = await importListeningKeysAction(testId, keyTest, updateAnswers, section);
       if (result.error) {
         toast.error(result.error);
         return;
       }
       toast.success(
-        `Đã cập nhật ${result.updatedQuestions} câu, ${result.updatedPassages} nhóm hội thoại/bài nói` +
+        `Đã cập nhật ${result.updatedQuestions} câu` +
+          (result.updatedPassages ? `, ${result.updatedPassages} nhóm hội thoại/bài nói` : "") +
           (result.updatedAnswers ? `, sửa ${result.updatedAnswers} đáp án` : "")
       );
       router.refresh();
@@ -45,7 +49,7 @@ export function ListeningKeyImportButton({
         <label className="flex items-start gap-3 rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm">
           <Checkbox checked={updateAnswers} onCheckedChange={(checked) => setUpdateAnswers(checked === true)} className="mt-0.5" />
           <span>
-            Sửa luôn <strong>{mismatchCount}</strong> đáp án trên web cho khớp với file (nếu không tick, chỉ ghi transcript và giải thích)
+            Sửa luôn <strong>{mismatchCount}</strong> đáp án trên web cho khớp với file (nếu không tick, chỉ ghi giải thích{section === "listening" ? " và transcript" : ""})
           </span>
         </label>
       )}
