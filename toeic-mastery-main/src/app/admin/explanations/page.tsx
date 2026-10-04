@@ -24,6 +24,13 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
   const fits = testId ? await rankKeyFilesForTest(testId) : [];
   const keyTest = requestedKey ?? fits[0]?.keyTest ?? KEY_TESTS[0];
   const plan = testId ? await buildListeningKeyImportPlan(testId, keyTest) : null;
+  // Picking a file that clearly isn't this test (e.g. web Test 01 with file
+  // Test 4) must not look like "80 wrong answers" — say so and block it.
+  const bestFit = fits.find((f) => !f.blocked);
+  const chosenFit = fits.find((f) => f.keyTest === keyTest);
+  const wrongPair = Boolean(bestFit && chosenFit && bestFit.keyTest !== keyTest && bestFit.avgScore - chosenFit.avgScore >= 0.2);
+  const testTitle = tests.find((t) => t.id === testId)?.title;
+  const webTestForKey = guessTestId(tests, keyTest);
   const mismatches = plan?.rows.filter((r) => r.dbAnswer !== r.key.answer) ?? [];
 
   return (
@@ -102,6 +109,26 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
         </section>
       )}
 
+      {wrongPair && bestFit && (
+        <section className="flex flex-col gap-2 rounded-2xl border border-destructive/40 bg-destructive/10 p-5 text-sm">
+          <p className="font-semibold text-destructive">Bạn đang ghép nhầm cặp — chưa áp dụng được.</p>
+          <p>
+            Đề <strong>{testTitle}</strong> trên web khớp với <strong>file Test {bestFit.keyTest}</strong> ({Math.round(bestFit.avgScore * 100)}%), không phải file
+            Test {keyTest} ({Math.round((chosenFit?.avgScore ?? 0) * 100)}%). Các “câu khác đáp án” bên dưới là do so hai đề khác nhau, không phải đáp án sai.
+          </p>
+          <div className="flex flex-wrap gap-3">
+            <a href={`?test=${testId}&key=${bestFit.keyTest}`} className="font-medium text-primary hover:underline">
+              → Xem {testTitle} với file Test {bestFit.keyTest}
+            </a>
+            {webTestForKey && webTestForKey !== testId && (
+              <a href={`?test=${webTestForKey}&key=${keyTest}`} className="font-medium text-primary hover:underline">
+                → Xem file Test {keyTest} với {tests.find((t) => t.id === webTestForKey)?.title}
+              </a>
+            )}
+          </div>
+        </section>
+      )}
+
       {!plan ? (
         <p className="text-sm text-muted-foreground">Chọn đề trên web tương ứng để xem bảng đối chiếu.</p>
       ) : (
@@ -118,7 +145,7 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
                 ))}
               </ul>
             )}
-            {plan.errors.length > 0 ? (
+            {wrongPair ? null : plan.errors.length > 0 ? (
               <ul className="list-disc pl-5 text-sm text-destructive">
                 {plan.errors.slice(0, 8).map((e) => (
                   <li key={e}>{e}</li>
