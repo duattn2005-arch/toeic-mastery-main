@@ -191,6 +191,7 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
                 keyTest={keyTest}
                 section={section}
                 mismatchCount={mismatches.length}
+                structureIssues={plan.rows.filter((r) => r.webNumber !== r.number || r.dbPart !== r.part).length}
                 fixAnswersByDefault={plan.warnings.length === 0}
               />
             )}
@@ -221,7 +222,7 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
                   >
                     <td className="px-4 py-2 font-medium">{row.number}</td>
                     <td className={cn("px-4 py-2", row.webNumber !== row.number && "font-semibold text-warning")}>{row.webNumber}</td>
-                    <td className="px-4 py-2">{row.part}</td>
+                    <td className={cn("px-4 py-2", row.dbPart !== row.part && "font-semibold text-warning")}>{row.dbPart !== row.part ? `${row.dbPart} → ${row.part}` : row.part}</td>
                     <td className="px-4 py-2">{row.dbAnswer}</td>
                     <td className="px-4 py-2 font-semibold">{row.key.answer}</td>
                     <td className="whitespace-nowrap px-4 py-2 text-xs">
