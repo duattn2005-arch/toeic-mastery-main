@@ -46,8 +46,7 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Giải thích ETS {meta.year} ({meta.label})</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Ghép {meta.listening ? "transcript tiếng Anh và " : ""}giải thích/dịch nghĩa tiếng Việt từ file “{meta.source}” (Test {KEY_TESTS[0]}–
-          {KEY_TESTS[KEY_TESTS.length - 1]}) vào {meta.count} câu {meta.label} ({meta.range}) của một đề trên web. Câu được ghép theo nội dung (câu hỏi + đáp án) khi câu trên web có chữ riêng, câu chỉ có audio/lời dẫn chung ghép theo thứ tự hiển thị trên web.
+          Ghép {meta.listening ? "transcript tiếng Anh và " : ""}giải thích/dịch nghĩa tiếng Việt từ file “{meta.source}” (Test {KEY_TESTS.join(", ")}) vào {meta.count} câu {meta.label} ({meta.range}) của một đề trên web. Câu được ghép theo nội dung (câu hỏi + đáp án) khi câu trên web có chữ riêng, câu chỉ có audio/lời dẫn chung ghép theo thứ tự hiển thị trên web.
           Xem trước bảng đối chiếu rồi mới bấm áp dụng; có thể áp dụng lại nhiều lần.
         </p>
       </div>
