@@ -5,9 +5,11 @@ import { useRouter } from "next/navigation";
 import { Loader2, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { setTranscriptAudioAction } from "@/lib/actions/admin-transcripts";
+import { uploadFileInChunks } from "@/lib/chunked-upload";
+import { QUESTION_MEDIA_KINDS } from "@/lib/upload-kinds";
 
-const MAX_SIZE_MB = 55;
-const ACCEPTED_TYPES = ["audio/mpeg", "audio/mp3", "audio/wav", "audio/x-wav", "audio/ogg", "audio/mp4", "audio/x-m4a", "audio/aac"];
+const { maxSizeBytes, acceptedTypes: ACCEPTED_TYPES } = QUESTION_MEDIA_KINDS.transcriptAudio;
+const MAX_SIZE_MB = Math.round(maxSizeBytes / (1024 * 1024));
 
 /** One audio slot (whole test or a single Part) of a listening transcript —
  * uploading a file saves it straight away; no separate submit step. */
@@ -27,6 +29,8 @@ export function TranscriptAudioSlot({
   const router = useRouter();
   const [url, setUrl] = React.useState(initialUrl ?? "");
   const [busy, setBusy] = React.useState(false);
+  /** Upload progress 0–100 while sending, null otherwise. */
+  const [progress, setProgress] = React.useState<number | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   async function save(nextUrl: string, successMessage: string) {
@@ -45,7 +49,7 @@ export function TranscriptAudioSlot({
     const file = e.target.files?.[0];
     e.target.value = "";
     if (!file) return;
-    if (!ACCEPTED_TYPES.includes(file.type)) {
+    if (!(ACCEPTED_TYPES as readonly string[]).includes(file.type)) {
       toast.error("Chỉ hỗ trợ file âm thanh MP3, WAV, OGG, M4A hoặc AAC");
       return;
     }
@@ -56,20 +60,15 @@ export function TranscriptAudioSlot({
 
     setBusy(true);
     try {
-      const body = new FormData();
-      body.append("file", file);
-      body.append("kind", "transcriptAudio");
-      const res = await fetch("/api/upload/question-media", { method: "POST", body });
-      // A proxy/Nginx rejection (e.g. 413) comes back as HTML, not JSON.
-      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
-      if (!res.ok || !data.url) {
-        throw new Error(data.error ?? (res.status === 413 ? `File quá lớn (tối đa ${MAX_SIZE_MB}MB)` : `Tải file thất bại (mã ${res.status})`));
-      }
-      await save(data.url, `Đã lưu file nghe ${label}`);
+      // Sent in small chunks — one big request kept failing on large Part /
+      // full-test audio (body limits + timeouts on a slow connection).
+      const uploadedUrl = await uploadFileInChunks(file, "transcriptAudio", setProgress);
+      await save(uploadedUrl, `Đã lưu file nghe ${label}`);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Tải file thất bại");
+      toast.error(`Không tải được file nghe ${label}: ${err instanceof Error ? err.message : "lỗi không xác định"}`);
     } finally {
       setBusy(false);
+      setProgress(null);
     }
   }
 
@@ -92,7 +91,7 @@ export function TranscriptAudioSlot({
             className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-card px-2.5 py-1.5 text-xs font-medium hover:bg-muted disabled:opacity-50"
           >
             {busy ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
-            {url ? "Thay file" : "Tải file lên"}
+            {progress !== null ? `Đang tải ${progress}%` : url ? "Thay file" : "Tải file lên"}
           </button>
           {url && (
             <button
@@ -107,6 +106,11 @@ export function TranscriptAudioSlot({
           )}
         </div>
       </div>
+      {progress !== null && (
+        <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted" role="progressbar" aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100}>
+          <div className="h-full rounded-full bg-primary transition-[width] duration-300" style={{ width: `${progress}%` }} />
+        </div>
+      )}
       {url ? (
         <audio controls preload="none" src={url} className="h-9 w-full" />
       ) : (
