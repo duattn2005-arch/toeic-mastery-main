@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { getOverallStats } from "@/lib/data/skill-stats";
 import { computeXp, getXpProgress } from "@/lib/services/xp";
 import type { StudyItem } from "@/lib/services/study-game";
+import { vocabStatus } from "@/lib/services/spaced-repetition";
 
 const PATH_SLUG = "toeic-20-day";
 const STEPS_PER_DAY = 3;
@@ -142,10 +143,17 @@ export async function getPathDayDetail(dayNumber: number, userId: string, pathSl
   const isUnlocked = dayNumber === 1 || (previousDayProgress?.stepsCompleted ?? 0) >= STEPS_PER_DAY;
 
   const dayWordTerms = currentDay.words.map((w) => w.word.word.toLowerCase());
-  const starredMatches = await db.savedWord.findMany({
-    where: { userId, word: { in: dayWordTerms } },
-    select: { word: true },
-  });
+  const [starredMatches, tracked] = await Promise.all([
+    db.savedWord.findMany({
+      where: { userId, word: { in: dayWordTerms } },
+      select: { word: true },
+    }),
+    db.userVocabulary.findMany({
+      where: { userId, vocabularyWordId: { in: currentDay.words.map((w) => w.word.id) } },
+      select: { vocabularyWordId: true, isLearned: true },
+    }),
+  ]);
+  const trackedById = new Map(tracked.map((t) => [t.vocabularyWordId, t]));
 
   return {
     dayId: currentDay.id,
@@ -163,6 +171,7 @@ export async function getPathDayDetail(dayNumber: number, userId: string, pathSl
       meaningVi: w.word.meaningVi,
       exampleEn: w.word.exampleEn,
       audioUrl: w.word.audioUrlUs ?? w.word.audioUrlUk,
+      status: vocabStatus(trackedById.get(w.word.id)),
     })),
     starredTerms: starredMatches.map((s) => s.word),
   };

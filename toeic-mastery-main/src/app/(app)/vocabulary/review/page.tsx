@@ -16,6 +16,7 @@ export default async function VocabularyReviewPage({ searchParams }: { searchPar
 
   const items = due.map((d) => ({
     vocabularyWordId: d.vocabularyWordId,
+    isLearned: d.isLearned,
     word: {
       word: d.vocabularyWord.word,
       ipa: d.vocabularyWord.ipa,

@@ -4,6 +4,7 @@ import { getOverallStats, getPartAccuracies } from "@/lib/data/skill-stats";
 import { getVocabularyReminder } from "@/lib/data/vocabulary";
 import { generateRecommendations } from "@/lib/services/recommendation";
 import { computeXp, getXpProgress } from "@/lib/services/xp";
+import { srsDueCutoff } from "@/lib/services/spaced-repetition";
 
 export async function getDashboardData(userId: string) {
   const [
@@ -41,7 +42,7 @@ export async function getDashboardData(userId: string) {
       getPartAccuracies(userId),
       getOverallStats(userId),
       db.userVocabulary.findMany({
-        where: { userId, nextReviewDate: { lte: new Date() } },
+        where: { userId, nextReviewDate: { lte: srsDueCutoff() } },
         include: { vocabularyWord: true },
         orderBy: { nextReviewDate: "asc" },
         take: 8,

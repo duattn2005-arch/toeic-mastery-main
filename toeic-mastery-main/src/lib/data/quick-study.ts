@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { srsDueCutoff } from "@/lib/services/spaced-repetition";
 
 export interface QuickStudyQuestionItem {
   type: "question";
@@ -91,7 +92,7 @@ export async function buildQuickStudySession(userId: string, durationMinutes: nu
 
   const [dueWords, newWords, part1Questions, part2Questions, part5Questions] = await Promise.all([
     db.userVocabulary.findMany({
-      where: { userId, nextReviewDate: { lte: new Date() } },
+      where: { userId, nextReviewDate: { lte: srsDueCutoff() } },
       include: { vocabularyWord: true },
       orderBy: { nextReviewDate: "asc" },
       take: 30,

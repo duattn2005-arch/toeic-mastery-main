@@ -10,8 +10,6 @@ export interface ActionResult {
   error?: string;
 }
 
-const LEARNED_AT_REPETITIONS = 3;
-
 export async function startLearningWordsAction(vocabularyWordIds: string[]): Promise<ActionResult> {
   const profile = await getCurrentProfile();
   if (!profile) return { error: "Vui lòng đăng nhập" };
@@ -37,13 +35,10 @@ export async function startLearningWordsAction(vocabularyWordIds: string[]): Pro
 /** Shared by the graded review flow and the flashcard/quiz/matching games —
  * one SRS update, one place. `existing` must already belong to `profile`. */
 async function applyReview(
-  existing: { id: string; repetitions: number; intervalDays: number; easeFactor: number },
+  existing: { id: string; repetitions: number; intervalDays: number; easeFactor: number; lastReviewedAt: Date | null; nextReviewDate: Date },
   rating: ReviewRating
 ) {
-  const result = computeNextReview(
-    { repetitions: existing.repetitions, intervalDays: existing.intervalDays, easeFactor: existing.easeFactor },
-    rating
-  );
+  const result = computeNextReview(existing, rating);
 
   await db.$transaction([
     db.userVocabulary.update({
@@ -54,7 +49,7 @@ async function applyReview(
         easeFactor: result.easeFactor,
         nextReviewDate: result.nextReviewDate,
         lastReviewedAt: new Date(),
-        isLearned: result.repetitions >= LEARNED_AT_REPETITIONS,
+        isLearned: result.isLearned,
       },
     }),
     db.vocabularyReview.create({

@@ -12,6 +12,7 @@ import { QuizMode } from "@/components/study-game/quiz-mode";
 import { MatchingGame } from "@/components/study-game/matching-game";
 import { VocabularyReviewOverview } from "@/components/vocabulary/vocabulary-review-overview";
 import { cn } from "@/lib/utils";
+import { useLiveVocabStatus } from "@/hooks/use-live-vocab-status";
 
 type Mode = "flashcard" | "quiz" | "match";
 
@@ -92,18 +93,19 @@ export function StudyGameLauncher({
   // instant a quiz finishes is exactly the kind that silently never lands
   // if the learner closes the tab moments later, which is a very natural
   // thing to do right after seeing "Cả nhà vỗ tay!".
+  const [liveItems, recordStatus] = useLiveVocabStatus(items);
   const handleItemResult = React.useCallback(
     async (itemId: string, rating: ReviewRating) => {
+      recordStatus(itemId, rating);
       if (trackable) await practiceVocabularyWordAction(itemId, rating);
       const term = items.find((i) => i.id === itemId)?.term.toLowerCase();
       if (!term) return;
-      // Quiz stars on anything but a perfect first try; flashcards/match
-      // (which only ever emit "GOOD") star only on "Học lại" — same rule
-      // QuizMode/FlashcardBrowse apply to Đã lưu themselves when autoStar.
-      const needsReview = mode === "quiz" ? rating !== "EASY" : rating === "AGAIN";
+      // Every mode reports a miss as AGAIN ("Đang học") — that's what stars
+      // a word into Đã lưu, same rule QuizMode/FlashcardBrowse apply.
+      const needsReview = rating === "AGAIN";
       setSessionOverrides((prev) => ({ ...prev, [term]: needsReview }));
     },
-    [items, mode, trackable]
+    [items, trackable, recordStatus]
   );
 
   if (items.length === 0) {
@@ -127,7 +129,7 @@ export function StudyGameLauncher({
       <VocabularyReviewOverview
         key={effectiveStarredTerms.join(",")}
         title={title}
-        items={items}
+        items={liveItems}
         starredTerms={effectiveStarredTerms}
         onStartReview={(list) => {
           startedAtRef.current = Date.now();

@@ -12,9 +12,11 @@ import { practiceVocabularyWordAction, logStudySessionAction } from "@/lib/actio
 import type { ReviewRating } from "@/lib/services/spaced-repetition";
 import type { StudyItem } from "@/lib/services/study-game";
 import { cn } from "@/lib/utils";
+import { useLiveVocabStatus } from "@/hooks/use-live-vocab-status";
 
 interface ReviewItem {
   vocabularyWordId: string;
+  isLearned: boolean;
   word: {
     word: string;
     ipa: string | null;
@@ -35,6 +37,7 @@ function toStudyItem(item: ReviewItem): StudyItem {
     meaningVi: item.word.meaningVi,
     exampleEn: item.word.exampleEn,
     audioUrl: item.word.audioUrlUs ?? item.word.audioUrlUk,
+    status: item.isLearned ? "mastered" : "learning",
   };
 }
 
@@ -73,7 +76,9 @@ export function ReviewSession({ items, starredTerms }: { items: ReviewItem[]; st
     return [...base];
   }, [starredTerms, sessionOverrides]);
 
+  const [liveItems, recordStatus] = useLiveVocabStatus(studyItems);
   function handleItemResult(vocabularyWordId: string, rating: ReviewRating) {
+    recordStatus(vocabularyWordId, rating);
     void practiceVocabularyWordAction(vocabularyWordId, rating);
     const term = studyItems.find((i) => i.id === vocabularyWordId)?.term.toLowerCase();
     if (term) setSessionOverrides((prev) => ({ ...prev, [term]: rating === "AGAIN" }));
@@ -132,7 +137,7 @@ export function ReviewSession({ items, starredTerms }: { items: ReviewItem[]; st
       <VocabularyReviewOverview
         key={effectiveStarredTerms.join(",")}
         title="Ôn tập hôm nay"
-        items={studyItems}
+        items={liveItems}
         starredTerms={effectiveStarredTerms}
         onStartReview={(list) => setReviewItems(list)}
       />

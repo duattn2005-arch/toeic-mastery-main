@@ -14,6 +14,7 @@ import { MatchingGame } from "@/components/study-game/matching-game";
 import { VocabularyReviewOverview } from "@/components/vocabulary/vocabulary-review-overview";
 import { logStudySessionAction, practiceVocabularyWordAction } from "@/lib/actions/vocabulary";
 import { completePathStepAction } from "@/lib/actions/vocabulary-path";
+import { useLiveVocabStatus } from "@/hooks/use-live-vocab-status";
 
 const STEPS = [
   { step: 1 as const, label: "Học", icon: BookOpenCheck },
@@ -79,18 +80,19 @@ export function PathDayRunner({
   // async + awaited-by-QuizMode (not fire-and-forget) so a quiz's burst of
   // per-word writes at completion time survives even if the user navigates
   // away moments after seeing the results screen.
+  const [liveItems, recordStatus] = useLiveVocabStatus(items);
   const handleItemResult = React.useCallback(
     async (itemId: string, rating: Parameters<typeof practiceVocabularyWordAction>[1]) => {
+      recordStatus(itemId, rating);
       await practiceVocabularyWordAction(itemId, rating);
       const term = items.find((i) => i.id === itemId)?.term.toLowerCase();
       if (!term) return;
-      // Step 3 (quiz) stars on anything but a perfect first try; every other
-      // flow (self-rated flashcards) stars only on "Học lại" — same rule
-      // FlashcardBrowse/QuizMode apply server-side (see their own files).
-      const shouldStar = activeStep === 3 ? rating !== "EASY" : rating === "AGAIN";
+      // A miss anywhere (flashcard "Học lại", a wrong quiz answer, a wrong
+      // match) is reported as AGAIN — "Đang học" — and stars the word.
+      const shouldStar = rating === "AGAIN";
       setLocalStarOverrides((prev) => ({ ...prev, [term]: shouldStar }));
     },
-    [items, activeStep]
+    [items, recordStatus]
   );
 
   function beginStep(step: 1 | 2 | 3) {
@@ -142,7 +144,7 @@ export function PathDayRunner({
         <VocabularyReviewOverview
           key={effectiveStarredTerms.join(",")}
           title={`Từ vựng Ngày ${dayNumber}`}
-          items={items}
+          items={liveItems}
           starredTerms={effectiveStarredTerms}
           onStartReview={(list) => setReviewItems(list)}
           onBack={() => setShowOverview(false)}

@@ -84,7 +84,13 @@ export function VocabularyReviewOverview({
     void toggleSaveWordAction(item.term);
   }
 
-  const needsReview = items.filter((i) => starred.has(i.term.toLowerCase()));
+  // With tracked words, group by real learning status (Quizlet's Đang học /
+  // Chưa học / Đã thuộc); for untracked lists (Đã lưu) fall back to stars.
+  const hasStatus = items.some((i) => i.status);
+  const learning = items.filter((i) => i.status === "learning");
+  const fresh = items.filter((i) => i.status === "new");
+  const mastered = items.filter((i) => i.status === "mastered");
+  const needsReview = hasStatus ? learning : items.filter((i) => starred.has(i.term.toLowerCase()));
   const known = items.filter((i) => !starred.has(i.term.toLowerCase()));
 
   const alphabetical = [...items].sort((a, b) => a.term.localeCompare(b.term));
@@ -117,7 +123,29 @@ export function VocabularyReviewOverview({
         </DropdownMenu>
       </div>
 
-      {sortMode === "stats" ? (
+      {sortMode === "stats" && hasStatus ? (
+        <div className="flex flex-col gap-5">
+          {[
+            { list: learning, label: "Đang học", tone: "text-warning", hint: "Từ bạn làm sai, chọn “Học lại”/“Khó”, hoặc mới nhớ được 1–2 ngày — sẽ quay lại để ôn cho đến khi nhớ chắc." },
+            { list: fresh, label: "Chưa học", tone: "text-muted-foreground", hint: null },
+            { list: mastered, label: "Đã thuộc", tone: "text-success", hint: "Nhớ đúng qua ít nhất 3 ngày khác nhau — vẫn được ôn lại thưa dần để không quên." },
+          ]
+            .filter((g) => g.list.length > 0)
+            .map((g) => (
+              <div key={g.label}>
+                <p className={cn("text-sm font-semibold", g.tone)}>
+                  {g.label} ({g.list.length})
+                </p>
+                {g.hint && <p className="mb-2 text-xs text-muted-foreground">{g.hint}</p>}
+                <div className={cn("rounded-2xl border border-border bg-card", !g.hint && "mt-2")}>
+                  {g.list.map((item) => (
+                    <WordRow key={item.id} item={item} starred={starred.has(item.term.toLowerCase())} onToggleStar={() => toggleStar(item)} />
+                  ))}
+                </div>
+              </div>
+            ))}
+        </div>
+      ) : sortMode === "stats" ? (
         <div className="flex flex-col gap-5">
           {needsReview.length > 0 && (
             <div>
@@ -151,7 +179,7 @@ export function VocabularyReviewOverview({
 
       <div className="sticky bottom-4 flex flex-wrap justify-center gap-2 rounded-2xl border border-border bg-card/95 p-3 shadow-soft backdrop-blur-sm">
         <Button variant="outline" onClick={() => onStartReview(needsReview)} disabled={needsReview.length === 0}>
-          Ôn từ chưa nhớ ({needsReview.length})
+          {hasStatus ? "Ôn từ đang học" : "Ôn từ chưa nhớ"} ({needsReview.length})
         </Button>
         <Button onClick={() => onStartReview(items)}>Ôn tập lại tất cả</Button>
       </div>

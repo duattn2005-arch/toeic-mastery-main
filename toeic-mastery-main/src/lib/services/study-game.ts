@@ -9,6 +9,9 @@ export interface StudyItem {
   meaningVi: string;
   exampleEn: string | null;
   audioUrl: string | null;
+  /** The learner's progress on this word (Chưa học / Đang học / Đã thuộc),
+   * when the item is a tracked VocabularyWord. */
+  status?: import("@/lib/services/spaced-repetition").VocabStatus;
 }
 
 export interface QuizQuestion {

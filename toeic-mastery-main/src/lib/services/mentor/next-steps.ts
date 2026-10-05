@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { generateRecommendations, type PartAccuracy } from "@/lib/services/recommendation";
 import type { TestPart } from "@/generated/prisma/enums";
+import { srsDueCutoff } from "@/lib/services/spaced-repetition";
 
 export interface NextStepSuggestion {
   title: string;
@@ -30,7 +31,7 @@ export async function getNextStepSuggestions(userId: string, maxItems: number): 
       select: { dimensionKey: true, masteryScore: true, attemptedCount: true },
     }),
     db.userVocabulary.count({
-      where: { userId, origin: "AI_DETECTED_WEAKNESS", isLearned: false, nextReviewDate: { lte: new Date() } },
+      where: { userId, origin: "AI_DETECTED_WEAKNESS", isLearned: false, nextReviewDate: { lte: srsDueCutoff() } },
     }),
     db.skillMastery.findFirst({
       where: { userId, dimensionType: "GRAMMAR_TOPIC", attemptedCount: { gte: 5 }, masteryScore: { lt: 0.6 } },

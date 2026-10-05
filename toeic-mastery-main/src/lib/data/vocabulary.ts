@@ -1,9 +1,9 @@
 import "server-only";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
-import { toDateOnlyUTC } from "@/lib/utils";
 import type { StudyItem } from "@/lib/services/study-game";
 import { VOCAB_COLLECTION_CATEGORIES } from "@/lib/content/vocab-collections";
+import { srsDueCutoff, vocabStatus } from "@/lib/services/spaced-repetition";
 
 /** Excludes the DB mirror of collection topics (IIG Vocab, ETS 2026) —
  * those have their own tabs and pages (see ensureCollectionSynced). */
@@ -19,7 +19,7 @@ export async function getVocabularyOverview(userId: string) {
   const [topics, learnedCount, dueCount, totalUser] = await Promise.all([
     db.vocabularyTopic.count(),
     db.userVocabulary.count({ where: { userId, isLearned: true } }),
-    db.userVocabulary.count({ where: { userId, nextReviewDate: { lte: new Date() } } }),
+    db.userVocabulary.count({ where: { userId, nextReviewDate: { lte: srsDueCutoff() } } }),
     db.userVocabulary.count({ where: { userId } }),
   ]);
   return { topicsCount: topics, learnedCount, dueCount, totalTracked: totalUser };
@@ -60,12 +60,19 @@ export async function getTopicStudyItems(
   });
   if (!topic) notFound();
 
-  const starredMatches = userId
-    ? await db.savedWord.findMany({
-        where: { userId, word: { in: topic.words.map((w) => w.word.toLowerCase()) } },
-        select: { word: true },
-      })
-    : [];
+  const [starredMatches, tracked] = userId
+    ? await Promise.all([
+        db.savedWord.findMany({
+          where: { userId, word: { in: topic.words.map((w) => w.word.toLowerCase()) } },
+          select: { word: true },
+        }),
+        db.userVocabulary.findMany({
+          where: { userId, vocabularyWordId: { in: topic.words.map((w) => w.id) } },
+          select: { vocabularyWordId: true, isLearned: true },
+        }),
+      ])
+    : [[], []];
+  const trackedById = new Map(tracked.map((t) => [t.vocabularyWordId, t]));
 
   return {
     topicName: topic.name,
@@ -77,6 +84,7 @@ export async function getTopicStudyItems(
       meaningVi: w.meaningVi,
       exampleEn: w.exampleEn,
       audioUrl: w.audioUrlUs ?? w.audioUrlUk,
+      ...(userId ? { status: vocabStatus(trackedById.get(w.id)) } : {}),
     })),
     starredTerms: starredMatches.map((s) => s.word),
   };
@@ -85,7 +93,7 @@ export async function getTopicStudyItems(
 /** `topicSlug` narrows the queue to one topic (e.g. an IIG topic's own review). */
 export async function getDueReviewQueue(userId: string, limit = 30, topicSlug?: string) {
   return db.userVocabulary.findMany({
-    where: { userId, nextReviewDate: { lte: new Date() }, ...(topicSlug ? { vocabularyWord: { topic: { slug: topicSlug } } } : {}) },
+    where: { userId, nextReviewDate: { lte: srsDueCutoff() }, ...(topicSlug ? { vocabularyWord: { topic: { slug: topicSlug } } } : {}) },
     include: { vocabularyWord: true },
     orderBy: { nextReviewDate: "asc" },
     take: limit,
@@ -95,26 +103,31 @@ export async function getDueReviewQueue(userId: string, limit = 30, topicSlug?: 
 export interface VocabularyReminder {
   dueTodayCount: number;
   dueTomorrowCount: number;
+  /** Tracked words not yet mastered ("Đang học") / mastered ("Đã thuộc"). */
+  learningCount: number;
+  masteredCount: number;
 }
 
 /** Powers both the dashboard reminder card and the notification bell — same
  * `nextReviewDate` (date-only column) that drives /vocabulary/review.
  * Anchored at UTC midnight, not `setHours(0,0,0,0)`: naively zeroing local
  * hours on a `@db.Date` column reads back as the previous calendar day for
- * any positive UTC offset (all of Vietnam), see toDateOnlyUTC(). */
+ * any positive UTC offset (all of Vietnam) — the Vietnam day, see srsDueCutoff(). */
 export async function getVocabularyReminder(userId: string): Promise<VocabularyReminder> {
-  const todayStart = toDateOnlyUTC(new Date());
+  const todayStart = srsDueCutoff();
   const tomorrowStart = new Date(todayStart);
   tomorrowStart.setUTCDate(tomorrowStart.getUTCDate() + 1);
   const dayAfterStart = new Date(todayStart);
   dayAfterStart.setUTCDate(dayAfterStart.getUTCDate() + 2);
 
-  const [dueTodayCount, dueTomorrowCount] = await Promise.all([
+  const [dueTodayCount, dueTomorrowCount, learningCount, masteredCount] = await Promise.all([
     db.userVocabulary.count({ where: { userId, nextReviewDate: { lt: tomorrowStart } } }),
     db.userVocabulary.count({ where: { userId, nextReviewDate: { gte: tomorrowStart, lt: dayAfterStart } } }),
+    db.userVocabulary.count({ where: { userId, isLearned: false } }),
+    db.userVocabulary.count({ where: { userId, isLearned: true } }),
   ]);
 
-  return { dueTodayCount, dueTomorrowCount };
+  return { dueTodayCount, dueTomorrowCount, learningCount, masteredCount };
 }
 
 /** Per-topic SRS snapshot: how many of the topic's words the user is
@@ -124,7 +137,7 @@ export async function getTopicSrsStats(slug: string, userId: string) {
   const [tracked, learned, due] = await Promise.all([
     db.userVocabulary.count({ where }),
     db.userVocabulary.count({ where: { ...where, isLearned: true } }),
-    db.userVocabulary.count({ where: { ...where, nextReviewDate: { lte: new Date() } } }),
+    db.userVocabulary.count({ where: { ...where, nextReviewDate: { lte: srsDueCutoff() } } }),
   ]);
   return { tracked, learned, due };
 }

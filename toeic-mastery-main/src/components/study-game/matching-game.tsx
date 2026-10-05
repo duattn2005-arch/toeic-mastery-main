@@ -27,6 +27,8 @@ export function MatchingGame({
   const [wrongPair, setWrongPair] = React.useState<string[]>([]);
   const [solved, setSolved] = React.useState<Set<string>>(new Set());
   const [moves, setMoves] = React.useState(0);
+  // Words involved in a wrong pairing: still "Đang học" once matched.
+  const missed = React.useRef(new Set<string>());
 
   const totalPairs = board.length / 2;
   const solvedPairs = solved.size / 2;
@@ -47,8 +49,9 @@ export function MatchingGame({
     if (first.itemId === tile.itemId) {
       setSolved((prev) => new Set(prev).add(first.key).add(tile.key));
       setSelected([]);
-      onItemResult?.(first.itemId, "GOOD");
+      onItemResult?.(first.itemId, missed.current.has(first.itemId) ? "AGAIN" : "GOOD");
     } else {
+      missed.current.add(first.itemId).add(tile.itemId);
       setSelected([firstKey, tile.key]);
       setWrongPair([firstKey, tile.key]);
       setTimeout(() => {

@@ -12,18 +12,12 @@ import { ensureSavedWordAction, unsaveWordIfExistsAction } from "@/lib/actions/d
 import { useDictionaryHintTutorial } from "@/hooks/use-dictionary-hint-tutorial";
 import { formatIpa, pronounce } from "@/lib/pronounce";
 
-/** Wrong-attempt count within THIS quiz session -> the same rating buckets
- * self-rated flashcards use. Never-correct (wrong on every attempt, capped
- * at MAX_ATTEMPTS_PER_ITEM) must map to AGAIN, not HARD — HARD still
- * increments `repetitions` toward "isLearned", which would silently mark a
- * word mastered purely from being answered wrong every single time. */
+/** Quizlet's rule: right on the first try counts as recalled; missed even
+ * once — even if answered right on a later retry — means the word is still
+ * "Đang học" and comes back for review (see spaced-repetition.ts). */
 function ratingForWrongCount(wrongCount: number): ReviewRating {
-  if (wrongCount === 0) return "EASY";
-  if (wrongCount <= 2) return "GOOD";
-  return "AGAIN";
+  return wrongCount === 0 ? "GOOD" : "AGAIN";
 }
-
-const INTERVAL_LABEL: Record<ReviewRating, string> = { AGAIN: "Hôm nay", HARD: "1 NGÀY", GOOD: "2 NGÀY", EASY: "4 NGÀY" };
 
 const MAX_ATTEMPTS_PER_ITEM = 3;
 
@@ -83,10 +77,9 @@ export function QuizMode({
         results.map(async (row) => {
           await onItemResult?.(row.item.id, row.rating);
           if (!autoStar) return;
-          // "Làm sai" (wrongCount > 0, i.e. anything but the perfect EASY
-          // bucket) -> starred into Đã lưu for later review; answered right
-          // first try -> no longer needs it.
-          if (row.rating === "EASY") await unsaveWordIfExistsAction(row.item.term);
+          // Missed at least once -> starred into Đã lưu for later review;
+          // answered right first try -> no longer needs it.
+          if (row.rating !== "AGAIN") await unsaveWordIfExistsAction(row.item.term);
           else await ensureSavedWordAction(row.item.term);
         })
       );
@@ -144,11 +137,11 @@ export function QuizMode({
                   <span className="block text-xs text-muted-foreground">{row.item.meaningVi}</span>
                 </span>
               </button>
-              <span className="whitespace-nowrap text-right text-xs text-muted-foreground">
-                Ôn lại sau
-                <br />
-                <span className="text-sm font-bold text-foreground">{INTERVAL_LABEL[row.rating]}</span>
-              </span>
+              {row.rating === "AGAIN" ? (
+                <span className="whitespace-nowrap rounded-full bg-warning/15 px-2.5 py-1 text-xs font-semibold text-warning">Đang học</span>
+              ) : (
+                <span className="whitespace-nowrap rounded-full bg-success/15 px-2.5 py-1 text-xs font-semibold text-success">Nhớ rồi</span>
+              )}
             </div>
           ))}
         </div>
