@@ -10,6 +10,7 @@ import { buildQuiz, type QuizQuestion, type StudyItem } from "@/lib/services/stu
 import type { ReviewRating } from "@/lib/services/spaced-repetition";
 import { ensureSavedWordAction, unsaveWordIfExistsAction } from "@/lib/actions/dictionary";
 import { useDictionaryHintTutorial } from "@/hooks/use-dictionary-hint-tutorial";
+import { formatIpa, pronounce } from "@/lib/pronounce";
 
 /** Wrong-attempt count within THIS quiz session -> the same rating buckets
  * self-rated flashcards use. Never-correct (wrong on every attempt, capped
@@ -134,11 +135,10 @@ export function QuizMode({
             <div key={row.item.id} className="flex items-center justify-between gap-3 px-4 py-3">
               <button
                 type="button"
-                onClick={() => row.item.audioUrl && new Audio(row.item.audioUrl).play().catch(() => {})}
+                onClick={() => pronounce(row.item.term, row.item.audioUrl)}
                 className="flex items-center gap-2 text-left"
-                disabled={!row.item.audioUrl}
               >
-                {row.item.audioUrl && <Volume2 className="size-4 shrink-0 text-primary" />}
+                <Volume2 className="size-4 shrink-0 text-primary" />
                 <span>
                   <span className="block text-sm font-semibold">{row.item.term}</span>
                   <span className="block text-xs text-muted-foreground">{row.item.meaningVi}</span>
@@ -179,7 +179,7 @@ export function QuizMode({
       <div className="w-full max-w-sm rounded-3xl border border-border bg-card p-6 text-center shadow-soft">
         <p className="text-xs font-medium text-muted-foreground">Từ này có nghĩa là gì?</p>
         <p className="mt-2 text-3xl font-bold tracking-tight">{question.item.term}</p>
-        {question.item.ipa && <p className="mt-1 text-sm text-muted-foreground">/{question.item.ipa}/</p>}
+        {formatIpa(question.item.ipa) && <p className="mt-1 text-sm text-muted-foreground">{formatIpa(question.item.ipa)}</p>}
       </div>
 
       <div className="grid w-full max-w-sm grid-cols-1 gap-2.5">

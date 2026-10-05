@@ -64,16 +64,30 @@ async function syncTopic(collection: VocabCollection, topic: IigTopic, index: nu
     });
   }
 
+  // Changed words are written in one statement per topic — a content update
+  // (e.g. IPA added to all 1,600 ETS words) must not turn the first page
+  // load after a deploy into thousands of sequential round trips.
+  const changed: { id: string; partOfSpeech: string | null; ipa: string | null; meaningVi: string; exampleEn: string | null }[] = [];
   for (const [word, pos, ipa, meaning, example] of topic.words) {
     const row = byWord.get(word);
     if (!row) continue;
     const data = { partOfSpeech: pos || null, ipa: ipa || null, meaningVi: meaning, exampleEn: example || null };
     if (row.partOfSpeech !== data.partOfSpeech || row.ipa !== data.ipa || row.meaningVi !== data.meaningVi || row.exampleEn !== data.exampleEn) {
-      await db.vocabularyWord.update({
-        where: { id: row.id },
-        data,
-      });
+      changed.push({ id: row.id, ...data });
     }
+  }
+  if (changed.length > 0) {
+    await db.$executeRaw`
+      UPDATE vocabulary_words AS w
+      SET part_of_speech = v.pos, ipa = v.ipa, meaning_vi = v.meaning, example_en = v.example, updated_at = now()
+      FROM unnest(
+        ${changed.map((c) => c.id)}::uuid[],
+        ${changed.map((c) => c.partOfSpeech)}::text[],
+        ${changed.map((c) => c.ipa)}::text[],
+        ${changed.map((c) => c.meaningVi)}::text[],
+        ${changed.map((c) => c.exampleEn)}::text[]
+      ) AS v(id, pos, ipa, meaning, example)
+      WHERE w.id = v.id`;
   }
 
   const words = await db.vocabularyWord.findMany({ where: { topicId: dbTopic.id }, select: { id: true, word: true } });

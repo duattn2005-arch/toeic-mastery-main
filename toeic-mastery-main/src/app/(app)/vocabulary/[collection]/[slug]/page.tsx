@@ -13,6 +13,8 @@ import { PathOverviewContent } from "@/components/vocabulary/path/path-overview-
 import { StartLearningButton } from "@/components/vocabulary/start-learning-button";
 import { MasteryBlocks } from "@/components/mastery/mastery-blocks";
 import { MasteryQuiz } from "@/components/mastery/mastery-quiz";
+import { PronounceButton } from "@/components/vocabulary/pronounce-button";
+import { formatIpa } from "@/lib/pronounce";
 
 type Params = Promise<{ collection: string; slug: string }>;
 
@@ -92,10 +94,13 @@ export default async function CollectionTopicPage({ params }: { params: Params }
         <div className={cn("grid gap-3", hasDetails ? "md:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3")}>
           {topic.words.map(([word, pos, ipa, meaning, example, note]) => (
             <div key={word} className={cn("flex flex-col rounded-2xl border border-border bg-card shadow-soft", hasDetails ? "gap-2 p-4" : "gap-1 p-3")}>
-              <div className="flex flex-wrap items-baseline gap-x-2">
-                <span className="text-base font-semibold">{word}</span>
-                {pos && <span className="text-xs italic text-muted-foreground">({pos})</span>}
-                {ipa && <span className="text-xs text-muted-foreground">{ipa}</span>}
+              <div className="flex items-start gap-1">
+                <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
+                  <span className="text-base font-semibold">{word}</span>
+                  {pos && <span className="text-xs italic text-muted-foreground">({pos})</span>}
+                  {formatIpa(ipa) && <span className="text-xs text-muted-foreground">{formatIpa(ipa)}</span>}
+                </div>
+                <PronounceButton term={word} className="-mr-1 -mt-1" />
               </div>
               <p className="text-sm font-medium text-primary">{meaning}</p>
               {example && <p className="text-sm text-muted-foreground">E.g. {example}</p>}

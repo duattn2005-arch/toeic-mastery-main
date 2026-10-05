@@ -12,6 +12,7 @@ import {
 import { toggleSaveWordAction } from "@/lib/actions/dictionary";
 import { cn } from "@/lib/utils";
 import type { StudyItem } from "@/lib/services/study-game";
+import { pronounce } from "@/lib/pronounce";
 
 type SortMode = "stats" | "original" | "alphabetical";
 
@@ -22,14 +23,7 @@ const SORT_LABEL: Record<SortMode, string> = {
 };
 
 function playAudio(item: StudyItem) {
-  if (item.audioUrl) {
-    new Audio(item.audioUrl).play().catch(() => {});
-    return;
-  }
-  if (typeof window !== "undefined" && window.speechSynthesis) {
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(new SpeechSynthesisUtterance(item.term));
-  }
+  pronounce(item.term, item.audioUrl);
 }
 
 function WordRow({ item, starred, onToggleStar }: { item: StudyItem; starred: boolean; onToggleStar: () => void }) {

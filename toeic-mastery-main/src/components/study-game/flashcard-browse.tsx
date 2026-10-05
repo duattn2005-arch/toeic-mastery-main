@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Volume2 } from "lucide-react";
+import { Volume2, VolumeX } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import type { StudyItem } from "@/lib/services/study-game";
@@ -10,6 +10,9 @@ import type { ReviewRating } from "@/lib/services/spaced-repetition";
 import { RATING_BUTTONS } from "@/components/vocabulary/flash-card";
 import { ensureSavedWordAction, unsaveWordIfExistsAction } from "@/lib/actions/dictionary";
 import { useDictionaryHintTutorial } from "@/hooks/use-dictionary-hint-tutorial";
+import { formatIpa, pronounce } from "@/lib/pronounce";
+
+const AUTO_SPEAK_KEY = "flashcard:auto-speak";
 
 interface QueueEntry extends StudyItem {
   queueKey: string;
@@ -71,10 +74,38 @@ export function FlashcardBrowse({
     setIndex((i) => i - 1);
   }
 
-  function playAudio() {
-    if (!item.audioUrl) return;
-    new Audio(item.audioUrl).play().catch(() => {});
+  // Each new card reads its word aloud (opening a card is always a click,
+  // so the browser allows it); learners can mute this, remembered per browser.
+  const [autoSpeak, setAutoSpeak] = React.useState(true);
+  React.useEffect(() => {
+    try {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      if (window.localStorage.getItem(AUTO_SPEAK_KEY) === "off") setAutoSpeak(false);
+    } catch {
+      // Storage unavailable — keep the default.
+    }
+  }, []);
+  function toggleAutoSpeak() {
+    setAutoSpeak((on) => {
+      try {
+        window.localStorage.setItem(AUTO_SPEAK_KEY, on ? "off" : "on");
+      } catch {
+        // Ignore — the choice just won't persist.
+      }
+      return !on;
+    });
   }
+  React.useEffect(() => {
+    if (autoSpeak && item) pronounce(item.term, item.audioUrl);
+    // Only when the card changes, not when the setting is toggled.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [item?.queueKey]);
+
+  function playAudio() {
+    pronounce(item.term, item.audioUrl);
+  }
+
+  const ipa = formatIpa(item.ipa);
 
   return (
     <div className="flex flex-col items-center gap-5">
@@ -89,15 +120,22 @@ export function FlashcardBrowse({
         <Progress value={((index + 1) / queue.length) * 100} className="h-1.5" />
       </div>
 
-      <button
-        type="button"
+      <div
+        role="button"
+        tabIndex={0}
         onClick={() => setFlipped((f) => !f)}
-        className="flex h-64 w-full max-w-sm flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-card p-6 text-center shadow-soft transition-transform hover:-translate-y-0.5"
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            setFlipped((f) => !f);
+          }
+        }}
+        className="relative flex h-64 cursor-pointer w-full max-w-sm flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-card p-6 text-center shadow-soft transition-transform hover:-translate-y-0.5"
       >
         {!flipped ? (
           <>
             <p className="text-3xl font-bold tracking-tight">{item.term}</p>
-            {item.ipa && <p className="text-sm text-muted-foreground">/{item.ipa}/</p>}
+            {ipa && <p className="text-base text-muted-foreground">{ipa}</p>}
             {item.partOfSpeech && (
               <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-medium text-accent-foreground">{item.partOfSpeech}</span>
             )}
@@ -109,7 +147,18 @@ export function FlashcardBrowse({
             {item.exampleEn && <p className="mt-1 max-w-xs text-sm italic text-muted-foreground">&ldquo;{item.exampleEn}&rdquo;</p>}
           </>
         )}
-      </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            playAudio();
+          }}
+          aria-label="Phát âm"
+          className="absolute right-3 top-3 flex size-10 items-center justify-center rounded-full bg-primary/10 text-primary transition-colors hover:bg-primary/20"
+        >
+          <Volume2 className="size-5" />
+        </button>
+      </div>
 
       <div className="flex items-center gap-3">
         <button
@@ -121,11 +170,18 @@ export function FlashcardBrowse({
         >
           ‹
         </button>
-        {item.audioUrl && (
-          <button type="button" onClick={playAudio} aria-label="Phát âm" className="flex size-9 items-center justify-center rounded-lg border border-input">
-            <Volume2 className="size-4" />
-          </button>
-        )}
+        <button type="button" onClick={playAudio} aria-label="Phát âm" className="flex size-9 items-center justify-center rounded-lg border border-input">
+          <Volume2 className="size-4" />
+        </button>
+        <button
+          type="button"
+          onClick={toggleAutoSpeak}
+          aria-pressed={autoSpeak}
+          className="flex h-9 items-center gap-1.5 rounded-lg border border-input px-3 text-xs text-muted-foreground hover:text-foreground"
+        >
+          {autoSpeak ? <Volume2 className="size-3.5" /> : <VolumeX className="size-3.5" />}
+          Tự đọc: {autoSpeak ? "Bật" : "Tắt"}
+        </button>
       </div>
 
       <AnimatePresence>
