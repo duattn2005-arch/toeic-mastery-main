@@ -16,6 +16,7 @@ import { QuestionAudioUploader } from "@/components/admin/question-audio-uploade
 import { ImageUploader } from "@/components/admin/image-uploader";
 import { ImportGuideCallout } from "@/components/admin/import-guide-callout";
 import { QuestionGroupQuestionFields } from "@/components/admin/question-group-question-fields";
+import { MoveQuestionGroupDialog, PRACTICE_POOL_CHOICE } from "@/components/admin/move-question-group-dialog";
 import {
   questionGroupFormSchema,
   PASSAGE_PART_VALUES,
@@ -100,22 +101,25 @@ const BLANK_QUESTION: QuestionGroupFormInput["questions"][number] = {
  */
 export function QuestionGroupForm({
   testOptions,
-  defaultTestId = "",
+  defaultTestChoice = "",
   defaultPart = "PART3",
   hidden = false,
   initialValues,
   initialPassageId,
   onSaved,
   tabsBar,
+  onTestChoiceChange,
 }: {
   testOptions: { id: string; title: string }[];
-  defaultTestId?: string;
+  /** "" (not chosen yet), a test id, or PRACTICE_POOL_CHOICE. */
+  defaultTestChoice?: string;
   defaultPart?: QuestionGroupFormInput["part"];
   /** Kept mounted but visually hidden — see the class comment above. */
   hidden?: boolean;
   /** Full prefill for editing an existing group (the standalone
    * /admin/questions/groups/[passageId]/edit page) — overrides
-   * defaultTestId/defaultPart/the blank-question defaults entirely. */
+   * defaultTestChoice/defaultPart/the blank-question defaults entirely.
+   * An empty `testId` here means the group sits in the practice pool. */
   initialValues?: QuestionGroupFormInput;
   /** Pairs with initialValues: the group being edited, so the first Save
    * here updates it instead of creating a new one. */
@@ -129,18 +133,23 @@ export function QuestionGroupForm({
    * (which needs this form's own textsArray/questionsArray/setValue) up
    * into the workspace. */
   tabsBar?: React.ReactNode;
+  /** Lets the workspace carry this tab's test choice over to the next tab
+   * and refuse to open a new one while it's still unchosen. */
+  onTestChoiceChange?: (choice: string) => void;
 }) {
   const {
     register,
     handleSubmit,
     watch,
     setValue,
+    setError,
+    clearErrors,
     control,
     formState: { errors, isSubmitting },
   } = useForm<QuestionGroupFormInput>({
     resolver: zodResolver(questionGroupFormSchema),
     defaultValues: initialValues ?? {
-      testId: defaultTestId,
+      testId: defaultTestChoice === PRACTICE_POOL_CHOICE ? "" : defaultTestChoice,
       part: defaultPart,
       format: "CONVERSATION",
       layout: "SINGLE",
@@ -162,6 +171,21 @@ export function QuestionGroupForm({
   // saving has no way to save again": the old code just disabled the
   // button once saved and never had an update path at all.
   const [passageId, setPassageId] = React.useState(initialPassageId);
+
+  // Which test this group belongs to is a required, explicit choice: "" =
+  // not chosen yet, PRACTICE_POOL_CHOICE = deliberately no test. It used to
+  // silently default to "no test", so a forgotten pick on one group in a
+  // long run dropped it into the practice pool and every later group of
+  // the run landed one slot too early in the real test.
+  const [testChoice, setTestChoice] = React.useState(initialValues ? initialValues.testId || PRACTICE_POOL_CHOICE : defaultTestChoice);
+  function changeTestChoice(choice: string) {
+    setTestChoice(choice);
+    setValue("testId", choice === PRACTICE_POOL_CHOICE ? "" : choice);
+    clearErrors("testId");
+    onTestChoiceChange?.(choice);
+  }
+  const testTitle =
+    testChoice === PRACTICE_POOL_CHOICE ? "Kho luyện tập (không thuộc đề nào)" : (testOptions.find((t) => t.id === testChoice)?.title ?? "Đề khác");
 
   const part = watch("part");
   const isReadingPart = part === "PART6" || part === "PART7";
@@ -231,6 +255,11 @@ export function QuestionGroupForm({
   }
 
   async function onSubmit(values: QuestionGroupFormInput) {
+    if (!passageId && testChoice === "") {
+      setError("testId", { message: "Chọn đề thi cho nhóm này trước khi lưu" });
+      toast.error('Bạn chưa chọn "Thuộc đề thi" cho nhóm này.');
+      return;
+    }
     const result = passageId ? await updateQuestionGroupAction(passageId, values) : await createQuestionGroupAction(values);
     if (result?.error) {
       toast.error(result.error);
@@ -389,21 +418,39 @@ export function QuestionGroupForm({
           </div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Thuộc đề thi (không bắt buộc)">
-              <Select value={watch("testId") || "none"} onValueChange={(v) => setValue("testId", v === "none" ? "" : v)} disabled={!!passageId}>
-                <SelectTrigger title={passageId ? "Không thể đổi đề thi sau khi đã lưu — tạo nhóm mới nếu cần đổi" : undefined}>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">— Chưa gán —</SelectItem>
-                  {testOptions.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>
-                      {t.title}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
+            <div className="col-span-2">
+              <Field label="Thuộc đề thi *">
+                {passageId ? (
+                  <div className="flex flex-col gap-2">
+                    <p className="rounded-md border border-input bg-muted/40 px-3 py-2 text-sm">{testTitle}</p>
+                    <MoveQuestionGroupDialog
+                      passageId={passageId}
+                      part={part}
+                      currentChoice={testChoice}
+                      testOptions={testOptions}
+                      onMoved={changeTestChoice}
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <Select value={testChoice || undefined} onValueChange={changeTestChoice}>
+                      <SelectTrigger aria-invalid={!!errors.testId} className={cn(errors.testId && "border-destructive")}>
+                        <SelectValue placeholder="— Chọn đề thi —" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {testOptions.map((t) => (
+                          <SelectItem key={t.id} value={t.id}>
+                            {t.title}
+                          </SelectItem>
+                        ))}
+                        <SelectItem value={PRACTICE_POOL_CHOICE}>Kho luyện tập (không thuộc đề nào)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {errors.testId && <p className="text-xs text-destructive">{errors.testId.message}</p>}
+                  </>
+                )}
+              </Field>
+            </div>
             <Field label="Trạng thái">
               <Select value={watch("status")} onValueChange={(v) => setValue("status", v as QuestionGroupFormInput["status"])}>
                 <SelectTrigger>

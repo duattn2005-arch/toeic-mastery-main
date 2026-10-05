@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Check, Plus, X } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { QuestionGroupForm } from "@/components/admin/question-group-form";
 import type { QuestionGroupFormInput } from "@/lib/validations/admin";
@@ -10,7 +11,11 @@ interface GroupTab {
   id: string;
   label: string;
   saved: boolean;
-  defaultTestId: string;
+  /** The test picked in this tab's form ("" = not yet, or
+   * PRACTICE_POOL_CHOICE) — kept in sync via onTestChoiceChange so a new
+   * tab inherits what was actually chosen, not just this tab's own
+   * starting default. */
+  testChoice: string;
   defaultPart: QuestionGroupFormInput["part"];
 }
 
@@ -34,12 +39,18 @@ function newTabId() {
  */
 export function QuestionGroupWorkspace({ testOptions }: { testOptions: { id: string; title: string }[] }) {
   const [tabs, setTabs] = React.useState<GroupTab[]>(() => [
-    { id: newTabId(), label: "Nhóm 1", saved: false, defaultTestId: "", defaultPart: "PART3" },
+    { id: newTabId(), label: "Nhóm 1", saved: false, testChoice: "", defaultPart: "PART3" },
   ]);
   const [activeId, setActiveId] = React.useState(tabs[0].id);
 
   function addTab() {
     const base = tabs.find((t) => t.id === activeId) ?? tabs[0];
+    if (!base.testChoice) {
+      // Forgetting this on one group of a long run is exactly what used to
+      // throw every later group's question numbers off by one.
+      toast.error(`Chọn "Thuộc đề thi" cho ${base.label} trước khi thêm nhóm mới.`);
+      return;
+    }
     const tab: GroupTab = {
       id: newTabId(),
       label: `Nhóm ${tabs.length + 1}`,
@@ -47,7 +58,7 @@ export function QuestionGroupWorkspace({ testOptions }: { testOptions: { id: str
       // Carries over the same test/part — consecutive groups in one
       // sitting are almost always for the same test and often the same
       // part, so this saves re-selecting them every time.
-      defaultTestId: base.defaultTestId,
+      testChoice: base.testChoice,
       defaultPart: base.defaultPart,
     };
     setTabs((prev) => [...prev, tab]);
@@ -63,6 +74,10 @@ export function QuestionGroupWorkspace({ testOptions }: { testOptions: { id: str
     });
   }
 
+  function handleTestChoiceChange(id: string, choice: string) {
+    setTabs((prev) => prev.map((t) => (t.id === id ? { ...t, testChoice: choice } : t)));
+  }
+
   function handleSaved(id: string) {
     setTabs((prev) => {
       const updated = prev.map((t) => (t.id === id ? { ...t, saved: true } : t));
@@ -76,7 +91,7 @@ export function QuestionGroupWorkspace({ testOptions }: { testOptions: { id: str
         id: newTabId(),
         label: `Nhóm ${updated.length + 1}`,
         saved: false,
-        defaultTestId: updated[idx].defaultTestId,
+        testChoice: updated[idx].testChoice,
         defaultPart: updated[idx].defaultPart,
       };
       setActiveId(fresh.id);
@@ -131,9 +146,10 @@ export function QuestionGroupWorkspace({ testOptions }: { testOptions: { id: str
           key={tab.id}
           testOptions={testOptions}
           hidden={tab.id !== activeId}
-          defaultTestId={tab.defaultTestId}
+          defaultTestChoice={tab.testChoice}
           defaultPart={tab.defaultPart}
           onSaved={() => handleSaved(tab.id)}
+          onTestChoiceChange={(choice) => handleTestChoiceChange(tab.id, choice)}
           tabsBar={tabsBar}
         />
       ))}

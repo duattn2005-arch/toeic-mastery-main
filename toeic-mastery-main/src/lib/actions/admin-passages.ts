@@ -5,7 +5,8 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { questionGroupFormSchema, type QuestionGroupFormInput } from "@/lib/validations/admin";
 import { getOrCreatePracticePool, syncIfPracticePool } from "@/lib/services/practice-pool";
-import { reserveQuestionOrderIndex } from "@/lib/services/question-order";
+import { endOfPartIndex, reserveQuestionOrderIndex, startOfPartIndex } from "@/lib/services/question-order";
+import type { TestPart } from "@/generated/prisma/enums";
 
 export interface GroupActionResult {
   error?: string;
@@ -242,3 +243,129 @@ export async function updateQuestionGroupAction(passageId: string, input: Questi
   revalidatePath("/admin/questions");
   return { passageId };
 }
+
+export interface TestGroupSlot {
+  passageId: string;
+  /** 1-based question numbers inside the test (e.g. 32–34 for the first
+   * Part 3 conversation of a full test), by orderIndex across ALL parts. */
+  firstNumber: number;
+  lastNumber: number;
+  label: string;
+}
+
+/**
+ * The groups of one Part already inside a test, in test order — the
+ * "đặt sau nhóm…" choices in MoveQuestionGroupDialog.
+ */
+export async function listTestGroupSlotsAction(testId: string, part: TestPart): Promise<TestGroupSlot[]> {
+  await requireAdmin();
+  const questions = await db.question.findMany({
+    where: { testId },
+    orderBy: { orderIndex: "asc" },
+    select: { part: true, passageId: true, prompt: true, passage: { select: { title: true } } },
+  });
+
+  const slots = new Map<string, TestGroupSlot>();
+  questions.forEach((q, i) => {
+    if (q.part !== part || !q.passageId) return;
+    const existing = slots.get(q.passageId);
+    if (existing) {
+      existing.lastNumber = i + 1;
+      return;
+    }
+    const prompt = q.prompt.length > 60 ? `${q.prompt.slice(0, 60)}…` : q.prompt;
+    slots.set(q.passageId, { passageId: q.passageId, firstNumber: i + 1, lastNumber: i + 1, label: q.passage?.title || prompt || "(chưa có tiêu đề)" });
+  });
+  return [...slots.values()];
+}
+
+export type GroupPlacement = { type: "end" } | { type: "start" } | { type: "after"; passageId: string };
+
+/**
+ * "Gán lại đề" for a group that's already saved — the fix for "I forgot to
+ * pick the test on group 2 of 13": moves the group (its Passage plus every
+ * Question in it) into another test, or into the Part's practice pool, at
+ * a chosen spot (start/end of the Part, or right after a specific group),
+ * shifting later questions down to make room. Questions are updated in
+ * place, never re-created, so attempt history/bookmarks stay attached.
+ */
+export async function moveQuestionGroupAction(
+  passageId: string,
+  target: { testId: string | null; placement: GroupPlacement }
+): Promise<GroupActionResult> {
+  await requireAdmin();
+
+  const passage = await db.passage.findUnique({
+    where: { id: passageId },
+    select: { testId: true, part: true, questions: { orderBy: { orderIndex: "asc" }, select: { id: true, status: true } } },
+  });
+  if (!passage || passage.questions.length === 0) return { error: "Không tìm thấy nhóm câu hỏi này" };
+  const part = passage.part;
+
+  // No test picked = the Part's practice pool, same rule as create: only
+  // published content goes there (a draft stays unattached).
+  let testId = target.testId;
+  let poolSectionId: string | null = null;
+  if (!testId && passage.questions.some((q) => q.status === "PUBLISHED")) {
+    const pool = await getOrCreatePracticePool(part);
+    testId = pool.testId;
+    poolSectionId = pool.testSectionId;
+  }
+  if (testId && !(await db.test.findUnique({ where: { id: testId }, select: { id: true } }))) {
+    return { error: "Không tìm thấy đề thi đã chọn" };
+  }
+
+  const movedIds = passage.questions.map((q) => q.id);
+  const count = movedIds.length;
+
+  try {
+    await db.$transaction(
+      async (tx) => {
+        let insertAt = 0;
+        let testSectionId: string | null = poolSectionId;
+        if (testId) {
+          // The group's own rows are excluded — when moving within the same
+          // test they must not count as "existing" or get shifted along.
+          const others = await tx.question.findMany({
+            where: { testId, id: { notIn: movedIds } },
+            select: { part: true, orderIndex: true, passageId: true },
+          });
+
+          if (target.placement.type === "after") {
+            const afterId = target.placement.passageId;
+            const anchor = others.filter((q) => q.passageId === afterId);
+            if (anchor.length === 0) throw new GroupMoveError("Nhóm được chọn để đặt sau không còn trong đề này, vui lòng chọn lại");
+            insertAt = Math.max(...anchor.map((q) => q.orderIndex)) + 1;
+          } else {
+            insertAt = target.placement.type === "start" ? startOfPartIndex(others, part) : endOfPartIndex(others, part);
+          }
+
+          await tx.question.updateMany({
+            where: { testId, id: { notIn: movedIds }, orderIndex: { gte: insertAt } },
+            data: { orderIndex: { increment: count } },
+          });
+
+          if (!testSectionId) {
+            const section = await tx.testSection.findFirst({ where: { testId, part }, select: { id: true } });
+            testSectionId = section?.id ?? null;
+          }
+        }
+
+        await tx.passage.update({ where: { id: passageId }, data: { testId, orderIndex: insertAt } });
+        await Promise.all(
+          movedIds.map((id, i) => tx.question.update({ where: { id }, data: { testId, testSectionId, orderIndex: insertAt + i } }))
+        );
+      },
+      { timeout: 15_000 }
+    );
+  } catch (err) {
+    if (err instanceof GroupMoveError) return { error: err.message };
+    throw err;
+  }
+
+  await Promise.all([syncIfPracticePool(passage.testId, part), syncIfPracticePool(testId, part)]);
+  revalidatePath("/admin/questions");
+  return { passageId };
+}
+
+class GroupMoveError extends Error {}

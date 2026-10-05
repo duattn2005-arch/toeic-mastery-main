@@ -29,21 +29,31 @@ export async function reserveQuestionOrderIndex(tx: Tx, testId: string | null, p
   if (!testId) return 0;
 
   const existing = await tx.question.findMany({ where: { testId }, select: { part: true, orderIndex: true } });
-  if (existing.length === 0) return 0;
-
-  const samePart = existing.filter((q) => q.part === part);
-  let insertAt: number;
-  if (samePart.length > 0) {
-    // Insert right after this part's own last question.
-    insertAt = Math.max(...samePart.map((q) => q.orderIndex)) + 1;
-  } else {
-    // No question of this part yet — insert right before the first question
-    // of the next-higher-ranked part that already exists, or at the very
-    // end if this is the highest-ranked part present so far.
-    const laterParts = existing.filter((q) => PART_RANK[q.part] > PART_RANK[part]);
-    insertAt = laterParts.length > 0 ? Math.min(...laterParts.map((q) => q.orderIndex)) : Math.max(...existing.map((q) => q.orderIndex)) + 1;
-  }
+  const insertAt = endOfPartIndex(existing, part);
+  if (existing.length === 0) return insertAt;
 
   await tx.question.updateMany({ where: { testId, orderIndex: { gte: insertAt } }, data: { orderIndex: { increment: count } } });
   return insertAt;
+}
+
+/**
+ * Where a new block of `part` questions goes by default: right after that
+ * part's own last question, or — if the test has none of that part yet —
+ * right before the first question of the next-higher-ranked part (or at
+ * the very end if this is the highest-ranked part present so far). Pure
+ * over the given rows, so callers can exclude rows that are being moved.
+ */
+export function endOfPartIndex(existing: { part: TestPart; orderIndex: number }[], part: TestPart): number {
+  if (existing.length === 0) return 0;
+  const samePart = existing.filter((q) => q.part === part);
+  if (samePart.length > 0) return Math.max(...samePart.map((q) => q.orderIndex)) + 1;
+  const laterParts = existing.filter((q) => PART_RANK[q.part] > PART_RANK[part]);
+  return laterParts.length > 0 ? Math.min(...laterParts.map((q) => q.orderIndex)) : Math.max(...existing.map((q) => q.orderIndex)) + 1;
+}
+
+/** Like endOfPartIndex, but the first slot of the part instead of the last. */
+export function startOfPartIndex(existing: { part: TestPart; orderIndex: number }[], part: TestPart): number {
+  const samePart = existing.filter((q) => q.part === part);
+  if (samePart.length > 0) return Math.min(...samePart.map((q) => q.orderIndex));
+  return endOfPartIndex(existing, part);
 }

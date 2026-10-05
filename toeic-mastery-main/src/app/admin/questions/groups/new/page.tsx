@@ -5,7 +5,13 @@ import { QuestionGroupWorkspace } from "@/components/admin/question-group-worksp
 export const metadata: Metadata = { title: "Tạo nhóm câu hỏi" };
 
 export default async function NewQuestionGroupPage() {
-  const tests = await db.test.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, title: true }, take: 50 });
+  const tests = await db.test.findMany({
+    // Practice pools are offered as their own explicit choice in the form.
+    where: { NOT: { slug: { startsWith: "practice-pool-" } } },
+    orderBy: { createdAt: "desc" },
+    select: { id: true, title: true },
+    take: 100,
+  });
 
   return (
     <div className="flex flex-col gap-6">

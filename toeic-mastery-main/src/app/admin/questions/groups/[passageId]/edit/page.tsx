@@ -15,9 +15,18 @@ export default async function EditQuestionGroupPage({ params }: { params: Promis
   const [passage, tests] = await Promise.all([
     db.passage.findUnique({
       where: { id: passageId },
-      include: { questions: { orderBy: { orderIndex: "asc" }, include: { options: { orderBy: { label: "asc" } } } } },
+      include: {
+        questions: { orderBy: { orderIndex: "asc" }, include: { options: { orderBy: { label: "asc" } } } },
+        test: { select: { id: true, title: true, slug: true } },
+      },
     }),
-    db.test.findMany({ orderBy: { createdAt: "desc" }, select: { id: true, title: true }, take: 50 }),
+    db.test.findMany({
+      // Practice pools are offered as their own explicit choice in the form.
+      where: { NOT: { slug: { startsWith: "practice-pool-" } } },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, title: true },
+      take: 100,
+    }),
   ]);
   if (!passage || passage.questions.length === 0) notFound();
 
@@ -25,9 +34,16 @@ export default async function EditQuestionGroupPage({ params }: { params: Promis
   // treats them as one shared value for the whole group (same as create) —
   // the first question's values stand in for "the group's" here.
   const first = passage.questions[0];
+  const inPracticePool = passage.test?.slug.startsWith("practice-pool-") ?? false;
+  // Older than the 100 most recent tests — still show its real title.
+  const testOptions =
+    passage.test && !inPracticePool && !tests.some((t) => t.id === passage.test?.id)
+      ? [...tests, { id: passage.test.id, title: passage.test.title }]
+      : tests;
 
   const initialValues: QuestionGroupFormInput = {
-    testId: passage.testId ?? "",
+    // Empty = practice pool / unattached — the form shows that as its own choice.
+    testId: inPracticePool ? "" : (passage.testId ?? ""),
     part: passage.part as QuestionGroupFormInput["part"],
     format: passage.format,
     layout: passage.layout,
@@ -61,10 +77,11 @@ export default async function EditQuestionGroupPage({ params }: { params: Promis
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight">Sửa nhóm câu hỏi</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Part và đề thi không thể đổi ở đây — tạo nhóm mới nếu cần chuyển nhóm này sang Part hoặc đề khác.
+          Lỡ gán nhầm hoặc quên gán đề? Bấm &quot;Đổi đề / vị trí&quot; để chuyển nhóm sang đúng đề và đúng vị trí. Part thì không đổi được — tạo
+          nhóm mới nếu cần.
         </p>
       </div>
-      <QuestionGroupForm testOptions={tests} initialValues={initialValues} initialPassageId={passage.id} />
+      <QuestionGroupForm testOptions={testOptions} initialValues={initialValues} initialPassageId={passage.id} />
     </div>
   );
 }
