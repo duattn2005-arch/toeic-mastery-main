@@ -83,7 +83,7 @@ export async function getTopicStudyItems(
       partOfSpeech: w.partOfSpeech,
       meaningVi: w.meaningVi,
       exampleEn: w.exampleEn,
-      audioUrl: w.audioUrlUs ?? w.audioUrlUk,
+      audioUrl: w.audioUrlUk ?? w.audioUrlUs,
       ...(userId ? { status: vocabStatus(trackedById.get(w.id)) } : {}),
     })),
     starredTerms: starredMatches.map((s) => s.word),

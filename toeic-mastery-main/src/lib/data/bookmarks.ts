@@ -119,7 +119,7 @@ async function resolveSavedWords(saved: SavedWord[]): Promise<ResolvedSavedWord[
         partOfSpeech: vw.partOfSpeech,
         meaningVi: vw.meaningVi,
         exampleEn: vw.exampleEn,
-        audioUrl: vw.audioUrlUs ?? vw.audioUrlUk,
+        audioUrl: vw.audioUrlUk ?? vw.audioUrlUs,
         note: s.note,
       });
       continue;
@@ -134,7 +134,7 @@ async function resolveSavedWords(saved: SavedWord[]): Promise<ResolvedSavedWord[
         partOfSpeech: entry.partOfSpeech,
         meaningVi: entry.meaningVi,
         exampleEn: null,
-        audioUrl: entry.audioUrlUs ?? entry.audioUrlUk,
+        audioUrl: entry.audioUrlUk ?? entry.audioUrlUs,
         note: s.note,
       });
     }

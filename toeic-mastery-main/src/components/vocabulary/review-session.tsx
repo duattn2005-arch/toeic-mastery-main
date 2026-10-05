@@ -36,7 +36,7 @@ function toStudyItem(item: ReviewItem): StudyItem {
     partOfSpeech: item.word.partOfSpeech,
     meaningVi: item.word.meaningVi,
     exampleEn: item.word.exampleEn,
-    audioUrl: item.word.audioUrlUs ?? item.word.audioUrlUk,
+    audioUrl: item.word.audioUrlUk ?? item.word.audioUrlUs,
     status: item.isLearned ? "mastered" : "learning",
   };
 }

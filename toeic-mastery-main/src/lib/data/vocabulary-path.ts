@@ -170,7 +170,7 @@ export async function getPathDayDetail(dayNumber: number, userId: string, pathSl
       partOfSpeech: w.word.partOfSpeech,
       meaningVi: w.word.meaningVi,
       exampleEn: w.word.exampleEn,
-      audioUrl: w.word.audioUrlUs ?? w.word.audioUrlUk,
+      audioUrl: w.word.audioUrlUk ?? w.word.audioUrlUs,
       status: vocabStatus(trackedById.get(w.word.id)),
     })),
     starredTerms: starredMatches.map((s) => s.word),
