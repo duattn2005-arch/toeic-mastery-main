@@ -126,9 +126,9 @@ export function VocabularyReviewOverview({
       {sortMode === "stats" && hasStatus ? (
         <div className="flex flex-col gap-5">
           {[
-            { list: learning, label: "Đang học", tone: "text-warning", hint: "Từ bạn làm sai, chọn “Học lại”/“Khó”, hoặc mới nhớ được 1–2 ngày — sẽ quay lại để ôn cho đến khi nhớ chắc." },
+            { list: learning, label: "Đang học", tone: "text-warning", hint: "Từ bạn từng làm sai (sai rồi mới đúng) hoặc chọn “Học lại”/“Khó” — sẽ hiện lại hôm sau để ôn, trả lời đúng ngay là thành Đã thuộc." },
             { list: fresh, label: "Chưa học", tone: "text-muted-foreground", hint: null },
-            { list: mastered, label: "Đã thuộc", tone: "text-success", hint: "Nhớ đúng qua ít nhất 3 ngày khác nhau — vẫn được ôn lại thưa dần để không quên." },
+            { list: mastered, label: "Đã thuộc", tone: "text-success", hint: "Trả lời đúng ngay, không sai lần nào — chỉ ôn lại nhẹ sau vài ngày để không quên." },
           ]
             .filter((g) => g.list.length > 0)
             .map((g) => (

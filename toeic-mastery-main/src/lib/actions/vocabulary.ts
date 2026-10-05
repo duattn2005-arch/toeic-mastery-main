@@ -35,7 +35,7 @@ export async function startLearningWordsAction(vocabularyWordIds: string[]): Pro
 /** Shared by the graded review flow and the flashcard/quiz/matching games —
  * one SRS update, one place. `existing` must already belong to `profile`. */
 async function applyReview(
-  existing: { id: string; repetitions: number; intervalDays: number; easeFactor: number; lastReviewedAt: Date | null; nextReviewDate: Date },
+  existing: { id: string; repetitions: number; intervalDays: number; easeFactor: number; isLearned: boolean; lastReviewedAt: Date | null; nextReviewDate: Date },
   rating: ReviewRating
 ) {
   const result = computeNextReview(existing, rating);
