@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
 import { buildListeningKeyImportPlan, KEY_SECTIONS, keyTestNumbers, rankKeyFilesForTest, type KeySection } from "@/lib/data/listening-key-import";
 import { ListeningKeyImportButton } from "@/components/admin/listening-key-import-button";
+import { KeyTestPicker } from "@/components/admin/key-test-picker";
 
 export const metadata: Metadata = { title: "Giải thích ETS" };
 
@@ -31,7 +33,6 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
   // different ETS test than the file numbered 2.
   const fits = testId ? await rankKeyFilesForTest(testId, section) : [];
   const keyTest = requestedKey ?? fits[0]?.keyTest ?? KEY_TESTS[0];
-  const plan = testId ? await buildListeningKeyImportPlan(testId, keyTest, section) : null;
   // Picking a file that clearly isn't this test (e.g. web Test 01 with file
   // Test 4) must not look like "80 wrong answers" — say so and block it.
   const bestFit = fits.find((f) => !f.blocked);
@@ -39,6 +40,10 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
   const wrongPair = Boolean(bestFit && chosenFit && bestFit.keyTest !== keyTest && bestFit.avgScore - chosenFit.avgScore >= 0.2);
   const testTitle = tests.find((t) => t.id === testId)?.title;
   const webTestForKey = guessTestId(tests, keyTest, meta.year);
+  // File Test 6 against web Test 01: switch the web side to Test 06 first.
+  // On Test 06 itself webTestForKey === testId, so this never loops.
+  if (wrongPair && requestedKey && webTestForKey && webTestForKey !== testId) redirect("/admin/explanations" + qs({ test: webTestForKey, key: keyTest }));
+  const plan = testId ? await buildListeningKeyImportPlan(testId, keyTest, section) : null;
   const mismatches = plan?.rows.filter((r) => r.dbAnswer !== r.key.answer) ?? [];
 
   return (
@@ -68,28 +73,15 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
 
       <form className="flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-card p-5 shadow-soft">
         <input type="hidden" name="section" value={section} />
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-xs font-medium text-muted-foreground">File giải thích</span>
-          <select name="key" defaultValue={requestedKey ?? ""} className="h-9 rounded-lg border border-input bg-background px-3">
-            <option value="">Tự chọn file khớp nhất</option>
-            {KEY_TESTS.map((n) => (
-              <option key={n} value={n}>
-                ETS {meta.year} — Test {n}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="flex min-w-64 flex-1 flex-col gap-1 text-sm">
-          <span className="text-xs font-medium text-muted-foreground">Đề trên web</span>
-          <select name="test" defaultValue={testId} className="h-9 rounded-lg border border-input bg-background px-3">
-            <option value="">— Chọn đề —</option>
-            {tests.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.title}
-              </option>
-            ))}
-          </select>
-        </label>
+        <KeyTestPicker
+          key={`${section}-${testId}-${requestedKey ?? ""}`}
+          year={meta.year}
+          keyTests={KEY_TESTS}
+          tests={tests}
+          webTestByKey={Object.fromEntries(KEY_TESTS.map((n) => [n, guessTestId(tests, n, meta.year)]))}
+          defaultKey={requestedKey ? String(requestedKey) : ""}
+          defaultTest={testId}
+        />
         <button type="submit" className="h-9 rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90">
           Xem trước
         </button>
