@@ -15,6 +15,14 @@ const nextConfig: NextConfig = {
   // direct `import sharp` in src/lib/upload.ts (this entry is what makes
   // that one work too).
   serverExternalPackages: ["sharp"],
+  experimental: {
+    // src/proxy.ts runs on every request, so Next buffers each request body
+    // for it — and silently truncates anything past this limit (default
+    // 10MB). A full-test/Part transcript audio is well over that, and the
+    // truncated multipart body made /api/upload/question-media fail. Match
+    // Nginx's client_max_body_size (60m, README §12).
+    proxyClientMaxBodySize: "60mb",
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "api.dicebear.com" },

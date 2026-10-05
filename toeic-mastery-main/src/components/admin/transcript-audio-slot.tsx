@@ -60,8 +60,11 @@ export function TranscriptAudioSlot({
       body.append("file", file);
       body.append("kind", "transcriptAudio");
       const res = await fetch("/api/upload/question-media", { method: "POST", body });
-      const data = (await res.json()) as { url?: string; error?: string };
-      if (!res.ok || !data.url) throw new Error(data.error ?? "Tải file thất bại");
+      // A proxy/Nginx rejection (e.g. 413) comes back as HTML, not JSON.
+      const data = (await res.json().catch(() => ({}))) as { url?: string; error?: string };
+      if (!res.ok || !data.url) {
+        throw new Error(data.error ?? (res.status === 413 ? `File quá lớn (tối đa ${MAX_SIZE_MB}MB)` : `Tải file thất bại (mã ${res.status})`));
+      }
       await save(data.url, `Đã lưu file nghe ${label}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Tải file thất bại");
