@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/auth";
-import { applyListeningKeyImport, buildListeningKeyImportPlan, KEY_SECTIONS, type KeySection } from "@/lib/data/listening-key-import";
+import { applyListeningKeyImport, buildListeningKeyImportPlan, KEY_SECTIONS, sectionPartNumbers, type KeySection } from "@/lib/data/listening-key-import";
 
 export interface ImportResult {
   error?: string;
@@ -17,21 +17,25 @@ export interface ImportResult {
 /** Admin entry point for applyListeningKeyImport — refuses while the
  * preview plan has any count/Part mismatch. `fixStructure` ("Sửa toàn bộ
  * theo file") also fixes answers, moves misfiled questions to their Part
- * and renumbers the test into the file's question order. */
+ * and renumbers the test into the file's question order. `parts` limits
+ * either mode to those Parts (omitted = the whole section). */
 export async function importListeningKeysAction(
   testId: string,
   keyTest: number,
   updateAnswers: boolean,
   section: KeySection = "listening",
-  fixStructure = false
+  fixStructure = false,
+  parts?: number[]
 ): Promise<ImportResult> {
   await requireAdmin();
   if (!KEY_SECTIONS.includes(section)) return { error: "Phần đề không hợp lệ" };
+  const allowed = sectionPartNumbers(section);
+  if (parts && (parts.length === 0 || parts.some((p) => !allowed.includes(p)))) return { error: "Hãy chọn ít nhất một Part hợp lệ" };
   const plan = await buildListeningKeyImportPlan(testId, keyTest, section);
   if (!plan) return { error: "Không tìm thấy đề hoặc file giải thích" };
   if (plan.errors.length > 0) return { error: plan.errors[0] };
 
-  const result = await applyListeningKeyImport(plan, { updateAnswers: updateAnswers || fixStructure, fixStructure });
+  const result = await applyListeningKeyImport(plan, { updateAnswers: updateAnswers || fixStructure, fixStructure, parts });
   revalidatePath(`/admin/tests/${testId}`);
   revalidatePath("/admin/explanations");
   return result;
