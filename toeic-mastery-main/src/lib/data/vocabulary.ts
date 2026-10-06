@@ -100,6 +100,18 @@ export async function getDueReviewQueue(userId: string, limit = 30, topicSlug?: 
   });
 }
 
+/** Words the learner has already studied (any SRS state), most recently
+ * practised first — lets /vocabulary/review still offer the games on a day
+ * with nothing due, instead of a dead end. */
+export async function getStudiedWordsQueue(userId: string, limit = 200, topicSlug?: string) {
+  return db.userVocabulary.findMany({
+    where: { userId, ...(topicSlug ? { vocabularyWord: { topic: { slug: topicSlug } } } : {}) },
+    include: { vocabularyWord: true },
+    orderBy: [{ lastReviewedAt: { sort: "desc", nulls: "last" } }, { nextReviewDate: "asc" }],
+    take: limit,
+  });
+}
+
 export interface VocabularyReminder {
   dueTodayCount: number;
   dueTomorrowCount: number;

@@ -2,10 +2,11 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { BookOpenCheck, Grid3x3, ListChecks, Loader2, PartyPopper, RotateCcw } from "lucide-react";
+import { BookOpenCheck, Grid3x3, ListChecks, Loader2, PartyPopper, Rocket, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FlashcardBrowse } from "@/components/study-game/flashcard-browse";
 import { MatchingGame } from "@/components/study-game/matching-game";
+import { BlastGame } from "@/components/study-game/blast-game";
 import { QuizMode } from "@/components/study-game/quiz-mode";
 import { VocabularyReviewOverview } from "@/components/vocabulary/vocabulary-review-overview";
 import { practiceVocabularyWordAction, logStudySessionAction } from "@/lib/actions/vocabulary";
@@ -41,25 +42,71 @@ function toStudyItem(item: ReviewItem): StudyItem {
   };
 }
 
+type Step = 1 | 2 | 3 | 4;
+const LAST_STEP: Step = 4;
+
 const STEPS = [
   { step: 1 as const, label: "Học", icon: BookOpenCheck },
-  { step: 2 as const, label: "Luyện tập", icon: Grid3x3 },
-  { step: 3 as const, label: "Kiểm tra", icon: ListChecks },
+  { step: 2 as const, label: "Nối từ", icon: Grid3x3 },
+  { step: 3 as const, label: "Blast", icon: Rocket },
+  { step: 4 as const, label: "Kiểm tra", icon: ListChecks },
 ];
 
 /**
- * Same Học/Luyện tập/Kiểm tra flow as the 20-day path's PathDayRunner, reused
+ * Same Học/Luyện tập/Kiểm tra flow (plus a Blast round) as the 20-day path's PathDayRunner, reused
  * here for the daily spaced-repetition due queue — same underlying
  * StudyItem-based games (FlashcardBrowse/MatchingGame/QuizMode), just no
  * per-day persistence (there's nothing to resume: a fresh due queue is
  * generated every visit, so `activeStep`/`stepsCompleted` are plain local
  * state, not saved to the server like a path day's step is).
  */
-export function ReviewSession({ items, starredTerms }: { items: ReviewItem[]; starredTerms: string[] }) {
-  const studyItems = React.useMemo(() => items.map(toStudyItem), [items]);
-  const hasItems = studyItems.length > 0;
+export function ReviewSession({
+  items,
+  practiceItems = [],
+  starredTerms,
+}: {
+  items: ReviewItem[];
+  /** Already-studied words, offered when nothing is due today. */
+  practiceItems?: ReviewItem[];
+  starredTerms: string[];
+}) {
+  const [practicing, setPracticing] = React.useState(false);
 
-  const [activeStep, setActiveStep] = React.useState<1 | 2 | 3 | null>(hasItems ? 1 : null);
+  if (items.length > 0) return <ReviewRunner items={items} starredTerms={starredTerms} doneLabel="hôm nay" />;
+  if (practicing) return <ReviewRunner items={practiceItems} starredTerms={starredTerms} doneLabel="đã học" />;
+
+  return (
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-card p-10 text-center shadow-soft">
+      <PartyPopper className="size-10 text-primary" />
+      <h2 className="text-lg font-semibold">Không có từ nào đến hạn ôn hôm nay!</h2>
+      <p className="max-w-md text-sm text-muted-foreground">
+        {practiceItems.length > 0
+          ? `Bạn vẫn có thể ôn lại ${practiceItems.length} từ đã học với thẻ ghi nhớ, Nối từ, Blast và bài Kiểm tra.`
+          : "Học vài từ mới trước đã — sau đó bạn có thể quay lại đây để ôn bằng game."}
+      </p>
+      <div className="mt-2 flex flex-wrap justify-center gap-2">
+        {practiceItems.length > 0 && (
+          <Button onClick={() => setPracticing(true)}>
+            <Rocket className="size-4" /> Ôn lại {practiceItems.length} từ đã học
+          </Button>
+        )}
+        <Button asChild variant="outline">
+          <Link href="/vocabulary/topics">Học thêm từ mới</Link>
+        </Button>
+        {practiceItems.length === 0 && (
+          <Button asChild>
+            <Link href="/dashboard">Về Tổng quan</Link>
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ReviewRunner({ items, starredTerms, doneLabel }: { items: ReviewItem[]; starredTerms: string[]; doneLabel: string }) {
+  const studyItems = React.useMemo(() => items.map(toStudyItem), [items]);
+
+  const [activeStep, setActiveStep] = React.useState<Step | null>(1);
   const [stepsCompleted, setStepsCompleted] = React.useState(0);
   const [pending, setPending] = React.useState(false);
   const [reviewItems, setReviewItems] = React.useState<StudyItem[] | null>(null);
@@ -84,12 +131,12 @@ export function ReviewSession({ items, starredTerms }: { items: ReviewItem[]; st
     if (term) setSessionOverrides((prev) => ({ ...prev, [term]: rating === "AGAIN" }));
   }
 
-  function beginStep(step: 1 | 2 | 3) {
+  function beginStep(step: Step) {
     startedAtRef.current = Date.now();
     setActiveStep(step);
   }
 
-  function finishStep(step: 1 | 2 | 3) {
+  function finishStep(step: Step) {
     setPending(true);
     if (startedAtRef.current !== null) {
       const elapsedSec = Math.round((Date.now() - startedAtRef.current) / 1000);
@@ -97,8 +144,8 @@ export function ReviewSession({ items, starredTerms }: { items: ReviewItem[]; st
       startedAtRef.current = null;
     }
     setStepsCompleted((prev) => Math.max(prev, step));
-    if (step < 3) {
-      setActiveStep((step + 1) as 1 | 2 | 3);
+    if (step < LAST_STEP) {
+      setActiveStep((step + 1) as Step);
     } else {
       setActiveStep(null);
     }
@@ -108,24 +155,6 @@ export function ReviewSession({ items, starredTerms }: { items: ReviewItem[]; st
   function finishReview() {
     setReviewItems(null);
     setShowOverview(true);
-  }
-
-  if (!hasItems) {
-    return (
-      <div className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-card p-10 text-center shadow-soft">
-        <PartyPopper className="size-10 text-primary" />
-        <h2 className="text-lg font-semibold">Không có từ nào cần ôn hôm nay!</h2>
-        <p className="text-sm text-muted-foreground">Quay lại vào ngày mai để tiếp tục duy trì streak học tập.</p>
-        <div className="mt-2 flex gap-2">
-          <Button asChild variant="outline">
-            <Link href="/vocabulary/topics">Học thêm từ mới</Link>
-          </Button>
-          <Button asChild>
-            <Link href="/dashboard">Về Tổng quan</Link>
-          </Button>
-        </div>
-      </div>
-    );
   }
 
   if (reviewItems) {
@@ -144,14 +173,14 @@ export function ReviewSession({ items, starredTerms }: { items: ReviewItem[]; st
     );
   }
 
-  if (activeStep === null && stepsCompleted >= 3) {
+  if (activeStep === null && stepsCompleted >= LAST_STEP) {
     const needsReviewCount = studyItems.filter((i) => effectiveStarredTerms.includes(i.term.toLowerCase())).length;
     return (
       <div className="flex flex-col items-center gap-4 rounded-3xl border border-success/30 bg-success/10 p-8 text-center">
         <span className="flex size-16 items-center justify-center rounded-full bg-success/20 text-success">
           <PartyPopper className="size-8" />
         </span>
-        <p className="text-xl font-bold">Đã ôn xong {studyItems.length} từ hôm nay!</p>
+        <p className="text-xl font-bold">Đã ôn xong {studyItems.length} từ {doneLabel}!</p>
         {needsReviewCount > 0 && (
           <p className="text-sm text-muted-foreground">
             Bạn có <strong className="text-foreground">{needsReviewCount}</strong>/{studyItems.length} từ chưa nhớ chắc — hãy ôn tập lại.
@@ -206,7 +235,8 @@ export function ReviewSession({ items, starredTerms }: { items: ReviewItem[]; st
         <>
           {activeStep === 1 && <FlashcardBrowse items={studyItems} onFinish={() => finishStep(1)} onItemResult={handleItemResult} />}
           {activeStep === 2 && <MatchingGame items={studyItems} onFinish={() => finishStep(2)} onItemResult={handleItemResult} />}
-          {activeStep === 3 && <QuizMode items={studyItems} onFinish={() => finishStep(3)} onItemResult={handleItemResult} />}
+          {activeStep === 3 && <BlastGame items={studyItems} onFinish={() => finishStep(3)} onItemResult={handleItemResult} />}
+          {activeStep === 4 && <QuizMode items={studyItems} onFinish={() => finishStep(4)} onItemResult={handleItemResult} />}
         </>
       )}
     </div>
