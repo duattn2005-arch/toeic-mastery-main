@@ -2,7 +2,21 @@ import Link from "next/link";
 import { ChevronRight, FolderOpen } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
-export function TestFolderCard({ name, href, total, completed }: { name: string; href: string; total: number; completed: number }) {
+export function TestFolderCard({
+  name,
+  href,
+  total,
+  completed,
+  attempts = 0,
+  questionsPracticed = 0,
+}: {
+  name: string;
+  href: string;
+  total: number;
+  completed: number;
+  attempts?: number;
+  questionsPracticed?: number;
+}) {
   return (
     <Link
       href={href}
@@ -14,7 +28,10 @@ export function TestFolderCard({ name, href, total, completed }: { name: string;
         </span>
         <div className="min-w-0 flex-1">
           <p className="truncate text-base font-semibold">{name}</p>
-          <p className="text-xs text-muted-foreground">{total} đề</p>
+          <p className="text-xs text-muted-foreground">
+            {total} đề · {attempts.toLocaleString("vi-VN")} lượt làm
+            {questionsPracticed > 0 && <> · {questionsPracticed.toLocaleString("vi-VN")} câu đã luyện</>}
+          </p>
         </div>
         <ChevronRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
       </div>
