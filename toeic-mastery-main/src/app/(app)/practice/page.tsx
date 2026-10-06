@@ -16,11 +16,14 @@ import { LoginRequiredGate } from "@/components/practice/login-required-gate";
 
 export const metadata: Metadata = { title: "Luyện đề" };
 
-/** Real count, rounded DOWN so the claim is never overstated: 1234 → "Hơn 1k+". */
+/** Real count, rounded UP — worded "Gần" (nearly) whenever rounding moved
+ * it, so the headline stays true: 1234 → "Gần 1,3k", 1300 → "1,3k",
+ * 850 → "Gần 900", 42 → "42". */
 function formatPracticeCount(n: number) {
-  if (n < 1000) return n.toLocaleString("vi-VN");
-  const k = Math.floor(n / 100) / 10;
-  return `Hơn ${k.toLocaleString("vi-VN")}k+`;
+  if (n < 100) return n.toLocaleString("vi-VN");
+  const up = Math.ceil(n / 100) * 100;
+  const label = up < 1000 ? up.toLocaleString("vi-VN") : `${(up / 1000).toLocaleString("vi-VN")}k`;
+  return up === n ? label : `Gần ${label}`;
 }
 
 function PracticeHeader({ questionsPracticed, attempts }: { questionsPracticed: number; attempts: number }) {
