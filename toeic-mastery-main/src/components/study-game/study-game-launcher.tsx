@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowLeft, BookOpenCheck, Grid3x3, ListChecks, Rocket } from "lucide-react";
+import { ArrowLeft, BookOpenCheck, Grid3x3, ListChecks, Rocket, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { canPlayQuiz, type StudyItem } from "@/lib/services/study-game";
 import { logStudySessionAction, practiceVocabularyWordAction } from "@/lib/actions/vocabulary";
@@ -11,11 +11,12 @@ import { FlashcardBrowse } from "@/components/study-game/flashcard-browse";
 import { QuizMode } from "@/components/study-game/quiz-mode";
 import { MatchingGame } from "@/components/study-game/matching-game";
 import { BlastGame } from "@/components/study-game/blast-game";
+import { StudyFlow } from "@/components/study-game/study-flow";
 import { VocabularyReviewOverview } from "@/components/vocabulary/vocabulary-review-overview";
 import { cn } from "@/lib/utils";
 import { useLiveVocabStatus } from "@/hooks/use-live-vocab-status";
 
-type Mode = "flashcard" | "quiz" | "match" | "blast";
+type Mode = "flow" | "flashcard" | "quiz" | "match" | "blast";
 
 const MIN_ITEMS_FOR_MATCH = 3;
 
@@ -122,7 +123,7 @@ export function StudyGameLauncher({
   }
 
   if (reviewItems) {
-    return <FlashcardBrowse items={reviewItems} onFinish={finishReview} onItemResult={handleItemResult} autoStar={trackable} />;
+    return <StudyFlow items={reviewItems} distractorPool={items} onFinish={finishReview} onItemResult={handleItemResult} autoStar={trackable} />;
   }
 
   if (showOverview) {
@@ -147,6 +148,7 @@ export function StudyGameLauncher({
         <button type="button" onClick={finishSession} className="flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground">
           <ArrowLeft className="size-4" /> Chọn chế độ khác
         </button>
+        {mode === "flow" && <StudyFlow items={items} onFinish={finishSession} onItemResult={handleItemResult} autoStar={trackable} />}
         {mode === "flashcard" && <FlashcardBrowse items={items} onFinish={finishSession} onItemResult={handleItemResult} autoStar={trackable} />}
         {mode === "quiz" && <QuizMode items={items} onFinish={finishSession} onItemResult={handleItemResult} autoStar={trackable} />}
         {mode === "match" && <MatchingGame items={items} onFinish={finishSession} onItemResult={handleItemResult} />}
@@ -168,6 +170,21 @@ export function StudyGameLauncher({
         <p className="text-sm text-muted-foreground">{items.length} từ · chọn cách bạn muốn luyện tập</p>
       </div>
 
+      <button
+        type="button"
+        onClick={() => start("flow")}
+        className="flex items-center gap-4 rounded-2xl border border-primary/40 bg-primary/10 p-5 text-left shadow-soft transition-all hover:-translate-y-0.5 hover:shadow-lg"
+      >
+        <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+          <Sparkles className="size-5" />
+        </span>
+        <span className="flex flex-col gap-0.5">
+          <span className="text-sm font-semibold">Học đủ 4 bước (khuyên dùng)</span>
+          <span className="text-xs text-muted-foreground">Flashcard → Nối từ → Blast → Kiểm tra, với cả {items.length} từ</span>
+        </span>
+      </button>
+
+      <p className="text-xs font-medium text-muted-foreground">Hoặc chơi riêng từng chế độ:</p>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <ModeCard
           icon={BookOpenCheck}

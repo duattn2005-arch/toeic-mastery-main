@@ -32,16 +32,22 @@ function shuffle<T>(arr: T[]): T[] {
   return copy;
 }
 
+function uniqueBy<T>(arr: T[], key: (t: T) => string): T[] {
+  const seen = new Set<string>();
+  return arr.filter((t) => (seen.has(key(t)) ? false : (seen.add(key(t)), true)));
+}
+
 export function canPlayQuiz(items: StudyItem[]): boolean {
   return items.length >= MIN_ITEMS_FOR_QUIZ;
 }
 
 /** One question per item, 3 wrong-meaning distractors drawn from the rest of
- * the set (so distractors are always plausible — real TOEIC meanings, not
+ * the set — or from `distractorPool` (e.g. the whole lesson) when reviewing
+ * just a few words (so distractors are always plausible — real TOEIC meanings, not
  * nonsense strings). */
-export function buildQuiz(items: StudyItem[]): QuizQuestion[] {
+export function buildQuiz(items: StudyItem[], distractorPool: StudyItem[] = items): QuizQuestion[] {
   return shuffle(items).map((item) => {
-    const pool = items.filter((i) => i.id !== item.id);
+    const pool = uniqueBy([...items, ...distractorPool], (i) => i.meaningVi).filter((i) => i.id !== item.id && i.meaningVi !== item.meaningVi);
     const distractors = shuffle(pool)
       .slice(0, 3)
       .map((i) => i.meaningVi);
@@ -93,9 +99,10 @@ export interface BlastQuestion {
 
 /** One Blast question per item (every word in the session): the meaning is
  * the prompt, the asteroids carry the correct term + real distractor terms. */
-export function buildBlast(items: StudyItem[]): BlastQuestion[] {
+export function buildBlast(items: StudyItem[], distractorPool: StudyItem[] = items): BlastQuestion[] {
   return shuffle(items).map((item) => {
-    const distractors = shuffle(items.filter((i) => i.id !== item.id && i.term !== item.term)).slice(0, 3);
+    const pool = uniqueBy([...items, ...distractorPool], (i) => i.term).filter((i) => i.id !== item.id && i.term !== item.term);
+    const distractors = shuffle(pool).slice(0, 3);
     return { item, options: shuffle([item, ...distractors]) };
   });
 }
