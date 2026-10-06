@@ -41,14 +41,17 @@ export function QuizMode({
   onFinish,
   onItemResult,
   autoStar = true,
+  distractorPool,
 }: {
   items: StudyItem[];
   onFinish: (result?: { correct: number; total: number }) => void;
   onItemResult?: (itemId: string, rating: ReviewRating) => void | Promise<void>;
   /** Off for Saved Words — see FlashcardBrowse's autoStar doc. */
   autoStar?: boolean;
+  /** Wider word list to draw wrong options from (defaults to `items`). */
+  distractorPool?: StudyItem[];
 }) {
-  const [queue, setQueue] = React.useState<QueueEntry[]>(() => buildQuiz(items).map((question) => ({ question, wrongCount: 0 })));
+  const [queue, setQueue] = React.useState<QueueEntry[]>(() => buildQuiz(items, distractorPool).map((question) => ({ question, wrongCount: 0 })));
   const [index, setIndex] = React.useState(0);
   const [picked, setPicked] = React.useState<number | null>(null);
   const [firstTryCorrect, setFirstTryCorrect] = React.useState(0);
