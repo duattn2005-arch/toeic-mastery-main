@@ -42,7 +42,7 @@ export default async function VocabularyReviewPage({ searchParams }: { searchPar
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Ôn tập từ vựng{topic ? ` — ${topic.name}` : ""}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Flashcard theo lịch lặp lại ngắt quãng (spaced repetition).</p>
+        <p className="mt-1 text-sm text-muted-foreground">Flashcard → Nối từ → Blast → Kiểm tra, theo lịch lặp lại ngắt quãng (spaced repetition).</p>
       </div>
       <ReviewSession items={items} practiceItems={practiceItems} starredTerms={starredMatches.map((s) => s.word)} />
     </div>
