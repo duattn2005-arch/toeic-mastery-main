@@ -54,29 +54,36 @@ export function ReviewSession({
   starredTerms: string[];
 }) {
   const [practicing, setPracticing] = React.useState(false);
+  // Snapshot the word lists for this visit. Every rating writes progress
+  // through a server action, whose revalidation re-renders this page with
+  // a fresh due queue — which empties as words are rated. Following those
+  // new props would drop the learner out of the session (to the "nothing
+  // due" screen) right after the flashcards, before Nối từ/Blast/Kiểm tra.
+  const [session] = React.useState(() => ({ due: items, studied: practiceItems }));
+  const { due, studied } = session;
 
-  if (items.length > 0) return <ReviewRunner items={items} starredTerms={starredTerms} doneLabel="hôm nay" />;
-  if (practicing) return <ReviewRunner items={practiceItems} starredTerms={starredTerms} doneLabel="đã học" />;
+  if (due.length > 0) return <ReviewRunner items={due} starredTerms={starredTerms} doneLabel="hôm nay" />;
+  if (practicing) return <ReviewRunner items={studied} starredTerms={starredTerms} doneLabel="đã học" />;
 
   return (
     <div className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-card p-10 text-center shadow-soft">
       <PartyPopper className="size-10 text-primary" />
       <h2 className="text-lg font-semibold">Không có từ nào đến hạn ôn hôm nay!</h2>
       <p className="max-w-md text-sm text-muted-foreground">
-        {practiceItems.length > 0
-          ? `Bạn vẫn có thể ôn lại ${practiceItems.length} từ đã học với thẻ ghi nhớ, Nối từ, Blast và bài Kiểm tra.`
+        {studied.length > 0
+          ? `Bạn vẫn có thể ôn lại ${studied.length} từ đã học với thẻ ghi nhớ, Nối từ, Blast và bài Kiểm tra.`
           : "Học vài từ mới trước đã — sau đó bạn có thể quay lại đây để ôn bằng game."}
       </p>
       <div className="mt-2 flex flex-wrap justify-center gap-2">
-        {practiceItems.length > 0 && (
+        {studied.length > 0 && (
           <Button onClick={() => setPracticing(true)}>
-            <Rocket className="size-4" /> Ôn lại {practiceItems.length} từ đã học
+            <Rocket className="size-4" /> Ôn lại {studied.length} từ đã học
           </Button>
         )}
         <Button asChild variant="outline">
           <Link href="/vocabulary/topics">Học thêm từ mới</Link>
         </Button>
-        {practiceItems.length === 0 && (
+        {studied.length === 0 && (
           <Button asChild>
             <Link href="/dashboard">Về Tổng quan</Link>
           </Button>
