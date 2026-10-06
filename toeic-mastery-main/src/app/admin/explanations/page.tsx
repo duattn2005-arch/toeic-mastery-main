@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { cn } from "@/lib/utils";
-import { buildListeningKeyImportPlan, KEY_SECTIONS, keyTestNumbers, rankKeyFilesForTest, type KeySection } from "@/lib/data/listening-key-import";
+import { buildListeningKeyImportPlan, KEY_SECTIONS, keyTestNumbers, rankKeyFilesForTest, sectionPartNumbers, type KeySection } from "@/lib/data/listening-key-import";
 import { ListeningKeyImportButton } from "@/components/admin/listening-key-import-button";
 import { KeyTestPicker } from "@/components/admin/key-test-picker";
 
@@ -181,8 +181,16 @@ export default async function AdminExplanationsPage({ searchParams }: { searchPa
                 testId={testId}
                 keyTest={keyTest}
                 section={section}
-                mismatchCount={mismatches.length}
-                structureIssues={plan.rows.filter((r) => r.webNumber !== r.number || r.dbPart !== r.part).length}
+                partStats={sectionPartNumbers(section).map((part) => {
+                  const inPart = plan.rows.filter((r) => r.part === part);
+                  return {
+                    part,
+                    matched: inPart.length,
+                    mismatches: inPart.filter((r) => r.dbAnswer !== r.key.answer).length,
+                    structureIssues: inPart.filter((r) => r.webNumber !== r.number || r.dbPart !== r.part).length,
+                    missing: plan.missing.filter((k) => k.part === part).length,
+                  };
+                })}
                 fixAnswersByDefault={plan.warnings.length === 0}
               />
             )}

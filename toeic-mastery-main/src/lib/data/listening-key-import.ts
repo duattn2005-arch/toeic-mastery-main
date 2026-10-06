@@ -21,6 +21,11 @@ const SECTIONS = {
   reading: { parts: ["PART5", "PART6", "PART7"], firstNumber: 101, keys: ETS_2026_READING_KEYS, minScore: 0.3 },
 } as const;
 
+/** The Part numbers a section covers (1–4 Listening, 5–7 Reading). */
+export function sectionPartNumbers(section: KeySection) {
+  return SECTIONS[section].parts.map((p) => Number(p.slice(4)));
+}
+
 /** Key file numbers available for a section (Test 1–5 for every set). */
 export function keyTestNumbers(section: KeySection) {
   return Object.keys(SECTIONS[section].keys).map(Number);
@@ -162,6 +167,10 @@ export interface ApplyOptions {
   /** Also move questions saved under the wrong Part and renumber the whole
    * test so this section follows the file's question order. */
   fixStructure?: boolean;
+  /** Only touch these (file) Parts — questions the file puts in any other
+   * Part, and the order of other Parts' questions, are left as they are.
+   * Omitted = every Part of the section. */
+  parts?: number[];
 }
 
 /** Writes a plan's transcripts and Vietnamese explanations into the DB in
@@ -169,7 +178,9 @@ export interface ApplyOptions {
  * question belongs to one (one write per group), otherwise on the question
  * itself. Answers only change when `updateAnswers` is set; Parts and exam
  * order only with `fixStructure`. */
-export async function applyListeningKeyImport(plan: ImportPlan, { updateAnswers, fixStructure = false }: ApplyOptions) {
+export async function applyListeningKeyImport(plan: ImportPlan, { updateAnswers, fixStructure = false, parts }: ApplyOptions) {
+  const inScope = (part: number) => !parts || parts.includes(part);
+  const rows = plan.rows.filter((r) => inScope(r.part));
   const writes = [];
   const passagesDone = new Set<string>();
   let updatedAnswers = 0;
@@ -182,7 +193,7 @@ export async function applyListeningKeyImport(plan: ImportPlan, { updateAnswers,
     for (const s of sections) sectionIdByPart.set(s.part, s.id);
   }
 
-  for (const row of plan.rows) {
+  for (const row of rows) {
     const { key } = row;
     // Reading keys have no transcript — never touch transcripts then.
     const hasTranscript = key.transcript !== undefined;
@@ -217,19 +228,21 @@ export async function applyListeningKeyImport(plan: ImportPlan, { updateAnswers,
   }
 
   // File questions absent on the web, created by "Sửa toàn bộ theo file".
-  const created = fixStructure ? plan.missing.map((key) => ({ id: randomUUID(), key, ...splitKeyText(key) })) : [];
+  const created = fixStructure ? plan.missing.filter((key) => inScope(key.part)).map((key) => ({ id: randomUUID(), key, ...splitKeyText(key) })) : [];
 
   if (fixStructure) {
     // The exam lists a test's questions by orderIndex alone, so renumber
     // the whole test: Part by Part, this section's questions in the file's
     // order, anything else (the other section, unmatched extras) keeping its
-    // current relative order after them.
+    // current relative order after them. With a Part selection, questions
+    // outside it are ranked by their current position, so only the chosen
+    // Parts get rearranged.
     const all = await db.question.findMany({
       where: { testId: plan.testId },
       orderBy: [{ orderIndex: "asc" }, { createdAt: "asc" }, { id: "asc" }],
       select: { id: true, part: true, orderIndex: true },
     });
-    const fileNumber = new Map(plan.rows.map((r) => [r.questionId, r]));
+    const fileNumber = new Map(rows.map((r) => [r.questionId, r]));
     const sortKey = all.map((q, i) => {
       const row = fileNumber.get(q.id);
       return { id: q.id, current: q.orderIndex, part: row ? row.part : partNumber(q.part), rank: row ? row.number : 10_000 + i };
@@ -283,7 +296,7 @@ export async function applyListeningKeyImport(plan: ImportPlan, { updateAnswers,
   }
 
   await db.$transaction(writes);
-  return { updatedQuestions: plan.rows.length, updatedPassages: passagesDone.size, updatedAnswers, movedParts, reordered, createdQuestions: created.length };
+  return { updatedQuestions: rows.length, updatedPassages: passagesDone.size, updatedAnswers, movedParts, reordered, createdQuestions: created.length };
 }
 
 export interface KeyFileFit {
