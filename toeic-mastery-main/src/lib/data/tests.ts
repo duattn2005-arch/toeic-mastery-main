@@ -1,6 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
-import type { Prisma, TestPart } from "@/generated/prisma/client";
+import { Prisma, type TestPart } from "@/generated/prisma/client";
 
 export interface TestListFilters {
   category?: "ALL" | "FULL" | "LISTENING" | "READING" | TestPart;
@@ -54,6 +54,7 @@ export async function getTestList(userId: string, filters: TestListFilters) {
     _max: { totalScore: true },
   });
   const bestScoreByTest = new Map(bestScores.map((b) => [b.testId, b._max.totalScore]));
+  const practicedByTest = await getQuestionsPracticedByTest(tests.map((t) => t.id));
 
   const mapped = tests.map((t) => {
     const latestAttempt = t.attempts[0] ?? null;
@@ -68,6 +69,7 @@ export async function getTestList(userId: string, filters: TestListFilters) {
       isFullTest: t.isFullTest,
       isPro: t.isPro,
       usersCompleted: t._count.attempts,
+      questionsPracticed: practicedByTest.get(t.id) ?? 0,
       bestScore: bestScoreByTest.get(t.id) ?? null,
       isCompleted,
       isInProgress,
@@ -82,6 +84,30 @@ export async function getTestList(userId: string, filters: TestListFilters) {
 }
 
 export type TestListItem = Awaited<ReturnType<typeof getTestList>>[number];
+
+/** Real number of answered questions (all learners, every attempt status)
+ * per test — a bigger, still truthful engagement figure than attempts. */
+async function getQuestionsPracticedByTest(testIds: string[]): Promise<Map<string, number>> {
+  if (testIds.length === 0) return new Map();
+  const rows = await db.$queryRaw<{ testId: string; count: bigint }[]>`
+    SELECT a.test_id::text AS "testId", COUNT(*) AS count
+    FROM attempt_answers aa
+    JOIN attempts a ON a.id = aa.attempt_id
+    WHERE aa.selected_label IS NOT NULL
+      AND a.test_id::text IN (${Prisma.join(testIds)})
+    GROUP BY a.test_id
+  `;
+  return new Map(rows.map((r) => [r.testId, Number(r.count)]));
+}
+
+/** Site-wide real totals for the "lượt luyện tập" headline on /practice. */
+export async function getPracticeTotals() {
+  const [attempts, answered] = await Promise.all([
+    db.attempt.count(),
+    db.$queryRaw<{ count: bigint }[]>`SELECT COUNT(*) AS count FROM attempt_answers WHERE selected_label IS NOT NULL`,
+  ]);
+  return { attempts, questionsPracticed: Number(answered[0]?.count ?? 0) };
+}
 
 /**
  * Picks one test for "Làm bài test thử" (take a trial test) to jump

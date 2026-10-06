@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
-import { ChevronLeft, ChevronRight, ClipboardList, ListX } from "lucide-react";
+import { ChevronLeft, ChevronRight, ClipboardList, Flame, ListX } from "lucide-react";
 
 import { getCurrentProfile } from "@/lib/auth";
-import { getTestList, type TestListFilters } from "@/lib/data/tests";
+import { getPracticeTotals, getTestList, type TestListFilters } from "@/lib/data/tests";
 import { getMistakeCount } from "@/lib/data/mistakes";
 import { PracticeFilters } from "@/components/practice/practice-filters";
 import { TestCard } from "@/components/practice/test-card";
@@ -15,6 +15,32 @@ import { PracticeTour } from "@/components/practice/practice-tour";
 import { LoginRequiredGate } from "@/components/practice/login-required-gate";
 
 export const metadata: Metadata = { title: "Luyện đề" };
+
+/** Real count, rounded UP — worded "Gần" (nearly) whenever rounding moved
+ * it, so the headline stays true: 1234 → "Gần 1,3k", 1300 → "1,3k",
+ * 850 → "Gần 900", 42 → "42". */
+function formatPracticeCount(n: number) {
+  if (n < 100) return n.toLocaleString("vi-VN");
+  const up = Math.ceil(n / 100) * 100;
+  const label = up < 1000 ? up.toLocaleString("vi-VN") : `${(up / 1000).toLocaleString("vi-VN")}k`;
+  return up === n ? label : `Gần ${label}`;
+}
+
+function PracticeHeader({ questionsPracticed, attempts }: { questionsPracticed: number; attempts: number }) {
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold tracking-tight">Luyện đề</h1>
+      <p className="mt-1 text-sm text-muted-foreground">Chọn đề thi phù hợp với mục tiêu của bạn.</p>
+      {questionsPracticed > 0 && (
+        <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+          <Flame className="size-3.5" />
+          {formatPracticeCount(questionsPracticed)} lượt luyện tập trên TOEIC Mastery
+          <span className="text-primary/70">· {attempts.toLocaleString("vi-VN")} lượt làm đề</span>
+        </p>
+      )}
+    </div>
+  );
+}
 
 const VALID_CATEGORIES = new Set(["ALL", "FULL", "LISTENING", "READING", "PART1", "PART2", "PART3", "PART4", "PART5", "PART6", "PART7"]);
 
@@ -34,13 +60,12 @@ export default async function PracticePage({
     sort: (typeof params.sort === "string" ? params.sort : "NEWEST") as TestListFilters["sort"],
   };
 
+  const totals = await getPracticeTotals();
+
   if (!profile) {
     return (
       <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Luyện đề</h1>
-          <p className="mt-1 text-sm text-muted-foreground">Chọn đề thi phù hợp với mục tiêu của bạn.</p>
-        </div>
+        <PracticeHeader {...totals} />
         <LoginRequiredGate />
       </div>
     );
@@ -62,6 +87,10 @@ export default async function PracticePage({
     return query ? `/practice?${query}` : "/practice";
   }
 
+  function sum(list: typeof tests, key: "usersCompleted" | "questionsPracticed") {
+    return list.reduce((acc, t) => acc + t[key], 0);
+  }
+
   function renderTests(list: typeof tests) {
     return (
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -73,6 +102,7 @@ export default async function PracticePage({
             totalQuestions={test.totalQuestions}
             durationMinutes={test.durationMinutes}
             usersCompleted={test.usersCompleted}
+            questionsPracticed={test.questionsPracticed}
             bestScore={test.bestScore}
             progressPercent={test.progressPercent}
             href={test.resumeAttemptId ? `/exam/${test.resumeAttemptId}` : `/practice/${test.id}`}
@@ -86,10 +116,7 @@ export default async function PracticePage({
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight">Luyện đề</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Chọn đề thi phù hợp với mục tiêu của bạn.</p>
-      </div>
+      <PracticeHeader {...totals} />
 
       {mistakeCount > 0 && (
         <Link
@@ -121,7 +148,10 @@ export default async function PracticePage({
             </Link>
             <ChevronRight className="size-4 text-muted-foreground" />
             <span className="font-semibold">{openFolder.name}</span>
-            <span className="text-muted-foreground">· {openFolder.tests.length} đề</span>
+            <span className="text-muted-foreground">
+              · {openFolder.tests.length} đề · {sum(openFolder.tests, "usersCompleted").toLocaleString("vi-VN")} lượt làm ·{" "}
+              {sum(openFolder.tests, "questionsPracticed").toLocaleString("vi-VN")} câu đã luyện
+            </span>
           </div>
           {openFolder.tests.length === 0 ? (
             <EmptyState icon={ClipboardList} title="Không có đề phù hợp trong bộ này" description="Hãy thử thay đổi bộ lọc." />
@@ -142,6 +172,8 @@ export default async function PracticePage({
                   href={folderHref(folder.name)}
                   total={folder.tests.length}
                   completed={folder.tests.filter((t) => t.isCompleted).length}
+                  attempts={sum(folder.tests, "usersCompleted")}
+                  questionsPracticed={sum(folder.tests, "questionsPracticed")}
                 />
               ))}
             </div>

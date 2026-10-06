@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Clock, Crown, ListChecks, Trophy, Users } from "lucide-react";
+import { Clock, Crown, Flame, ListChecks, Trophy, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -24,6 +24,7 @@ export function TestCard({
   totalQuestions,
   durationMinutes,
   usersCompleted,
+  questionsPracticed,
   bestScore,
   progressPercent,
   href,
@@ -35,6 +36,7 @@ export function TestCard({
   totalQuestions: number;
   durationMinutes: number;
   usersCompleted: number;
+  questionsPracticed?: number;
   bestScore: number | null;
   progressPercent?: number | null;
   href: string;
@@ -66,8 +68,13 @@ export function TestCard({
           <Clock className="size-3.5" /> {durationMinutes} phút
         </span>
         <span className="flex items-center gap-1">
-          <Users className="size-3.5" /> {usersCompleted} lượt làm
+          <Users className="size-3.5" /> {usersCompleted.toLocaleString("vi-VN")} lượt làm
         </span>
+        {!!questionsPracticed && (
+          <span className="flex items-center gap-1">
+            <Flame className="size-3.5" /> {questionsPracticed.toLocaleString("vi-VN")} câu đã luyện
+          </span>
+        )}
         {bestScore !== null && (
           <span className="flex items-center gap-1">
             <Trophy className="size-3.5" /> Điểm cao nhất {bestScore}
