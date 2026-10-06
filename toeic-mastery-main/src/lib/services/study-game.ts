@@ -57,13 +57,45 @@ export interface MatchTile {
   kind: "term" | "meaning";
 }
 
-/** A random subset (capped so the board stays playable) laid out as
- * shuffled term/meaning tiles for the matching game. */
-export function buildMatchBoard(items: StudyItem[]): MatchTile[] {
-  const pairs = shuffle(items).slice(0, MAX_MATCH_PAIRS);
+function boardFor(pairs: StudyItem[]): MatchTile[] {
   const tiles: MatchTile[] = pairs.flatMap((item) => [
     { key: `${item.id}-term`, itemId: item.id, label: item.term, kind: "term" as const },
     { key: `${item.id}-meaning`, itemId: item.id, label: item.meaningVi, kind: "meaning" as const },
   ]);
   return shuffle(tiles);
+}
+
+/** EVERY item, split into rounds of at most MAX_MATCH_PAIRS pairs (so each
+ * board stays playable) — a session of N words plays all N, not just 8.
+ * Round sizes are balanced (e.g. 10 words -> 5 + 5, not 8 + 2) so no round
+ * is a trivial 1-2 pair board. */
+export function buildMatchRounds(items: StudyItem[]): MatchTile[][] {
+  const shuffled = shuffle(items);
+  if (shuffled.length === 0) return [];
+  const roundCount = Math.ceil(shuffled.length / MAX_MATCH_PAIRS);
+  const base = Math.floor(shuffled.length / roundCount);
+  const extra = shuffled.length % roundCount;
+  const rounds: MatchTile[][] = [];
+  let start = 0;
+  for (let r = 0; r < roundCount; r++) {
+    const size = base + (r < extra ? 1 : 0);
+    rounds.push(boardFor(shuffled.slice(start, start + size)));
+    start += size;
+  }
+  return rounds;
+}
+
+export interface BlastQuestion {
+  item: StudyItem;
+  /** Terms written on the asteroids — the right one plus up to 3 others. */
+  options: StudyItem[];
+}
+
+/** One Blast question per item (every word in the session): the meaning is
+ * the prompt, the asteroids carry the correct term + real distractor terms. */
+export function buildBlast(items: StudyItem[]): BlastQuestion[] {
+  return shuffle(items).map((item) => {
+    const distractors = shuffle(items.filter((i) => i.id !== item.id && i.term !== item.term)).slice(0, 3);
+    return { item, options: shuffle([item, ...distractors]) };
+  });
 }
