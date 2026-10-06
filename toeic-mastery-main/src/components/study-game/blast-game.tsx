@@ -48,12 +48,15 @@ export function BlastGame({
   items,
   onFinish,
   onItemResult,
+  distractorPool,
 }: {
   items: StudyItem[];
+  /** Wider word list for the decoy asteroids (defaults to `items`). */
+  distractorPool?: StudyItem[];
   onFinish: () => void;
   onItemResult?: (itemId: string, rating: ReviewRating) => void | Promise<void>;
 }) {
-  const [questions] = React.useState<BlastQuestion[]>(() => buildBlast(items));
+  const [questions] = React.useState<BlastQuestion[]>(() => buildBlast(items, distractorPool));
   const [index, setIndex] = React.useState(0);
   const [phase, setPhase] = React.useState<Phase>("aim");
   const [missed, setMissed] = React.useState<Set<string>>(new Set());

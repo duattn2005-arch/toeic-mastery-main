@@ -11,6 +11,8 @@ import type { StudyItem } from "@/lib/services/study-game";
 import { FlashcardBrowse } from "@/components/study-game/flashcard-browse";
 import { QuizMode } from "@/components/study-game/quiz-mode";
 import { MatchingGame } from "@/components/study-game/matching-game";
+import { BlastGame } from "@/components/study-game/blast-game";
+import { StudyFlow } from "@/components/study-game/study-flow";
 import { VocabularyReviewOverview } from "@/components/vocabulary/vocabulary-review-overview";
 import { logStudySessionAction, practiceVocabularyWordAction } from "@/lib/actions/vocabulary";
 import { completePathStepAction } from "@/lib/actions/vocabulary-path";
@@ -18,7 +20,7 @@ import { useLiveVocabStatus } from "@/hooks/use-live-vocab-status";
 
 const STEPS = [
   { step: 1 as const, label: "Học", icon: BookOpenCheck },
-  { step: 2 as const, label: "Luyện tập", icon: Grid3x3 },
+  { step: 2 as const, label: "Nối từ & Blast", icon: Grid3x3 },
   { step: 3 as const, label: "Kiểm tra", icon: ListChecks },
 ];
 
@@ -59,6 +61,8 @@ export function PathDayRunner({
   const [stars, setStars] = React.useState(initialStars);
   const [pending, setPending] = React.useState(false);
   const [reviewItems, setReviewItems] = React.useState<StudyItem[] | null>(null);
+  // Step 2 "Luyện tập" plays both games: Nối từ, then Blast.
+  const [practiceGame, setPracticeGame] = React.useState<"match" | "blast">("match");
   const [showOverview, setShowOverview] = React.useState(false);
   // Mirrors the star/unstar side effect FlashcardBrowse/QuizMode trigger
   // server-side, so the overview's counts update immediately instead of
@@ -97,6 +101,7 @@ export function PathDayRunner({
 
   function beginStep(step: 1 | 2 | 3) {
     startedAtRef.current = Date.now();
+    setPracticeGame("match");
     setActiveStep(step);
   }
 
@@ -111,6 +116,7 @@ export function PathDayRunner({
     if (result.stepsCompleted !== undefined) setStepsCompleted(result.stepsCompleted);
     if (result.stars !== undefined) setStars(result.stars);
     setActiveStep(step < 3 ? ((step + 1) as 1 | 2 | 3) : null);
+    setPracticeGame("match");
     setPending(false);
     router.refresh();
   }
@@ -139,7 +145,7 @@ export function PathDayRunner({
       </div>
 
       {reviewItems ? (
-        <FlashcardBrowse items={reviewItems} onFinish={finishReview} onItemResult={handleItemResult} />
+        <StudyFlow items={reviewItems} distractorPool={items} onFinish={finishReview} onItemResult={handleItemResult} />
       ) : showOverview ? (
         <VocabularyReviewOverview
           key={effectiveStarredTerms.join(",")}
@@ -220,7 +226,12 @@ export function PathDayRunner({
           ) : (
             <>
               {activeStep === 1 && <FlashcardBrowse items={items} onFinish={() => void finishStep(1)} onItemResult={handleItemResult} />}
-              {activeStep === 2 && <MatchingGame items={items} onFinish={() => void finishStep(2)} onItemResult={handleItemResult} />}
+              {activeStep === 2 &&
+                (practiceGame === "match" && items.length >= 2 ? (
+                  <MatchingGame items={items} onFinish={() => setPracticeGame("blast")} onItemResult={handleItemResult} />
+                ) : (
+                  <BlastGame items={items} onFinish={() => void finishStep(2)} onItemResult={handleItemResult} />
+                ))}
               {activeStep === 3 && (
                 <QuizMode items={items} onFinish={(result) => void finishStep(3, result)} onItemResult={handleItemResult} />
               )}
