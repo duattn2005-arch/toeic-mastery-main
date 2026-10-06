@@ -149,7 +149,7 @@ export default async function DashboardPage() {
                   difficulty={test.difficulty}
                   totalQuestions={test.totalQuestions}
                   durationMinutes={test.durationMinutes}
-                  usersCompleted={test.usersCompleted}
+                  usersCompleted={profile.role === "ADMIN" ? test.usersCompleted : undefined}
                   bestScore={test.bestScore}
                   href={`/practice/${test.id}`}
                   ctaLabel="Làm đề"

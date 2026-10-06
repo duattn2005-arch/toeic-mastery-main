@@ -7,6 +7,7 @@ import { PART_META } from "@/lib/constants/toeic";
 import type { TestPart } from "@/generated/prisma/enums";
 import { getPartTests } from "@/lib/data/skill-hub";
 import { db } from "@/lib/db";
+import { getCurrentProfile } from "@/lib/auth";
 import { ListeningPartTour } from "@/components/listening/listening-part-tour";
 
 function practicePoolSlug(part: TestPart): string {
@@ -26,6 +27,8 @@ const PART_TIPS: Record<TestPart, string[]> = {
 export async function PartDetailView({ part, userId }: { part: TestPart; userId: string }) {
   const meta = PART_META[part];
   const basePath = meta.skill === "LISTENING" ? "listening" : "reading";
+  // Attempt counts are an admin-only figure.
+  const isAdmin = (await getCurrentProfile())?.role === "ADMIN";
 
   const [tests, attempts] = await Promise.all([
     getPartTests(part),
@@ -81,7 +84,7 @@ export async function PartDetailView({ part, userId }: { part: TestPart; userId:
           partLabel={meta.label}
           totalQuestions={poolTest.totalQuestions}
           durationMinutes={poolTest.durationMinutes}
-          usersCompleted={poolTest._count.attempts}
+          usersCompleted={isAdmin ? poolTest._count.attempts : undefined}
           bestScore={attemptsByTest.get(poolTest.id)?.best ?? null}
           href={`/practice/${poolTest.id}`}
           ctaLabel={attemptsByTest.has(poolTest.id) ? "Làm lại" : "Bắt đầu"}
@@ -113,7 +116,7 @@ export async function PartDetailView({ part, userId }: { part: TestPart; userId:
                   difficulty={test.difficulty}
                   totalQuestions={test.totalQuestions}
                   durationMinutes={test.durationMinutes}
-                  usersCompleted={test._count.attempts}
+                  usersCompleted={isAdmin ? test._count.attempts : undefined}
                   bestScore={stats?.best ?? null}
                   href={`/practice/${test.id}`}
                   ctaLabel={stats ? "Làm lại" : "Bắt đầu"}

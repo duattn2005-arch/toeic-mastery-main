@@ -14,7 +14,8 @@ export function PartPracticeHero({
   partLabel: string;
   totalQuestions: number;
   durationMinutes: number;
-  usersCompleted: number;
+  /** Only passed for admins; hidden when omitted. */
+  usersCompleted?: number;
   bestScore: number | null;
   href: string;
   ctaLabel: string;
@@ -43,9 +44,11 @@ export function PartPracticeHero({
               <span className="flex items-center gap-1.5">
                 <Clock className="size-4" /> {durationMinutes} phút
               </span>
-              <span className="flex items-center gap-1.5">
-                <Users className="size-4" /> {usersCompleted} lượt làm
-              </span>
+              {usersCompleted !== undefined && (
+                <span className="flex items-center gap-1.5">
+                  <Users className="size-4" /> {usersCompleted} lượt làm
+                </span>
+              )}
               {bestScore !== null && (
                 <span className="flex items-center gap-1.5">
                   <Trophy className="size-4" /> Điểm cao nhất {bestScore}
