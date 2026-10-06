@@ -114,6 +114,40 @@ export function QuizMode({
     setIndex((i) => i + 1);
   }
 
+  // Keyboard: 1–4 / A–D picks an option, Enter goes to the next question
+  // (Enter on the results screen continues once results are saved).
+  const pickRef = React.useRef(pick);
+  const nextRef = React.useRef(next);
+  const finishRef = React.useRef<(() => void) | null>(null);
+  React.useEffect(() => {
+    pickRef.current = pick;
+    nextRef.current = next;
+    finishRef.current = done && !applying ? () => onFinish({ correct: firstTryCorrect, total: totalUnique }) : null;
+  });
+  React.useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return;
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("input, textarea, select, [contenteditable='true']")) return;
+      if (e.key === "Enter") {
+        // Also cancels Enter "clicking" whatever button has focus, so one
+        // press never advances twice.
+        e.preventDefault();
+        if (done) finishRef.current?.();
+        else if (picked !== null) nextRef.current();
+        return;
+      }
+      if (done || picked !== null || !current) return;
+      const n = /^[1-9]$/.test(e.key) ? Number(e.key) - 1 : "abcd".indexOf(e.key.toLowerCase());
+      if (n >= 0 && n < current.question.options.length) {
+        e.preventDefault();
+        pickRef.current(n);
+      }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [done, picked, current]);
+
   if (done) {
     return (
       <div className="flex flex-col items-center gap-5 text-center">
@@ -197,7 +231,12 @@ export function QuizMode({
                 revealed && !isCorrect && !isPicked && "border-border opacity-50"
               )}
             >
-              {option}
+              <span className="flex items-center gap-3">
+                <kbd className="hidden size-5 shrink-0 items-center justify-center rounded border border-border text-[10px] font-semibold text-muted-foreground sm:flex">
+                  {i + 1}
+                </kbd>
+                {option}
+              </span>
               {revealed && isCorrect && <Check className="size-4 shrink-0" />}
               {revealed && isPicked && !isCorrect && <X className="size-4 shrink-0" />}
             </button>
@@ -205,10 +244,12 @@ export function QuizMode({
         })}
       </div>
 
-      {picked !== null && (
+      {picked !== null ? (
         <Button type="button" onClick={next}>
-          Câu tiếp theo
+          Câu tiếp theo <kbd className="ml-1 hidden rounded bg-white/20 px-1.5 py-0.5 text-[10px] font-semibold sm:inline">Enter</kbd>
         </Button>
+      ) : (
+        <p className="hidden text-xs text-muted-foreground sm:block">Mẹo: bấm phím 1–4 để chọn đáp án, Enter để sang câu tiếp</p>
       )}
     </div>
   );
