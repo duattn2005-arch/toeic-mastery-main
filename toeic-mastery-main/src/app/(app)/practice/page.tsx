@@ -26,16 +26,16 @@ function formatPracticeCount(n: number) {
   return up === n ? label : `Gần ${label}`;
 }
 
-function PracticeHeader({ questionsPracticed, attempts }: { questionsPracticed: number; attempts: number }) {
+function PracticeHeader({ totals }: { totals?: { questionsPracticed: number; attempts: number } | null }) {
   return (
     <div>
       <h1 className="text-2xl font-semibold tracking-tight">Luyện đề</h1>
       <p className="mt-1 text-sm text-muted-foreground">Chọn đề thi phù hợp với mục tiêu của bạn.</p>
-      {questionsPracticed > 0 && (
+      {totals && totals.questionsPracticed > 0 && (
         <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
           <Flame className="size-3.5" />
-          {formatPracticeCount(questionsPracticed)} lượt luyện tập trên TOEIC Mastery
-          <span className="text-primary/70">· {attempts.toLocaleString("vi-VN")} lượt làm đề</span>
+          {formatPracticeCount(totals.questionsPracticed)} lượt luyện tập trên TOEIC Mastery
+          <span className="text-primary/70">· {totals.attempts.toLocaleString("vi-VN")} lượt làm đề</span>
         </p>
       )}
     </div>
@@ -60,12 +60,14 @@ export default async function PracticePage({
     sort: (typeof params.sort === "string" ? params.sort : "NEWEST") as TestListFilters["sort"],
   };
 
-  const totals = await getPracticeTotals();
+  // Attempt / practised-question counts are shown to admins only.
+  const isAdmin = profile?.role === "ADMIN";
+  const totals = isAdmin ? await getPracticeTotals() : null;
 
   if (!profile) {
     return (
       <div className="flex flex-col gap-6">
-        <PracticeHeader {...totals} />
+        <PracticeHeader />
         <LoginRequiredGate />
       </div>
     );
@@ -101,8 +103,8 @@ export default async function PracticePage({
             difficulty={test.difficulty}
             totalQuestions={test.totalQuestions}
             durationMinutes={test.durationMinutes}
-            usersCompleted={test.usersCompleted}
-            questionsPracticed={test.questionsPracticed}
+            usersCompleted={isAdmin ? test.usersCompleted : undefined}
+            questionsPracticed={isAdmin ? test.questionsPracticed : undefined}
             bestScore={test.bestScore}
             progressPercent={test.progressPercent}
             href={test.resumeAttemptId ? `/exam/${test.resumeAttemptId}` : `/practice/${test.id}`}
@@ -116,7 +118,7 @@ export default async function PracticePage({
 
   return (
     <div className="flex flex-col gap-6">
-      <PracticeHeader {...totals} />
+      <PracticeHeader totals={totals} />
 
       {mistakeCount > 0 && (
         <Link
@@ -149,8 +151,14 @@ export default async function PracticePage({
             <ChevronRight className="size-4 text-muted-foreground" />
             <span className="font-semibold">{openFolder.name}</span>
             <span className="text-muted-foreground">
-              · {openFolder.tests.length} đề · {sum(openFolder.tests, "usersCompleted").toLocaleString("vi-VN")} lượt làm ·{" "}
-              {sum(openFolder.tests, "questionsPracticed").toLocaleString("vi-VN")} câu đã luyện
+              · {openFolder.tests.length} đề
+              {isAdmin && (
+                <>
+                  {" "}
+                  · {sum(openFolder.tests, "usersCompleted").toLocaleString("vi-VN")} lượt làm ·{" "}
+                  {sum(openFolder.tests, "questionsPracticed").toLocaleString("vi-VN")} câu đã luyện
+                </>
+              )}
             </span>
           </div>
           {openFolder.tests.length === 0 ? (
@@ -172,8 +180,8 @@ export default async function PracticePage({
                   href={folderHref(folder.name)}
                   total={folder.tests.length}
                   completed={folder.tests.filter((t) => t.isCompleted).length}
-                  attempts={sum(folder.tests, "usersCompleted")}
-                  questionsPracticed={sum(folder.tests, "questionsPracticed")}
+                  attempts={isAdmin ? sum(folder.tests, "usersCompleted") : undefined}
+                  questionsPracticed={isAdmin ? sum(folder.tests, "questionsPracticed") : undefined}
                 />
               ))}
             </div>

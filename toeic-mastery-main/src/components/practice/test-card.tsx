@@ -35,7 +35,8 @@ export function TestCard({
   difficulty: string;
   totalQuestions: number;
   durationMinutes: number;
-  usersCompleted: number;
+  /** Attempt/answer counts — only passed for admins; hidden when omitted. */
+  usersCompleted?: number;
   questionsPracticed?: number;
   bestScore: number | null;
   progressPercent?: number | null;
@@ -67,9 +68,11 @@ export function TestCard({
         <span className="flex items-center gap-1">
           <Clock className="size-3.5" /> {durationMinutes} phút
         </span>
-        <span className="flex items-center gap-1">
-          <Users className="size-3.5" /> {usersCompleted.toLocaleString("vi-VN")} lượt làm
-        </span>
+        {usersCompleted !== undefined && (
+          <span className="flex items-center gap-1">
+            <Users className="size-3.5" /> {usersCompleted.toLocaleString("vi-VN")} lượt làm
+          </span>
+        )}
         {!!questionsPracticed && (
           <span className="flex items-center gap-1">
             <Flame className="size-3.5" /> {questionsPracticed.toLocaleString("vi-VN")} câu đã luyện

@@ -75,9 +75,11 @@ export default async function TestDetailPage({
           <span className="flex items-center gap-1.5">
             <Clock className="size-4" /> {test.durationMinutes} phút
           </span>
-          <span className="flex items-center gap-1.5">
-            <Users className="size-4" /> {test._count.attempts} lượt làm
-          </span>
+          {profile.role === "ADMIN" && (
+            <span className="flex items-center gap-1.5">
+              <Users className="size-4" /> {test._count.attempts} lượt làm
+            </span>
+          )}
           {bestScore !== null && (
             <span className="flex items-center gap-1.5">
               <Trophy className="size-4" /> Điểm cao nhất của bạn: {bestScore}

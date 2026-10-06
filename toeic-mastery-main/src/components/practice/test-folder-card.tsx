@@ -7,13 +7,14 @@ export function TestFolderCard({
   href,
   total,
   completed,
-  attempts = 0,
+  attempts,
   questionsPracticed = 0,
 }: {
   name: string;
   href: string;
   total: number;
   completed: number;
+  /** Only passed for admins; the counts are hidden when omitted. */
   attempts?: number;
   questionsPracticed?: number;
 }) {
@@ -29,8 +30,9 @@ export function TestFolderCard({
         <div className="min-w-0 flex-1">
           <p className="truncate text-base font-semibold">{name}</p>
           <p className="text-xs text-muted-foreground">
-            {total} đề · {attempts.toLocaleString("vi-VN")} lượt làm
-            {questionsPracticed > 0 && <> · {questionsPracticed.toLocaleString("vi-VN")} câu đã luyện</>}
+            {total} đề
+            {attempts !== undefined && <> · {attempts.toLocaleString("vi-VN")} lượt làm</>}
+            {attempts !== undefined && questionsPracticed > 0 && <> · {questionsPracticed.toLocaleString("vi-VN")} câu đã luyện</>}
           </p>
         </div>
         <ChevronRight className="size-5 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
