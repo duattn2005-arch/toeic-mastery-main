@@ -4,7 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { AnalyticsGuard } from "@/components/analytics-guard";
-import { GA_DISABLE_FLAG, GA_EXCLUDE_STORAGE_KEY, GA_MEASUREMENT_ID } from "@/lib/analytics";
+import { GA_DISABLE_FLAG, GA_MEASUREMENT_ID } from "@/lib/analytics";
 const SECURE_PRIVACY_SRC = "https://app.secureprivacy.ai/script/6a9942ee4e74644db5656e70.js";
 
 const inter = Inter({
@@ -48,12 +48,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />
         <Script id="google-analytics" strategy="afterInteractive">
           {`
-            (function () {
-              // No GA on admin pages or for admin accounts (see analytics-guard.tsx).
-              var excluded = location.pathname === '/admin' || location.pathname.indexOf('/admin/') === 0;
-              try { excluded = excluded || localStorage.getItem('${GA_EXCLUDE_STORAGE_KEY}') === '1'; } catch (e) {}
-              window['${GA_DISABLE_FLAG}'] = excluded;
-            })();
+            // No GA on admin pages (see analytics-guard.tsx); every other page counts.
+            window['${GA_DISABLE_FLAG}'] = location.pathname === '/admin' || location.pathname.indexOf('/admin/') === 0;
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
