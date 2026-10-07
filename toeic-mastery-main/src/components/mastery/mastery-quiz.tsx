@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, CloudOff, History, Loader2, RotateCcw } from "lucide-react";
+import { Check, CloudOff, History, Loader2, RotateCcw, XCircle } from "lucide-react";
 import { AnswerOptionList } from "@/components/exam/answer-option";
 import { Button } from "@/components/ui/button";
 import type { MasteryExercise } from "@/lib/content/mastery";
@@ -42,6 +42,10 @@ export function MasteryQuiz({
       : null
   );
   const [saveState, setSaveState] = React.useState<SaveState>("idle");
+  // Right answers kept on screen (still marked correct) after "Làm lại câu
+  // sai" in test mode, while the missed ones are answered again.
+  const [kept, setKept] = React.useState<Set<number>>(new Set());
+  const questionRefs = React.useRef<(HTMLDivElement | null)[]>([]);
   const saveTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isTest = exercise.kind === "test";
@@ -49,6 +53,9 @@ export function MasteryQuiz({
 
   const answeredCount = Object.keys(answers).length;
   const correctCount = exercise.questions.filter((q, i) => answers[i] === q.answer).length;
+  const wrongIndexes = exercise.questions.flatMap((q, i) => (answers[i] !== undefined && answers[i] !== q.answer ? [i] : []));
+  // Only offer "câu sai" once right/wrong is actually shown.
+  const canRedoWrong = revealed && wrongIndexes.length > 0;
 
   function persist(next: { answers: Record<number, string>; submitted: boolean; finished: boolean }, immediate = false) {
     if (!progressKey) return;
@@ -96,8 +103,35 @@ export function MasteryQuiz({
   function reset() {
     setAnswers({});
     setSubmitted(false);
+    setKept(new Set());
     persist({ answers: {}, submitted: false, finished: false }, true);
+    questionRefs.current[0]?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
+
+  /** Clears only the missed questions; right answers stay (and stay marked
+   * correct), so the learner redoes just what they got wrong. */
+  function redoWrong() {
+    const first = wrongIndexes[0];
+    const next = Object.fromEntries(Object.entries(answers).filter(([i]) => !wrongIndexes.includes(Number(i))));
+    setAnswers(next);
+    setSubmitted(false);
+    setKept(new Set(Object.keys(next).map(Number)));
+    persist({ answers: next, submitted: false, finished: false }, true);
+    questionRefs.current[first]?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }
+
+  const redoButtons = (
+    <div className="flex flex-wrap items-center gap-2">
+      {canRedoWrong && (
+        <Button type="button" size="sm" variant="outline" onClick={redoWrong} className="border-destructive/40 text-destructive hover:bg-destructive/10">
+          <XCircle className="size-3.5" /> Làm lại câu sai ({wrongIndexes.length})
+        </Button>
+      )}
+      <Button type="button" size="sm" variant="ghost" onClick={reset}>
+        <RotateCcw className="size-3.5" /> Làm lại tất cả
+      </Button>
+    </div>
+  );
 
   return (
     <div className="flex flex-col gap-4">
@@ -140,18 +174,20 @@ export function MasteryQuiz({
             </span>
           )}
         </span>
-        {answeredCount > 0 && (
-          <Button type="button" size="sm" variant="ghost" onClick={reset}>
-            <RotateCcw className="size-3.5" /> Làm lại
-          </Button>
-        )}
+        {answeredCount > 0 && redoButtons}
       </div>
 
       {exercise.questions.map((q, i) => {
         const selected = answers[i] ?? null;
-        const showResult = revealed && selected !== null;
+        const showResult = (revealed || kept.has(i)) && selected !== null;
         return (
-          <div key={i} className="rounded-2xl border border-border bg-card p-4">
+          <div
+            key={i}
+            ref={(el) => {
+              questionRefs.current[i] = el;
+            }}
+            className="scroll-mt-24 rounded-2xl border border-border bg-card p-4"
+          >
             <p className="mb-3 whitespace-pre-line text-sm font-medium">
               {i + 1}. {q.prompt}
             </p>
@@ -162,7 +198,7 @@ export function MasteryQuiz({
               disabled={showResult || (isTest && submitted)}
               onSelect={(label) => select(i, label)}
             />
-            {(showResult || (isTest && submitted)) && (
+            {(showResult || (isTest && submitted && !kept.has(i))) && (
               <div className="mt-3 rounded-lg bg-accent/50 p-3 text-xs text-foreground/90">
                 <span className="font-semibold text-success">Đáp án {q.answer}.</span> {q.explanation}
               </div>
@@ -181,10 +217,14 @@ export function MasteryQuiz({
           </Button>
         </div>
       )}
-      {isTest && submitted && (
-        <div className="rounded-2xl border border-primary/30 bg-primary/5 p-4 text-sm">
-          Kết quả: <span className="font-semibold text-primary">{correctCount}/{total}</span> câu đúng. Xem giải thích chi tiết ở từng câu bên trên.
-          {progressKey && <> Kết quả đã được lưu vào tài khoản của bạn.</>}
+      {revealed && answeredCount > 0 && (isTest || answeredCount === total) && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-4 text-sm">
+          <p>
+            Kết quả: <span className="font-semibold text-primary">{correctCount}/{total}</span> câu đúng
+            {wrongIndexes.length > 0 && <>, <span className="font-semibold text-destructive">{wrongIndexes.length}</span> câu sai</>}.
+            {progressKey && <> Kết quả đã được lưu vào tài khoản của bạn.</>}
+          </p>
+          {redoButtons}
         </div>
       )}
     </div>
