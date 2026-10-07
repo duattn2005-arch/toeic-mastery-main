@@ -13,6 +13,7 @@ import { PathOverviewContent } from "@/components/vocabulary/path/path-overview-
 import { StartLearningButton } from "@/components/vocabulary/start-learning-button";
 import { MasteryBlocks } from "@/components/mastery/mastery-blocks";
 import { MasteryQuiz } from "@/components/mastery/mastery-quiz";
+import { getExerciseProgress } from "@/lib/data/exercise-progress";
 import { PronounceButton } from "@/components/vocabulary/pronounce-button";
 import { formatIpa } from "@/lib/pronounce";
 import { VOCAB_STATUS_LABEL, vocabStatus, type VocabStatus } from "@/lib/services/spaced-repetition";
@@ -38,6 +39,8 @@ export default async function CollectionTopicPage({ params }: { params: Params }
   await ensureCollectionSynced(collection);
   const dbSlug = collectionDbSlug(collection, slug);
   const collectionPath = collectionBasePath(collection);
+  const quizKey = `vocab:${dbSlug}:quiz`;
+  const quizProgress = await getExerciseProgress(profile.id, [quizKey]);
   const [pathOverview, srs, { words: dbWords }] = await Promise.all([
     getVocabularyPathOverview(profile.id, dbSlug),
     getTopicSrsStats(dbSlug, profile.id),
@@ -119,7 +122,11 @@ export default async function CollectionTopicPage({ params }: { params: Params }
           <h2 className="mb-3 text-sm font-semibold uppercase text-muted-foreground">
             Kiểm tra tổng hợp <span className="font-normal normal-case">({topic.quiz.length} câu)</span>
           </h2>
-          <MasteryQuiz exercise={{ title: "Kiểm tra tổng hợp", kind: "test", questions: topic.quiz }} />
+          <MasteryQuiz
+            exercise={{ title: "Kiểm tra tổng hợp", kind: "test", questions: topic.quiz }}
+            progressKey={quizKey}
+            initialProgress={quizProgress[quizKey]}
+          />
         </section>
       )}
 

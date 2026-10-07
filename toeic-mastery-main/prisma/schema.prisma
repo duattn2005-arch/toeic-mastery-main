@@ -368,6 +368,7 @@ model Profile {
   dictionaryHistory   DictionaryHistory[]
   answerRevealLogs    AnswerRevealLog[]
   savedWords          SavedWord[]
+  exerciseProgress    UserExerciseProgress[]
   questionReports     QuestionReport[]
   createdTests        Test[]                          @relation("TestAuthor")
   pathDayProgress     UserVocabularyPathDayProgress[]
@@ -1596,4 +1597,32 @@ model TranscriptAudio {
 
   @@unique([setKey, testNumber, part])
   @@map("transcript_audio")
+}
+
+/**
+ * A learner's answers on a static exercise (Mastery grammar quizzes, IIG /
+ * ETS vocabulary "Kiểm tra tổng hợp") — content that lives in code, not in
+ * Question rows, so it has no Attempt. One row per user + exercise:
+ * `answers` is the current sitting (cleared by "Làm lại"), `last*` keep the
+ * most recent finished result so it survives a redo.
+ */
+model UserExerciseProgress {
+  id           String    @id @default(uuid()) @db.Uuid
+  userId       String    @map("user_id") @db.Uuid
+  /** e.g. "mastery:danh-tu-1:0", "vocab:iig-offices:quiz". */
+  exerciseKey  String    @map("exercise_key")
+  /** { "<question index>": "A" | "B" | "C" | "D" } */
+  answers      Json      @default("{}")
+  submitted    Boolean   @default(false)
+  total        Int
+  lastCorrect  Int?      @map("last_correct")
+  lastAnswered Int?      @map("last_answered")
+  lastDoneAt   DateTime? @map("last_done_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  profile Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, exerciseKey])
+  @@map("user_exercise_progress")
 }
