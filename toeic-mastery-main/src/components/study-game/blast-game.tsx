@@ -15,11 +15,13 @@ const NEXT_DELAY_MS = 750;
 const REVEAL_DELAY_MS = 1300;
 
 /** Where the asteroids float (percent of the arena) — one per option. */
+// Kept ≥ ~13% from the edges so a phone-size asteroid (80px on a ~330px
+// arena) is never clipped by the rounded frame.
 const SLOTS = [
-  { x: 23, y: 30 },
-  { x: 77, y: 28 },
-  { x: 27, y: 76 },
-  { x: 73, y: 77 },
+  { x: 26, y: 31 },
+  { x: 74, y: 29 },
+  { x: 28, y: 77 },
+  { x: 72, y: 78 },
 ];
 const CANNON = { x: 50, y: 53 };
 
@@ -297,7 +299,7 @@ export function BlastGame({
               >
                 <span
                   className={cn(
-                    "relative flex size-24 items-center justify-center rounded-[46%_54%_50%_50%/52%_46%_54%_48%] p-3 text-center text-xs font-bold leading-tight text-white shadow-[inset_-8px_-10px_0_rgba(0,0,0,0.25),0_0_22px_rgba(139,92,246,0.45)] sm:size-32 sm:text-sm",
+                    "relative flex size-20 items-center justify-center rounded-[46%_54%_50%_50%/52%_46%_54%_48%] p-2.5 text-center text-[11px] font-bold leading-tight text-white shadow-[inset_-8px_-10px_0_rgba(0,0,0,0.25),0_0_22px_rgba(139,92,246,0.45)] sm:size-32 sm:text-sm",
                     revealed
                       ? "bg-gradient-to-br from-emerald-300 to-emerald-600 ring-4 ring-emerald-300/70"
                       : wrongShot

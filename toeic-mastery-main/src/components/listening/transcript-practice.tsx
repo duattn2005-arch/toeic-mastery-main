@@ -286,7 +286,7 @@ function LineWithBlanks({
               spellCheck={false}
               aria-label="Chỗ trống"
               className={cn(
-                "mx-0.5 inline-block h-7 rounded-md border-b-2 bg-accent/40 px-1.5 text-center align-baseline text-sm font-medium outline-none transition-colors focus:border-primary focus:bg-accent",
+                "mx-0.5 inline-block h-7 rounded-md border-b-2 bg-accent/40 px-1.5 text-center align-baseline text-base font-medium sm:text-sm outline-none transition-colors focus:border-primary focus:bg-accent",
                 value.trim() ? "border-primary/60 text-primary" : "border-muted-foreground/40"
               )}
             />

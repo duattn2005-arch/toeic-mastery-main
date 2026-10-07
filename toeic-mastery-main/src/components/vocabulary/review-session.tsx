@@ -66,7 +66,7 @@ export function ReviewSession({
   if (practicing) return <ReviewRunner items={studied} starredTerms={starredTerms} doneLabel="đã học" />;
 
   return (
-    <div className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-card p-10 text-center shadow-soft">
+    <div className="flex flex-col items-center gap-3 rounded-2xl border border-border bg-card p-6 text-center shadow-soft sm:p-10">
       <PartyPopper className="size-10 text-primary" />
       <h2 className="text-lg font-semibold">Không có từ nào đến hạn ôn hôm nay!</h2>
       <p className="max-w-md text-sm text-muted-foreground">
@@ -154,7 +154,7 @@ function ReviewRunner({ items, starredTerms, doneLabel }: { items: ReviewItem[];
 
   const needsReviewCount = studyItems.filter((i) => effectiveStarredTerms.includes(i.term.toLowerCase())).length;
   return (
-    <div className="flex flex-col items-center gap-4 rounded-3xl border border-success/30 bg-success/10 p-8 text-center">
+    <div className="flex flex-col items-center gap-4 rounded-3xl border border-success/30 bg-success/10 p-6 text-center sm:p-8">
       <span className="flex size-16 items-center justify-center rounded-full bg-success/20 text-success">
         <PartyPopper className="size-8" />
       </span>

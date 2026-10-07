@@ -92,7 +92,7 @@ export function ExamQuestionPanel({
   const questionImage = question.imageUrl && !passage?.imageUrls.length ? question.imageUrl : null;
 
   return (
-    <div className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 shadow-soft sm:p-6">
+    <div className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-4 shadow-soft sm:p-6">
       <div className="flex items-start justify-between gap-3">
         <div>
           <span className="text-xs font-semibold text-primary">{PART_META[question.part as keyof typeof PART_META].label}</span>
