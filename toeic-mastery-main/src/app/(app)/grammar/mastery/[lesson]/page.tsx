@@ -7,6 +7,7 @@ import { MASTERY_BASE_PATH, MASTERY_FOLDER_TITLE, getMasteryLesson } from "@/lib
 import { MasteryBlocks } from "@/components/mastery/mastery-blocks";
 import { MasteryQuiz } from "@/components/mastery/mastery-quiz";
 import { GrammarStudyTimer } from "@/components/grammar/grammar-study-timer";
+import { getExerciseProgress } from "@/lib/data/exercise-progress";
 
 export async function generateMetadata({ params }: { params: Promise<{ lesson: string }> }): Promise<Metadata> {
   const { lesson: slug } = await params;
@@ -16,10 +17,12 @@ export async function generateMetadata({ params }: { params: Promise<{ lesson: s
 
 export default async function MasteryLessonPage({ params }: { params: Promise<{ lesson: string }> }) {
   const { lesson: slug } = await params;
-  await requireUser();
+  const profile = await requireUser();
   const found = getMasteryLesson(slug);
   if (!found) notFound();
   const { lesson, chapter, prev, next } = found;
+  const exerciseKey = (i: number) => `mastery:${slug}:${i}`;
+  const progress = await getExerciseProgress(profile.id, lesson.exercises.map((_, i) => exerciseKey(i)));
 
   return (
     <div className="flex flex-col gap-6">
@@ -52,7 +55,7 @@ export default async function MasteryLessonPage({ params }: { params: Promise<{ 
           <h2 className="mb-3 text-sm font-semibold uppercase text-muted-foreground">
             {exercise.title} <span className="font-normal normal-case">({exercise.questions.length} câu)</span>
           </h2>
-          <MasteryQuiz exercise={exercise} />
+          <MasteryQuiz exercise={exercise} progressKey={exerciseKey(i)} initialProgress={progress[exerciseKey(i)]} />
         </section>
       ))}
 
