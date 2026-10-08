@@ -1,7 +1,7 @@
 import "server-only";
 
 /** One Listening question's key from "ETS 2026 Listening — Script & Đáp án"
- * (Test 1–5): answer, English transcript (Part 1/2: the spoken lines; Part
+ * (Test 1–10): answer, English transcript (Part 1/2: the spoken lines; Part
  * 3/4: the conversation/talk only, never the printed questions — it may be
  * read aloud by TTS when a question has no audio), and a Vietnamese
  * explanation (translation of the transcript and, for Part 3/4, of the
@@ -6993,6 +6993,1748 @@ export const ETS_2026_LISTENING_KEYS: Record<number, ListeningKeyQuestion[]> = {
    "textEn": "100. What does the speaker say about some brochures? (A) They contain trail maps. (B) They contain discount coupons. (C) They list a schedule of holidays. (D) They list volunteer opportunities.",
    "transcript": "Thank you for calling the Wilson Park visitor center. Due to the high volume of visitors in the summer, as well as limited parking, we encourage everyone to take the city bus to the park. Most of the tours are booked for today, but we still have spots open for the mountain bike tour. And remember, there are plenty of things you can do around the park on your own. As you enter the park, brochures are available with maps of all the hiking trails located throughout the park.",
    "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n100. Người nói nói gì về một số tờ giới thiệu?\n(A) Chúng có bản đồ đường mòn.\n(B) Chúng có phiếu giảm giá.\n(C) Chúng liệt kê lịch các ngày nghỉ lễ.\n(D) Chúng liệt kê các cơ hội tình nguyện.\n\nDịch bài nói:\nCảm ơn bạn đã gọi đến trung tâm khách truy cập của Công viên Wilson. Do lượng khách rất đông vào mùa hè và bãi đậu xe có hạn, chúng tôi khuyến khích mọi người đi xe buýt thành phố đến công viên. Hầu hết các tour hôm nay đã được đặt kín, nhưng chúng tôi vẫn còn chỗ cho tour đạp xe leo núi. Và xin nhớ rằng có rất nhiều hoạt động bạn có thể tự làm trong khu vực công viên. Khi vào cổng, bạn có thể lấy các tờ rơi có bản đồ tất cả các tuyến đường đi bộ trong khắp công viên."
+  }
+ ],
+ "9": [
+  {
+   "number": 1,
+   "part": 1,
+   "answer": "D",
+   "textEn": "(A) A man is placing books into a shelving unit. (B) A man is hanging up some flyers. (C) A man is picking up tools from the floor. (D) A man is bending over some wires.",
+   "transcript": "(A) A man is placing books into a shelving unit.\n(B) A man is hanging up some flyers.\n(C) A man is picking up tools from the floor.\n(D) A man is bending over some wires.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch nghĩa:\n(A) Một người đàn ông đang đặt sách vào kệ.\n(B) Một người đàn ông đang treo một số tờ thông báo.\n(C) Một người đàn ông đang nhặt dụng cụ từ dưới sàn.\n(D) Một người đàn ông đang cúi xuống bên những sợi dây."
+  },
+  {
+   "number": 2,
+   "part": 1,
+   "answer": "A",
+   "textEn": "(A) A picnic area is covered by a roof. (B) A bin is filled with flowers. (C) A picnic area is shaded by trees. (D) A road leads to a picnic area.",
+   "transcript": "(A) A picnic area is covered by a roof.\n(B) A bin is filled with flowers.\n(C) A picnic area is shaded by trees.\n(D) A road leads to a picnic area.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch nghĩa:\n(A) Một khu vực dã ngoại được che bởi mái nhà.\n(B) Một thùng chứa đầy hoa.\n(C) Một khu vực dã ngoại được che bóng bởi cây cối.\n(D) Một con đường dẫn đến khu vực dã ngoại."
+  },
+  {
+   "number": 3,
+   "part": 1,
+   "answer": "C",
+   "textEn": "(A) She's dusting a counter. (B) She's loading paper into a copy machine. (C) She's distributing some envelopes. (D) She's opening some cabinet doors.",
+   "transcript": "(A) She's dusting a counter.\n(B) She's loading paper into a copy machine.\n(C) She's distributing some envelopes.\n(D) She's opening some cabinet doors.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\n(A) Cô ấy đang lau quầy.\n(B) Cô ấy đang cho giấy vào máy photocopy.\n(C) Cô ấy đang phát phong bì.\n(D) Cô ấy đang mở cửa tủ."
+  },
+  {
+   "number": 4,
+   "part": 1,
+   "answer": "B",
+   "textEn": "(A) Some people are waiting in line to order. (B) A menu board has been hung on a wall. (C) A server is placing some food on a tray. (D) A server is taking an order from a customer.",
+   "transcript": "(A) Some people are waiting in line to order.\n(B) A menu board has been hung on a wall.\n(C) A server is placing some food on a tray.\n(D) A server is taking an order from a customer.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\n(A) Một số người đang xếp hàng chờ gọi món.\n(B) Một bảng thực đơn được treo trên tường.\n(C) Một nhân viên phục vụ đang đặt thức ăn lên khay.\n(D) Một nhân viên phục vụ đang nhận gọi món từ khách."
+  },
+  {
+   "number": 5,
+   "part": 1,
+   "answer": "C",
+   "textEn": "(A) One of the men is stacking vegetables in a basket. (B) One of the men is selling merchandise in front of a tent. (C) One of the men is riding a motorcycle down a street. (D) One of the men is walking into a store.",
+   "transcript": "(A) One of the men is stacking vegetables in a basket.\n(B) One of the men is selling merchandise in front of a tent.\n(C) One of the men is riding a motorcycle down a street.\n(D) One of the men is walking into a store.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\n(A) Một người đàn ông đang xếp rau vào giỏ.\n(B) Một người đàn ông đang bán hàng trước lều.\n(C) Một người đàn ông đang lái xe máy trên đường.\n(D) Một người đàn ông đang đi vào cửa hàng."
+  },
+  {
+   "number": 6,
+   "part": 1,
+   "answer": "C",
+   "textEn": "(A) The woman is standing in front of a painting. (B) The woman is carrying a painting through a doorway. (C) One of the paintings is displayed in a round frame. (D) Some paintings are leaning against a wooden bench.",
+   "transcript": "(A) The woman is standing in front of a painting.\n(B) The woman is carrying a painting through a doorway.\n(C) One of the paintings is displayed in a round frame.\n(D) Some paintings are leaning against a wooden bench.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\n(A) Người phụ nữ đang đứng trước một bức tranh.\n(B) Người phụ nữ đang mang một bức tranh qua cửa.\n(C) Một bức tranh được trưng bày trong khung tròn.\n(D) Một số bức tranh đang dựa vào băng ghế gỗ."
+  },
+  {
+   "number": 7,
+   "part": 2,
+   "answer": "C",
+   "textEn": "Would you like me to check the price on that item? (A) A couple of bowls. (B) I hadn't noticed. (C) Yes, thank you.",
+   "transcript": "Would you like me to check the price on that item?\n(A) A couple of bowls.\n(B) I hadn't noticed.\n(C) Yes, thank you.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\nBạn có muốn tôi kiểm tra giá của món hàng đó không?\n(A) Vài cái bát.\n(B) Tôi không để ý.\n(C) Vâng, cảm ơn."
+  },
+  {
+   "number": 8,
+   "part": 2,
+   "answer": "A",
+   "textEn": "Shouldn't we have submitted the expense report by now? (A) No, the deadline is tomorrow. (B) Yes, it is very expensive. (C) Did you check the batteries?",
+   "transcript": "Shouldn't we have submitted the expense report by now?\n(A) No, the deadline is tomorrow.\n(B) Yes, it is very expensive.\n(C) Did you check the batteries?",
+   "explanationVi": "Đáp án đúng: A\n\nDịch nghĩa:\nChẳng phải bây giờ chúng ta nên nộp báo cáo chi phí rồi sao?\n(A) Không, hạn chót là ngày mai.\n(B) Vâng, nó rất đắt.\n(C) Bạn đã kiểm tra pin chưa?"
+  },
+  {
+   "number": 9,
+   "part": 2,
+   "answer": "B",
+   "textEn": "How can we resolve the problem with our client? (A) Please change the ink cartridge. (B) By hiring a consulting firm. (C) His office is on the third floor.",
+   "transcript": "How can we resolve the problem with our client?\n(A) Please change the ink cartridge.\n(B) By hiring a consulting firm.\n(C) His office is on the third floor.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nLàm thế nào chúng ta có thể giải quyết vấn đề với khách hàng?\n(A) Vui lòng thay hộp mực in.\n(B) Bằng cách thuê một công ty tư vấn.\n(C) Văn phòng của anh ấy ở tầng ba."
+  },
+  {
+   "number": 10,
+   "part": 2,
+   "answer": "B",
+   "textEn": "Was the restaurant really expensive? (A) I can pick up some today. (B) Yes, it was a lot. (C) OK, I'll close the door.",
+   "transcript": "Was the restaurant really expensive?\n(A) I can pick up some today.\n(B) Yes, it was a lot.\n(C) OK, I'll close the door.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nNhà hàng đó có thật sự đắt không?\n(A) Tôi có thể mua một ít hôm nay.\n(B) Vâng, rất đắt.\n(C) Được rồi, tôi sẽ đóng cửa."
+  },
+  {
+   "number": 11,
+   "part": 2,
+   "answer": "B",
+   "textEn": "When will the dishwasher prototype be ready? (A) On Treetown Avenue. (B) Next Tuesday. (C) OK, thanks for the update.",
+   "transcript": "When will the dishwasher prototype be ready?\n(A) On Treetown Avenue.\n(B) Next Tuesday.\n(C) OK, thanks for the update.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nKhi nào mẫu thử máy rửa chén sẽ sẵn sàng?\n(A) Trên đường Treetown.\n(B) Thứ Ba tuần sau.\n(C) Được rồi, cảm ơn vì đã cập nhật."
+  },
+  {
+   "number": 12,
+   "part": 2,
+   "answer": "C",
+   "textEn": "Let's cancel our appointment. (A) The shipping and receiving department. (B) My dentist has an office downtown. (C) Sure, I'll do that now.",
+   "transcript": "Let's cancel our appointment.\n(A) The shipping and receiving department.\n(B) My dentist has an office downtown.\n(C) Sure, I'll do that now.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\nHãy hủy cuộc hẹn của chúng ta đi.\n(A) Bộ phận giao và nhận hàng.\n(B) Nha sĩ của tôi có phòng khám ở trung tâm thành phố.\n(C) Được, tôi sẽ làm ngay bây giờ."
+  },
+  {
+   "number": 13,
+   "part": 2,
+   "answer": "A",
+   "textEn": "It's OK if we don't check these receipts until later. (A) Good, because I'm busy at the moment. (B) I haven't seen that show either. (C) About 200 dollars.",
+   "transcript": "It's OK if we don't check these receipts until later.\n(A) Good, because I'm busy at the moment.\n(B) I haven't seen that show either.\n(C) About 200 dollars.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch nghĩa:\nKhông sao nếu chúng ta chưa kiểm tra những hóa đơn này cho đến sau.\n(A) Tốt, vì hiện tại tôi đang bận.\n(B) Tôi cũng chưa xem chương trình đó.\n(C) Khoảng 200 đô la."
+  },
+  {
+   "number": 14,
+   "part": 2,
+   "answer": "B",
+   "textEn": "Where can I find the shipping address? (A) He doesn't mind. (B) It's on my business card. (C) No, I'm fine.",
+   "transcript": "Where can I find the shipping address?\n(A) He doesn't mind.\n(B) It's on my business card.\n(C) No, I'm fine.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nTôi có thể tìm địa chỉ giao hàng ở đâu?\n(A) Anh ấy không phiền đâu.\n(B) Nó ở trên danh thiếp của tôi.\n(C) Không, tôi ổn."
+  },
+  {
+   "number": 15,
+   "part": 2,
+   "answer": "B",
+   "textEn": "Which bus stop is closest to the apartment building? (A) No, I don't have any coins. (B) The one on Eighth Street. (C) An extra bag for groceries.",
+   "transcript": "Which bus stop is closest to the apartment building?\n(A) No, I don't have any coins.\n(B) The one on Eighth Street.\n(C) An extra bag for groceries.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nTrạm xe buýt nào gần tòa nhà chung cư nhất?\n(A) Không, tôi không có tiền xu.\n(B) Trạm ở phố Eighth.\n(C) Một túi thêm để đựng đồ tạp hóa."
+  },
+  {
+   "number": 16,
+   "part": 2,
+   "answer": "A",
+   "textEn": "Who's the main performer at the music festival next weekend? (A) The famous singer Bradley Patel. (B) Some seats near the stage. (C) The corner of Main Street and First Avenue.",
+   "transcript": "Who's the main performer at the music festival next weekend?\n(A) The famous singer Bradley Patel.\n(B) Some seats near the stage.\n(C) The corner of Main Street and First Avenue.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch nghĩa:\nAi là nghệ sĩ biểu diễn chính tại lễ hội âm nhạc cuối tuần tới?\n(A) Ca sĩ nổi tiếng Bradley Patel.\n(B) Một số chỗ ngồi gần sân khấu.\n(C) Góc đường Main và đại lộ First."
+  },
+  {
+   "number": 17,
+   "part": 2,
+   "answer": "A",
+   "textEn": "When are we meeting again? (A) Tomorrow after lunch. (B) It was about two hours long. (C) I prefer to use local suppliers.",
+   "transcript": "When are we meeting again?\n(A) Tomorrow after lunch.\n(B) It was about two hours long.\n(C) I prefer to use local suppliers.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch nghĩa:\nKhi nào chúng ta gặp lại nhau?\n(A) Ngày mai sau bữa trưa.\n(B) Khoảng hai tiếng.\n(C) Tôi thích sử dụng nhà cung cấp địa phương."
+  },
+  {
+   "number": 18,
+   "part": 2,
+   "answer": "B",
+   "textEn": "That project's been approved, right? (A) Dinner is at eight. (B) We're waiting for the final cost estimate. (C) There's a store nearby.",
+   "transcript": "That project's been approved, right?\n(A) Dinner is at eight.\n(B) We're waiting for the final cost estimate.\n(C) There's a store nearby.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nDự án đó đã được phê duyệt rồi, đúng không?\n(A) Bữa tối lúc tám giờ.\n(B) Chúng ta đang chờ bảng ước tính chi phí cuối cùng.\n(C) Có một cửa hàng gần đây."
+  },
+  {
+   "number": 19,
+   "part": 2,
+   "answer": "C",
+   "textEn": "Did you put the brochures in the lobby? (A) The conference center is on Walnut Avenue. (B) Do you have a reservation? (C) Yes, I left them at the front desk.",
+   "transcript": "Did you put the brochures in the lobby?\n(A) The conference center is on Walnut Avenue.\n(B) Do you have a reservation?\n(C) Yes, I left them at the front desk.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\nBạn đã đặt các tờ quảng cáo ở sảnh chưa?\n(A) Trung tâm hội nghị ở đại lộ Walnut.\n(B) Bạn có đặt chỗ trước không?\n(C) Rồi, tôi đã để chúng ở quầy lễ tân."
+  },
+  {
+   "number": 20,
+   "part": 2,
+   "answer": "A",
+   "textEn": "How soon will we be able to replace the furniture in the waiting room? (A) We'll do that at the end of the summer. (B) Agreed—that painting looks good in this room! (C) Put all the old files upstairs.",
+   "transcript": "How soon will we be able to replace the furniture in the waiting room?\n(A) We'll do that at the end of the summer.\n(B) Agreed—that painting looks good in this room!\n(C) Put all the old files upstairs.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch nghĩa:\nBao lâu nữa thì chúng ta có thể thay nội thất trong phòng chờ?\n(A) Chúng ta sẽ làm việc đó vào cuối mùa hè.\n(B) Đồng ý — bức tranh đó trông đẹp trong phòng này!\n(C) Đưa tất cả các tập hồ sơ cũ lên lầu."
+  },
+  {
+   "number": 21,
+   "part": 2,
+   "answer": "C",
+   "textEn": "Who is the keynote speaker on Friday? (A) The keys are on my desk. (B) Yes, she gave a nice speech. (C) Here’s the schedule.",
+   "transcript": "Who is the keynote speaker on Friday?\n(A) The keys are on my desk.\n(B) Yes, she gave a nice speech.\n(C) Here’s the schedule.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\nAi là diễn giả chính vào thứ Sáu?\n(A) Chìa khóa ở trên bàn tôi.\n(B) Vâng, cô ấy đã có một bài phát biểu hay.\n(C) Đây là lịch trình."
+  },
+  {
+   "number": 22,
+   "part": 2,
+   "answer": "C",
+   "textEn": "When should we order the gift baskets? (A) No, just me this time. (B) From the florist down the street. (C) Let’s discuss that at our next meeting.",
+   "transcript": "When should we order the gift baskets?\n(A) No, just me this time.\n(B) From the florist down the street.\n(C) Let’s discuss that at our next meeting.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\nKhi nào chúng ta nên đặt các giỏ quà?\n(A) Không, chỉ mình tôi lần này.\n(B) Từ cửa hàng hoa ở cuối phố.\n(C) Hãy bàn về việc đó trong cuộc họp tới."
+  },
+  {
+   "number": 23,
+   "part": 2,
+   "answer": "B",
+   "textEn": "Why was the seminar agenda changed? (A) Try rebooting the computer. (B) Because an additional speaker was added. (C) That’s a good idea.",
+   "transcript": "Why was the seminar agenda changed?\n(A) Try rebooting the computer.\n(B) Because an additional speaker was added.\n(C) That’s a good idea.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nTại sao chương trình nghị sự của hội thảo lại bị thay đổi?\n(A) Thử khởi động lại máy tính.\n(B) Vì có thêm một diễn giả được bổ sung.\n(C) Đó là một ý hay."
+  },
+  {
+   "number": 24,
+   "part": 2,
+   "answer": "B",
+   "textEn": "Are you taking the bus or a taxi to the client’s office? (A) To pick up some coffee. (B) I brought my car today. (C) They weren’t too expensive.",
+   "transcript": "Are you taking the bus or a taxi to the client’s office?\n(A) To pick up some coffee.\n(B) I brought my car today.\n(C) They weren’t too expensive.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nBạn sẽ đi xe buýt hay taxi đến văn phòng khách hàng?\n(A) Để đi mua cà phê.\n(B) Hôm nay tôi mang xe riêng.\n(C) Chúng không quá đắt."
+  },
+  {
+   "number": 25,
+   "part": 2,
+   "answer": "C",
+   "textEn": "Could you help me set up these chairs for the picnic? (A) She moved to Singapore last year. (B) The furniture store on Maple Street. (C) I’m about to go pick up the cake.",
+   "transcript": "Could you help me set up these chairs for the picnic?\n(A) She moved to Singapore last year.\n(B) The furniture store on Maple Street.\n(C) I’m about to go pick up the cake.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\nBạn có thể giúp tôi sắp xếp những chiếc ghế này cho buổi dã ngoại không?\n(A) Cô ấy đã chuyển đến Singapore năm ngoái.\n(B) Cửa hàng nội thất trên phố Maple.\n(C) Tôi sắp đi lấy bánh."
+  },
+  {
+   "number": 26,
+   "part": 2,
+   "answer": "B",
+   "textEn": "Who’ll be selected to work on the prototype? (A) No, it’s not too heavy. (B) Jacob’s team has done some good work. (C) I already have some.",
+   "transcript": "Who’ll be selected to work on the prototype?\n(A) No, it’s not too heavy.\n(B) Jacob’s team has done some good work.\n(C) I already have some.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nAi sẽ được chọn để làm việc với nguyên mẫu?\n(A) Không, nó không quá nặng.\n(B) Nhóm của Jacob đã làm việc rất tốt.\n(C) Tôi đã có một vài cái rồi."
+  },
+  {
+   "number": 27,
+   "part": 2,
+   "answer": "B",
+   "textEn": "Ms. Lambert is responsible for the payroll. (A) On the second floor. (B) Yes, she’s done it for years. (C) No, it shouldn’t be too difficult.",
+   "transcript": "Ms. Lambert is responsible for the payroll.\n(A) On the second floor.\n(B) Yes, she’s done it for years.\n(C) No, it shouldn’t be too difficult.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nCô Lambert chịu trách nhiệm về bảng lương.\n(A) Ở tầng hai.\n(B) Vâng, cô ấy đã làm việc đó nhiều năm rồi.\n(C) Không, việc đó không quá khó."
+  },
+  {
+   "number": 28,
+   "part": 2,
+   "answer": "A",
+   "textEn": "Can’t we extend the advertising campaign? (A) We’re already over budget. (B) Yes, it’s a new printer. (C) A retirement bonus.",
+   "transcript": "Can’t we extend the advertising campaign?\n(A) We’re already over budget.\n(B) Yes, it’s a new printer.\n(C) A retirement bonus.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch nghĩa:\nChúng ta không thể kéo dài chiến dịch quảng cáo sao?\n(A) Chúng ta đã vượt ngân sách rồi.\n(B) Vâng, đó là một máy in mới.\n(C) Tiền thưởng hưu trí."
+  },
+  {
+   "number": 29,
+   "part": 2,
+   "answer": "C",
+   "textEn": "Please close the door so that the presentation can start. (A) The car keys are on my desk. (B) Our filing cabinets are full. (C) We’re waiting for a few more people.",
+   "transcript": "Please close the door so that the presentation can start.\n(A) The car keys are on my desk.\n(B) Our filing cabinets are full.\n(C) We’re waiting for a few more people.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\nLàm ơn đóng cửa lại để buổi thuyết trình có thể bắt đầu.\n(A) Chìa khóa xe ở trên bàn tôi.\n(B) Tủ hồ sơ của chúng ta đã đầy.\n(C) Chúng ta đang chờ thêm vài người."
+  },
+  {
+   "number": 30,
+   "part": 2,
+   "answer": "A",
+   "textEn": "How often have our packages been damaged during delivery? (A) We need to find a new shipping partner. (B) Several customers are waiting to have their cars serviced. (C) No, we don’t need to eat.",
+   "transcript": "How often have our packages been damaged during delivery?\n(A) We need to find a new shipping partner.\n(B) Several customers are waiting to have their cars serviced.\n(C) No, we don’t need to eat.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch nghĩa:\nCác gói hàng của chúng ta đã bị hư hỏng bao nhiêu lần trong quá trình giao hàng?\n(A) Chúng ta cần tìm một đối tác vận chuyển mới.\n(B) Một số khách hàng đang chờ sửa xe.\n(C) Không, chúng ta không cần ăn."
+  },
+  {
+   "number": 31,
+   "part": 2,
+   "answer": "A",
+   "textEn": "They’re bringing a piano into the café, aren’t they? (A) There’s not enough space. (B) The food is fantastic. (C) Turn left at the light.",
+   "transcript": "They’re bringing a piano into the café, aren’t they?\n(A) There’s not enough space.\n(B) The food is fantastic.\n(C) Turn left at the light.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch nghĩa:\nHọ đang mang một cây đàn piano vào quán cà phê, đúng không?\n(A) Không đủ không gian.\n(B) Đồ ăn rất tuyệt.\n(C) Rẽ trái ở đèn giao thông."
+  },
+  {
+   "number": 32,
+   "part": 3,
+   "answer": "C",
+   "group": "32-34",
+   "textEn": "32. What is the purpose of the man’s call? (A) To question a charge on a bill (B) To inquire about a job opening (C) To purchase a membership (D) To cancel a reservation",
+   "transcript": "M: Hello. I'm calling because I'll be staying in the city next week for work, and I'd like to purchase a temporary gym membership.\nW: Of course! Our standard day pass is twenty dollars. We also offer rentals on athletic equipment like exercise mats and tennis rackets if you're interested.\nM: I'll just purchase the pass for now, thanks.\nW: Great. First, I'll need to set you up in our system. Can I have your name and e-mail address?",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n32. Mục đích cuộc gọi của người đàn ông là gì?\n(A) Hỏi về một khoản phí trên hóa đơn\n(B) Hỏi về một vị trí tuyển dụng\n(C) Mua một gói thành viên\n(D) Hủy một đặt chỗ\n\nDịch hội thoại:\nNam: Xin chào. Tôi gọi đến vì tuần tới tôi sẽ ở lại thành phố để làm việc, và tôi muốn mua thẻ thành viên tạm thời tại phòng tập.\nNữ: Tất nhiên rồi ạ! Thẻ tập theo ngày tiêu chuẩn của chúng tôi là 20 đô la. Chúng tôi cũng có cho thuê các thiết bị thể thao như thảm tập thể dục và vợt tennis nếu ông có nhu cầu.\nNam: Hiện tại tôi sẽ chỉ mua thẻ tập thôi, cảm ơn cô.\nNữ: Tuyệt vời. Trước tiên, tôi cần thiết lập thông tin của ông trên hệ thống. Ông vui lòng cho tôi biết tên và địa chỉ email nhé?"
+  },
+  {
+   "number": 33,
+   "part": 3,
+   "answer": "A",
+   "group": "32-34",
+   "textEn": "33. According to the woman, what additional service does the business offer? (A) Equipment rentals (B) Spa treatments (C) Personalized training sessions (D) Nutrition consultations",
+   "transcript": "M: Hello. I'm calling because I'll be staying in the city next week for work, and I'd like to purchase a temporary gym membership.\nW: Of course! Our standard day pass is twenty dollars. We also offer rentals on athletic equipment like exercise mats and tennis rackets if you're interested.\nM: I'll just purchase the pass for now, thanks.\nW: Great. First, I'll need to set you up in our system. Can I have your name and e-mail address?",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n33. Theo người phụ nữ, doanh nghiệp còn cung cấp dịch vụ bổ sung nào?\n(A) Cho thuê thiết bị\n(B) Các liệu pháp spa\n(C) Các buổi huấn luyện cá nhân hóa\n(D) Tư vấn dinh dưỡng\n\nDịch hội thoại:\nNam: Xin chào. Tôi gọi đến vì tuần tới tôi sẽ ở lại thành phố để làm việc, và tôi muốn mua thẻ thành viên tạm thời tại phòng tập.\nNữ: Tất nhiên rồi ạ! Thẻ tập theo ngày tiêu chuẩn của chúng tôi là 20 đô la. Chúng tôi cũng có cho thuê các thiết bị thể thao như thảm tập thể dục và vợt tennis nếu ông có nhu cầu.\nNam: Hiện tại tôi sẽ chỉ mua thẻ tập thôi, cảm ơn cô.\nNữ: Tuyệt vời. Trước tiên, tôi cần thiết lập thông tin của ông trên hệ thống. Ông vui lòng cho tôi biết tên và địa chỉ email nhé?"
+  },
+  {
+   "number": 34,
+   "part": 3,
+   "answer": "B",
+   "group": "32-34",
+   "textEn": "34. What does the woman ask the man to provide? (A) Some referral letters (B) Some contact information (C) A copy of a receipt (D) A discount code",
+   "transcript": "M: Hello. I'm calling because I'll be staying in the city next week for work, and I'd like to purchase a temporary gym membership.\nW: Of course! Our standard day pass is twenty dollars. We also offer rentals on athletic equipment like exercise mats and tennis rackets if you're interested.\nM: I'll just purchase the pass for now, thanks.\nW: Great. First, I'll need to set you up in our system. Can I have your name and e-mail address?",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n34. Người phụ nữ yêu cầu người đàn ông cung cấp gì?\n(A) Một vài thư giới thiệu\n(B) Một số thông tin liên hệ\n(C) Một bản sao hóa đơn\n(D) Một mã giảm giá\n\nDịch hội thoại:\nNam: Xin chào. Tôi gọi đến vì tuần tới tôi sẽ ở lại thành phố để làm việc, và tôi muốn mua thẻ thành viên tạm thời tại phòng tập.\nNữ: Tất nhiên rồi ạ! Thẻ tập theo ngày tiêu chuẩn của chúng tôi là 20 đô la. Chúng tôi cũng có cho thuê các thiết bị thể thao như thảm tập thể dục và vợt tennis nếu ông có nhu cầu.\nNam: Hiện tại tôi sẽ chỉ mua thẻ tập thôi, cảm ơn cô.\nNữ: Tuyệt vời. Trước tiên, tôi cần thiết lập thông tin của ông trên hệ thống. Ông vui lòng cho tôi biết tên và địa chỉ email nhé?"
+  },
+  {
+   "number": 35,
+   "part": 3,
+   "answer": "D",
+   "group": "35-37",
+   "textEn": "35. Who most likely is the man? (A) A business client (B) A board member (C) A potential investor (D) A new employee",
+   "transcript": "W: Welcome to Reynold's Ice Cream Factory. I'm so glad that you'll be joining our quality assurance team.\nM: Thanks! I'm excited to work with the rest of the group.\nW: Great! I saw on your résumé that you previously did quality control at a similar factory.\nM: Yes. I learned a lot about food manufacturing regulations there.\nW: Then you'll already be familiar with the testing we do. We test at the beginning of each shift to make sure all the equipment has been cleaned and sanitized.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n35. Người đàn ông có khả năng là ai?\n(A) Một khách hàng doanh nghiệp\n(B) Một thành viên hội đồng quản trị\n(C) Một nhà đầu tư tiềm năng\n(D) Một nhân viên mới\n\nDịch hội thoại:\nNữ: Chào mừng bạn đến với Nhà máy Kem Reynold. Tôi rất vui vì bạn sẽ gia nhập đội ngũ đảm bảo chất lượng của chúng tôi.\nNam: Cảm ơn chị! Tôi rất hào hứng được làm việc với các thành viên còn lại trong nhóm.\nNữ: Rất tốt! Tôi thấy trên sơ yếu lý lịch rằng trước đây bạn đã từng làm kiểm soát chất lượng tại một nhà máy tương tự.\nNam: Vâng. Tại đó tôi đã học được rất nhiều về các quy định trong sản xuất thực phẩm.\nNữ: Vậy thì bạn sẽ thấy quen thuộc với các quy trình kiểm tra mà chúng tôi thực hiện. Chúng tôi kiểm tra vào đầu mỗi ca làm việc để đảm bảo rằng tất cả thiết bị đã được làm sạch và khử trùng."
+  },
+  {
+   "number": 36,
+   "part": 3,
+   "answer": "C",
+   "group": "35-37",
+   "textEn": "36. What does the man say he learned from another factory? (A) Assembly-line schedules (B) Budgeting strategies (C) Manufacturing regulations (D) Sourcing considerations",
+   "transcript": "W: Welcome to Reynold's Ice Cream Factory. I'm so glad that you'll be joining our quality assurance team.\nM: Thanks! I'm excited to work with the rest of the group.\nW: Great! I saw on your résumé that you previously did quality control at a similar factory.\nM: Yes. I learned a lot about food manufacturing regulations there.\nW: Then you'll already be familiar with the testing we do. We test at the beginning of each shift to make sure all the equipment has been cleaned and sanitized.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n36. Người đàn ông nói rằng anh ấy đã học được gì từ nhà máy khác?\n(A) Lịch trình dây chuyền lắp ráp\n(B) Chiến lược lập ngân sách\n(C) Các quy định sản xuất\n(D) Các yếu tố cần cân nhắc khi tìm nguồn cung\n\nDịch hội thoại:\nNữ: Chào mừng bạn đến với Nhà máy Kem Reynold. Tôi rất vui vì bạn sẽ gia nhập đội ngũ đảm bảo chất lượng của chúng tôi.\nNam: Cảm ơn chị! Tôi rất hào hứng được làm việc với các thành viên còn lại trong nhóm.\nNữ: Rất tốt! Tôi thấy trên sơ yếu lý lịch rằng trước đây bạn đã từng làm kiểm soát chất lượng tại một nhà máy tương tự.\nNam: Vâng. Tại đó tôi đã học được rất nhiều về các quy định trong sản xuất thực phẩm.\nNữ: Vậy thì bạn sẽ thấy quen thuộc với các quy trình kiểm tra mà chúng tôi thực hiện. Chúng tôi kiểm tra vào đầu mỗi ca làm việc để đảm bảo rằng tất cả thiết bị đã được làm sạch và khử trùng."
+  },
+  {
+   "number": 37,
+   "part": 3,
+   "answer": "B",
+   "group": "35-37",
+   "textEn": "37. What is done at the start of each shift? (A) A database review (B) A cleanliness test (C) An attendance check (D) A uniform inspection",
+   "transcript": "W: Welcome to Reynold's Ice Cream Factory. I'm so glad that you'll be joining our quality assurance team.\nM: Thanks! I'm excited to work with the rest of the group.\nW: Great! I saw on your résumé that you previously did quality control at a similar factory.\nM: Yes. I learned a lot about food manufacturing regulations there.\nW: Then you'll already be familiar with the testing we do. We test at the beginning of each shift to make sure all the equipment has been cleaned and sanitized.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n37. Việc gì được thực hiện vào đầu mỗi ca làm việc?\n(A) Kiểm tra cơ sở dữ liệu\n(B) Kiểm tra vệ sinh\n(C) Điểm danh\n(D) Kiểm tra đồng phục\n\nDịch hội thoại:\nNữ: Chào mừng bạn đến với Nhà máy Kem Reynold. Tôi rất vui vì bạn sẽ gia nhập đội ngũ đảm bảo chất lượng của chúng tôi.\nNam: Cảm ơn chị! Tôi rất hào hứng được làm việc với các thành viên còn lại trong nhóm.\nNữ: Rất tốt! Tôi thấy trên sơ yếu lý lịch rằng trước đây bạn đã từng làm kiểm soát chất lượng tại một nhà máy tương tự.\nNam: Vâng. Tại đó tôi đã học được rất nhiều về các quy định trong sản xuất thực phẩm.\nNữ: Vậy thì bạn sẽ thấy quen thuộc với các quy trình kiểm tra mà chúng tôi thực hiện. Chúng tôi kiểm tra vào đầu mỗi ca làm việc để đảm bảo rằng tất cả thiết bị đã được làm sạch và khử trùng."
+  },
+  {
+   "number": 38,
+   "part": 3,
+   "answer": "A",
+   "group": "38-40",
+   "textEn": "38. According to the man, what is the human resources department concerned about? (A) Lack of interest in a newsletter (B) Employee compliance with a policy (C) A shortage of qualified applicants (D) Inadequate training materials",
+   "transcript": "M: So-Jin, do you have a minute? I've got an assignment for you.\nW: Sure. What is it?\nM: The human resources department is concerned that employees aren't reading their weekly staff newsletter. They asked if one of our graphic designers could redesign the newsletter to make it more attractive.\nW: All right. I'll start working on it after I've finished with the Web site update.\nM: I'll ask Hiroki to take care of that so you're free to work on the newsletter.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n38. Theo người đàn ông, phòng nhân sự đang lo ngại điều gì?\n(A) Thiếu sự quan tâm đối với bản tin nội bộ\n(B) Nhân viên không tuân thủ một chính sách\n(C) Thiếu ứng viên đủ điều kiện\n(D) Tài liệu đào tạo không đạt yêu cầu\n\nDịch hội thoại:\nNam: So-Jin, cô có rảnh một chút không? Tôi có một nhiệm vụ dành cho cô đây.\nNữ: Chắc chắn rồi ạ. Có việc gì vậy ông?\nNam: Bộ phận nhân sự đang lo lắng rằng nhân viên không đọc bản tin nội bộ hàng tuần. Họ hỏi liệu một trong những nhà thiết kế đồ họa của chúng ta có thể thiết kế lại bản tin để làm cho nó trông hấp dẫn hơn không.\nNữ: Được ạ. Tôi sẽ bắt đầu thực hiện ngay sau khi hoàn thành việc cập nhật trang web.\nNam: Tôi sẽ bảo Hiroki đảm nhận việc cập nhật trang web đó để cô có thể rảnh tay tập trung làm bản tin."
+  },
+  {
+   "number": 39,
+   "part": 3,
+   "answer": "D",
+   "group": "38-40",
+   "textEn": "39. Which department does the woman most likely work in? (A) Sales (B) Shipping (C) Legal (D) Graphic design",
+   "transcript": "M: So-Jin, do you have a minute? I've got an assignment for you.\nW: Sure. What is it?\nM: The human resources department is concerned that employees aren't reading their weekly staff newsletter. They asked if one of our graphic designers could redesign the newsletter to make it more attractive.\nW: All right. I'll start working on it after I've finished with the Web site update.\nM: I'll ask Hiroki to take care of that so you're free to work on the newsletter.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n39. Người phụ nữ có khả năng làm việc ở phòng ban nào?\n(A) Phòng kinh doanh\n(B) Bộ phận vận chuyển\n(C) Bộ phận pháp lý\n(D) Thiết kế đồ họa\n\nDịch hội thoại:\nNam: So-Jin, cô có rảnh một chút không? Tôi có một nhiệm vụ dành cho cô đây.\nNữ: Chắc chắn rồi ạ. Có việc gì vậy ông?\nNam: Bộ phận nhân sự đang lo lắng rằng nhân viên không đọc bản tin nội bộ hàng tuần. Họ hỏi liệu một trong những nhà thiết kế đồ họa của chúng ta có thể thiết kế lại bản tin để làm cho nó trông hấp dẫn hơn không.\nNữ: Được ạ. Tôi sẽ bắt đầu thực hiện ngay sau khi hoàn thành việc cập nhật trang web.\nNam: Tôi sẽ bảo Hiroki đảm nhận việc cập nhật trang web đó để cô có thể rảnh tay tập trung làm bản tin."
+  },
+  {
+   "number": 40,
+   "part": 3,
+   "answer": "A",
+   "group": "38-40",
+   "textEn": "40. What does the man say he will do? (A) Reassign a task (B) Publish a news report (C) Move a project deadline (D) Repair a link on a Web site",
+   "transcript": "M: So-Jin, do you have a minute? I've got an assignment for you.\nW: Sure. What is it?\nM: The human resources department is concerned that employees aren't reading their weekly staff newsletter. They asked if one of our graphic designers could redesign the newsletter to make it more attractive.\nW: All right. I'll start working on it after I've finished with the Web site update.\nM: I'll ask Hiroki to take care of that so you're free to work on the newsletter.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n40. Người đàn ông nói rằng anh ấy sẽ làm gì?\n(A) Phân công lại một nhiệm vụ\n(B) Đăng một bản tin\n(C) Dời hạn chót của dự án\n(D) Sửa một đường dẫn trên trang web\n\nDịch hội thoại:\nNam: So-Jin, cô có rảnh một chút không? Tôi có một nhiệm vụ dành cho cô đây.\nNữ: Chắc chắn rồi ạ. Có việc gì vậy ông?\nNam: Bộ phận nhân sự đang lo lắng rằng nhân viên không đọc bản tin nội bộ hàng tuần. Họ hỏi liệu một trong những nhà thiết kế đồ họa của chúng ta có thể thiết kế lại bản tin để làm cho nó trông hấp dẫn hơn không.\nNữ: Được ạ. Tôi sẽ bắt đầu thực hiện ngay sau khi hoàn thành việc cập nhật trang web.\nNam: Tôi sẽ bảo Hiroki đảm nhận việc cập nhật trang web đó để cô có thể rảnh tay tập trung làm bản tin."
+  },
+  {
+   "number": 41,
+   "part": 3,
+   "answer": "C",
+   "group": "41-43",
+   "textEn": "41. What are the speakers mainly discussing? (A) A future business trip (B) An upcoming workshop (C) A job opportunity (D) A new employee’s progress",
+   "transcript": "M1: Did you hear that Ms. Hamdy is retiring? There's going to be an opening for an accounts payable manager. I think you'd be a perfect fit for the job, Amanda.\nM2: I agree. When anyone in accounting has a question, you're the one they go to.\nW: Thanks. The only thing I worry about is that I've never managed a team before.\nM2: That's not a problem. The company provides an intensive training program for new managers. You learn how to motivate employees, how to handle budgets—all that stuff.\nW: I appreciate your encouragement. I'll talk to Ms. Hamdy to learn more about what she does.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n41. Hai người đang thảo luận chủ yếu về điều gì?\n(A) Một chuyến công tác sắp tới\n(B) Một buổi hội thảo sắp diễn ra\n(C) Một cơ hội việc làm\n(D) Tiến độ của một nhân viên mới\n\nDịch hội thoại:\nM1: Bạn có nghe tin cô Hamdy sẽ nghỉ hưu không? Sẽ có một vị trí trống cho quản lý phòng thanh toán phải trả. Tôi nghĩ bạn sẽ rất phù hợp với công việc này, Amanda.\nM2: Tôi đồng ý. Khi ai đó trong bộ phận kế toán có câu hỏi, họ đều tìm đến bạn.\nW: Cảm ơn các bạn. Điều duy nhất tôi lo lắng là tôi chưa bao giờ quản lý một đội nhóm trước đây.\nM2: Điều đó không thành vấn đề. Công ty có một chương trình đào tạo chuyên sâu cho các quản lý mới. Bạn sẽ học cách tạo động lực cho nhân viên, cách quản lý ngân sách—tất cả những thứ đó.\nW: Tôi cảm ơn sự động viên của bạn. Tôi sẽ nói chuyện với cô Hamdy để tìm hiểu thêm về công việc mà cô ấy đang làm."
+  },
+  {
+   "number": 42,
+   "part": 3,
+   "answer": "C",
+   "group": "41-43",
+   "textEn": "42. What is the woman concerned about? (A) Difficulty speaking in public (B) Missing an appointment (C) A lack of experience (D) A negative performance review",
+   "transcript": "M1: Did you hear that Ms. Hamdy is retiring? There's going to be an opening for an accounts payable manager. I think you'd be a perfect fit for the job, Amanda.\nM2: I agree. When anyone in accounting has a question, you're the one they go to.\nW: Thanks. The only thing I worry about is that I've never managed a team before.\nM2: That's not a problem. The company provides an intensive training program for new managers. You learn how to motivate employees, how to handle budgets—all that stuff.\nW: I appreciate your encouragement. I'll talk to Ms. Hamdy to learn more about what she does.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n42. Người phụ nữ lo lắng điều gì?\n(A) Việc nói trước đám đông\n(B) Bỏ lỡ một cuộc hẹn\n(C) Thiếu kinh nghiệm\n(D) Một báo cáo đánh giá tiêu cực\n\nDịch hội thoại:\nM1: Bạn có nghe tin cô Hamdy sẽ nghỉ hưu không? Sẽ có một vị trí trống cho quản lý phòng thanh toán phải trả. Tôi nghĩ bạn sẽ rất phù hợp với công việc này, Amanda.\nM2: Tôi đồng ý. Khi ai đó trong bộ phận kế toán có câu hỏi, họ đều tìm đến bạn.\nW: Cảm ơn các bạn. Điều duy nhất tôi lo lắng là tôi chưa bao giờ quản lý một đội nhóm trước đây.\nM2: Điều đó không thành vấn đề. Công ty có một chương trình đào tạo chuyên sâu cho các quản lý mới. Bạn sẽ học cách tạo động lực cho nhân viên, cách quản lý ngân sách—tất cả những thứ đó.\nW: Tôi cảm ơn sự động viên của bạn. Tôi sẽ nói chuyện với cô Hamdy để tìm hiểu thêm về công việc mà cô ấy đang làm."
+  },
+  {
+   "number": 43,
+   "part": 3,
+   "answer": "B",
+   "group": "41-43",
+   "textEn": "43. What does the woman say she will do? (A) Update her résumé (B) Speak to a colleague (C) Review a budget (D) Register for a training program",
+   "transcript": "M1: Did you hear that Ms. Hamdy is retiring? There's going to be an opening for an accounts payable manager. I think you'd be a perfect fit for the job, Amanda.\nM2: I agree. When anyone in accounting has a question, you're the one they go to.\nW: Thanks. The only thing I worry about is that I've never managed a team before.\nM2: That's not a problem. The company provides an intensive training program for new managers. You learn how to motivate employees, how to handle budgets—all that stuff.\nW: I appreciate your encouragement. I'll talk to Ms. Hamdy to learn more about what she does.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n43. Người phụ nữ nói rằng cô ấy sẽ làm gì?\n(A) Cập nhật sơ yếu lý lịch\n(B) Nói chuyện với một đồng nghiệp\n(C) Xem lại ngân sách\n(D) Đăng ký một khóa đào tạo\n\nDịch hội thoại:\nM1: Bạn có nghe tin cô Hamdy sẽ nghỉ hưu không? Sẽ có một vị trí trống cho quản lý phòng thanh toán phải trả. Tôi nghĩ bạn sẽ rất phù hợp với công việc này, Amanda.\nM2: Tôi đồng ý. Khi ai đó trong bộ phận kế toán có câu hỏi, họ đều tìm đến bạn.\nW: Cảm ơn các bạn. Điều duy nhất tôi lo lắng là tôi chưa bao giờ quản lý một đội nhóm trước đây.\nM2: Điều đó không thành vấn đề. Công ty có một chương trình đào tạo chuyên sâu cho các quản lý mới. Bạn sẽ học cách tạo động lực cho nhân viên, cách quản lý ngân sách—tất cả những thứ đó.\nW: Tôi cảm ơn sự động viên của bạn. Tôi sẽ nói chuyện với cô Hamdy để tìm hiểu thêm về công việc mà cô ấy đang làm."
+  },
+  {
+   "number": 44,
+   "part": 3,
+   "answer": "A",
+   "group": "44-46",
+   "textEn": "44. What have the speakers been working on? (A) An advertising campaign (B) A software update (C) An office renovation (D) A training course",
+   "transcript": "W: Hi, Rodrigo. Would you like to join me and the team for lunch? We're going to Café Milano. We've all been working hard to finish this advertising campaign for our client.\nM: Sure! I can drive if you'd like.\nW: The café is just down the street.\nM: Oh, they must have opened a second location. I only know about the one across town.\nW: Yes, this one just opened. Would you like to see the menu? I have a copy in my office.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n44. Hai người đã làm việc về điều gì?\n(A) Một chiến dịch quảng cáo\n(B) Một bản cập nhật phần mềm\n(C) Cải tạo văn phòng\n(D) Một khóa đào tạo\n\nDịch hội thoại:\nW: Chào Rodrigo. Bạn có muốn đi ăn trưa cùng tôi và cả nhóm không? Chúng tôi sẽ đến Café Milano. Chúng tôi đã làm việc rất chăm chỉ để hoàn thành chiến dịch quảng cáo cho khách hàng.\nM: Chắc chắn rồi! Nếu bạn muốn, tôi có thể lái xe.\nW: Quán cà phê này ngay dưới phố thôi.\nM: Ồ, chắc họ vừa mở thêm chi nhánh thứ hai. Tôi chỉ biết quán bên kia thành phố.\nW: Vâng, chi nhánh này vừa mở. Bạn có muốn xem thực đơn không? Tôi có một bản trong văn phòng của mình."
+  },
+  {
+   "number": 45,
+   "part": 3,
+   "answer": "C",
+   "group": "44-46",
+   "textEn": "45. Why does the woman say, “The café is just down the street”? (A) To praise a planning decision (B) To give directions (C) To reject an offer (D) To show concern about parking",
+   "transcript": "W: Hi, Rodrigo. Would you like to join me and the team for lunch? We're going to Café Milano. We've all been working hard to finish this advertising campaign for our client.\nM: Sure! I can drive if you'd like.\nW: The café is just down the street.\nM: Oh, they must have opened a second location. I only know about the one across town.\nW: Yes, this one just opened. Would you like to see the menu? I have a copy in my office.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n45. Tại sao người phụ nữ nói: “Quán cà phê ở ngay cuối phố”?\n(A) Để khen ngợi một quyết định lập kế hoạch\n(B) Để chỉ đường\n(C) Để từ chối một đề nghị\n(D) Để bày tỏ lo lắng về chỗ đỗ xe\n\nDịch hội thoại:\nW: Chào Rodrigo. Bạn có muốn đi ăn trưa cùng tôi và cả nhóm không? Chúng tôi sẽ đến Café Milano. Chúng tôi đã làm việc rất chăm chỉ để hoàn thành chiến dịch quảng cáo cho khách hàng.\nM: Chắc chắn rồi! Nếu bạn muốn, tôi có thể lái xe.\nW: Quán cà phê này ngay dưới phố thôi.\nM: Ồ, chắc họ vừa mở thêm chi nhánh thứ hai. Tôi chỉ biết quán bên kia thành phố.\nW: Vâng, chi nhánh này vừa mở. Bạn có muốn xem thực đơn không? Tôi có một bản trong văn phòng của mình."
+  },
+  {
+   "number": 46,
+   "part": 3,
+   "answer": "D",
+   "group": "44-46",
+   "textEn": "46. What does the woman offer to show the man? (A) A schedule (B) A photograph (C) A map (D) A menu",
+   "transcript": "W: Hi, Rodrigo. Would you like to join me and the team for lunch? We're going to Café Milano. We've all been working hard to finish this advertising campaign for our client.\nM: Sure! I can drive if you'd like.\nW: The café is just down the street.\nM: Oh, they must have opened a second location. I only know about the one across town.\nW: Yes, this one just opened. Would you like to see the menu? I have a copy in my office.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n46. Người phụ nữ đề nghị cho người đàn ông xem gì?\n(A) Một lịch trình\n(B) Một bức ảnh\n(C) Một bản đồ\n(D) Một thực đơn\n\nDịch hội thoại:\nW: Chào Rodrigo. Bạn có muốn đi ăn trưa cùng tôi và cả nhóm không? Chúng tôi sẽ đến Café Milano. Chúng tôi đã làm việc rất chăm chỉ để hoàn thành chiến dịch quảng cáo cho khách hàng.\nM: Chắc chắn rồi! Nếu bạn muốn, tôi có thể lái xe.\nW: Quán cà phê này ngay dưới phố thôi.\nM: Ồ, chắc họ vừa mở thêm chi nhánh thứ hai. Tôi chỉ biết quán bên kia thành phố.\nW: Vâng, chi nhánh này vừa mở. Bạn có muốn xem thực đơn không? Tôi có một bản trong văn phòng của mình."
+  },
+  {
+   "number": 47,
+   "part": 3,
+   "answer": "B",
+   "group": "47-49",
+   "textEn": "47. Who most likely is the man? (A) A salesperson (B) A journalist (C) A company intern (D) A safety inspector",
+   "transcript": "M: / W-Am\nM: 47 Thanks for agreeing to be interviewed for Textiles Quarterly about your company's recycling process. Our readers will be intrigued.\nW: Simply put, we shred discarded fabric, turn it into a watery mixture called slurry, and then dry it and press it into new sheets of fabric. That fabric is then available to create new products. 48 Reducing unnecessary waste is our goal.\nM: It sounds like a great way to use leftover materials.\nW: Unfortunately, our facility is currently able to process only cotton waste. But in the next few years, we should be able to recycle more types of textiles here. 49 It's my hope that it could eventually become as common as recycling aluminum is now.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n47. Người đàn ông có khả năng là ai?\n(A) Nhân viên kinh doanh\n(B) Nhà báo\n(C) Thực tập sinh của công ty\n(D) Nhân viên thanh tra an toàn\n\nDịch hội thoại:\nM: Cảm ơn bạn đã đồng ý tham gia phỏng vấn cho Textiles Quarterly về quy trình tái chế của công ty bạn. Độc giả của chúng tôi chắc chắn sẽ rất hứng thú.\nW: Nói một cách đơn giản, chúng tôi xé vụn vải bỏ đi, biến nó thành một hỗn hợp nước gọi là slurry, sau đó sấy khô và ép thành những tấm vải mới. Những tấm vải này sau đó có thể được sử dụng để tạo ra các sản phẩm mới. Mục tiêu của chúng tôi là giảm thiểu lãng phí không cần thiết.\nM: Nghe có vẻ là một cách tuyệt vời để tận dụng nguyên liệu thừa.\nW: Thật tiếc là cơ sở của chúng tôi hiện tại chỉ có thể xử lý rác thải cotton. Nhưng trong vài năm tới, chúng tôi hy vọng có thể tái chế nhiều loại vải hơn tại đây. Tôi hy vọng rằng điều này cuối cùng có thể trở nên phổ biến như việc tái chế nhôm hiện nay."
+  },
+  {
+   "number": 48,
+   "part": 3,
+   "answer": "A",
+   "group": "47-49",
+   "textEn": "48. What does the woman say her company’s goal is? (A) To decrease material waste (B) To open additional facilities (C) To improve employee morale (D) To acquire international contracts",
+   "transcript": "M: / W-Am\nM: 47 Thanks for agreeing to be interviewed for Textiles Quarterly about your company's recycling process. Our readers will be intrigued.\nW: Simply put, we shred discarded fabric, turn it into a watery mixture called slurry, and then dry it and press it into new sheets of fabric. That fabric is then available to create new products. 48 Reducing unnecessary waste is our goal.\nM: It sounds like a great way to use leftover materials.\nW: Unfortunately, our facility is currently able to process only cotton waste. But in the next few years, we should be able to recycle more types of textiles here. 49 It's my hope that it could eventually become as common as recycling aluminum is now.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n48. Người phụ nữ nói mục tiêu của công ty cô ấy là gì?\n(A) Giảm lượng rác thải vật liệu\n(B) Mở thêm cơ sở mới\n(C) Cải thiện tinh thần nhân viên\n(D) Ký được hợp đồng quốc tế\n\nDịch hội thoại:\nM: Cảm ơn bạn đã đồng ý tham gia phỏng vấn cho Textiles Quarterly về quy trình tái chế của công ty bạn. Độc giả của chúng tôi chắc chắn sẽ rất hứng thú.\nW: Nói một cách đơn giản, chúng tôi xé vụn vải bỏ đi, biến nó thành một hỗn hợp nước gọi là slurry, sau đó sấy khô và ép thành những tấm vải mới. Những tấm vải này sau đó có thể được sử dụng để tạo ra các sản phẩm mới. Mục tiêu của chúng tôi là giảm thiểu lãng phí không cần thiết.\nM: Nghe có vẻ là một cách tuyệt vời để tận dụng nguyên liệu thừa.\nW: Thật tiếc là cơ sở của chúng tôi hiện tại chỉ có thể xử lý rác thải cotton. Nhưng trong vài năm tới, chúng tôi hy vọng có thể tái chế nhiều loại vải hơn tại đây. Tôi hy vọng rằng điều này cuối cùng có thể trở nên phổ biến như việc tái chế nhôm hiện nay."
+  },
+  {
+   "number": 49,
+   "part": 3,
+   "answer": "C",
+   "group": "47-49",
+   "textEn": "49. What does the woman hope will happen? (A) Some funding will become available (B) A fashion line will be popular (C) A process will be widely adopted (D) Export fees will be reduced",
+   "transcript": "M: / W-Am\nM: 47 Thanks for agreeing to be interviewed for Textiles Quarterly about your company's recycling process. Our readers will be intrigued.\nW: Simply put, we shred discarded fabric, turn it into a watery mixture called slurry, and then dry it and press it into new sheets of fabric. That fabric is then available to create new products. 48 Reducing unnecessary waste is our goal.\nM: It sounds like a great way to use leftover materials.\nW: Unfortunately, our facility is currently able to process only cotton waste. But in the next few years, we should be able to recycle more types of textiles here. 49 It's my hope that it could eventually become as common as recycling aluminum is now.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n49. Người phụ nữ hy vọng điều gì sẽ xảy ra?\n(A) Có thêm nguồn tài trợ\n(B) Dòng thời trang sẽ trở nên phổ biến\n(C) Một quy trình sẽ được áp dụng rộng rãi\n(D) Phí xuất khẩu sẽ được giảm\n\nDịch hội thoại:\nM: Cảm ơn bạn đã đồng ý tham gia phỏng vấn cho Textiles Quarterly về quy trình tái chế của công ty bạn. Độc giả của chúng tôi chắc chắn sẽ rất hứng thú.\nW: Nói một cách đơn giản, chúng tôi xé vụn vải bỏ đi, biến nó thành một hỗn hợp nước gọi là slurry, sau đó sấy khô và ép thành những tấm vải mới. Những tấm vải này sau đó có thể được sử dụng để tạo ra các sản phẩm mới. Mục tiêu của chúng tôi là giảm thiểu lãng phí không cần thiết.\nM: Nghe có vẻ là một cách tuyệt vời để tận dụng nguyên liệu thừa.\nW: Thật tiếc là cơ sở của chúng tôi hiện tại chỉ có thể xử lý rác thải cotton. Nhưng trong vài năm tới, chúng tôi hy vọng có thể tái chế nhiều loại vải hơn tại đây. Tôi hy vọng rằng điều này cuối cùng có thể trở nên phổ biến như việc tái chế nhôm hiện nay."
+  },
+  {
+   "number": 50,
+   "part": 3,
+   "answer": "C",
+   "group": "50-52",
+   "textEn": "50. Which department are the speakers most likely hiring for? (A) Product Development (B) Technical Support (C) Public Relations (D) Graphic Design",
+   "transcript": "M: / W-Br\nM: Well, I think we've found the right person for the job. Sergey has a confident presence when speaking with reporters, and he knows the travel industry well. He'll be a great spokesperson for our airline.\nW: I liked the media clips he shared with us. He speaks clearly and naturally. However, he also does some consulting as an extra source of income. Will he be available whenever we need him?\nM: You bring up a good point. We should call him about that.\nW: Well, we have his final interview scheduled for tomorrow. Let's wait until then.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n50. Hai người có khả năng đang tuyển dụng cho bộ phận nào?\n(A) Phát triển sản phẩm\n(B) Hỗ trợ kỹ thuật\n(C) Quan hệ công chúng\n(D) Thiết kế đồ họa\n\nDịch hội thoại:\nM: Tôi nghĩ chúng ta đã tìm được người phù hợp cho công việc. Sergey có phong thái tự tin khi nói chuyện với phóng viên, và anh ấy hiểu rõ ngành du lịch. Anh ấy sẽ là phát ngôn viên tuyệt vời cho hãng hàng không của chúng ta.\nW: Tôi thích các clip truyền thông mà anh ấy chia sẻ với chúng ta. Anh ấy nói chuyện rõ ràng và tự nhiên. Tuy nhiên, anh ấy cũng làm một số công việc tư vấn để có thêm thu nhập. Liệu anh ấy có sẵn sàng bất cứ khi nào chúng ta cần không?\nM: Bạn nêu ra một điểm hay. Chúng ta nên gọi cho anh ấy về vấn đề đó.\nW: Chúng ta có lịch phỏng vấn cuối cùng với anh ấy vào ngày mai. Hãy đợi đến lúc đó."
+  },
+  {
+   "number": 51,
+   "part": 3,
+   "answer": "B",
+   "group": "50-52",
+   "textEn": "51. Why is the woman unsure about a candidate? (A) He lives too far from headquarters (B) He might have limited availability (C) He cannot provide any references (D) He does not have relevant experience",
+   "transcript": "M: / W-Br\nM: Well, I think we've found the right person for the job. Sergey has a confident presence when speaking with reporters, and he knows the travel industry well. He'll be a great spokesperson for our airline.\nW: I liked the media clips he shared with us. He speaks clearly and naturally. However, he also does some consulting as an extra source of income. Will he be available whenever we need him?\nM: You bring up a good point. We should call him about that.\nW: Well, we have his final interview scheduled for tomorrow. Let's wait until then.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n51. Tại sao người phụ nữ không chắc chắn về một ứng viên?\n(A) Anh ấy sống quá xa trụ sở\n(B) Anh ấy có thể không rảnh nhiều\n(C) Anh ấy không cung cấp được người giới thiệu\n(D) Anh ấy không có kinh nghiệm phù hợp\n\nDịch hội thoại:\nM: Tôi nghĩ chúng ta đã tìm được người phù hợp cho công việc. Sergey có phong thái tự tin khi nói chuyện với phóng viên, và anh ấy hiểu rõ ngành du lịch. Anh ấy sẽ là phát ngôn viên tuyệt vời cho hãng hàng không của chúng ta.\nW: Tôi thích các clip truyền thông mà anh ấy chia sẻ với chúng ta. Anh ấy nói chuyện rõ ràng và tự nhiên. Tuy nhiên, anh ấy cũng làm một số công việc tư vấn để có thêm thu nhập. Liệu anh ấy có sẵn sàng bất cứ khi nào chúng ta cần không?\nM: Bạn nêu ra một điểm hay. Chúng ta nên gọi cho anh ấy về vấn đề đó.\nW: Chúng ta có lịch phỏng vấn cuối cùng với anh ấy vào ngày mai. Hãy đợi đến lúc đó."
+  },
+  {
+   "number": 52,
+   "part": 3,
+   "answer": "D",
+   "group": "50-52",
+   "textEn": "52. What does the woman suggest doing? (A) Scheduling a press conference (B) Canceling a training session (C) Making a lunch reservation (D) Postponing a phone call",
+   "transcript": "M: / W-Br\nM: Well, I think we've found the right person for the job. Sergey has a confident presence when speaking with reporters, and he knows the travel industry well. He'll be a great spokesperson for our airline.\nW: I liked the media clips he shared with us. He speaks clearly and naturally. However, he also does some consulting as an extra source of income. Will he be available whenever we need him?\nM: You bring up a good point. We should call him about that.\nW: Well, we have his final interview scheduled for tomorrow. Let's wait until then.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n52. Người phụ nữ đề nghị làm gì?\n(A) Sắp xếp họp báo\n(B) Hủy một buổi đào tạo\n(C) Đặt chỗ ăn trưa\n(D) Hoãn một cuộc gọi\n\nDịch hội thoại:\nM: Tôi nghĩ chúng ta đã tìm được người phù hợp cho công việc. Sergey có phong thái tự tin khi nói chuyện với phóng viên, và anh ấy hiểu rõ ngành du lịch. Anh ấy sẽ là phát ngôn viên tuyệt vời cho hãng hàng không của chúng ta.\nW: Tôi thích các clip truyền thông mà anh ấy chia sẻ với chúng ta. Anh ấy nói chuyện rõ ràng và tự nhiên. Tuy nhiên, anh ấy cũng làm một số công việc tư vấn để có thêm thu nhập. Liệu anh ấy có sẵn sàng bất cứ khi nào chúng ta cần không?\nM: Bạn nêu ra một điểm hay. Chúng ta nên gọi cho anh ấy về vấn đề đó.\nW: Chúng ta có lịch phỏng vấn cuối cùng với anh ấy vào ngày mai. Hãy đợi đến lúc đó."
+  },
+  {
+   "number": 53,
+   "part": 3,
+   "answer": "C",
+   "group": "53-55",
+   "textEn": "53. What is the conversation mainly about? (A) A holiday gathering (B) A community festival (C) An art gallery opening (D) A fashion design show",
+   "transcript": "W: / M-Au\nW: Good morning, Mr. Murray. I'm here to help you start planning the opening of your newest art gallery.\nM: Great! As you know, this will be our third location. So I think I might like to try a different kind of approach this time.\nW: I understand. I have many options for you to consider.\nM: Glad to hear it.\nW: Let me grab the catering menu and the book of flower selections from my van. It's parked just outside.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n53. Cuộc trò chuyện chủ yếu nói về điều gì?\n(A) Một buổi tụ họp ngày lễ\n(B) Một lễ hội cộng đồng\n(C) Một buổi khai mạc triển lãm nghệ thuật\n(D) Một buổi trình diễn thời trang\n\nDịch hội thoại:\nW: Chào buổi sáng, ông Murray. Tôi đến để giúp ông bắt đầu lên kế hoạch cho buổi khai trương của phòng tranh nghệ thuật mới nhất của ông.\nM: Tuyệt! Như ông biết, đây sẽ là địa điểm thứ ba của chúng ta. Vì vậy tôi nghĩ lần này mình muốn thử một cách tiếp cận khác.\nW: Tôi hiểu rồi. Tôi có nhiều lựa chọn để ông cân nhắc.\nM: Nghe hay đấy.\nW: Để tôi lấy thực đơn phục vụ tiệc và cuốn sổ các lựa chọn hoa từ xe của tôi. Xe tôi đang đậu ngay bên ngoài."
+  },
+  {
+   "number": 54,
+   "part": 3,
+   "answer": "B",
+   "group": "53-55",
+   "textEn": "54. Why does the woman say, “I have many options for you to consider”? (A) To recommend budgeting carefully (B) To offer reassurance (C) To praise the work her team did (D) To question a decision",
+   "transcript": "W: / M-Au\nW: Good morning, Mr. Murray. I'm here to help you start planning the opening of your newest art gallery.\nM: Great! As you know, this will be our third location. So I think I might like to try a different kind of approach this time.\nW: I understand. I have many options for you to consider.\nM: Glad to hear it.\nW: Let me grab the catering menu and the book of flower selections from my van. It's parked just outside.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n54. Tại sao người phụ nữ nói: “Tôi có nhiều lựa chọn để anh xem xét”?\n(A) Để gợi ý nên cân nhắc ngân sách kỹ lưỡng\n(B) Để trấn an\n(C) Để khen nhóm của cô ấy\n(D) Để chất vấn một quyết định\n\nDịch hội thoại:\nW: Chào buổi sáng, ông Murray. Tôi đến để giúp ông bắt đầu lên kế hoạch cho buổi khai trương của phòng tranh nghệ thuật mới nhất của ông.\nM: Tuyệt! Như ông biết, đây sẽ là địa điểm thứ ba của chúng ta. Vì vậy tôi nghĩ lần này mình muốn thử một cách tiếp cận khác.\nW: Tôi hiểu rồi. Tôi có nhiều lựa chọn để ông cân nhắc.\nM: Nghe hay đấy.\nW: Để tôi lấy thực đơn phục vụ tiệc và cuốn sổ các lựa chọn hoa từ xe của tôi. Xe tôi đang đậu ngay bên ngoài."
+  },
+  {
+   "number": 55,
+   "part": 3,
+   "answer": "C",
+   "group": "53-55",
+   "textEn": "55. What will the woman do next? (A) Contact a colleague (B) Drive to a bank (C) Retrieve items from a vehicle (D) Take the man to an event venue",
+   "transcript": "W: / M-Au\nW: Good morning, Mr. Murray. I'm here to help you start planning the opening of your newest art gallery.\nM: Great! As you know, this will be our third location. So I think I might like to try a different kind of approach this time.\nW: I understand. I have many options for you to consider.\nM: Glad to hear it.\nW: Let me grab the catering menu and the book of flower selections from my van. It's parked just outside.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n55. Người phụ nữ sẽ làm gì tiếp theo?\n(A) Liên hệ với một đồng nghiệp\n(B) Lái xe đến ngân hàng\n(C) Lấy đồ từ xe\n(D) Đưa người đàn ông đến địa điểm sự kiện\n\nDịch hội thoại:\nW: Chào buổi sáng, ông Murray. Tôi đến để giúp ông bắt đầu lên kế hoạch cho buổi khai trương của phòng tranh nghệ thuật mới nhất của ông.\nM: Tuyệt! Như ông biết, đây sẽ là địa điểm thứ ba của chúng ta. Vì vậy tôi nghĩ lần này mình muốn thử một cách tiếp cận khác.\nW: Tôi hiểu rồi. Tôi có nhiều lựa chọn để ông cân nhắc.\nM: Nghe hay đấy.\nW: Để tôi lấy thực đơn phục vụ tiệc và cuốn sổ các lựa chọn hoa từ xe của tôi. Xe tôi đang đậu ngay bên ngoài."
+  },
+  {
+   "number": 56,
+   "part": 3,
+   "answer": "D",
+   "group": "56-58",
+   "textEn": "56. What is unique about the woman’s cookbook recipes? (A) They are inspired by the woman’s university friends (B) They are intended for large holiday celebrations (C) They are collected from places the woman has traveled to (D) They add unusual ingredients to traditional dishes",
+   "transcript": "M: Thanks for joining my podcast, Bianca. I'm enjoying your unique cookbook, which takes traditional dishes from around the world and adds unusual ingredients—which gives them a contemporary flair. What's your inspiration?\nW: Well, after finishing university, I was looking for a way to combine my knowledge of history that I learned there with cooking. So I decided to attend culinary school.\nM: I also noticed that you provide the recipes in a variety of other languages. That's a nice touch that many readers will appreciate. Is it based on where the dish originated?",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n56. Điều gì đặc biệt về các công thức nấu ăn trong sách của người phụ nữ?\n(A) Lấy cảm hứng từ bạn đại học của cô ấy\n(B) Dành cho các buổi tiệc lớn\n(C) Được sưu tầm từ những nơi cô ấy đã đi\n(D) Thêm các nguyên liệu độc đáo vào món truyền thống\n\nDịch hội thoại:\nM: Cảm ơn bạn đã tham gia podcast của tôi, Bianca. Tôi đang rất thích cuốn sách nấu ăn độc đáo của bạn, nơi bạn biến tấu các món ăn truyền thống từ khắp nơi trên thế giới bằng những nguyên liệu khác lạ—điều này tạo nên phong cách hiện đại cho chúng. Cảm hứng của bạn đến từ đâu?\nW: Sau khi tốt nghiệp đại học, tôi muốn tìm một cách kết hợp kiến thức lịch sử mà tôi học được với việc nấu ăn. Vì vậy tôi đã quyết định theo học trường dạy nấu ăn.\nM: Tôi cũng nhận thấy bạn cung cấp công thức bằng nhiều ngôn ngữ khác nhau. Đây là một chi tiết hay mà nhiều độc giả sẽ đánh giá cao. Điều này có dựa trên nơi món ăn đó xuất xứ không?"
+  },
+  {
+   "number": 57,
+   "part": 3,
+   "answer": "C",
+   "group": "56-58",
+   "textEn": "57. What did the woman most likely study at university? (A) Accounting (B) Biology (C) History (D) Computer science",
+   "transcript": "M: Thanks for joining my podcast, Bianca. I'm enjoying your unique cookbook, which takes traditional dishes from around the world and adds unusual ingredients—which gives them a contemporary flair. What's your inspiration?\nW: Well, after finishing university, I was looking for a way to combine my knowledge of history that I learned there with cooking. So I decided to attend culinary school.\nM: I also noticed that you provide the recipes in a variety of other languages. That's a nice touch that many readers will appreciate. Is it based on where the dish originated?",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n57. Người phụ nữ có khả năng đã học ngành gì ở đại học?\n(A) Kế toán\n(B) Sinh học\n(C) Lịch sử\n(D) Khoa học máy tính\n\nDịch hội thoại:\nM: Cảm ơn bạn đã tham gia podcast của tôi, Bianca. Tôi đang rất thích cuốn sách nấu ăn độc đáo của bạn, nơi bạn biến tấu các món ăn truyền thống từ khắp nơi trên thế giới bằng những nguyên liệu khác lạ—điều này tạo nên phong cách hiện đại cho chúng. Cảm hứng của bạn đến từ đâu?\nW: Sau khi tốt nghiệp đại học, tôi muốn tìm một cách kết hợp kiến thức lịch sử mà tôi học được với việc nấu ăn. Vì vậy tôi đã quyết định theo học trường dạy nấu ăn.\nM: Tôi cũng nhận thấy bạn cung cấp công thức bằng nhiều ngôn ngữ khác nhau. Đây là một chi tiết hay mà nhiều độc giả sẽ đánh giá cao. Điều này có dựa trên nơi món ăn đó xuất xứ không?"
+  },
+  {
+   "number": 58,
+   "part": 3,
+   "answer": "A",
+   "group": "56-58",
+   "textEn": "58. According to the man, what will some of the readers appreciate about the recipes? (A) They appear in multiple languages (B) They explain how to measure ingredients (C) They list alternative cooking methods (D) They include color photographs",
+   "transcript": "M: Thanks for joining my podcast, Bianca. I'm enjoying your unique cookbook, which takes traditional dishes from around the world and adds unusual ingredients—which gives them a contemporary flair. What's your inspiration?\nW: Well, after finishing university, I was looking for a way to combine my knowledge of history that I learned there with cooking. So I decided to attend culinary school.\nM: I also noticed that you provide the recipes in a variety of other languages. That's a nice touch that many readers will appreciate. Is it based on where the dish originated?",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n58. Theo người đàn ông, độc giả sẽ đánh giá cao điều gì ở các công thức nấu ăn?\n(A) Chúng xuất hiện bằng nhiều ngôn ngữ khác nhau\n(B) Chúng giải thích cách đo nguyên liệu\n(C) Chúng liệt kê các phương pháp nấu thay thế\n(D) Chúng có ảnh màu\n\nDịch hội thoại:\nM: Cảm ơn bạn đã tham gia podcast của tôi, Bianca. Tôi đang rất thích cuốn sách nấu ăn độc đáo của bạn, nơi bạn biến tấu các món ăn truyền thống từ khắp nơi trên thế giới bằng những nguyên liệu khác lạ—điều này tạo nên phong cách hiện đại cho chúng. Cảm hứng của bạn đến từ đâu?\nW: Sau khi tốt nghiệp đại học, tôi muốn tìm một cách kết hợp kiến thức lịch sử mà tôi học được với việc nấu ăn. Vì vậy tôi đã quyết định theo học trường dạy nấu ăn.\nM: Tôi cũng nhận thấy bạn cung cấp công thức bằng nhiều ngôn ngữ khác nhau. Đây là một chi tiết hay mà nhiều độc giả sẽ đánh giá cao. Điều này có dựa trên nơi món ăn đó xuất xứ không?"
+  },
+  {
+   "number": 59,
+   "part": 3,
+   "answer": "A",
+   "group": "59-61",
+   "textEn": "59. Which industry do the speakers work in? (A) Pharmaceuticals (B) Technology (C) Construction (D) Agriculture",
+   "transcript": "W: Hi, Ji-Soo and Alberto. Are you planning on attending the pharmaceutical conference next month? I think it'll be a great opportunity for us to learn from and network with other industry professionals.\nM1: Yes, we're going. In fact, Alberto and I will be leading a roundtable discussion on sustainable health care.\nW: That's fantastic. When is it?\nM1: I can't remember the time. Alberto, do you have the schedule?\nM2: Yes, I actually just downloaded the conference's app. It should be listed there. Let's see. It looks like it's on Thursday at four.\nW: Great! I'll download the app now and sign up.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n59. Hai người làm trong ngành nào?\n(A) Dược phẩm\n(B) Công nghệ\n(C) Xây dựng\n(D) Nông nghiệp\n\nDịch hội thoại:\nW: Chào Ji-Soo và Alberto. Hai bạn có dự định tham dự hội nghị dược phẩm vào tháng tới không? Tôi nghĩ đó sẽ là một cơ hội tuyệt vời để chúng ta học hỏi và kết nối với các chuyên gia khác trong ngành.\nM1: Có, chúng tôi sẽ tham dự. Thực tế là Alberto và tôi sẽ dẫn dắt một buổi thảo luận bàn tròn về chăm sóc sức khỏe bền vững.\nW: Tuyệt vời quá. Khi nào vậy?\nM1: Tôi không nhớ chính xác thời gian. Alberto, bạn có lịch trình không?\nM2: Có, tôi vừa tải ứng dụng của hội nghị. Thông tin chắc chắn được ghi ở đó. Để xem nào. Có vẻ là vào thứ Năm lúc bốn giờ.\nW: Tuyệt! Tôi sẽ tải ứng dụng ngay bây giờ và đăng ký."
+  },
+  {
+   "number": 60,
+   "part": 3,
+   "answer": "B",
+   "group": "59-61",
+   "textEn": "60. What will the men be doing? (A) Planning a hiring process (B) Leading a discussion (C) Conducting a tour (D) Inspecting a renovation project",
+   "transcript": "W: Hi, Ji-Soo and Alberto. Are you planning on attending the pharmaceutical conference next month? I think it'll be a great opportunity for us to learn from and network with other industry professionals.\nM1: Yes, we're going. In fact, Alberto and I will be leading a roundtable discussion on sustainable health care.\nW: That's fantastic. When is it?\nM1: I can't remember the time. Alberto, do you have the schedule?\nM2: Yes, I actually just downloaded the conference's app. It should be listed there. Let's see. It looks like it's on Thursday at four.\nW: Great! I'll download the app now and sign up.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n60. Những người đàn ông sẽ làm gì?\n(A) Lập kế hoạch tuyển dụng\n(B) Dẫn dắt một cuộc thảo luận\n(C) Dẫn một chuyến tham quan\n(D) Kiểm tra một dự án cải tạo\n\nDịch hội thoại:\nW: Chào Ji-Soo và Alberto. Hai bạn có dự định tham dự hội nghị dược phẩm vào tháng tới không? Tôi nghĩ đó sẽ là một cơ hội tuyệt vời để chúng ta học hỏi và kết nối với các chuyên gia khác trong ngành.\nM1: Có, chúng tôi sẽ tham dự. Thực tế là Alberto và tôi sẽ dẫn dắt một buổi thảo luận bàn tròn về chăm sóc sức khỏe bền vững.\nW: Tuyệt vời quá. Khi nào vậy?\nM1: Tôi không nhớ chính xác thời gian. Alberto, bạn có lịch trình không?\nM2: Có, tôi vừa tải ứng dụng của hội nghị. Thông tin chắc chắn được ghi ở đó. Để xem nào. Có vẻ là vào thứ Năm lúc bốn giờ.\nW: Tuyệt! Tôi sẽ tải ứng dụng ngay bây giờ và đăng ký."
+  },
+  {
+   "number": 61,
+   "part": 3,
+   "answer": "B",
+   "group": "59-61",
+   "textEn": "61. What will the woman most likely do next? (A) Write a review (B) Download a mobile application (C) Consult a manager (D) Print some documents",
+   "transcript": "W: Hi, Ji-Soo and Alberto. Are you planning on attending the pharmaceutical conference next month? I think it'll be a great opportunity for us to learn from and network with other industry professionals.\nM1: Yes, we're going. In fact, Alberto and I will be leading a roundtable discussion on sustainable health care.\nW: That's fantastic. When is it?\nM1: I can't remember the time. Alberto, do you have the schedule?\nM2: Yes, I actually just downloaded the conference's app. It should be listed there. Let's see. It looks like it's on Thursday at four.\nW: Great! I'll download the app now and sign up.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n61. Người phụ nữ có khả năng sẽ làm gì tiếp theo?\n(A) Viết một bài đánh giá\n(B) Tải một ứng dụng di động\n(C) Tham khảo ý kiến quản lý\n(D) In một vài tài liệu\n\nDịch hội thoại:\nW: Chào Ji-Soo và Alberto. Hai bạn có dự định tham dự hội nghị dược phẩm vào tháng tới không? Tôi nghĩ đó sẽ là một cơ hội tuyệt vời để chúng ta học hỏi và kết nối với các chuyên gia khác trong ngành.\nM1: Có, chúng tôi sẽ tham dự. Thực tế là Alberto và tôi sẽ dẫn dắt một buổi thảo luận bàn tròn về chăm sóc sức khỏe bền vững.\nW: Tuyệt vời quá. Khi nào vậy?\nM1: Tôi không nhớ chính xác thời gian. Alberto, bạn có lịch trình không?\nM2: Có, tôi vừa tải ứng dụng của hội nghị. Thông tin chắc chắn được ghi ở đó. Để xem nào. Có vẻ là vào thứ Năm lúc bốn giờ.\nW: Tuyệt! Tôi sẽ tải ứng dụng ngay bây giờ và đăng ký."
+  },
+  {
+   "number": 62,
+   "part": 3,
+   "answer": "A",
+   "group": "62-64",
+   "textEn": "62. What problem does the woman mention? (A) Low attendance (B) High maintenance costs (C) Few trained staff (D) Poor customer service",
+   "transcript": "W: Our water park will be reopening for the summer season soon, and we're looking for ways to increase park attendance. This has been an ongoing problem.\nM: I agree. It's mainly weekdays that have poor attendance. So I've come up with a plan with special offers on those days. What do you think?\nW: It's good. I like the free parking. In fact, I think we should offer it on another day too. How about we replace the free arcade tickets with another day of free parking?\nM: Sure. But first I'm going to talk to the maintenance staff and make sure the repairs to the overflow parking area are done before customers start arriving.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n62. Người phụ nữ đề cập đến vấn đề gì?\n(A) Lượng khách thấp\n(B) Chi phí bảo trì cao\n(C) Thiếu nhân viên được đào tạo\n(D) Dịch vụ khách hàng kém\n\nDịch hội thoại:\nW: Công viên nước của chúng ta sắp mở cửa trở lại cho mùa hè, và chúng ta đang tìm cách để tăng lượng khách đến công viên. Đây là một vấn đề đã kéo dài khá lâu rồi.\nM: Tôi đồng ý. Chủ yếu là các ngày trong tuần có lượng khách rất thấp. Vì vậy tôi đã nghĩ ra một kế hoạch với những ưu đãi đặc biệt vào những ngày đó. Bạn thấy thế nào?\nW: Kế hoạch đó tốt đấy. Tôi thích ý tưởng miễn phí đỗ xe. Thực ra, tôi nghĩ chúng ta nên áp dụng ưu đãi này vào thêm một ngày nữa. Hay là chúng ta thay vé trò chơi điện tử miễn phí bằng một ngày miễn phí đỗ xe nữa nhé?\nM: Được thôi. Nhưng trước tiên tôi sẽ trao đổi với đội bảo trì để đảm bảo việc sửa chữa khu bãi đỗ xe phụ được hoàn tất trước khi khách hàng bắt đầu đến."
+  },
+  {
+   "number": 63,
+   "part": 3,
+   "answer": "D",
+   "group": "62-64",
+   "textEn": "63. Look at the graphic. Which day does the woman want to change the special offer for? (A) Monday (B) Tuesday (C) Wednesday (D) Thursday",
+   "transcript": "W: Our water park will be reopening for the summer season soon, and we're looking for ways to increase park attendance. This has been an ongoing problem.\nM: I agree. It's mainly weekdays that have poor attendance. So I've come up with a plan with special offers on those days. What do you think?\nW: It's good. I like the free parking. In fact, I think we should offer it on another day too. How about we replace the free arcade tickets with another day of free parking?\nM: Sure. But first I'm going to talk to the maintenance staff and make sure the repairs to the overflow parking area are done before customers start arriving.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n63. Dựa vào hình, người phụ nữ muốn thay đổi ưu đãi đặc biệt vào ngày nào?\n(A) Thứ Hai\n(B) Thứ Ba\n(C) Thứ Tư\n(D) Thứ Năm\n\nDịch hội thoại:\nW: Công viên nước của chúng ta sắp mở cửa trở lại cho mùa hè, và chúng ta đang tìm cách để tăng lượng khách đến công viên. Đây là một vấn đề đã kéo dài khá lâu rồi.\nM: Tôi đồng ý. Chủ yếu là các ngày trong tuần có lượng khách rất thấp. Vì vậy tôi đã nghĩ ra một kế hoạch với những ưu đãi đặc biệt vào những ngày đó. Bạn thấy thế nào?\nW: Kế hoạch đó tốt đấy. Tôi thích ý tưởng miễn phí đỗ xe. Thực ra, tôi nghĩ chúng ta nên áp dụng ưu đãi này vào thêm một ngày nữa. Hay là chúng ta thay vé trò chơi điện tử miễn phí bằng một ngày miễn phí đỗ xe nữa nhé?\nM: Được thôi. Nhưng trước tiên tôi sẽ trao đổi với đội bảo trì để đảm bảo việc sửa chữa khu bãi đỗ xe phụ được hoàn tất trước khi khách hàng bắt đầu đến."
+  },
+  {
+   "number": 64,
+   "part": 3,
+   "answer": "C",
+   "group": "62-64",
+   "textEn": "64. What does the man say he wants to confirm? (A) Some posters have been distributed (B) A schedule has been printed (C) Some repairs have been completed (D) A park map has been updated",
+   "transcript": "W: Our water park will be reopening for the summer season soon, and we're looking for ways to increase park attendance. This has been an ongoing problem.\nM: I agree. It's mainly weekdays that have poor attendance. So I've come up with a plan with special offers on those days. What do you think?\nW: It's good. I like the free parking. In fact, I think we should offer it on another day too. How about we replace the free arcade tickets with another day of free parking?\nM: Sure. But first I'm going to talk to the maintenance staff and make sure the repairs to the overflow parking area are done before customers start arriving.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n64. Người đàn ông nói rằng anh ấy muốn xác nhận điều gì?\n(A) Các áp phích đã được phân phát\n(B) Lịch trình đã được in\n(C) Một số sửa chữa đã hoàn thành\n(D) Bản đồ công viên đã được cập nhật\n\nDịch hội thoại:\nW: Công viên nước của chúng ta sắp mở cửa trở lại cho mùa hè, và chúng ta đang tìm cách để tăng lượng khách đến công viên. Đây là một vấn đề đã kéo dài khá lâu rồi.\nM: Tôi đồng ý. Chủ yếu là các ngày trong tuần có lượng khách rất thấp. Vì vậy tôi đã nghĩ ra một kế hoạch với những ưu đãi đặc biệt vào những ngày đó. Bạn thấy thế nào?\nW: Kế hoạch đó tốt đấy. Tôi thích ý tưởng miễn phí đỗ xe. Thực ra, tôi nghĩ chúng ta nên áp dụng ưu đãi này vào thêm một ngày nữa. Hay là chúng ta thay vé trò chơi điện tử miễn phí bằng một ngày miễn phí đỗ xe nữa nhé?\nM: Được thôi. Nhưng trước tiên tôi sẽ trao đổi với đội bảo trì để đảm bảo việc sửa chữa khu bãi đỗ xe phụ được hoàn tất trước khi khách hàng bắt đầu đến."
+  },
+  {
+   "number": 65,
+   "part": 3,
+   "answer": "C",
+   "group": "65-67",
+   "textEn": "65. Where most likely is the gift shop? (A) At an airport (B) At a sports stadium (C) At a museum (D) At a concert hall",
+   "transcript": "W: I can't find this shirt in my size. Do you have any more in a size small?\nM: The exhibit of Narumi Azuma's drawings is very popular. The gift shop has sold out of a lot of the merchandise. Do you want me to see if the display shirt is a small?\nW: Sure. That print is one of my favorites.\nM: You're in luck. It's a small. I'll ring it up for you. 67 Are you a museum member?\nW: No, I'm not.\nM: You might consider becoming one. Members get a ten percent discount at the gift shop.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n65. Cửa hàng quà tặng có khả năng nằm ở đâu?\n(A) Sân bay\n(B) Sân vận động thể thao\n(C) Bảo tàng\n(D) Nhà hát hòa nhạc\n\nDịch hội thoại:\nW: Tôi không tìm thấy chiếc áo này đúng cỡ của mình. Anh/chị có còn chiếc nào cỡ nhỏ (size S) không?\nM: Triển lãm các bức vẽ của Narumi Azuma đang rất được yêu thích. Cửa hàng quà tặng đã bán hết khá nhiều mặt hàng rồi. Bạn có muốn tôi kiểm tra xem chiếc áo trưng bày có phải cỡ nhỏ không?\nW: Vâng. Hình in đó là một trong những mẫu tôi thích nhất.\nM: Bạn thật may mắn. Nó là cỡ nhỏ. Tôi sẽ tính tiền cho bạn nhé. Bạn có phải là hội viên của bảo tàng không?\nW: Không, tôi không phải.\nM: Bạn có thể cân nhắc việc trở thành hội viên. Hội viên sẽ được giảm giá mười phần trăm tại cửa hàng quà tặng."
+  },
+  {
+   "number": 66,
+   "part": 3,
+   "answer": "A",
+   "group": "65-67",
+   "textEn": "66. Look at the graphic. How much will the woman pay for an item? (A) $35 (B) $18 (C) $25 (D) $12",
+   "transcript": "W: I can't find this shirt in my size. Do you have any more in a size small?\nM: The exhibit of Narumi Azuma's drawings is very popular. The gift shop has sold out of a lot of the merchandise. Do you want me to see if the display shirt is a small?\nW: Sure. That print is one of my favorites.\nM: You're in luck. It's a small. I'll ring it up for you. 67 Are you a museum member?\nW: No, I'm not.\nM: You might consider becoming one. Members get a ten percent discount at the gift shop.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n66. Dựa vào hình, người phụ nữ sẽ trả bao nhiêu cho một món hàng?\n(A) 35 đô\n(B) 18 đô\n(C) 25 đô\n(D) 12 đô\n\nDịch hội thoại:\nW: Tôi không tìm thấy chiếc áo này đúng cỡ của mình. Anh/chị có còn chiếc nào cỡ nhỏ (size S) không?\nM: Triển lãm các bức vẽ của Narumi Azuma đang rất được yêu thích. Cửa hàng quà tặng đã bán hết khá nhiều mặt hàng rồi. Bạn có muốn tôi kiểm tra xem chiếc áo trưng bày có phải cỡ nhỏ không?\nW: Vâng. Hình in đó là một trong những mẫu tôi thích nhất.\nM: Bạn thật may mắn. Nó là cỡ nhỏ. Tôi sẽ tính tiền cho bạn nhé. Bạn có phải là hội viên của bảo tàng không?\nW: Không, tôi không phải.\nM: Bạn có thể cân nhắc việc trở thành hội viên. Hội viên sẽ được giảm giá mười phần trăm tại cửa hàng quà tặng."
+  },
+  {
+   "number": 67,
+   "part": 3,
+   "answer": "D",
+   "group": "65-67",
+   "textEn": "67. What does the man suggest doing? (A) Visiting a Web site (B) Registering for a class (C) Printing some tickets (D) Becoming a member",
+   "transcript": "W: I can't find this shirt in my size. Do you have any more in a size small?\nM: The exhibit of Narumi Azuma's drawings is very popular. The gift shop has sold out of a lot of the merchandise. Do you want me to see if the display shirt is a small?\nW: Sure. That print is one of my favorites.\nM: You're in luck. It's a small. I'll ring it up for you. 67 Are you a museum member?\nW: No, I'm not.\nM: You might consider becoming one. Members get a ten percent discount at the gift shop.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n67. Người đàn ông đề nghị làm gì?\n(A) Truy cập trang web\n(B) Đăng ký một lớp học\n(C) In một số vé\n(D) Trở thành thành viên\n\nDịch hội thoại:\nW: Tôi không tìm thấy chiếc áo này đúng cỡ của mình. Anh/chị có còn chiếc nào cỡ nhỏ (size S) không?\nM: Triển lãm các bức vẽ của Narumi Azuma đang rất được yêu thích. Cửa hàng quà tặng đã bán hết khá nhiều mặt hàng rồi. Bạn có muốn tôi kiểm tra xem chiếc áo trưng bày có phải cỡ nhỏ không?\nW: Vâng. Hình in đó là một trong những mẫu tôi thích nhất.\nM: Bạn thật may mắn. Nó là cỡ nhỏ. Tôi sẽ tính tiền cho bạn nhé. Bạn có phải là hội viên của bảo tàng không?\nW: Không, tôi không phải.\nM: Bạn có thể cân nhắc việc trở thành hội viên. Hội viên sẽ được giảm giá mười phần trăm tại cửa hàng quà tặng."
+  },
+  {
+   "number": 68,
+   "part": 3,
+   "answer": "B",
+   "group": "68-70",
+   "textEn": "68. Look at the graphic. Where does the woman want to install a fence? (A) In location 1 (B) In location 2 (C) In location 3 (D) In location 4",
+   "transcript": "W: Hi. I'm interested in installing a new fence on my property.\nM: You called the right place. What type of fence are you looking for?\nW: Something sturdy to put around the garden to keep animals from eating the vegetables.\nM: OK. A mesh fence might work well for you. In fact, right now, we have a promotion on fences. If you pay half the cost in advance, you'll get twenty percent off the price.\nW: Sounds great. Can you give me a cost estimate?\nM: Not until I take measurements. I can do that on Saturday, if you're available.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n68. Nhìn vào hình, người phụ nữ muốn lắp hàng rào ở vị trí nào?\n(A) Vị trí 1\n(B) Vị trí 2\n(C) Vị trí 3\n(D) Vị trí 4\n\nDịch hội thoại:\nW: Chào. Tôi muốn lắp một hàng rào mới quanh khu đất của mình.\nM: Bạn đã gọi đúng chỗ rồi. Bạn đang tìm loại hàng rào nào?\nW: Một loại chắc chắn để bao quanh vườn, tránh cho động vật ăn rau.\nM: Được rồi. Hàng rào lưới có lẽ sẽ phù hợp với bạn. Thực ra, hiện tại chúng tôi đang có chương trình khuyến mãi cho hàng rào. Nếu bạn trả trước một nửa chi phí, bạn sẽ được giảm giá hai mươi phần trăm.\nW: Nghe tuyệt đấy. Bạn có thể cho tôi ước tính chi phí không?\nM: Chưa thể, cho đến khi tôi đo đạc. Tôi có thể làm việc đó vào thứ Bảy, nếu bạn rảnh."
+  },
+  {
+   "number": 69,
+   "part": 3,
+   "answer": "B",
+   "group": "68-70",
+   "textEn": "69. How can the woman receive a discount? (A) By posting a review on social media (B) By paying half the cost in advance (C) By enrolling in a loyalty program (D) By referring a friend",
+   "transcript": "W: Hi. I'm interested in installing a new fence on my property.\nM: You called the right place. What type of fence are you looking for?\nW: Something sturdy to put around the garden to keep animals from eating the vegetables.\nM: OK. A mesh fence might work well for you. In fact, right now, we have a promotion on fences. If you pay half the cost in advance, you'll get twenty percent off the price.\nW: Sounds great. Can you give me a cost estimate?\nM: Not until I take measurements. I can do that on Saturday, if you're available.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n69. Người phụ nữ có thể nhận được giảm giá bằng cách nào?\n(A) Đăng đánh giá trên mạng xã hội\n(B) Trả trước một nửa chi phí\n(C) Tham gia chương trình thành viên thân thiết\n(D) Giới thiệu bạn bè\n\nDịch hội thoại:\nW: Chào. Tôi muốn lắp một hàng rào mới quanh khu đất của mình.\nM: Bạn đã gọi đúng chỗ rồi. Bạn đang tìm loại hàng rào nào?\nW: Một loại chắc chắn để bao quanh vườn, tránh cho động vật ăn rau.\nM: Được rồi. Hàng rào lưới có lẽ sẽ phù hợp với bạn. Thực ra, hiện tại chúng tôi đang có chương trình khuyến mãi cho hàng rào. Nếu bạn trả trước một nửa chi phí, bạn sẽ được giảm giá hai mươi phần trăm.\nW: Nghe tuyệt đấy. Bạn có thể cho tôi ước tính chi phí không?\nM: Chưa thể, cho đến khi tôi đo đạc. Tôi có thể làm việc đó vào thứ Bảy, nếu bạn rảnh."
+  },
+  {
+   "number": 70,
+   "part": 3,
+   "answer": "D",
+   "group": "68-70",
+   "textEn": "70. Why will the man visit the property on Saturday? (A) To obtain a signature (B) To deliver some materials (C) To take some photographs (D) To take some measurements",
+   "transcript": "W: Hi. I'm interested in installing a new fence on my property.\nM: You called the right place. What type of fence are you looking for?\nW: Something sturdy to put around the garden to keep animals from eating the vegetables.\nM: OK. A mesh fence might work well for you. In fact, right now, we have a promotion on fences. If you pay half the cost in advance, you'll get twenty percent off the price.\nW: Sounds great. Can you give me a cost estimate?\nM: Not until I take measurements. I can do that on Saturday, if you're available.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n70. Tại sao người đàn ông sẽ ghé thăm bất động sản vào thứ Bảy?\n(A) Để lấy chữ ký\n(B) Để giao một số vật liệu\n(C) Để chụp ảnh\n(D) Để đo đạc\n\nDịch hội thoại:\nW: Chào. Tôi muốn lắp một hàng rào mới quanh khu đất của mình.\nM: Bạn đã gọi đúng chỗ rồi. Bạn đang tìm loại hàng rào nào?\nW: Một loại chắc chắn để bao quanh vườn, tránh cho động vật ăn rau.\nM: Được rồi. Hàng rào lưới có lẽ sẽ phù hợp với bạn. Thực ra, hiện tại chúng tôi đang có chương trình khuyến mãi cho hàng rào. Nếu bạn trả trước một nửa chi phí, bạn sẽ được giảm giá hai mươi phần trăm.\nW: Nghe tuyệt đấy. Bạn có thể cho tôi ước tính chi phí không?\nM: Chưa thể, cho đến khi tôi đo đạc. Tôi có thể làm việc đó vào thứ Bảy, nếu bạn rảnh."
+  },
+  {
+   "number": 71,
+   "part": 4,
+   "answer": "D",
+   "group": "71-73",
+   "textEn": "71. What is the focus of the tour? (A) Rock formations (B) Wildlife species (C) Bridges (D) Buildings",
+   "transcript": "Welcome aboard Sunshine Cruises. On today's tour, you'll have the opportunity to see several of the city's most famous buildings directly from the Camille River. Our route along the river provides a great view of the architecture. And we also have a professional photographer on board the boat who is available to take your picture for a small fee. OK, it's time for us to get going. Please take your seats for departure.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n71. Trọng tâm của chuyến tham quan là gì?\n(A) Các cấu trúc đá\n(B) Các loài động vật hoang dã\n(C) Những cây cầu\n(D) Các tòa nhà\n\nDịch bài nói:\nChào mừng quý vị đến với Sunshine Cruises. Trong chuyến tham quan hôm nay, quý vị sẽ có cơ hội ngắm nhìn nhiều tòa nhà nổi tiếng nhất của thành phố trực tiếp từ sông Camille. Lộ trình dọc theo con sông sẽ mang đến cho quý vị góc nhìn tuyệt vời về kiến trúc. Ngoài ra, trên thuyền còn có một nhiếp ảnh gia chuyên nghiệp sẵn sàng chụp ảnh cho quý vị với một khoản phí nhỏ. Được rồi, đã đến lúc chúng ta khởi hành. Xin vui lòng ngồi vào chỗ để chuẩn bị xuất phát."
+  },
+  {
+   "number": 72,
+   "part": 4,
+   "answer": "B",
+   "group": "71-73",
+   "textEn": "72. What does the speaker say is available on board the boat? (A) Personalized merchandise (B) Professional photography (C) Meals made to order (D) Recorded audio guides",
+   "transcript": "Welcome aboard Sunshine Cruises. On today's tour, you'll have the opportunity to see several of the city's most famous buildings directly from the Camille River. Our route along the river provides a great view of the architecture. And we also have a professional photographer on board the boat who is available to take your picture for a small fee. OK, it's time for us to get going. Please take your seats for departure.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n72. Người nói cho biết có gì trên thuyền?\n(A) Hàng lưu niệm cá nhân hóa\n(B) Dịch vụ chụp ảnh chuyên nghiệp\n(C) Các bữa ăn làm theo yêu cầu\n(D) Các bản hướng dẫn âm thanh đã thu sẵn\n\nDịch bài nói:\nChào mừng quý vị đến với Sunshine Cruises. Trong chuyến tham quan hôm nay, quý vị sẽ có cơ hội ngắm nhìn nhiều tòa nhà nổi tiếng nhất của thành phố trực tiếp từ sông Camille. Lộ trình dọc theo con sông sẽ mang đến cho quý vị góc nhìn tuyệt vời về kiến trúc. Ngoài ra, trên thuyền còn có một nhiếp ảnh gia chuyên nghiệp sẵn sàng chụp ảnh cho quý vị với một khoản phí nhỏ. Được rồi, đã đến lúc chúng ta khởi hành. Xin vui lòng ngồi vào chỗ để chuẩn bị xuất phát."
+  },
+  {
+   "number": 73,
+   "part": 4,
+   "answer": "A",
+   "group": "71-73",
+   "textEn": "73. What will the listeners most likely do next? (A) Go to their seats (B) Present their tickets (C) Put on their name tags (D) Store their belongings",
+   "transcript": "Welcome aboard Sunshine Cruises. On today's tour, you'll have the opportunity to see several of the city's most famous buildings directly from the Camille River. Our route along the river provides a great view of the architecture. And we also have a professional photographer on board the boat who is available to take your picture for a small fee. OK, it's time for us to get going. Please take your seats for departure.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n73. Thính giả có khả năng sẽ làm gì tiếp theo?\n(A) Đi đến chỗ ngồi của mình\n(B) Xuất trình vé\n(C) Đeo bảng tên\n(D) Cất giữ đồ đạc\n\nDịch bài nói:\nChào mừng quý vị đến với Sunshine Cruises. Trong chuyến tham quan hôm nay, quý vị sẽ có cơ hội ngắm nhìn nhiều tòa nhà nổi tiếng nhất của thành phố trực tiếp từ sông Camille. Lộ trình dọc theo con sông sẽ mang đến cho quý vị góc nhìn tuyệt vời về kiến trúc. Ngoài ra, trên thuyền còn có một nhiếp ảnh gia chuyên nghiệp sẵn sàng chụp ảnh cho quý vị với một khoản phí nhỏ. Được rồi, đã đến lúc chúng ta khởi hành. Xin vui lòng ngồi vào chỗ để chuẩn bị xuất phát."
+  },
+  {
+   "number": 74,
+   "part": 4,
+   "answer": "A",
+   "group": "74-76",
+   "textEn": "74. According to the speaker, what is the business launching? (A) A rewards program (B) A recycling program (C) A new logo (D) A delivery service",
+   "transcript": "Attention, customers of George's Grocery. We are pleased to share the launch of our shopper's rewards program and want you to be a part of it! This new program offers all members exclusive perks like personalized coupons and special discounts. Signing up is easy and can be done right at the register when you check out. Just present your driver's license or other identification and you'll be given a membership card. Also, don't forget that we will be closed tomorrow in honor of the national holiday.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n74. Theo người nói, doanh nghiệp đang ra mắt điều gì?\n(A) Một chương trình tích điểm\n(B) Một chương trình tái chế\n(C) Một logo mới\n(D) Một dịch vụ giao hàng\n\nDịch bài nói:\nXin chú ý, quý khách hàng của cửa hàng tạp hóa George’s. Chúng tôi rất vui mừng thông báo ra mắt chương trình khách hàng thân thiết và mong quý vị tham gia cùng chúng tôi! Chương trình mới này mang đến cho tất cả thành viên những quyền lợi độc quyền như phiếu giảm giá cá nhân hóa và các ưu đãi đặc biệt. Việc đăng ký rất đơn giản và có thể thực hiện ngay tại quầy thanh toán khi quý vị trả tiền. Chỉ cần xuất trình giấy phép lái xe hoặc giấy tờ tùy thân khác, quý vị sẽ được cấp một thẻ thành viên. Ngoài ra, xin lưu ý rằng cửa hàng sẽ đóng cửa vào ngày mai để hưởng ứng ngày lễ quốc gia."
+  },
+  {
+   "number": 75,
+   "part": 4,
+   "answer": "C",
+   "group": "74-76",
+   "textEn": "75. What should the listeners be prepared to show? (A) A coupon (B) A receipt (C) A piece of identification (D) A signed enrollment form",
+   "transcript": "Attention, customers of George's Grocery. We are pleased to share the launch of our shopper's rewards program and want you to be a part of it! This new program offers all members exclusive perks like personalized coupons and special discounts. Signing up is easy and can be done right at the register when you check out. Just present your driver's license or other identification and you'll be given a membership card. Also, don't forget that we will be closed tomorrow in honor of the national holiday.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n75. Thính giả cần chuẩn bị để xuất trình gì?\n(A) Một phiếu giảm giá\n(B) Một biên lai\n(C) Một giấy tờ tùy thân\n(D) Một mẫu đơn ghi danh đã ký\n\nDịch bài nói:\nXin chú ý, quý khách hàng của cửa hàng tạp hóa George’s. Chúng tôi rất vui mừng thông báo ra mắt chương trình khách hàng thân thiết và mong quý vị tham gia cùng chúng tôi! Chương trình mới này mang đến cho tất cả thành viên những quyền lợi độc quyền như phiếu giảm giá cá nhân hóa và các ưu đãi đặc biệt. Việc đăng ký rất đơn giản và có thể thực hiện ngay tại quầy thanh toán khi quý vị trả tiền. Chỉ cần xuất trình giấy phép lái xe hoặc giấy tờ tùy thân khác, quý vị sẽ được cấp một thẻ thành viên. Ngoài ra, xin lưu ý rằng cửa hàng sẽ đóng cửa vào ngày mai để hưởng ứng ngày lễ quốc gia."
+  },
+  {
+   "number": 76,
+   "part": 4,
+   "answer": "B",
+   "group": "74-76",
+   "textEn": "76. Why will the business be closed tomorrow? (A) For some floor repairs (B) For a national holiday (C) For a training exercise (D) For an equipment installation",
+   "transcript": "Attention, customers of George's Grocery. We are pleased to share the launch of our shopper's rewards program and want you to be a part of it! This new program offers all members exclusive perks like personalized coupons and special discounts. Signing up is easy and can be done right at the register when you check out. Just present your driver's license or other identification and you'll be given a membership card. Also, don't forget that we will be closed tomorrow in honor of the national holiday.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n76. Tại sao doanh nghiệp sẽ đóng cửa vào ngày mai?\n(A) Để sửa chữa sàn\n(B) Vì một ngày nghỉ lễ quốc gia\n(C) Để diễn tập đào tạo\n(D) Để lắp đặt thiết bị\n\nDịch bài nói:\nXin chú ý, quý khách hàng của cửa hàng tạp hóa George’s. Chúng tôi rất vui mừng thông báo ra mắt chương trình khách hàng thân thiết và mong quý vị tham gia cùng chúng tôi! Chương trình mới này mang đến cho tất cả thành viên những quyền lợi độc quyền như phiếu giảm giá cá nhân hóa và các ưu đãi đặc biệt. Việc đăng ký rất đơn giản và có thể thực hiện ngay tại quầy thanh toán khi quý vị trả tiền. Chỉ cần xuất trình giấy phép lái xe hoặc giấy tờ tùy thân khác, quý vị sẽ được cấp một thẻ thành viên. Ngoài ra, xin lưu ý rằng cửa hàng sẽ đóng cửa vào ngày mai để hưởng ứng ngày lễ quốc gia."
+  },
+  {
+   "number": 77,
+   "part": 4,
+   "answer": "C",
+   "group": "77-79",
+   "textEn": "77. What is the speaker reporting on? (A) A store opening (B) A celebrity visit (C) A traffic delay (D) A sports tournament",
+   "transcript": "This just in on News Channel Six: there is a traffic delay on Highway 59 with expected delays of about fifteen minutes in the direction of the sports stadium. Apparently, a tree has fallen into the easternmost lane of the road. Many residents will recognize this tree—it's been featured in many publications about the area. Join me as I interview Jingdao Wei, an area photographer who has captured some of the most iconic images of this tree. Mr. Wei, thanks for talking with me.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n77. Người nói đang đưa tin về điều gì?\n(A) Một cửa hàng khai trương\n(B) Một người nổi tiếng ghé thăm\n(C) Một sự chậm trễ giao thông\n(D) Một giải đấu thể thao\n\nDịch bài nói:\nBản tin mới nhất từ Kênh Tin tức số Sáu: hiện đang xảy ra tình trạng ùn tắc giao thông trên Xa lộ 59, với thời gian chậm trễ dự kiến khoảng mười lăm phút theo hướng về sân vận động thể thao. Nguyên nhân được cho là do một cái cây đã đổ vào làn đường phía đông nhất. Nhiều cư dân sẽ nhận ra cái cây này — nó đã từng xuất hiện trong nhiều ấn phẩm viết về khu vực. Hãy cùng tôi trò chuyện với Jingdao Wei, một nhiếp ảnh gia địa phương đã ghi lại một số hình ảnh mang tính biểu tượng nhất của cái cây này. Thưa ông Wei, cảm ơn ông đã dành thời gian trao đổi với chúng tôi."
+  },
+  {
+   "number": 78,
+   "part": 4,
+   "answer": "A",
+   "group": "77-79",
+   "textEn": "78. What is causing a problem? (A) A fallen tree (B) A broken piece of equipment (C) A permitting process (D) A parking lot closure",
+   "transcript": "This just in on News Channel Six: there is a traffic delay on Highway 59 with expected delays of about fifteen minutes in the direction of the sports stadium. Apparently, a tree has fallen into the easternmost lane of the road. Many residents will recognize this tree—it's been featured in many publications about the area. Join me as I interview Jingdao Wei, an area photographer who has captured some of the most iconic images of this tree. Mr. Wei, thanks for talking with me.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n78. Điều gì đang gây ra vấn đề?\n(A) Một cái cây bị ngã\n(B) Một thiết bị bị hỏng\n(C) Quy trình xin phép\n(D) Việc đóng cửa bãi đậu xe\n\nDịch bài nói:\nBản tin mới nhất từ Kênh Tin tức số Sáu: hiện đang xảy ra tình trạng ùn tắc giao thông trên Xa lộ 59, với thời gian chậm trễ dự kiến khoảng mười lăm phút theo hướng về sân vận động thể thao. Nguyên nhân được cho là do một cái cây đã đổ vào làn đường phía đông nhất. Nhiều cư dân sẽ nhận ra cái cây này — nó đã từng xuất hiện trong nhiều ấn phẩm viết về khu vực. Hãy cùng tôi trò chuyện với Jingdao Wei, một nhiếp ảnh gia địa phương đã ghi lại một số hình ảnh mang tính biểu tượng nhất của cái cây này. Thưa ông Wei, cảm ơn ông đã dành thời gian trao đổi với chúng tôi."
+  },
+  {
+   "number": 79,
+   "part": 4,
+   "answer": "B",
+   "group": "77-79",
+   "textEn": "79. Who is Mr. Wei? (A) A landscaper (B) A photographer (C) An athlete (D) A road maintenance worker",
+   "transcript": "This just in on News Channel Six: there is a traffic delay on Highway 59 with expected delays of about fifteen minutes in the direction of the sports stadium. Apparently, a tree has fallen into the easternmost lane of the road. Many residents will recognize this tree—it's been featured in many publications about the area. Join me as I interview Jingdao Wei, an area photographer who has captured some of the most iconic images of this tree. Mr. Wei, thanks for talking with me.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n79. Ông Wei là ai?\n(A) Một nhân viên chăm sóc cảnh quan\n(B) Một nhiếp ảnh gia\n(C) Một vận động viên\n(D) Một nhân viên bảo trì đường bộ\n\nDịch bài nói:\nBản tin mới nhất từ Kênh Tin tức số Sáu: hiện đang xảy ra tình trạng ùn tắc giao thông trên Xa lộ 59, với thời gian chậm trễ dự kiến khoảng mười lăm phút theo hướng về sân vận động thể thao. Nguyên nhân được cho là do một cái cây đã đổ vào làn đường phía đông nhất. Nhiều cư dân sẽ nhận ra cái cây này — nó đã từng xuất hiện trong nhiều ấn phẩm viết về khu vực. Hãy cùng tôi trò chuyện với Jingdao Wei, một nhiếp ảnh gia địa phương đã ghi lại một số hình ảnh mang tính biểu tượng nhất của cái cây này. Thưa ông Wei, cảm ơn ông đã dành thời gian trao đổi với chúng tôi."
+  },
+  {
+   "number": 80,
+   "part": 4,
+   "answer": "B",
+   "group": "80-82",
+   "textEn": "80. Where does the speaker work? (A) At a print shop (B) At a social media company (C) At an electronics store (D) At a community center",
+   "transcript": "Junko, I just read your e-mail about the photo-sharing app that our social media company's launching tomorrow. You know, the e-mail about updating the language in the community guidelines for the app. We've already spent a lot of time reviewing the guideline document, and actually, I was just about to post it. Since we'll both be at the all-staff meeting at one o'clock, let's stay after it finishes to touch base on upcoming projects.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n80. Người nói làm việc ở đâu?\n(A) Tại một cửa hàng in ấn\n(B) Tại một công ty truyền thông xã hội\n(C) Tại một cửa hàng điện tử\n(D) Tại một trung tâm cộng đồng\n\nDịch bài nói:\nJunko, tôi vừa đọc email của bạn về ứng dụng chia sẻ ảnh mà công ty truyền thông xã hội của chúng ta sẽ ra mắt vào ngày mai. Bạn biết đó, email nói về việc cập nhật ngôn ngữ trong bộ nguyên tắc cộng đồng của ứng dụng. Chúng ta đã dành khá nhiều thời gian để rà soát tài liệu hướng dẫn này rồi, và thực ra tôi vừa định đăng nó lên. Vì cả hai chúng ta sẽ tham dự cuộc họp toàn thể nhân viên lúc một giờ, nên sau khi cuộc họp kết thúc, chúng ta hãy ở lại để trao đổi nhanh về các dự án sắp tới nhé."
+  },
+  {
+   "number": 81,
+   "part": 4,
+   "answer": "C",
+   "group": "80-82",
+   "textEn": "81. What does the speaker imply when he says, \"I was just about to post it\"? (A) He misunderstood the timeline for a task. (B) Some technical assistance is needed. (C) It is too late to make a change. (D) An immediate answer is required.",
+   "transcript": "Junko, I just read your e-mail about the photo-sharing app that our social media company's launching tomorrow. You know, the e-mail about updating the language in the community guidelines for the app. We've already spent a lot of time reviewing the guideline document, and actually, I was just about to post it. Since we'll both be at the all-staff meeting at one o'clock, let's stay after it finishes to touch base on upcoming projects.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n81. Người nói ngụ ý gì khi nói: “Tôi vừa chuẩn bị đăng nó đây”?\n(A) Anh ấy hiểu sai thời hạn hoàn thành nhiệm vụ.\n(B) Cần có hỗ trợ kỹ thuật.\n(C) Đã quá muộn để thực hiện thay đổi.\n(D) Cần câu trả lời ngay lập tức.\n\nDịch bài nói:\nJunko, tôi vừa đọc email của bạn về ứng dụng chia sẻ ảnh mà công ty truyền thông xã hội của chúng ta sẽ ra mắt vào ngày mai. Bạn biết đó, email nói về việc cập nhật ngôn ngữ trong bộ nguyên tắc cộng đồng của ứng dụng. Chúng ta đã dành khá nhiều thời gian để rà soát tài liệu hướng dẫn này rồi, và thực ra tôi vừa định đăng nó lên. Vì cả hai chúng ta sẽ tham dự cuộc họp toàn thể nhân viên lúc một giờ, nên sau khi cuộc họp kết thúc, chúng ta hãy ở lại để trao đổi nhanh về các dự án sắp tới nhé."
+  },
+  {
+   "number": 82,
+   "part": 4,
+   "answer": "D",
+   "group": "80-82",
+   "textEn": "82. What does the speaker say will happen at one o'clock? (A) A client will visit. (B) An interview will take place. (C) A shipment will arrive. (D) A staff meeting will be held.",
+   "transcript": "Junko, I just read your e-mail about the photo-sharing app that our social media company's launching tomorrow. You know, the e-mail about updating the language in the community guidelines for the app. We've already spent a lot of time reviewing the guideline document, and actually, I was just about to post it. Since we'll both be at the all-staff meeting at one o'clock, let's stay after it finishes to touch base on upcoming projects.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n82. Người nói cho biết điều gì sẽ diễn ra lúc một giờ?\n(A) Một khách hàng sẽ ghé thăm.\n(B) Một buổi phỏng vấn sẽ diễn ra.\n(C) Một lô hàng sẽ đến.\n(D) Một cuộc họp nhân viên sẽ được tổ chức.\n\nDịch bài nói:\nJunko, tôi vừa đọc email của bạn về ứng dụng chia sẻ ảnh mà công ty truyền thông xã hội của chúng ta sẽ ra mắt vào ngày mai. Bạn biết đó, email nói về việc cập nhật ngôn ngữ trong bộ nguyên tắc cộng đồng của ứng dụng. Chúng ta đã dành khá nhiều thời gian để rà soát tài liệu hướng dẫn này rồi, và thực ra tôi vừa định đăng nó lên. Vì cả hai chúng ta sẽ tham dự cuộc họp toàn thể nhân viên lúc một giờ, nên sau khi cuộc họp kết thúc, chúng ta hãy ở lại để trao đổi nhanh về các dự án sắp tới nhé."
+  },
+  {
+   "number": 83,
+   "part": 4,
+   "answer": "B",
+   "group": "83-85",
+   "textEn": "83. What is the focus of a project? (A) Analyzing survey results (B) Documenting operating procedures (C) Reducing technology expenses (D) Recruiting qualified staff",
+   "transcript": "Thanks, again, for taking on this project. You'll be authoring a comprehensive handbook that describes all the standard operating procedures to be used by our flight crew and airport staff. The goal is to have a master document from which we can pull out different sections as needed. On your screens, you'll see a list of who will be responsible for drafting each chapter. All chapters will be co-written with one other author.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n83. Trọng tâm của dự án là gì?\n(A) Phân tích kết quả khảo sát\n(B) Ghi lại các quy trình vận hành\n(C) Giảm chi phí công nghệ\n(D) Tuyển dụng nhân sự có trình độ\n\nDịch bài nói:\nMột lần nữa, cảm ơn bạn đã nhận nhận dự án này. Bạn sẽ chịu trách nhiệm biên soạn một cuốn sổ tay toàn diện, mô tả tất cả các quy trình vận hành tiêu chuẩn được áp dụng cho tổ bay và nhân viên sân bay của chúng ta. Mục tiêu là có một tài liệu gốc để từ đó chúng ta có thể trích ra các phần khác nhau khi cần. Trên màn hình của bạn, bạn sẽ thấy danh sách những người chịu trách nhiệm soạn thảo từng chương. Tất cả các chương sẽ được đồng biên soạn với một tác giả khác."
+  },
+  {
+   "number": 84,
+   "part": 4,
+   "answer": "A",
+   "group": "83-85",
+   "textEn": "84. Which industry does the speaker most likely work in? (A) Aviation (B) Forestry management (C) Real estate (D) Health care",
+   "transcript": "Thanks, again, for taking on this project. You'll be authoring a comprehensive handbook that describes all the standard operating procedures to be used by our flight crew and airport staff. The goal is to have a master document from which we can pull out different sections as needed. On your screens, you'll see a list of who will be responsible for drafting each chapter. All chapters will be co-written with one other author.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n84. Người nói có khả năng làm việc trong ngành nào?\n(A) Hàng không\n(B) Quản lý lâm nghiệp\n(C) Bất động sản\n(D) Y tế\n\nDịch bài nói:\nMột lần nữa, cảm ơn bạn đã nhận nhận dự án này. Bạn sẽ chịu trách nhiệm biên soạn một cuốn sổ tay toàn diện, mô tả tất cả các quy trình vận hành tiêu chuẩn được áp dụng cho tổ bay và nhân viên sân bay của chúng ta. Mục tiêu là có một tài liệu gốc để từ đó chúng ta có thể trích ra các phần khác nhau khi cần. Trên màn hình của bạn, bạn sẽ thấy danh sách những người chịu trách nhiệm soạn thảo từng chương. Tất cả các chương sẽ được đồng biên soạn với một tác giả khác."
+  },
+  {
+   "number": 85,
+   "part": 4,
+   "answer": "D",
+   "group": "83-85",
+   "textEn": "85. What will the listeners see on their screens? (A) Workplace policies (B) Budget proposals (C) Definitions of technical terms (D) Work assignments",
+   "transcript": "Thanks, again, for taking on this project. You'll be authoring a comprehensive handbook that describes all the standard operating procedures to be used by our flight crew and airport staff. The goal is to have a master document from which we can pull out different sections as needed. On your screens, you'll see a list of who will be responsible for drafting each chapter. All chapters will be co-written with one other author.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n85. Thính giả sẽ nhìn thấy gì trên màn hình của họ?\n(A) Các chính sách nơi làm việc\n(B) Các đề xuất ngân sách\n(C) Định nghĩa thuật ngữ kỹ thuật\n(D) Các nhiệm vụ công việc\n\nDịch bài nói:\nMột lần nữa, cảm ơn bạn đã nhận nhận dự án này. Bạn sẽ chịu trách nhiệm biên soạn một cuốn sổ tay toàn diện, mô tả tất cả các quy trình vận hành tiêu chuẩn được áp dụng cho tổ bay và nhân viên sân bay của chúng ta. Mục tiêu là có một tài liệu gốc để từ đó chúng ta có thể trích ra các phần khác nhau khi cần. Trên màn hình của bạn, bạn sẽ thấy danh sách những người chịu trách nhiệm soạn thảo từng chương. Tất cả các chương sẽ được đồng biên soạn với một tác giả khác."
+  },
+  {
+   "number": 86,
+   "part": 4,
+   "answer": "C",
+   "group": "86-88",
+   "textEn": "86. What does the speaker’s company develop? (A) Recipes (B) Medical devices (C) Educational software (D) Web sites",
+   "transcript": "One final thing before we close the team leaders' meeting. Some educators from various countries will be visiting our company next week. I will be giving a brief presentation to introduce all of the educational software products we make. After that, I'd like some of you to give demonstrations of the software your team developed. I'll have a final agenda ready soon and will meet with those of you who will be presenting that day to go over the details. We wanted to go to lunch with the visitors afterward at the restaurant next door, but it's closed for renovations. Luckily, a new restaurant has opened close by!",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n86. Công ty của người nói phát triển gì?\n(A) Công thức nấu ăn\n(B) Thiết bị y tế\n(C) Phần mềm giáo dục\n(D) Trang web\n\nDịch bài nói:\nMột điều cuối cùng trước khi chúng ta kết thúc cuộc họp của các trưởng nhóm. Tuần tới, một số nhà giáo dục đến từ nhiều quốc gia sẽ đến thăm công ty của chúng ta. Tôi sẽ có một bài thuyết trình ngắn để giới thiệu tất cả các sản phẩm phần mềm giáo dục mà chúng ta phát triển. Sau đó, tôi muốn một vài bạn thực hiện phần trình diễn các phần mềm do nhóm của mình phát triển. Tôi sẽ sớm hoàn thiện chương trình làm việc cuối cùng và sẽ gặp những người sẽ thuyết trình vào ngày hôm đó để trao đổi chi tiết. Ban đầu chúng ta dự định đi ăn trưa cùng các vị khách tại nhà hàng bên cạnh, nhưng nhà hàng đó đang đóng cửa để sửa chữa. May mắn thay, một nhà hàng mới đã mở ở gần đó!"
+  },
+  {
+   "number": 87,
+   "part": 4,
+   "answer": "D",
+   "group": "86-88",
+   "textEn": "87. Why will the speaker meet with some of the listeners? (A) To finalize some relocation plans (B) To go over professional certifications (C) To confirm project deadlines (D) To prepare for some product demonstrations",
+   "transcript": "One final thing before we close the team leaders' meeting. Some educators from various countries will be visiting our company next week. I will be giving a brief presentation to introduce all of the educational software products we make. After that, I'd like some of you to give demonstrations of the software your team developed. I'll have a final agenda ready soon and will meet with those of you who will be presenting that day to go over the details. We wanted to go to lunch with the visitors afterward at the restaurant next door, but it's closed for renovations. Luckily, a new restaurant has opened close by!",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n87. Tại sao người nói sẽ gặp một số thính giả?\n(A) Để hoàn tất một số kế hoạch tái bố trí\n(B) Để xem xét các chứng chỉ nghề nghiệp\n(C) Để xác nhận thời hạn dự án\n(D) Để chuẩn bị cho một số buổi trình diễn sản phẩm\n\nDịch bài nói:\nMột điều cuối cùng trước khi chúng ta kết thúc cuộc họp của các trưởng nhóm. Tuần tới, một số nhà giáo dục đến từ nhiều quốc gia sẽ đến thăm công ty của chúng ta. Tôi sẽ có một bài thuyết trình ngắn để giới thiệu tất cả các sản phẩm phần mềm giáo dục mà chúng ta phát triển. Sau đó, tôi muốn một vài bạn thực hiện phần trình diễn các phần mềm do nhóm của mình phát triển. Tôi sẽ sớm hoàn thiện chương trình làm việc cuối cùng và sẽ gặp những người sẽ thuyết trình vào ngày hôm đó để trao đổi chi tiết. Ban đầu chúng ta dự định đi ăn trưa cùng các vị khách tại nhà hàng bên cạnh, nhưng nhà hàng đó đang đóng cửa để sửa chữa. May mắn thay, một nhà hàng mới đã mở ở gần đó!"
+  },
+  {
+   "number": 88,
+   "part": 4,
+   "answer": "B",
+   "group": "86-88",
+   "textEn": "88. Why does the speaker say, “a new restaurant has opened close by”? (A) To complain about some noise (B) To suggest an alternative (C) To highlight an accomplishment (D) To clarify a misunderstanding",
+   "transcript": "One final thing before we close the team leaders' meeting. Some educators from various countries will be visiting our company next week. I will be giving a brief presentation to introduce all of the educational software products we make. After that, I'd like some of you to give demonstrations of the software your team developed. I'll have a final agenda ready soon and will meet with those of you who will be presenting that day to go over the details. We wanted to go to lunch with the visitors afterward at the restaurant next door, but it's closed for renovations. Luckily, a new restaurant has opened close by!",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n88. Tại sao người nói nói rằng “một nhà hàng mới vừa mở gần đây”?\n(A) Để phàn nàn về tiếng ồn\n(B) Để đề xuất một lựa chọn khác\n(C) Để nêu bật một thành tựu\n(D) Để làm rõ một sự hiểu lầm\n\nDịch bài nói:\nMột điều cuối cùng trước khi chúng ta kết thúc cuộc họp của các trưởng nhóm. Tuần tới, một số nhà giáo dục đến từ nhiều quốc gia sẽ đến thăm công ty của chúng ta. Tôi sẽ có một bài thuyết trình ngắn để giới thiệu tất cả các sản phẩm phần mềm giáo dục mà chúng ta phát triển. Sau đó, tôi muốn một vài bạn thực hiện phần trình diễn các phần mềm do nhóm của mình phát triển. Tôi sẽ sớm hoàn thiện chương trình làm việc cuối cùng và sẽ gặp những người sẽ thuyết trình vào ngày hôm đó để trao đổi chi tiết. Ban đầu chúng ta dự định đi ăn trưa cùng các vị khách tại nhà hàng bên cạnh, nhưng nhà hàng đó đang đóng cửa để sửa chữa. May mắn thay, một nhà hàng mới đã mở ở gần đó!"
+  },
+  {
+   "number": 89,
+   "part": 4,
+   "answer": "A",
+   "group": "89-91",
+   "textEn": "89. What kind of service is being advertised? (A) Career training (B) Financial planning (C) Language translation (D) Home inspection",
+   "transcript": "Are you ready to launch a new career in the technology industry? At Job Lift Enterprises, we provide hands-on training to help you learn the skills and earn the certifications that tech professionals need. Unlike other job-training programs, our courses are tuition-free. So students leave our school debt-free and ready to pursue their careers. Our schools are conveniently located throughout the Grand Lakes region. Visit our Web site today to find the location closest to you!",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n89. Loại dịch vụ nào đang được quảng cáo?\n(A) Đào tạo nghề nghiệp\n(B) Lập kế hoạch tài chính\n(C) Dịch thuật ngôn ngữ\n(D) Kiểm tra nhà ở\n\nDịch bài nói:\nBạn đã sẵn sàng bắt đầu một sự nghiệp mới trong ngành công nghệ chưa? Tại Job Lift Enterprises, chúng tôi cung cấp chương trình đào tạo thực hành giúp bạn học các kỹ năng và đạt được những chứng chỉ mà các chuyên gia công nghệ cần có. Không giống như các chương trình đào tạo nghề khác, các khóa học của chúng tôi hoàn toàn miễn học phí. Vì vậy, học viên rời trường mà không phải lo nợ học phí và sẵn sàng theo đuổi sự nghiệp của mình. Các cơ sở của chúng tôi được đặt tại nhiều địa điểm thuận tiện trên khắp khu vực Grand Lakes. Hãy truy cập trang web của chúng tôi ngay hôm nay để tìm địa điểm gần bạn nhất!"
+  },
+  {
+   "number": 90,
+   "part": 4,
+   "answer": "B",
+   "group": "89-91",
+   "textEn": "90. According to the speaker, what is unique about the business? (A) Its employees work remotely. (B) Its services are free of charge. (C) Its services are guaranteed. (D) It operates worldwide.",
+   "transcript": "Are you ready to launch a new career in the technology industry? At Job Lift Enterprises, we provide hands-on training to help you learn the skills and earn the certifications that tech professionals need. Unlike other job-training programs, our courses are tuition-free. So students leave our school debt-free and ready to pursue their careers. Our schools are conveniently located throughout the Grand Lakes region. Visit our Web site today to find the location closest to you!",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n90. Theo người nói, điều gì khiến doanh nghiệp trở nên đặc biệt?\n(A) Nhân viên làm việc từ xa.\n(B) Dịch vụ miễn phí.\n(C) Dịch vụ được đảm bảo chất lượng.\n(D) Công ty hoạt động trên toàn cầu.\n\nDịch bài nói:\nBạn đã sẵn sàng bắt đầu một sự nghiệp mới trong ngành công nghệ chưa? Tại Job Lift Enterprises, chúng tôi cung cấp chương trình đào tạo thực hành giúp bạn học các kỹ năng và đạt được những chứng chỉ mà các chuyên gia công nghệ cần có. Không giống như các chương trình đào tạo nghề khác, các khóa học của chúng tôi hoàn toàn miễn học phí. Vì vậy, học viên rời trường mà không phải lo nợ học phí và sẵn sàng theo đuổi sự nghiệp của mình. Các cơ sở của chúng tôi được đặt tại nhiều địa điểm thuận tiện trên khắp khu vực Grand Lakes. Hãy truy cập trang web của chúng tôi ngay hôm nay để tìm địa điểm gần bạn nhất!"
+  },
+  {
+   "number": 91,
+   "part": 4,
+   "answer": "C",
+   "group": "89-91",
+   "textEn": "91. Why should the listeners visit a Web site? (A) To download a brochure (B) To complete a survey (C) To find a nearby location (D) To schedule an appointment",
+   "transcript": "Are you ready to launch a new career in the technology industry? At Job Lift Enterprises, we provide hands-on training to help you learn the skills and earn the certifications that tech professionals need. Unlike other job-training programs, our courses are tuition-free. So students leave our school debt-free and ready to pursue their careers. Our schools are conveniently located throughout the Grand Lakes region. Visit our Web site today to find the location closest to you!",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n91. Tại sao thính giả nên truy cập trang web?\n(A) Để tải về một tờ giới thiệu\n(B) Để hoàn thành khảo sát\n(C) Để tìm địa điểm gần nhất\n(D) Để đặt lịch hẹn\n\nDịch bài nói:\nBạn đã sẵn sàng bắt đầu một sự nghiệp mới trong ngành công nghệ chưa? Tại Job Lift Enterprises, chúng tôi cung cấp chương trình đào tạo thực hành giúp bạn học các kỹ năng và đạt được những chứng chỉ mà các chuyên gia công nghệ cần có. Không giống như các chương trình đào tạo nghề khác, các khóa học của chúng tôi hoàn toàn miễn học phí. Vì vậy, học viên rời trường mà không phải lo nợ học phí và sẵn sàng theo đuổi sự nghiệp của mình. Các cơ sở của chúng tôi được đặt tại nhiều địa điểm thuận tiện trên khắp khu vực Grand Lakes. Hãy truy cập trang web của chúng tôi ngay hôm nay để tìm địa điểm gần bạn nhất!"
+  },
+  {
+   "number": 92,
+   "part": 4,
+   "answer": "C",
+   "group": "92-94",
+   "textEn": "92. Who are the listeners? (A) Shareholders (B) Customers (C) Employees (D) Journalists",
+   "transcript": "I'd like to thank you all for attending Omnicom Department Store's staff meeting. As you'll recall, six months ago we made a deal with Euphoria sports clothing to sell their merchandise exclusively in our department stores. The hope is that we can attract new customers to our stores by selling this brand. Data show that foot traffic in the department stores containing Euphoria clothing is up twenty percent from last year. Keep in mind, however, that total sales revenues are still being calculated.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n92. Thính giả là ai?\n(A) Cổ đông\n(B) Khách hàng\n(C) Nhân viên\n(D) Nhà báo\n\nDịch bài nói:\nTôi xin cảm ơn tất cả mọi người đã tham dự cuộc họp nhân viên của cửa hàng bách hóa Omnicom. Như quý vị còn nhớ, sáu tháng trước chúng ta đã ký thỏa thuận với hãng quần áo thể thao Euphoria để bán độc quyền sản phẩm của họ tại các cửa hàng bách hóa của chúng ta. Hy vọng là chúng ta có thể thu hút thêm khách hàng mới bằng việc kinh doanh thương hiệu này. Dữ liệu cho thấy lượng khách đến các cửa hàng bách hóa có bán sản phẩm Euphoria đã tăng 20% so với năm ngoái. Tuy nhiên, xin lưu ý rằng tổng doanh thu bán hàng hiện vẫn đang được tính toán."
+  },
+  {
+   "number": 93,
+   "part": 4,
+   "answer": "C",
+   "group": "92-94",
+   "textEn": "93. According to the speaker, what happened six months ago? (A) A corporate office was relocated. (B) An advertising campaign was launched. (C) A business partnership was formed. (D) A new executive director was hired.",
+   "transcript": "I'd like to thank you all for attending Omnicom Department Store's staff meeting. As you'll recall, six months ago we made a deal with Euphoria sports clothing to sell their merchandise exclusively in our department stores. The hope is that we can attract new customers to our stores by selling this brand. Data show that foot traffic in the department stores containing Euphoria clothing is up twenty percent from last year. Keep in mind, however, that total sales revenues are still being calculated.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n93. Theo người nói, điều gì đã xảy ra sáu tháng trước?\n(A) Một văn phòng công ty được chuyển địa điểm.\n(B) Một chiến dịch quảng cáo được triển khai.\n(C) Một quan hệ hợp tác kinh doanh được hình thành.\n(D) Một giám đốc điều hành mới được thuê.\n\nDịch bài nói:\nTôi xin cảm ơn tất cả mọi người đã tham dự cuộc họp nhân viên của cửa hàng bách hóa Omnicom. Như quý vị còn nhớ, sáu tháng trước chúng ta đã ký thỏa thuận với hãng quần áo thể thao Euphoria để bán độc quyền sản phẩm của họ tại các cửa hàng bách hóa của chúng ta. Hy vọng là chúng ta có thể thu hút thêm khách hàng mới bằng việc kinh doanh thương hiệu này. Dữ liệu cho thấy lượng khách đến các cửa hàng bách hóa có bán sản phẩm Euphoria đã tăng 20% so với năm ngoái. Tuy nhiên, xin lưu ý rằng tổng doanh thu bán hàng hiện vẫn đang được tính toán."
+  },
+  {
+   "number": 94,
+   "part": 4,
+   "answer": "B",
+   "group": "92-94",
+   "textEn": "94. Why does the speaker say, “total sales revenues are still being calculated”? (A) To express disappointment (B) To warn against reaching a conclusion too soon (C) To offer an excuse for missing an important deadline (D) To suggest that a budget be revised",
+   "transcript": "I'd like to thank you all for attending Omnicom Department Store's staff meeting. As you'll recall, six months ago we made a deal with Euphoria sports clothing to sell their merchandise exclusively in our department stores. The hope is that we can attract new customers to our stores by selling this brand. Data show that foot traffic in the department stores containing Euphoria clothing is up twenty percent from last year. Keep in mind, however, that total sales revenues are still being calculated.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n94. Tại sao người nói nói “tổng doanh thu vẫn đang được tính toán”?\n(A) Để thể hiện sự thất vọng\n(B) Để cảnh báo không kết luận quá sớm\n(C) Để biện minh cho việc bỏ lỡ một thời hạn quan trọng\n(D) Để đề xuất xem xét lại ngân sách\n\nDịch bài nói:\nTôi xin cảm ơn tất cả mọi người đã tham dự cuộc họp nhân viên của cửa hàng bách hóa Omnicom. Như quý vị còn nhớ, sáu tháng trước chúng ta đã ký thỏa thuận với hãng quần áo thể thao Euphoria để bán độc quyền sản phẩm của họ tại các cửa hàng bách hóa của chúng ta. Hy vọng là chúng ta có thể thu hút thêm khách hàng mới bằng việc kinh doanh thương hiệu này. Dữ liệu cho thấy lượng khách đến các cửa hàng bách hóa có bán sản phẩm Euphoria đã tăng 20% so với năm ngoái. Tuy nhiên, xin lưu ý rằng tổng doanh thu bán hàng hiện vẫn đang được tính toán."
+  },
+  {
+   "number": 95,
+   "part": 4,
+   "answer": "D",
+   "group": "95-97",
+   "textEn": "95. Who most likely is the speaker? (A) A news reporter (B) A garage attendant (C) An engineer (D) A city official",
+   "transcript": "Thanks for inviting me to represent the parking authority at this month's city council meeting. As you know, parking in city parking garages will no longer be free on Saturdays. My office has updated the parking rate schedule and posted copies in all city garages. If you look at the screen, you'll see the new rates that went into effect this week. We're planning to use some of the additional revenue to cover the cost of new payment kiosks for the garages. I will provide a revenue report at next month's meeting.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n95. Người nói có khả năng là ai?\n(A) Một phóng viên tin tức\n(B) Một nhân viên trông giữ bãi đậu xe\n(C) Một kỹ sư\n(D) Một quan chức thành phố\n\nDịch bài nói:\nCảm ơn đã mời tôi đại diện cho cơ quan quản lý bãi đỗ xe tham dự cuộc họp hội đồng thành phố tháng này. Như quý vị đã biết, việc đỗ xe trong các nhà để xe của thành phố sẽ không còn miễn phí vào các ngày thứ Bảy nữa. Văn phòng của tôi đã cập nhật bảng giá đỗ xe và niêm yết các bản sao tại tất cả các nhà để xe trong thành phố. Nếu quý vị nhìn lên màn hình, quý vị sẽ thấy mức giá mới đã có hiệu lực từ tuần này. Chúng tôi dự định sử dụng một phần doanh thu tăng thêm để chi trả cho chi phí lắp đặt các ki-ốt thanh toán mới cho các nhà để xe. Tôi sẽ cung cấp báo cáo doanh thu tại cuộc họp vào tháng tới."
+  },
+  {
+   "number": 96,
+   "part": 4,
+   "answer": "C",
+   "group": "95-97",
+   "textEn": "96. Look at the graphic. Which parking rate has been changed? (A) $22 (B) $24 (C) $10 (D) Free",
+   "transcript": "Thanks for inviting me to represent the parking authority at this month's city council meeting. As you know, parking in city parking garages will no longer be free on Saturdays. My office has updated the parking rate schedule and posted copies in all city garages. If you look at the screen, you'll see the new rates that went into effect this week. We're planning to use some of the additional revenue to cover the cost of new payment kiosks for the garages. I will provide a revenue report at next month's meeting.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n96. Nhìn vào biểu đồ. Mức phí đậu xe nào đã thay đổi?\n(A) 22 đô\n(B) 24 đô\n(C) 10 đô\n(D) Miễn phí\n\nDịch bài nói:\nCảm ơn đã mời tôi đại diện cho cơ quan quản lý bãi đỗ xe tham dự cuộc họp hội đồng thành phố tháng này. Như quý vị đã biết, việc đỗ xe trong các nhà để xe của thành phố sẽ không còn miễn phí vào các ngày thứ Bảy nữa. Văn phòng của tôi đã cập nhật bảng giá đỗ xe và niêm yết các bản sao tại tất cả các nhà để xe trong thành phố. Nếu quý vị nhìn lên màn hình, quý vị sẽ thấy mức giá mới đã có hiệu lực từ tuần này. Chúng tôi dự định sử dụng một phần doanh thu tăng thêm để chi trả cho chi phí lắp đặt các ki-ốt thanh toán mới cho các nhà để xe. Tôi sẽ cung cấp báo cáo doanh thu tại cuộc họp vào tháng tới."
+  },
+  {
+   "number": 97,
+   "part": 4,
+   "answer": "B",
+   "group": "95-97",
+   "textEn": "97. What will be presented next month? (A) A marketing proposal (B) A revenue report (C) Survey results (D) Some construction plans",
+   "transcript": "Thanks for inviting me to represent the parking authority at this month's city council meeting. As you know, parking in city parking garages will no longer be free on Saturdays. My office has updated the parking rate schedule and posted copies in all city garages. If you look at the screen, you'll see the new rates that went into effect this week. We're planning to use some of the additional revenue to cover the cost of new payment kiosks for the garages. I will provide a revenue report at next month's meeting.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n97. Tháng sau sẽ trình bày điều gì?\n(A) Một đề xuất tiếp thị\n(B) Một báo cáo doanh thu\n(C) Kết quả khảo sát\n(D) Một số kế hoạch xây dựng\n\nDịch bài nói:\nCảm ơn đã mời tôi đại diện cho cơ quan quản lý bãi đỗ xe tham dự cuộc họp hội đồng thành phố tháng này. Như quý vị đã biết, việc đỗ xe trong các nhà để xe của thành phố sẽ không còn miễn phí vào các ngày thứ Bảy nữa. Văn phòng của tôi đã cập nhật bảng giá đỗ xe và niêm yết các bản sao tại tất cả các nhà để xe trong thành phố. Nếu quý vị nhìn lên màn hình, quý vị sẽ thấy mức giá mới đã có hiệu lực từ tuần này. Chúng tôi dự định sử dụng một phần doanh thu tăng thêm để chi trả cho chi phí lắp đặt các ki-ốt thanh toán mới cho các nhà để xe. Tôi sẽ cung cấp báo cáo doanh thu tại cuộc họp vào tháng tới."
+  },
+  {
+   "number": 98,
+   "part": 4,
+   "answer": "B",
+   "group": "98-100",
+   "textEn": "98. Look at the graphic. What is the destination of the affected flight? (A) Austin (B) Los Angeles (C) Detroit (D) New Orleans",
+   "transcript": "Attention, passengers! Flight AU354 will now be departing from a different gate. The new gate will appear on screens throughout the terminal shortly. Your boarding time remains as scheduled and will begin in approximately 25 minutes. If you do not yet have a seat assignment, please come up to the counter now so that Claudia can assist you. And one important reminder: all carry-on baggage must comply with our height and width restrictions. Size-check templates are available throughout the terminal for your reference.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n98. Nhìn vào biểu đồ. Điểm đến của chuyến bay bị ảnh hưởng là gì?\n(A) Austin\n(B) Los Angeles\n(C) Detroit\n(D) New Orleans\n\nDịch bài nói:\nKính thông báo quý hành khách! Chuyến bay AU354 sẽ khởi hành từ một cổng khác. Cổng mới sẽ sớm hiển thị trên các màn hình trong toàn bộ nhà ga. Thời gian lên máy bay của quý vị vẫn như lịch đã định và sẽ bắt đầu khoảng 25 phút nữa. Nếu quý vị chưa có chỗ ngồi, vui lòng đến quầy ngay bây giờ để Claudia có thể hỗ trợ. Và một lời nhắc quan trọng: tất cả hành lý xách tay phải tuân thủ giới hạn về chiều cao và chiều rộng. Mẫu kiểm tra kích thước có sẵn tại các điểm trong nhà ga để quý vị tham khảo."
+  },
+  {
+   "number": 99,
+   "part": 4,
+   "answer": "A",
+   "group": "98-100",
+   "textEn": "99. According to the announcement, what will Claudia provide at the counter? (A) Seat assignments (B) Airport maps (C) Food vouchers (D) Hotel recommendations",
+   "transcript": "Attention, passengers! Flight AU354 will now be departing from a different gate. The new gate will appear on screens throughout the terminal shortly. Your boarding time remains as scheduled and will begin in approximately 25 minutes. If you do not yet have a seat assignment, please come up to the counter now so that Claudia can assist you. And one important reminder: all carry-on baggage must comply with our height and width restrictions. Size-check templates are available throughout the terminal for your reference.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n99. Theo thông báo, Claudia sẽ cung cấp gì tại quầy?\n(A) Sơ đồ chỗ ngồi\n(B) Bản đồ sân bay\n(C) Phiếu ăn uống\n(D) Các gợi ý khách sạn\n\nDịch bài nói:\nKính thông báo quý hành khách! Chuyến bay AU354 sẽ khởi hành từ một cổng khác. Cổng mới sẽ sớm hiển thị trên các màn hình trong toàn bộ nhà ga. Thời gian lên máy bay của quý vị vẫn như lịch đã định và sẽ bắt đầu khoảng 25 phút nữa. Nếu quý vị chưa có chỗ ngồi, vui lòng đến quầy ngay bây giờ để Claudia có thể hỗ trợ. Và một lời nhắc quan trọng: tất cả hành lý xách tay phải tuân thủ giới hạn về chiều cao và chiều rộng. Mẫu kiểm tra kích thước có sẵn tại các điểm trong nhà ga để quý vị tham khảo."
+  },
+  {
+   "number": 100,
+   "part": 4,
+   "answer": "D",
+   "group": "98-100",
+   "textEn": "100. What does the speaker remind the listeners about? (A) Complimentary Internet access (B) Boarding procedures (C) Automatic text notifications (D) Luggage size restrictions",
+   "transcript": "Attention, passengers! Flight AU354 will now be departing from a different gate. The new gate will appear on screens throughout the terminal shortly. Your boarding time remains as scheduled and will begin in approximately 25 minutes. If you do not yet have a seat assignment, please come up to the counter now so that Claudia can assist you. And one important reminder: all carry-on baggage must comply with our height and width restrictions. Size-check templates are available throughout the terminal for your reference.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n100. Người nói nhắc thính giả về điều gì?\n(A) Truy cập Internet miễn phí\n(B) Quy trình lên máy bay\n(C) Tin nhắn thông báo tự động\n(D) Quy định kích thước hành lý\n## Bảng đáp án\n| Câu | Đáp án | Câu | Đáp án | Câu | Đáp án | Câu | Đáp án | Câu | Đáp án |\n|---|---|---|---|---|---|---|---|---|---|\n| 1 | D | 21 | C | 41 | C | 61 | B | 81 | C |\n| 2 | A | 22 | C | 42 | C | 62 | A | 82 | D |\n| 3 | C | 23 | B | 43 | B | 63 | D | 83 | B |\n| 4 | B | 24 | B | 44 | A | 64 | C | 84 | A |\n| 5 | C | 25 | C | 45 | C | 65 | C | 85 | D |\n| 6 | C | 26 | B | 46 | D | 66 | A | 86 | C |\n| 7 | C | 27 | B | 47 | B | 67 | D | 87 | D |\n| 8 | A | 28 | A | 48 | A | 68 | B | 88 | B |\n| 9 | B | 29 | C | 49 | C | 69 | B | 89 | A |\n| 10 | B | 30 | A | 50 | C | 70 | D | 90 | B |\n| 11 | B | 31 | A | 51 | B | 71 | D | 91 | C |\n| 12 | C | 32 | C | 52 | D | 72 | B | 92 | C |\n| 13 | A | 33 | A | 53 | C | 73 | A | 93 | C |\n| 14 | B | 34 | B | 54 | B | 74 | A | 94 | B |\n| 15 | B | 35 | D | 55 | C | 75 | C | 95 | D |\n| 16 | A | 36 | C | 56 | D | 76 | B | 96 | C |\n| 17 | A | 37 | B | 57 | C | 77 | C | 97 | B |\n| 18 | B | 38 | A | 58 | A | 78 | A | 98 | B |\n| 19 | C | 39 | D | 59 | A | 79 | B | 99 | A |\n| 20 | A | 40 | A | 60 | B | 80 | B | 100 | D |\n\nDịch bài nói:\nKính thông báo quý hành khách! Chuyến bay AU354 sẽ khởi hành từ một cổng khác. Cổng mới sẽ sớm hiển thị trên các màn hình trong toàn bộ nhà ga. Thời gian lên máy bay của quý vị vẫn như lịch đã định và sẽ bắt đầu khoảng 25 phút nữa. Nếu quý vị chưa có chỗ ngồi, vui lòng đến quầy ngay bây giờ để Claudia có thể hỗ trợ. Và một lời nhắc quan trọng: tất cả hành lý xách tay phải tuân thủ giới hạn về chiều cao và chiều rộng. Mẫu kiểm tra kích thước có sẵn tại các điểm trong nhà ga để quý vị tham khảo."
+  }
+ ],
+ "10": [
+  {
+   "number": 1,
+   "part": 1,
+   "answer": "D",
+   "textEn": "(A) He’s reaching for the ceiling. (B) He’s carrying a bucket of paint. (C) He’s fixing a doorway. (D) He’s climbing down a ladder.",
+   "transcript": "(A) He’s reaching for the ceiling.\n(B) He’s carrying a bucket of paint.\n(C) He’s fixing a doorway.\n(D) He’s climbing down a ladder.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch nghĩa:\n(A) Anh ấy đang với tay lên trần nhà.\n(B) Anh ấy đang mang theo một xô sơn.\n(C) Anh ấy đang sửa một khung cửa.\n(D) Anh ấy đang trèo xuống một chiếc thang."
+  },
+  {
+   "number": 2,
+   "part": 1,
+   "answer": "C",
+   "textEn": "(A) She’s reading a poster on the wall. (B) A chair is propped against the door. (C) A laptop has been left open. (D) She’s speaking into a microphone.",
+   "transcript": "(A) She’s reading a poster on the wall.\n(B) A chair is propped against the door.\n(C) A laptop has been left open.\n(D) She’s speaking into a microphone.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\n(A) Cô ấy đang đọc một tấm áp phích trên tường.\n(B) Một chiếc ghế được dựng tựa vào cửa.\n(C) Một chiếc máy tính xách tay đang được để mở.\n(D) Cô ấy đang nói vào micro."
+  },
+  {
+   "number": 3,
+   "part": 1,
+   "answer": "C",
+   "textEn": "(A) They’re strolling in a park. (B) They’re shaking hands. (C) He’s holding up an umbrella. (D) She’s handing him a phone.",
+   "transcript": "(A) They’re strolling in a park.\n(B) They’re shaking hands.\n(C) He’s holding up an umbrella.\n(D) She’s handing him a phone.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\n(A) Họ đang dạo bộ trong công viên.\n(B) Họ đang bắt tay nhau.\n(C) Anh ấy đang cầm một chiếc ô giơ lên.\n(D) Cô ấy đang đưa cho anh ấy một chiếc điện thoại."
+  },
+  {
+   "number": 4,
+   "part": 1,
+   "answer": "D",
+   "textEn": "(A) A car is being towed down a street. (B) Some men are removing a tire from a truck. (C) One of the men is unloading equipment from a truck. (D) A building has a clock tower on top of it.",
+   "transcript": "(A) A car is being towed down a street.\n(B) Some men are removing a tire from a truck.\n(C) One of the men is unloading equipment from a truck.\n(D) A building has a clock tower on top of it.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch nghĩa:\n(A) Một chiếc xe hơi đang được kéo đi trên đường phố.\n(B) Một số người đàn ông đang tháo một chiếc lốp khỏi xe tải.\n(C) Một trong những người đàn ông đang dỡ thiết bị từ xe tải xuống.\n(D) Một tòa nhà có tháp đồng hồ ở trên đỉnh."
+  },
+  {
+   "number": 5,
+   "part": 1,
+   "answer": "B",
+   "textEn": "(A) Some of the bicycles are being repaired. (B) The bicycles are lined up in a row. (C) One of the bicycles is leaning against a traffic sign. (D) A bicycle path is being painted.",
+   "transcript": "(A) Some of the bicycles are being repaired.\n(B) The bicycles are lined up in a row.\n(C) One of the bicycles is leaning against a traffic sign.\n(D) A bicycle path is being painted.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\n(A) Một số chiếc xe đạp đang được sửa chữa.\n(B) Những chiếc xe đạp được xếp thành một hàng.\n(C) Một trong những chiếc xe đạp đang tựa vào biển báo giao thông.\n(D) Một làn đường dành cho xe đạp đang được sơn."
+  },
+  {
+   "number": 6,
+   "part": 1,
+   "answer": "B",
+   "textEn": "(A) Some ships are moving under a bridge. (B) Some boats are docked near a shore. (C) A ferryboat is traveling through a marina. (D) There are buildings along the side of a street.",
+   "transcript": "(A) Some ships are moving under a bridge.\n(B) Some boats are docked near a shore.\n(C) A ferryboat is traveling through a marina.\n(D) There are buildings along the side of a street.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\n(A) Một số con tàu đang di chuyển bên dưới cây cầu.\n(B) Một số chiếc thuyền đang neo đậu gần bờ.\n(C) Một chiếc phà đang di chuyển qua bến du thuyền.\n(D) Có các tòa nhà dọc theo một con phố."
+  },
+  {
+   "number": 7,
+   "part": 2,
+   "answer": "A",
+   "textEn": "Would you like me to order some more business cards for you? (A) Sure, that’d be great. (B) They’ll be busy at that time. (C) No, it wasn’t.",
+   "transcript": "Would you like me to order some more business cards for you?\n(A) Sure, that’d be great.\n(B) They’ll be busy at that time.\n(C) No, it wasn’t.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch nghĩa:\nBạn có muốn tôi đặt thêm danh thiếp cho bạn không?\n(A) Có, như vậy thì tuyệt quá.\n(B) Họ sẽ bận vào thời điểm đó.\n(C) Không, không phải vậy."
+  },
+  {
+   "number": 8,
+   "part": 2,
+   "answer": "A",
+   "textEn": "Why don’t you ask Ms. Kim for help? (A) Because she’s on a conference call. (B) There’s no more paper in the cabinet. (C) I’ve already seen that one.",
+   "transcript": "Why don’t you ask Ms. Kim for help?\n(A) Because she’s on a conference call.\n(B) There’s no more paper in the cabinet.\n(C) I’ve already seen that one.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch nghĩa:\nTại sao bạn không nhờ cô Kim giúp?\n(A) Vì cô ấy đang tham gia một cuộc gọi hội nghị.\n(B) Không còn giấy trong tủ nữa.\n(C) Tôi đã xem cái đó rồi."
+  },
+  {
+   "number": 9,
+   "part": 2,
+   "answer": "B",
+   "textEn": "Do you want to review the report together, or on your own? (A) No, I don’t need any more copies. (B) I’d prefer to look it over myself. (C) A fifteen-page document.",
+   "transcript": "Do you want to review the report together, or on your own?\n(A) No, I don’t need any more copies.\n(B) I’d prefer to look it over myself.\n(C) A fifteen-page document.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nBạn muốn cùng xem lại báo cáo hay tự xem một mình?\n(A) Không, tôi không cần thêm bản sao nào nữa.\n(B) Tôi muốn tự xem lại một mình.\n(C) Một tài liệu dài mười lăm trang."
+  },
+  {
+   "number": 10,
+   "part": 2,
+   "answer": "B",
+   "textEn": "When’s the marketing conference? (A) The convention center downtown. (B) Sometime next month. (C) I need a room with a projector.",
+   "transcript": "When’s the marketing conference?\n(A) The convention center downtown.\n(B) Sometime next month.\n(C) I need a room with a projector.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nHội nghị tiếp thị diễn ra khi nào?\n(A) Ở trung tâm hội nghị trong trung tâm thành phố.\n(B) Vào khoảng tháng sau.\n(C) Tôi cần một phòng có máy chiếu."
+  },
+  {
+   "number": 11,
+   "part": 2,
+   "answer": "B",
+   "textEn": "Where are the safety goggles kept? (A) I’m visiting an eye doctor soon. (B) They’re in the first-floor supply closet. (C) Sure, I’ll try them on.",
+   "transcript": "Where are the safety goggles kept?\n(A) I’m visiting an eye doctor soon.\n(B) They’re in the first-floor supply closet.\n(C) Sure, I’ll try them on.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nKính bảo hộ an toàn được để ở đâu?\n(A) Tôi sắp đi khám mắt.\n(B) Chúng ở trong phòng chứa đồ tầng một.\n(C) Được, tôi sẽ thử chúng."
+  },
+  {
+   "number": 12,
+   "part": 2,
+   "answer": "B",
+   "textEn": "When did this restaurant change its name? (A) Yes, it is well-known. (B) I’m not sure. (C) It’s my favorite type of cuisine.",
+   "transcript": "When did this restaurant change its name?\n(A) Yes, it is well-known.\n(B) I’m not sure.\n(C) It’s my favorite type of cuisine.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nNhà hàng này đổi tên khi nào?\n(A) Vâng, nó rất nổi tiếng.\n(B) Tôi không chắc.\n(C) Đó là loại ẩm thực tôi yêu thích nhất."
+  },
+  {
+   "number": 13,
+   "part": 2,
+   "answer": "B",
+   "textEn": "Did we complete the inventory, or is there more to do? (A) OK, that’d be fine. (B) We’re not quite finished. (C) About 1,000 dollars.",
+   "transcript": "Did we complete the inventory, or is there more to do?\n(A) OK, that’d be fine.\n(B) We’re not quite finished.\n(C) About 1,000 dollars.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nChúng ta đã hoàn tất việc kiểm kê chưa, hay vẫn còn việc phải làm?\n(A) Được, như vậy cũng ổn.\n(B) Chúng ta vẫn chưa hoàn thành xong.\n(C) Khoảng 1.000 đô la."
+  },
+  {
+   "number": 14,
+   "part": 2,
+   "answer": "C",
+   "textEn": "Can you get me a sandwich from the café down the street? (A) He left an hour ago. (B) The street signs will be replaced next week. (C) I’m just about to start a meeting.",
+   "transcript": "Can you get me a sandwich from the café down the street?\n(A) He left an hour ago.\n(B) The street signs will be replaced next week.\n(C) I’m just about to start a meeting.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\nBạn có thể mua giúp tôi một chiếc bánh mì từ quán cà phê ở cuối đường không?\n(A) Anh ấy rời đi cách đây một giờ.\n(B) Các biển báo đường phố sẽ được thay vào tuần tới.\n(C) Tôi sắp bắt đầu một cuộc họp."
+  },
+  {
+   "number": 15,
+   "part": 2,
+   "answer": "A",
+   "textEn": "How can we interest the client in our business? (A) By sharing positive customer reviews. (B) No, I didn't go this year. (C) At the meeting last Wednesday.",
+   "transcript": "How can we interest the client in our business?\n(A) By sharing positive customer reviews.\n(B) No, I didn't go this year.\n(C) At the meeting last Wednesday.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch nghĩa:\nLàm thế nào để chúng ta thu hút khách hàng quan tâm đến doanh nghiệp của mình?\n(A) Bằng cách chia sẻ những đánh giá tích cực từ khách hàng.\n(B) Không, tôi không đi năm nay.\n(C) Tại cuộc họp vào thứ Tư tuần trước."
+  },
+  {
+   "number": 16,
+   "part": 2,
+   "answer": "C",
+   "textEn": "Are you planning to work at home tomorrow? (A) Yes, in the city directory. (B) Every day at three o'clock. (C) No, I'll be going into the office.",
+   "transcript": "Are you planning to work at home tomorrow?\n(A) Yes, in the city directory.\n(B) Every day at three o'clock.\n(C) No, I'll be going into the office.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\nBạn có dự định làm việc tại nhà vào ngày mai không?\n(A) Có, trong danh bạ thành phố.\n(B) Mỗi ngày vào lúc ba giờ.\n(C) Không, tôi sẽ đến văn phòng."
+  },
+  {
+   "number": 17,
+   "part": 2,
+   "answer": "B",
+   "textEn": "Don't you have the promotional materials with you? (A) Thanks, that's great news. (B) Yes, they're in my bag. (C) It's lightweight but durable.",
+   "transcript": "Don't you have the promotional materials with you?\n(A) Thanks, that's great news.\n(B) Yes, they're in my bag.\n(C) It's lightweight but durable.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nBạn không mang theo tài liệu quảng bá sao?\n(A) Cảm ơn, đó là tin rất tốt.\n(B) Có, chúng ở trong túi của tôi.\n(C) Nó nhẹ nhưng bền."
+  },
+  {
+   "number": 18,
+   "part": 2,
+   "answer": "A",
+   "textEn": "The projector needs to be fixed before our presentation. (A) A technician has been notified. (B) The quarterly sales figures. (C) These pens have our logo on them.",
+   "transcript": "The projector needs to be fixed before our presentation.\n(A) A technician has been notified.\n(B) The quarterly sales figures.\n(C) These pens have our logo on them.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch nghĩa:\nMáy chiếu cần được sửa trước buổi thuyết trình của chúng ta.\n(A) Một kỹ thuật viên đã được thông báo.\n(B) Các số liệu bán hàng theo quý.\n(C) Những cây bút này có logo của công ty chúng ta."
+  },
+  {
+   "number": 19,
+   "part": 2,
+   "answer": "A",
+   "textEn": "What’s the price of this printer? (A) I don’t work here. (B) It’s on Washington Avenue. (C) Yes, I like it a lot.",
+   "transcript": "What’s the price of this printer?\n(A) I don’t work here.\n(B) It’s on Washington Avenue.\n(C) Yes, I like it a lot.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch nghĩa:\nGiá của chiếc máy in này là bao nhiêu?\n(A) Tôi không làm việc ở đây.\n(B) Nó ở trên đại lộ Washington.\n(C) Vâng, tôi rất thích nó."
+  },
+  {
+   "number": 20,
+   "part": 2,
+   "answer": "A",
+   "textEn": "How many people are attending the orientation session? (A) There should be 21 people. (B) Maybe next week. (C) I can’t see the screen.",
+   "transcript": "How many people are attending the orientation session?\n(A) There should be 21 people.\n(B) Maybe next week.\n(C) I can’t see the screen.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch nghĩa:\nCó bao nhiêu người tham dự buổi định hướng?\n(A) Sẽ có khoảng 21 người.\n(B) Có lẽ vào tuần tới.\n(C) Tôi không nhìn thấy màn hình."
+  },
+  {
+   "number": 21,
+   "part": 2,
+   "answer": "B",
+   "textEn": "There’s a free shuttle bus to the airport, right? (A) She has an overnight flight. (B) Yes, it stops right outside. (C) No, I don’t have any.",
+   "transcript": "There’s a free shuttle bus to the airport, right?\n(A) She has an overnight flight.\n(B) Yes, it stops right outside.\n(C) No, I don’t have any.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nCó xe buýt trung chuyển miễn phí ra sân bay, đúng không?\n(A) Cô ấy có chuyến bay qua đêm.\n(B) Đúng vậy, nó dừng ngay bên ngoài.\n(C) Không, tôi không có cái nào."
+  },
+  {
+   "number": 22,
+   "part": 2,
+   "answer": "C",
+   "textEn": "Who has time to edit this article? (A) The library is on Walton Street. (B) To meet the client. (C) It was checked this morning.",
+   "transcript": "Who has time to edit this article?\n(A) The library is on Walton Street.\n(B) To meet the client.\n(C) It was checked this morning.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\nAi có thời gian chỉnh sửa bài viết này?\n(A) Thư viện ở đường Walton.\n(B) Để gặp khách hàng.\n(C) Nó đã được kiểm tra vào sáng nay."
+  },
+  {
+   "number": 23,
+   "part": 2,
+   "answer": "C",
+   "textEn": "What time does the factory shift end? (A) Because it’s too far. (B) I’m glad you like it. (C) The schedule is posted in the break room.",
+   "transcript": "What time does the factory shift end?\n(A) Because it’s too far.\n(B) I’m glad you like it.\n(C) The schedule is posted in the break room.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\nCa làm việc ở nhà máy kết thúc lúc mấy giờ?\n(A) Vì nó quá xa.\n(B) Tôi rất vui vì bạn thích nó.\n(C) Lịch làm việc được dán trong phòng nghỉ."
+  },
+  {
+   "number": 24,
+   "part": 2,
+   "answer": "C",
+   "textEn": "These train tickets are expensive. (A) Just a one-way ticket, please. (B) Did you complete the training? (C) Yes, it’s an express train.",
+   "transcript": "These train tickets are expensive.\n(A) Just a one-way ticket, please.\n(B) Did you complete the training?\n(C) Yes, it’s an express train.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\nNhững vé tàu này đắt thật.\n(A) Cho tôi một vé một chiều thôi.\n(B) Bạn đã hoàn thành khóa đào tạo chưa?\n(C) Vâng, đó là tàu tốc hành."
+  },
+  {
+   "number": 25,
+   "part": 2,
+   "answer": "B",
+   "textEn": "Isn’t this television prototype supposed to have more advanced features? (A) He has an advanced degree in economics. (B) We’re already over budget. (C) I really enjoyed that television program.",
+   "transcript": "Isn’t this television prototype supposed to have more advanced features?\n(A) He has an advanced degree in economics.\n(B) We’re already over budget.\n(C) I really enjoyed that television program.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nChẳng phải mẫu tivi thử nghiệm này được cho là có nhiều tính năng tiên tiến hơn sao?\n(A) Anh ấy có bằng cấp cao về kinh tế.\n(B) Chúng ta đã vượt quá ngân sách rồi.\n(C) Tôi thực sự rất thích chương trình truyền hình đó."
+  },
+  {
+   "number": 26,
+   "part": 2,
+   "answer": "A",
+   "textEn": "What should we do to prepare for the sales meeting? (A) Let’s discuss it after lunch. (B) With the sixteen summer interns. (C) The conference center on Mill Street.",
+   "transcript": "What should we do to prepare for the sales meeting?\n(A) Let’s discuss it after lunch.\n(B) With the sixteen summer interns.\n(C) The conference center on Mill Street.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch nghĩa:\nChúng ta nên làm gì để chuẩn bị cho cuộc họp bán hàng?\n(A) Hãy thảo luận sau bữa trưa.\n(B) Với mười sáu thực tập sinh mùa hè.\n(C) Trung tâm hội nghị trên đường Mill."
+  },
+  {
+   "number": 27,
+   "part": 2,
+   "answer": "B",
+   "textEn": "Do you think Ms. Wang would be interested in joining the event planning committee? (A) Let’s reserve the hotel ballroom. (B) She’ll be on vacation for the next month. (C) I’d love a cup of tea.",
+   "transcript": "Do you think Ms. Wang would be interested in joining the event planning committee?\n(A) Let’s reserve the hotel ballroom.\n(B) She’ll be on vacation for the next month.\n(C) I’d love a cup of tea.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch nghĩa:\nBạn có nghĩ cô Vương sẽ quan tâm đến việc tham gia ủy ban tổ chức sự kiện không?\n(A) Hãy đặt trước phòng khiêu vũ của khách sạn.\n(B) Cô ấy sẽ đi nghỉ trong tháng tới.\n(C) Tôi rất muốn một tách trà."
+  },
+  {
+   "number": 28,
+   "part": 2,
+   "answer": "A",
+   "textEn": "Dr. Marino has the survey results on his desk. (A) His office door is locked. (B) He passed his driving test. (C) The pharmacy on Maple Street.",
+   "transcript": "Dr. Marino has the survey results on his desk.\n(A) His office door is locked.\n(B) He passed his driving test.\n(C) The pharmacy on Maple Street.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch nghĩa:\nBác sĩ Marino có kết quả khảo sát trên bàn làm việc của ông ấy.\n(A) Cửa văn phòng của ông ấy bị khóa.\n(B) Ông ấy đã vượt qua kỳ thi lái xe.\n(C) Hiệu thuốc trên đường Maple."
+  },
+  {
+   "number": 29,
+   "part": 2,
+   "answer": "A",
+   "textEn": "The keynote speech wasn’t very inspiring, was it? (A) It was too technical. (B) No, the one on the right side. (C) Some receipts for expenses.",
+   "transcript": "The keynote speech wasn’t very inspiring, was it?\n(A) It was too technical.\n(B) No, the one on the right side.\n(C) Some receipts for expenses.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch nghĩa:\nBài phát biểu chính không mấy truyền cảm hứng, đúng không?\n(A) Nó quá mang tính kỹ thuật.\n(B) Không, cái ở phía bên phải.\n(C) Một số hóa đơn chi phí."
+  },
+  {
+   "number": 30,
+   "part": 2,
+   "answer": "C",
+   "textEn": "Our company is upgrading its bookkeeping software. (A) No, I took a different flight. (B) How was your business trip to Shanghai? (C) I signed up for a training session this morning.",
+   "transcript": "Our company is upgrading its bookkeeping software.\n(A) No, I took a different flight.\n(B) How was your business trip to Shanghai?\n(C) I signed up for a training session this morning.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\nCông ty chúng ta đang nâng cấp phần mềm kế toán.\n(A) Không, tôi đã đi chuyến bay khác.\n(B) Chuyến công tác Thượng Hải của bạn thế nào?\n(C) Tôi đã đăng ký một buổi đào tạo sáng nay."
+  },
+  {
+   "number": 31,
+   "part": 2,
+   "answer": "C",
+   "textEn": "Should we set up the buffet table for tomorrow’s luncheon indoors or outdoors? (A) I haven't seen her. (B) We won't need any more copies. (C) It’s supposed to be a beautiful day.",
+   "transcript": "Should we set up the buffet table for tomorrow’s luncheon indoors or outdoors?\n(A) I haven't seen her.\n(B) We won't need any more copies.\n(C) It’s supposed to be a beautiful day.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch nghĩa:\nChúng ta nên sắp xếp bàn tiệc cho bữa trưa ngày mai ở trong nhà hay ngoài trời?\n(A) Tôi chưa gặp cô ấy.\n(B) Chúng ta sẽ không cần thêm bản sao nào nữa.\n(C) Trời được dự báo là sẽ rất đẹp."
+  },
+  {
+   "number": 32,
+   "part": 3,
+   "answer": "A",
+   "group": "32-34",
+   "textEn": "32. What is the speakers’ business planning to do in June? (A) Expand a space (B) Take product inventory (C) Plan an annual sale (D) Change a window display",
+   "transcript": "M: Bianca, the retail space next door to us will become available in June. That means we can begin the store expansion we've been planning.\nW: That's great news! After we increase our space, we can finally do more than just sell musical instruments.\nM: I knew you'd be happy to hear the news. We'll be able to add practice rooms so we can offer private music lessons by the end of the year.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n32. Doanh nghiệp của hai người nói đang dự định làm gì vào tháng Sáu?\n(A) Mở rộng một không gian\n(B) Kiểm kê hàng hóa\n(C) Lên kế hoạch cho một đợt giảm giá hằng năm\n(D) Thay đổi trưng bày cửa sổ\n\nDịch hội thoại:\nNam: Bianca, không gian bán lẻ bên cạnh chúng ta sẽ có sẵn vào tháng Sáu. Điều đó có nghĩa là chúng ta có thể bắt đầu mở rộng cửa hàng mà chúng ta đã lên kế hoạch.\nNữ: Thật là tin tuyệt vời! Sau khi mở rộng không gian, cuối cùng chúng ta có thể làm nhiều thứ hơn là chỉ bán nhạc cụ.\nNam: Anh biết em sẽ vui khi nghe tin này. Chúng ta sẽ có thể thêm các phòng luyện tập để cung cấp các lớp học nhạc riêng vào cuối năm."
+  },
+  {
+   "number": 33,
+   "part": 3,
+   "answer": "C",
+   "group": "32-34",
+   "textEn": "33. Where do the speakers most likely work? (A) At a dance studio (B) At a culinary school (C) At a music shop (D) At an arts and crafts store",
+   "transcript": "M: Bianca, the retail space next door to us will become available in June. That means we can begin the store expansion we've been planning.\nW: That's great news! After we increase our space, we can finally do more than just sell musical instruments.\nM: I knew you'd be happy to hear the news. We'll be able to add practice rooms so we can offer private music lessons by the end of the year.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n33. Hai người nói có khả năng làm việc ở đâu nhất?\n(A) Tại một phòng tập khiêu vũ\n(B) Tại một trường dạy nấu ăn\n(C) Tại một cửa hàng nhạc cụ\n(D) Tại một cửa hàng đồ thủ công mỹ nghệ\n\nDịch hội thoại:\nNam: Bianca, không gian bán lẻ bên cạnh chúng ta sẽ có sẵn vào tháng Sáu. Điều đó có nghĩa là chúng ta có thể bắt đầu mở rộng cửa hàng mà chúng ta đã lên kế hoạch.\nNữ: Thật là tin tuyệt vời! Sau khi mở rộng không gian, cuối cùng chúng ta có thể làm nhiều thứ hơn là chỉ bán nhạc cụ.\nNam: Anh biết em sẽ vui khi nghe tin này. Chúng ta sẽ có thể thêm các phòng luyện tập để cung cấp các lớp học nhạc riêng vào cuối năm."
+  },
+  {
+   "number": 34,
+   "part": 3,
+   "answer": "B",
+   "group": "32-34",
+   "textEn": "34. What does the man say he would like to do by the end of the year? (A) Advertise a contest (B) Offer private lessons (C) Increase operating hours (D) Provide repair services",
+   "transcript": "M: Bianca, the retail space next door to us will become available in June. That means we can begin the store expansion we've been planning.\nW: That's great news! After we increase our space, we can finally do more than just sell musical instruments.\nM: I knew you'd be happy to hear the news. We'll be able to add practice rooms so we can offer private music lessons by the end of the year.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n34. Người đàn ông nói rằng anh ấy muốn làm điều gì trước cuối năm?\n(A) Quảng bá một cuộc thi\n(B) Cung cấp các buổi học riêng\n(C) Tăng giờ mở cửa\n(D) Cung cấp dịch vụ sửa chữa\n\nDịch hội thoại:\nNam: Bianca, không gian bán lẻ bên cạnh chúng ta sẽ có sẵn vào tháng Sáu. Điều đó có nghĩa là chúng ta có thể bắt đầu mở rộng cửa hàng mà chúng ta đã lên kế hoạch.\nNữ: Thật là tin tuyệt vời! Sau khi mở rộng không gian, cuối cùng chúng ta có thể làm nhiều thứ hơn là chỉ bán nhạc cụ.\nNam: Anh biết em sẽ vui khi nghe tin này. Chúng ta sẽ có thể thêm các phòng luyện tập để cung cấp các lớp học nhạc riêng vào cuối năm."
+  },
+  {
+   "number": 35,
+   "part": 3,
+   "answer": "C",
+   "group": "35-37",
+   "textEn": "35. What type of project is the man working on? (A) Restoring a piece of art (B) Designing a logo (C) Renovating a lobby (D) Developing a hair dye",
+   "transcript": "M: Hi. I'm working on renovating the lobby of my office, and I'd like to get some paint for the walls.\nW: Sure. What do you have in mind?\nM: Well, I want to paint the walls with one of the colors from our new logo, either green or red.\nW: Hmm... I wouldn't choose red—it will fade too fast.\nM: Oh, OK. Then let's go with green.\nW: Do you have a copy of the logo with you? If I have the image, I can mix a custom paint to match it.\nM: Actually, I don't.\nW: Well, if you e-mail me a picture of the logo, I can have the paint ready for you by Friday.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n35. Người đàn ông đang làm loại dự án nào?\n(A) Phục chế một tác phẩm nghệ thuật\n(B) Thiết kế một logo\n(C) Tân trang lại sảnh đợi\n(D) Phát triển một loại thuốc nhuộm tóc\n\nDịch hội thoại:\nNam: Chào. Tôi đang cải tạo sảnh văn phòng và muốn mua một ít sơn cho các bức tường.\nNữ: Vâng. Anh đang nghĩ đến màu gì?\nNam: À, tôi muốn sơn các bức tường bằng một trong các màu từ logo mới của chúng tôi, hoặc màu xanh lá hoặc màu đỏ.\nNữ: Ừm… Tôi sẽ không chọn màu đỏ—nó sẽ phai quá nhanh.\nNam: Ồ, được rồi. Vậy thì chúng ta chọn màu xanh lá.\nNữ: Anh có mang theo bản logo không? Nếu tôi có hình ảnh, tôi có thể pha sơn theo màu phù hợp.\nNam: Thực ra là không.\nNữ: Vậy, nếu anh gửi cho tôi một bức ảnh của logo qua email, tôi có thể chuẩn bị sơn cho anh vào thứ Sáu."
+  },
+  {
+   "number": 36,
+   "part": 3,
+   "answer": "B",
+   "group": "35-37",
+   "textEn": "36. Why does the woman recommend avoiding the color red? (A) It is expensive to produce. (B) It fades quickly. (C) It is too bright. (D) It is very popular.",
+   "transcript": "M: Hi. I'm working on renovating the lobby of my office, and I'd like to get some paint for the walls.\nW: Sure. What do you have in mind?\nM: Well, I want to paint the walls with one of the colors from our new logo, either green or red.\nW: Hmm... I wouldn't choose red—it will fade too fast.\nM: Oh, OK. Then let's go with green.\nW: Do you have a copy of the logo with you? If I have the image, I can mix a custom paint to match it.\nM: Actually, I don't.\nW: Well, if you e-mail me a picture of the logo, I can have the paint ready for you by Friday.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n36. Tại sao người phụ nữ khuyên nên tránh màu đỏ?\n(A) Sản xuất nó rất tốn kém.\n(B) Nó phai màu nhanh.\n(C) Nó quá sáng.\n(D) Nó rất phổ biến.\n\nDịch hội thoại:\nNam: Chào. Tôi đang cải tạo sảnh văn phòng và muốn mua một ít sơn cho các bức tường.\nNữ: Vâng. Anh đang nghĩ đến màu gì?\nNam: À, tôi muốn sơn các bức tường bằng một trong các màu từ logo mới của chúng tôi, hoặc màu xanh lá hoặc màu đỏ.\nNữ: Ừm… Tôi sẽ không chọn màu đỏ—nó sẽ phai quá nhanh.\nNam: Ồ, được rồi. Vậy thì chúng ta chọn màu xanh lá.\nNữ: Anh có mang theo bản logo không? Nếu tôi có hình ảnh, tôi có thể pha sơn theo màu phù hợp.\nNam: Thực ra là không.\nNữ: Vậy, nếu anh gửi cho tôi một bức ảnh của logo qua email, tôi có thể chuẩn bị sơn cho anh vào thứ Sáu."
+  },
+  {
+   "number": 37,
+   "part": 3,
+   "answer": "B",
+   "group": "35-37",
+   "textEn": "37. What does the woman ask the man to do? (A) Pay a deposit (B) Send a picture (C) Test a product (D) Schedule a consultation",
+   "transcript": "M: Hi. I'm working on renovating the lobby of my office, and I'd like to get some paint for the walls.\nW: Sure. What do you have in mind?\nM: Well, I want to paint the walls with one of the colors from our new logo, either green or red.\nW: Hmm... I wouldn't choose red—it will fade too fast.\nM: Oh, OK. Then let's go with green.\nW: Do you have a copy of the logo with you? If I have the image, I can mix a custom paint to match it.\nM: Actually, I don't.\nW: Well, if you e-mail me a picture of the logo, I can have the paint ready for you by Friday.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n37. Người phụ nữ yêu cầu người đàn ông làm gì?\n(A) Trả tiền đặt cọc\n(B) Gửi một bức ảnh\n(C) Kiểm tra thử một sản phẩm\n(D) Đặt lịch tư vấn\n\nDịch hội thoại:\nNam: Chào. Tôi đang cải tạo sảnh văn phòng và muốn mua một ít sơn cho các bức tường.\nNữ: Vâng. Anh đang nghĩ đến màu gì?\nNam: À, tôi muốn sơn các bức tường bằng một trong các màu từ logo mới của chúng tôi, hoặc màu xanh lá hoặc màu đỏ.\nNữ: Ừm… Tôi sẽ không chọn màu đỏ—nó sẽ phai quá nhanh.\nNam: Ồ, được rồi. Vậy thì chúng ta chọn màu xanh lá.\nNữ: Anh có mang theo bản logo không? Nếu tôi có hình ảnh, tôi có thể pha sơn theo màu phù hợp.\nNam: Thực ra là không.\nNữ: Vậy, nếu anh gửi cho tôi một bức ảnh của logo qua email, tôi có thể chuẩn bị sơn cho anh vào thứ Sáu."
+  },
+  {
+   "number": 38,
+   "part": 3,
+   "answer": "B",
+   "group": "38-40",
+   "textEn": "38. What is the man trying to do? (A) Join a tour group (B) Pick up some luggage (C) Call a taxi (D) Buy some gifts",
+   "transcript": "W: Welcome to the Western Airlines customer service desk. How can I assist you?\nM: Hi. I flew in yesterday from Canada and was told that my luggage was accidentally put on a flight arriving this morning.\nW: OK. Do you have your boarding pass?\nM: Yes—here it is. Can I go to the unclaimed baggage area and pick up my luggage?\nW: That area is past security. I can use information on the boarding pass to locate the luggage for you.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n38. Người đàn ông đang cố gắng làm gì?\n(A) Tham gia một nhóm tham quan\n(B) Nhận lại hành lý\n(C) Gọi taxi\n(D) Mua vài món quà\n\nDịch hội thoại:\nNữ: Chào mừng đến với quầy dịch vụ khách hàng của Western Airlines. Tôi có thể giúp gì cho quý khách?\nNam: Chào. Tôi đã bay đến từ Canada ngày hôm qua và được thông báo rằng hành lý của tôi bị vô tình gửi nhầm sang chuyến bay đến vào sáng nay.\nNữ: Vâng. Anh có mang theo thẻ lên máy bay không?\nNam: Có—đây ạ. Tôi có thể đến khu vực hành lý thất lạc để lấy hành lý không?\nNữ: Khu vực đó nằm sau kiểm soát an ninh. Tôi có thể dùng thông tin trên thẻ lên máy bay để tìm hành lý cho anh."
+  },
+  {
+   "number": 39,
+   "part": 3,
+   "answer": "D",
+   "group": "38-40",
+   "textEn": "39. What does the woman ask to see? (A) Photo identification (B) A valid visa (C) A customs declaration (D) A boarding pass",
+   "transcript": "W: Welcome to the Western Airlines customer service desk. How can I assist you?\nM: Hi. I flew in yesterday from Canada and was told that my luggage was accidentally put on a flight arriving this morning.\nW: OK. Do you have your boarding pass?\nM: Yes—here it is. Can I go to the unclaimed baggage area and pick up my luggage?\nW: That area is past security. I can use information on the boarding pass to locate the luggage for you.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n39. Người phụ nữ yêu cầu xem gì?\n(A) Giấy tờ tùy thân có ảnh\n(B) Visa hợp lệ\n(C) Tờ khai hải quan\n(D) Thẻ lên máy bay\n\nDịch hội thoại:\nNữ: Chào mừng đến với quầy dịch vụ khách hàng của Western Airlines. Tôi có thể giúp gì cho quý khách?\nNam: Chào. Tôi đã bay đến từ Canada ngày hôm qua và được thông báo rằng hành lý của tôi bị vô tình gửi nhầm sang chuyến bay đến vào sáng nay.\nNữ: Vâng. Anh có mang theo thẻ lên máy bay không?\nNam: Có—đây ạ. Tôi có thể đến khu vực hành lý thất lạc để lấy hành lý không?\nNữ: Khu vực đó nằm sau kiểm soát an ninh. Tôi có thể dùng thông tin trên thẻ lên máy bay để tìm hành lý cho anh."
+  },
+  {
+   "number": 40,
+   "part": 3,
+   "answer": "C",
+   "group": "38-40",
+   "textEn": "40. Why does the woman say, “That area is past security”? (A) To clarify a policy (B) To express surprise (C) To reject a request (D) To describe a floor plan",
+   "transcript": "W: Welcome to the Western Airlines customer service desk. How can I assist you?\nM: Hi. I flew in yesterday from Canada and was told that my luggage was accidentally put on a flight arriving this morning.\nW: OK. Do you have your boarding pass?\nM: Yes—here it is. Can I go to the unclaimed baggage area and pick up my luggage?\nW: That area is past security. I can use information on the boarding pass to locate the luggage for you.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n40. Tại sao người phụ nữ nói: “Khu vực đó nằm sau cổng an ninh”?\n(A) Để làm rõ một quy định\n(B) Để bày tỏ sự ngạc nhiên\n(C) Để từ chối một yêu cầu\n(D) Để mô tả sơ đồ mặt bằng\n\nDịch hội thoại:\nNữ: Chào mừng đến với quầy dịch vụ khách hàng của Western Airlines. Tôi có thể giúp gì cho quý khách?\nNam: Chào. Tôi đã bay đến từ Canada ngày hôm qua và được thông báo rằng hành lý của tôi bị vô tình gửi nhầm sang chuyến bay đến vào sáng nay.\nNữ: Vâng. Anh có mang theo thẻ lên máy bay không?\nNam: Có—đây ạ. Tôi có thể đến khu vực hành lý thất lạc để lấy hành lý không?\nNữ: Khu vực đó nằm sau kiểm soát an ninh. Tôi có thể dùng thông tin trên thẻ lên máy bay để tìm hành lý cho anh."
+  },
+  {
+   "number": 41,
+   "part": 3,
+   "answer": "D",
+   "group": "41-43",
+   "textEn": "41. Where do the speakers most likely work? (A) At a bookstore (B) At a marketing firm (C) At an electronics manufacturer (D) At a dental office",
+   "transcript": "M: We're so happy to have you join our office as our new dental hygienist, Maria. As you know, you'll be cleaning our patients' teeth before I come in to complete the exam.\nW: I'll also be responsible for updating the patients' files and scheduling their next appointments, right?\nM: Yes. We use a software program called DentalX for all our patient records. Have you used it before?\nW: Yes, I'm familiar with that software.\nM: Great. Also, remember that our office closes every day from twelve to one thirty for lunch, so please be mindful of that when scheduling patients.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n41. Hai người có khả năng làm việc ở đâu nhất?\n(A) Tại một hiệu sách\n(B) Tại một công ty marketing\n(C) Tại nhà máy sản xuất điện tử\n(D) Tại phòng khám nha khoa\n\nDịch hội thoại:\nNam: Chúng tôi rất vui khi bạn gia nhập văn phòng của chúng tôi với vai trò là nha sĩ vệ sinh răng miệng mới, Maria. Như bạn đã biết, bạn sẽ làm sạch răng cho bệnh nhân trước khi tôi vào để hoàn tất kiểm tra.\nNữ: Tôi cũng sẽ chịu trách nhiệm cập nhật hồ sơ bệnh nhân và lên lịch hẹn tiếp theo cho họ, đúng không?\nNam: Đúng rồi. Chúng tôi sử dụng một phần mềm có tên DentalX cho tất cả hồ sơ bệnh nhân. Bạn đã từng sử dụng nó chưa?\nNữ: Có, tôi quen với phần mềm đó.\nNam: Tuyệt. Ngoài ra, hãy nhớ rằng văn phòng của chúng ta đóng cửa mỗi ngày từ 12 giờ đến 1 giờ 30 để nghỉ trưa, nên hãy lưu ý khi lên lịch hẹn cho bệnh nhân."
+  },
+  {
+   "number": 42,
+   "part": 3,
+   "answer": "B",
+   "group": "41-43",
+   "textEn": "42. What does the woman say she is familiar with? (A) A university course (B) A software program (C) An industry conference (D) A safety procedure",
+   "transcript": "M: We're so happy to have you join our office as our new dental hygienist, Maria. As you know, you'll be cleaning our patients' teeth before I come in to complete the exam.\nW: I'll also be responsible for updating the patients' files and scheduling their next appointments, right?\nM: Yes. We use a software program called DentalX for all our patient records. Have you used it before?\nW: Yes, I'm familiar with that software.\nM: Great. Also, remember that our office closes every day from twelve to one thirty for lunch, so please be mindful of that when scheduling patients.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n42. Người phụ nữ nói rằng cô ấy quen thuộc với điều gì?\n(A) Một khóa học đại học\n(B) Một phần mềm\n(C) Một hội nghị trong ngành\n(D) Một quy trình an toàn\n\nDịch hội thoại:\nNam: Chúng tôi rất vui khi bạn gia nhập văn phòng của chúng tôi với vai trò là nha sĩ vệ sinh răng miệng mới, Maria. Như bạn đã biết, bạn sẽ làm sạch răng cho bệnh nhân trước khi tôi vào để hoàn tất kiểm tra.\nNữ: Tôi cũng sẽ chịu trách nhiệm cập nhật hồ sơ bệnh nhân và lên lịch hẹn tiếp theo cho họ, đúng không?\nNam: Đúng rồi. Chúng tôi sử dụng một phần mềm có tên DentalX cho tất cả hồ sơ bệnh nhân. Bạn đã từng sử dụng nó chưa?\nNữ: Có, tôi quen với phần mềm đó.\nNam: Tuyệt. Ngoài ra, hãy nhớ rằng văn phòng của chúng ta đóng cửa mỗi ngày từ 12 giờ đến 1 giờ 30 để nghỉ trưa, nên hãy lưu ý khi lên lịch hẹn cho bệnh nhân."
+  },
+  {
+   "number": 43,
+   "part": 3,
+   "answer": "A",
+   "group": "41-43",
+   "textEn": "43. What does the man remind the woman about? (A) A lunch break (B) A dress code (C) A parking policy (D) A benefits program",
+   "transcript": "M: We're so happy to have you join our office as our new dental hygienist, Maria. As you know, you'll be cleaning our patients' teeth before I come in to complete the exam.\nW: I'll also be responsible for updating the patients' files and scheduling their next appointments, right?\nM: Yes. We use a software program called DentalX for all our patient records. Have you used it before?\nW: Yes, I'm familiar with that software.\nM: Great. Also, remember that our office closes every day from twelve to one thirty for lunch, so please be mindful of that when scheduling patients.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n43. Người đàn ông nhắc người phụ nữ về điều gì?\n(A) Giờ nghỉ trưa\n(B) Quy định trang phục\n(C) Chính sách đỗ xe\n(D) Chương trình phúc lợi\n\nDịch hội thoại:\nNam: Chúng tôi rất vui khi bạn gia nhập văn phòng của chúng tôi với vai trò là nha sĩ vệ sinh răng miệng mới, Maria. Như bạn đã biết, bạn sẽ làm sạch răng cho bệnh nhân trước khi tôi vào để hoàn tất kiểm tra.\nNữ: Tôi cũng sẽ chịu trách nhiệm cập nhật hồ sơ bệnh nhân và lên lịch hẹn tiếp theo cho họ, đúng không?\nNam: Đúng rồi. Chúng tôi sử dụng một phần mềm có tên DentalX cho tất cả hồ sơ bệnh nhân. Bạn đã từng sử dụng nó chưa?\nNữ: Có, tôi quen với phần mềm đó.\nNam: Tuyệt. Ngoài ra, hãy nhớ rằng văn phòng của chúng ta đóng cửa mỗi ngày từ 12 giờ đến 1 giờ 30 để nghỉ trưa, nên hãy lưu ý khi lên lịch hẹn cho bệnh nhân."
+  },
+  {
+   "number": 44,
+   "part": 3,
+   "answer": "C",
+   "group": "44-46",
+   "textEn": "44. What is the man concerned about? (A) A staff shortage (B) A design budget (C) A project timeline (D) A weather forecast",
+   "transcript": "M: Next, I wanted to check with the design team about our water-permeable bricks for walkways. I think the bricks will be popular in areas with water drainage problems. But I'm concerned that the final design won't be ready in time for the trade show.\nW1: Right, we still need to finish the durability testing. Camille, how's that going?\nW2: So far, they seem to be as durable as we anticipated. But we still have a few more tests to run.\nM: Great. Please keep me posted on your progress. In the meantime, we should start putting together a promotional video to show at our booth at the trade show. Who'd like to help me with that project?",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n44. Người đàn ông lo lắng về điều gì?\n(A) Thiếu nhân sự\n(B) Ngân sách thiết kế\n(C) Tiến độ dự án\n(D) Dự báo thời tiết\n\nDịch hội thoại:\nNam: Tiếp theo, tôi muốn trao đổi với nhóm thiết kế về các viên gạch thấm nước cho lối đi. Tôi nghĩ loại gạch này sẽ được ưa chuộng ở những khu vực có vấn đề về thoát nước. Nhưng tôi lo rằng thiết kế cuối cùng sẽ không kịp hoàn thành cho hội chợ thương mại.\nNữ 1: Đúng rồi, chúng ta vẫn cần hoàn tất việc kiểm tra độ bền. Camille, tiến độ thế nào rồi?\nNữ 2: Cho đến nay, chúng có vẻ bền như chúng ta dự đoán. Nhưng chúng ta vẫn còn một vài bài kiểm tra nữa.\nNam: Tuyệt. Hãy cập nhật cho tôi về tiến độ nhé. Trong khi đó, chúng ta nên bắt đầu chuẩn bị một video quảng cáo để trình chiếu tại gian hàng ở hội chợ. Ai muốn giúp tôi thực hiện dự án này?"
+  },
+  {
+   "number": 45,
+   "part": 3,
+   "answer": "A",
+   "group": "44-46",
+   "textEn": "45. What is Camille working on? (A) Durability testing (B) Contract negotiations (C) A marketing presentation (D) A product manual",
+   "transcript": "M: Next, I wanted to check with the design team about our water-permeable bricks for walkways. I think the bricks will be popular in areas with water drainage problems. But I'm concerned that the final design won't be ready in time for the trade show.\nW1: Right, we still need to finish the durability testing. Camille, how's that going?\nW2: So far, they seem to be as durable as we anticipated. But we still have a few more tests to run.\nM: Great. Please keep me posted on your progress. In the meantime, we should start putting together a promotional video to show at our booth at the trade show. Who'd like to help me with that project?",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n45. Camille đang làm việc trên điều gì?\n(A) Kiểm tra độ bền\n(B) Đàm phán hợp đồng\n(C) Một bài thuyết trình marketing\n(D) Một hướng dẫn sử dụng sản phẩm\n\nDịch hội thoại:\nNam: Tiếp theo, tôi muốn trao đổi với nhóm thiết kế về các viên gạch thấm nước cho lối đi. Tôi nghĩ loại gạch này sẽ được ưa chuộng ở những khu vực có vấn đề về thoát nước. Nhưng tôi lo rằng thiết kế cuối cùng sẽ không kịp hoàn thành cho hội chợ thương mại.\nNữ 1: Đúng rồi, chúng ta vẫn cần hoàn tất việc kiểm tra độ bền. Camille, tiến độ thế nào rồi?\nNữ 2: Cho đến nay, chúng có vẻ bền như chúng ta dự đoán. Nhưng chúng ta vẫn còn một vài bài kiểm tra nữa.\nNam: Tuyệt. Hãy cập nhật cho tôi về tiến độ nhé. Trong khi đó, chúng ta nên bắt đầu chuẩn bị một video quảng cáo để trình chiếu tại gian hàng ở hội chợ. Ai muốn giúp tôi thực hiện dự án này?"
+  },
+  {
+   "number": 46,
+   "part": 3,
+   "answer": "B",
+   "group": "44-46",
+   "textEn": "46. What would the man like assistance with? (A) Interviewing a job candidate (B) Making a video (C) Booking a venue (D) Packing some materials",
+   "transcript": "M: Next, I wanted to check with the design team about our water-permeable bricks for walkways. I think the bricks will be popular in areas with water drainage problems. But I'm concerned that the final design won't be ready in time for the trade show.\nW1: Right, we still need to finish the durability testing. Camille, how's that going?\nW2: So far, they seem to be as durable as we anticipated. But we still have a few more tests to run.\nM: Great. Please keep me posted on your progress. In the meantime, we should start putting together a promotional video to show at our booth at the trade show. Who'd like to help me with that project?",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n46. Người đàn ông muốn được hỗ trợ điều gì?\n(A) Phỏng vấn ứng viên\n(B) Làm một video\n(C) Đặt một địa điểm tổ chức\n(D) Đóng gói một số vật dụng\n\nDịch hội thoại:\nNam: Tiếp theo, tôi muốn trao đổi với nhóm thiết kế về các viên gạch thấm nước cho lối đi. Tôi nghĩ loại gạch này sẽ được ưa chuộng ở những khu vực có vấn đề về thoát nước. Nhưng tôi lo rằng thiết kế cuối cùng sẽ không kịp hoàn thành cho hội chợ thương mại.\nNữ 1: Đúng rồi, chúng ta vẫn cần hoàn tất việc kiểm tra độ bền. Camille, tiến độ thế nào rồi?\nNữ 2: Cho đến nay, chúng có vẻ bền như chúng ta dự đoán. Nhưng chúng ta vẫn còn một vài bài kiểm tra nữa.\nNam: Tuyệt. Hãy cập nhật cho tôi về tiến độ nhé. Trong khi đó, chúng ta nên bắt đầu chuẩn bị một video quảng cáo để trình chiếu tại gian hàng ở hội chợ. Ai muốn giúp tôi thực hiện dự án này?"
+  },
+  {
+   "number": 47,
+   "part": 3,
+   "answer": "D",
+   "group": "47-49",
+   "textEn": "47. What most likely is the man’s job? (A) Gift shop worker (B) Flight attendant (C) Security guard (D) Rideshare driver",
+   "transcript": "M: Excuse me—officer? Do you happen to know where rideshare drivers park to wait for passengers? It's my first time at this airport.\nW: Yes. Drive to the pickup area by terminal A. Look out for the orange sign that says \"rideshare.\" I'm sure you'll see other drivers there. By the way, I recommend taking the terminal bypass. That bridge will take you there faster.\nM: Great. Thank you. Oh—is there a fuel station near the airport? My tank is almost empty.\nW: You'll see one by the rental-car lot on your way out.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n47. Công việc của người đàn ông có khả năng là gì nhất?\n(A) Nhân viên cửa hàng quà tặng\n(B) Tiếp viên hàng không\n(C) Nhân viên an ninh\n(D) Tài xế dịch vụ gọi xe\n\nDịch hội thoại:\nNam: Xin lỗi—cảnh sát ạ? Ngài có biết các tài xế dịch vụ đi chung xe đậu ở đâu để chờ khách không? Đây là lần đầu tôi đến sân bay này.\nNữ: Có chứ. Lái xe đến khu vực đón khách bên nhà ga A. Nhìn theo biển màu cam có chữ \"rideshare\". Tôi chắc là bạn sẽ thấy các tài xế khác ở đó. Nhân tiện, tôi khuyên bạn nên đi đường vòng quanh nhà ga. Cây cầu đó sẽ đưa bạn đến nhanh hơn.\nNam: Tuyệt quá. Cảm ơn chị. À—có trạm xăng nào gần sân bay không? Bình xăng của tôi gần hết rồi.\nNữ: Bạn sẽ thấy một trạm gần bãi xe thuê xe khi ra khỏi sân bay."
+  },
+  {
+   "number": 48,
+   "part": 3,
+   "answer": "C",
+   "group": "47-49",
+   "textEn": "48. How does the woman recommend getting to terminal A? (A) By taking a shuttle bus (B) By riding an escalator (C) By using a bridge (D) By crossing a street",
+   "transcript": "M: Excuse me—officer? Do you happen to know where rideshare drivers park to wait for passengers? It's my first time at this airport.\nW: Yes. Drive to the pickup area by terminal A. Look out for the orange sign that says \"rideshare.\" I'm sure you'll see other drivers there. By the way, I recommend taking the terminal bypass. That bridge will take you there faster.\nM: Great. Thank you. Oh—is there a fuel station near the airport? My tank is almost empty.\nW: You'll see one by the rental-car lot on your way out.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n48. Người phụ nữ khuyên nên đến nhà ga A bằng cách nào?\n(A) Bằng xe buýt trung chuyển\n(B) Bằng thang cuốn\n(C) Bằng cách đi qua một cây cầu\n(D) Bằng cách băng qua đường\n\nDịch hội thoại:\nNam: Xin lỗi—cảnh sát ạ? Ngài có biết các tài xế dịch vụ đi chung xe đậu ở đâu để chờ khách không? Đây là lần đầu tôi đến sân bay này.\nNữ: Có chứ. Lái xe đến khu vực đón khách bên nhà ga A. Nhìn theo biển màu cam có chữ \"rideshare\". Tôi chắc là bạn sẽ thấy các tài xế khác ở đó. Nhân tiện, tôi khuyên bạn nên đi đường vòng quanh nhà ga. Cây cầu đó sẽ đưa bạn đến nhanh hơn.\nNam: Tuyệt quá. Cảm ơn chị. À—có trạm xăng nào gần sân bay không? Bình xăng của tôi gần hết rồi.\nNữ: Bạn sẽ thấy một trạm gần bãi xe thuê xe khi ra khỏi sân bay."
+  },
+  {
+   "number": 49,
+   "part": 3,
+   "answer": "D",
+   "group": "47-49",
+   "textEn": "49. What does the woman say is by the rental-car lot? (A) A department store (B) A bank (C) A restaurant (D) A fuel station",
+   "transcript": "M: Excuse me—officer? Do you happen to know where rideshare drivers park to wait for passengers? It's my first time at this airport.\nW: Yes. Drive to the pickup area by terminal A. Look out for the orange sign that says \"rideshare.\" I'm sure you'll see other drivers there. By the way, I recommend taking the terminal bypass. That bridge will take you there faster.\nM: Great. Thank you. Oh—is there a fuel station near the airport? My tank is almost empty.\nW: You'll see one by the rental-car lot on your way out.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n49. Người phụ nữ nói rằng cạnh bãi cho thuê xe có gì?\n(A) Một cửa hàng bách hóa\n(B) Một ngân hàng\n(C) Một nhà hàng\n(D) Một trạm nhiên liệu\n\nDịch hội thoại:\nNam: Xin lỗi—cảnh sát ạ? Ngài có biết các tài xế dịch vụ đi chung xe đậu ở đâu để chờ khách không? Đây là lần đầu tôi đến sân bay này.\nNữ: Có chứ. Lái xe đến khu vực đón khách bên nhà ga A. Nhìn theo biển màu cam có chữ \"rideshare\". Tôi chắc là bạn sẽ thấy các tài xế khác ở đó. Nhân tiện, tôi khuyên bạn nên đi đường vòng quanh nhà ga. Cây cầu đó sẽ đưa bạn đến nhanh hơn.\nNam: Tuyệt quá. Cảm ơn chị. À—có trạm xăng nào gần sân bay không? Bình xăng của tôi gần hết rồi.\nNữ: Bạn sẽ thấy một trạm gần bãi xe thuê xe khi ra khỏi sân bay."
+  },
+  {
+   "number": 50,
+   "part": 3,
+   "answer": "A",
+   "group": "50-52",
+   "textEn": "50. Where are the speakers? (A) On a bus (B) On a boat (C) At a car dealership (D) At a train station",
+   "transcript": "M: This traffic is really terrible.\nW: I know. We've been stuck in this bus for hours now! It's frustrating. I wonder what's going on.\nM: I heard the Day Street Bridge is being worked on.\nW: Oh, really? I didn't know that.\nM: Yes. I think it's down to just one lane for the next couple of weeks.\nW: That's good to know. I'll take the train into the city tomorrow instead, so I won't be late for my appointments.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n50. Hai người đang ở đâu?\n(A) Trên xe buýt\n(B) Trên thuyền\n(C) Tại đại lý ô tô\n(D) Tại ga tàu\n\nDịch hội thoại:\nNam: Giao thông hôm nay thật tệ.\nNữ: Tôi biết. Chúng ta đã kẹt trong chiếc xe buýt này mấy giờ rồi! Thật bực mình. Tôi tự hỏi chuyện gì đang xảy ra.\nNam: Tôi nghe nói cầu Day Street đang được sửa chữa.\nNữ: Thật sao? Tôi không biết điều đó.\nNam: Đúng rồi. Tôi nghĩ hiện chỉ còn một làn xe trong vài tuần tới.\nNữ: Biết vậy cũng tốt. Ngày mai tôi sẽ đi tàu vào thành phố thay vì đi xe, để không bị trễ các cuộc hẹn."
+  },
+  {
+   "number": 51,
+   "part": 3,
+   "answer": "C",
+   "group": "50-52",
+   "textEn": "51. Why does the man say, “I heard the Day Street Bridge is being worked on”? (A) To confirm some information (B) To make a correction (C) To explain a delay (D) To recommend leaving early",
+   "transcript": "M: This traffic is really terrible.\nW: I know. We've been stuck in this bus for hours now! It's frustrating. I wonder what's going on.\nM: I heard the Day Street Bridge is being worked on.\nW: Oh, really? I didn't know that.\nM: Yes. I think it's down to just one lane for the next couple of weeks.\nW: That's good to know. I'll take the train into the city tomorrow instead, so I won't be late for my appointments.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n51. Tại sao người đàn ông nói: “Tôi nghe nói cầu Day Street đang sửa chữa”?\n(A) Để xác nhận thông tin\n(B) Để chỉnh lại thông tin\n(C) Để giải thích một sự chậm trễ\n(D) Để khuyên nên đi sớm\n\nDịch hội thoại:\nNam: Giao thông hôm nay thật tệ.\nNữ: Tôi biết. Chúng ta đã kẹt trong chiếc xe buýt này mấy giờ rồi! Thật bực mình. Tôi tự hỏi chuyện gì đang xảy ra.\nNam: Tôi nghe nói cầu Day Street đang được sửa chữa.\nNữ: Thật sao? Tôi không biết điều đó.\nNam: Đúng rồi. Tôi nghĩ hiện chỉ còn một làn xe trong vài tuần tới.\nNữ: Biết vậy cũng tốt. Ngày mai tôi sẽ đi tàu vào thành phố thay vì đi xe, để không bị trễ các cuộc hẹn."
+  },
+  {
+   "number": 52,
+   "part": 3,
+   "answer": "D",
+   "group": "50-52",
+   "textEn": "52. What does the woman say she will do tomorrow? (A) Purchase a monthly pass (B) Download a map (C) Check a schedule (D) Use alternate transportation",
+   "transcript": "M: This traffic is really terrible.\nW: I know. We've been stuck in this bus for hours now! It's frustrating. I wonder what's going on.\nM: I heard the Day Street Bridge is being worked on.\nW: Oh, really? I didn't know that.\nM: Yes. I think it's down to just one lane for the next couple of weeks.\nW: That's good to know. I'll take the train into the city tomorrow instead, so I won't be late for my appointments.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n52. Người phụ nữ nói rằng cô ấy sẽ làm gì vào ngày mai?\n(A) Mua vé tháng\n(B) Tải xuống một bản đồ\n(C) Kiểm tra lịch trình\n(D) Sử dụng phương tiện thay thế\n\nDịch hội thoại:\nNam: Giao thông hôm nay thật tệ.\nNữ: Tôi biết. Chúng ta đã kẹt trong chiếc xe buýt này mấy giờ rồi! Thật bực mình. Tôi tự hỏi chuyện gì đang xảy ra.\nNam: Tôi nghe nói cầu Day Street đang được sửa chữa.\nNữ: Thật sao? Tôi không biết điều đó.\nNam: Đúng rồi. Tôi nghĩ hiện chỉ còn một làn xe trong vài tuần tới.\nNữ: Biết vậy cũng tốt. Ngày mai tôi sẽ đi tàu vào thành phố thay vì đi xe, để không bị trễ các cuộc hẹn."
+  },
+  {
+   "number": 53,
+   "part": 3,
+   "answer": "C",
+   "group": "53-55",
+   "textEn": "53. What product is the man calling about? (A) A portable game system (B) A printer (C) A camera (D) A tablet computer",
+   "transcript": "W: Girard Electronics. How can I help you?\nM: Hi. I bought a camera from your store last week, but I'm having trouble with it now.\nW: What's the problem?\nM: Well, I changed the lens from the standard to a telephoto one today, and now an error message pops up on the LCD screen.\nW: Hmm. I'm sorry, but I can't know for sure without looking at it, as it could be caused by a few things.\nM: I could come by this afternoon.\nW: OK. I won't be here, but one of the other employees can definitely help you. Let me just write a note down.\nM: Thanks.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n53. Người đàn ông đang gọi về sản phẩm nào?\n(A) Máy chơi game cầm tay\n(B) Máy in\n(C) Máy ảnh\n(D) Máy tính bảng\n\nDịch hội thoại:\nNữ: Girard Electronics. Tôi có thể giúp gì cho quý khách?\nNam: Chào. Tôi đã mua một chiếc máy ảnh từ cửa hàng của bạn tuần trước, nhưng bây giờ tôi gặp sự cố với nó.\nNữ: Vấn đề là gì vậy?\nNam: Hôm nay tôi đã thay ống kính từ ống kính tiêu chuẩn sang ống kính tele, và bây giờ một thông báo lỗi xuất hiện trên màn hình LCD.\nNữ: Ừm… Tôi xin lỗi, nhưng tôi không thể chắc chắn nếu không xem trực tiếp, vì nguyên nhân có thể do một vài thứ.\nNam: Tôi có thể ghé qua vào chiều nay.\nNữ: Được thôi. Tôi sẽ không có ở đây, nhưng một trong những nhân viên khác chắc chắn có thể giúp anh. Để tôi ghi chú lại.\nNam: Cảm ơn."
+  },
+  {
+   "number": 54,
+   "part": 3,
+   "answer": "B",
+   "group": "53-55",
+   "textEn": "54. Why will the man go to a store? (A) To purchase an extended warranty (B) To resolve a problem (C) To receive a refund (D) To pick up some accessories",
+   "transcript": "W: Girard Electronics. How can I help you?\nM: Hi. I bought a camera from your store last week, but I'm having trouble with it now.\nW: What's the problem?\nM: Well, I changed the lens from the standard to a telephoto one today, and now an error message pops up on the LCD screen.\nW: Hmm. I'm sorry, but I can't know for sure without looking at it, as it could be caused by a few things.\nM: I could come by this afternoon.\nW: OK. I won't be here, but one of the other employees can definitely help you. Let me just write a note down.\nM: Thanks.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n54. Tại sao người đàn ông sẽ đến cửa hàng?\n(A) Để mua bảo hành mở rộng\n(B) Để giải quyết một vấn đề\n(C) Để nhận tiền hoàn\n(D) Để lấy một số phụ kiện\n\nDịch hội thoại:\nNữ: Girard Electronics. Tôi có thể giúp gì cho quý khách?\nNam: Chào. Tôi đã mua một chiếc máy ảnh từ cửa hàng của bạn tuần trước, nhưng bây giờ tôi gặp sự cố với nó.\nNữ: Vấn đề là gì vậy?\nNam: Hôm nay tôi đã thay ống kính từ ống kính tiêu chuẩn sang ống kính tele, và bây giờ một thông báo lỗi xuất hiện trên màn hình LCD.\nNữ: Ừm… Tôi xin lỗi, nhưng tôi không thể chắc chắn nếu không xem trực tiếp, vì nguyên nhân có thể do một vài thứ.\nNam: Tôi có thể ghé qua vào chiều nay.\nNữ: Được thôi. Tôi sẽ không có ở đây, nhưng một trong những nhân viên khác chắc chắn có thể giúp anh. Để tôi ghi chú lại.\nNam: Cảm ơn."
+  },
+  {
+   "number": 55,
+   "part": 3,
+   "answer": "D",
+   "group": "53-55",
+   "textEn": "55. Who will the woman most likely give a note to? (A) A parking attendant (B) A product designer (C) A customer (D) A colleague",
+   "transcript": "W: Girard Electronics. How can I help you?\nM: Hi. I bought a camera from your store last week, but I'm having trouble with it now.\nW: What's the problem?\nM: Well, I changed the lens from the standard to a telephoto one today, and now an error message pops up on the LCD screen.\nW: Hmm. I'm sorry, but I can't know for sure without looking at it, as it could be caused by a few things.\nM: I could come by this afternoon.\nW: OK. I won't be here, but one of the other employees can definitely help you. Let me just write a note down.\nM: Thanks.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n55. Người phụ nữ có khả năng sẽ đưa ghi chú cho ai?\n(A) Nhân viên bãi đỗ xe\n(B) Nhà thiết kế sản phẩm\n(C) Khách hàng\n(D) Đồng nghiệp\n\nDịch hội thoại:\nNữ: Girard Electronics. Tôi có thể giúp gì cho quý khách?\nNam: Chào. Tôi đã mua một chiếc máy ảnh từ cửa hàng của bạn tuần trước, nhưng bây giờ tôi gặp sự cố với nó.\nNữ: Vấn đề là gì vậy?\nNam: Hôm nay tôi đã thay ống kính từ ống kính tiêu chuẩn sang ống kính tele, và bây giờ một thông báo lỗi xuất hiện trên màn hình LCD.\nNữ: Ừm… Tôi xin lỗi, nhưng tôi không thể chắc chắn nếu không xem trực tiếp, vì nguyên nhân có thể do một vài thứ.\nNam: Tôi có thể ghé qua vào chiều nay.\nNữ: Được thôi. Tôi sẽ không có ở đây, nhưng một trong những nhân viên khác chắc chắn có thể giúp anh. Để tôi ghi chú lại.\nNam: Cảm ơn."
+  },
+  {
+   "number": 56,
+   "part": 3,
+   "answer": "A",
+   "group": "56-58",
+   "textEn": "56. Where do the women most likely work? (A) At a medical clinic (B) At a department store (C) At a hotel (D) At a manufacturing plant",
+   "transcript": "M: Hi. I have a delivery of medical supplies addressed to Eun-Mi Park.\nW1: That's Eun-Mi sitting at the desk over there.\nW2: I'm Eun-Mi, I've been waiting for these sterile pads and bandages.\nM: Great. I just need you to sign here to confirm the delivery.\nW2: OK, sure. Oh, Claudia, do you have time to help me carry these boxes to the storage closet?\nW1: Of course. I have a patient at one o'clock, but I have a few minutes now.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n56. Hai người phụ nữ có khả năng làm việc ở đâu nhất?\n(A) Tại phòng khám\n(B) Tại cửa hàng bách hóa\n(C) Tại khách sạn\n(D) Tại nhà máy\n\nDịch hội thoại:\nNam: Chào. Tôi có một lô vật tư y tế gửi đến Eun-Mi Park.\nNữ 1: Người đang ngồi tại bàn kia là Eun-Mi đó.\nNữ 2: Tôi là Eun-Mi, tôi đang chờ các miếng gạc và băng vô trùng này.\nNam: Tuyệt. Tôi chỉ cần bạn ký vào đây để xác nhận việc giao hàng.\nNữ 2: Được, chắc chắn rồi. À, Claudia, bạn có thời gian giúp tôi mang mấy thùng này vào tủ lưu trữ không?\nNữ 1: Dĩ nhiên. Tôi có một bệnh nhân lúc 1 giờ, nhưng giờ tôi có vài phút rảnh."
+  },
+  {
+   "number": 57,
+   "part": 3,
+   "answer": "D",
+   "group": "56-58",
+   "textEn": "57. What does the man request? (A) A schedule (B) A list of employees (C) A facility tour (D) A signature",
+   "transcript": "M: Hi. I have a delivery of medical supplies addressed to Eun-Mi Park.\nW1: That's Eun-Mi sitting at the desk over there.\nW2: I'm Eun-Mi, I've been waiting for these sterile pads and bandages.\nM: Great. I just need you to sign here to confirm the delivery.\nW2: OK, sure. Oh, Claudia, do you have time to help me carry these boxes to the storage closet?\nW1: Of course. I have a patient at one o'clock, but I have a few minutes now.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n57. Người đàn ông yêu cầu điều gì?\n(A) Một lịch trình\n(B) Danh sách nhân viên\n(C) Một chuyến tham quan cơ sở\n(D) Một chữ ký\n\nDịch hội thoại:\nNam: Chào. Tôi có một lô vật tư y tế gửi đến Eun-Mi Park.\nNữ 1: Người đang ngồi tại bàn kia là Eun-Mi đó.\nNữ 2: Tôi là Eun-Mi, tôi đang chờ các miếng gạc và băng vô trùng này.\nNam: Tuyệt. Tôi chỉ cần bạn ký vào đây để xác nhận việc giao hàng.\nNữ 2: Được, chắc chắn rồi. À, Claudia, bạn có thời gian giúp tôi mang mấy thùng này vào tủ lưu trữ không?\nNữ 1: Dĩ nhiên. Tôi có một bệnh nhân lúc 1 giờ, nhưng giờ tôi có vài phút rảnh."
+  },
+  {
+   "number": 58,
+   "part": 3,
+   "answer": "D",
+   "group": "56-58",
+   "textEn": "58. What will the women most likely do next? (A) Attend a staff meeting (B) Check some reports (C) Take a lunch break (D) Move some boxes",
+   "transcript": "M: Hi. I have a delivery of medical supplies addressed to Eun-Mi Park.\nW1: That's Eun-Mi sitting at the desk over there.\nW2: I'm Eun-Mi, I've been waiting for these sterile pads and bandages.\nM: Great. I just need you to sign here to confirm the delivery.\nW2: OK, sure. Oh, Claudia, do you have time to help me carry these boxes to the storage closet?\nW1: Of course. I have a patient at one o'clock, but I have a few minutes now.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n58. Hai người phụ nữ có khả năng sẽ làm gì tiếp theo?\n(A) Tham dự cuộc họp nhân viên\n(B) Kiểm tra vài báo cáo\n(C) Nghỉ trưa\n(D) Di chuyển vài thùng hàng\n\nDịch hội thoại:\nNam: Chào. Tôi có một lô vật tư y tế gửi đến Eun-Mi Park.\nNữ 1: Người đang ngồi tại bàn kia là Eun-Mi đó.\nNữ 2: Tôi là Eun-Mi, tôi đang chờ các miếng gạc và băng vô trùng này.\nNam: Tuyệt. Tôi chỉ cần bạn ký vào đây để xác nhận việc giao hàng.\nNữ 2: Được, chắc chắn rồi. À, Claudia, bạn có thời gian giúp tôi mang mấy thùng này vào tủ lưu trữ không?\nNữ 1: Dĩ nhiên. Tôi có một bệnh nhân lúc 1 giờ, nhưng giờ tôi có vài phút rảnh."
+  },
+  {
+   "number": 59,
+   "part": 3,
+   "answer": "A",
+   "group": "59-61",
+   "textEn": "59. Why is the woman calling? (A) To inquire about a service (B) To arrange an interview (C) To request a refund (D) To make a reservation",
+   "transcript": "W: Dula Commercial Cleaners. How can I help you?\nM: Hi, I'm running a new bed-and-breakfast in town, and I'm looking for a company to wash, dry, and fold our linens. I have a few questions.\nW: Sure.\nM: How do you work in terms of scheduling?\nW: We work around the clock to guarantee a 24-hour turnaround. We run three separate shifts.\nM: That's good to hear.\nW: Could I ask where you're located?\nM: Oh, we're at 647 Pond Street.\nW: In that case, pickup and delivery will not add to your service charge, since you're within a fifteen-kilometer radius of our company.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n59. Tại sao người phụ nữ gọi điện?\n(A) Để hỏi về một dịch vụ\n(B) Để sắp xếp một buổi phỏng vấn\n(C) Để yêu cầu hoàn tiền\n(D) Để đặt chỗ\n\nDịch hội thoại:\nNữ: Dula Commercial Cleaners. Tôi có thể giúp gì cho quý khách?\nNam: Chào, tôi đang vận hành một nhà nghỉ kiểu bed-and-breakfast mới trong thị trấn, và tôi đang tìm một công ty để giặt, sấy và gấp đồ vải. Tôi có vài câu hỏi.\nNữ: Vâng, được.\nNam: Quý công ty làm việc thế nào về lịch trình?\nNữ: Chúng tôi làm việc 24/7 để đảm bảo hoàn thành trong vòng 24 giờ. Chúng tôi có ba ca làm việc riêng biệt.\nNam: Nghe tốt quá.\nNữ: Tôi có thể hỏi quý vị ở đâu không?\nNam: À, chúng tôi ở 647 Pond Street.\nNữ: Trong trường hợp đó, việc lấy và giao hàng sẽ không tính thêm phí dịch vụ, vì quý vị nằm trong bán kính 15km của công ty chúng tôi."
+  },
+  {
+   "number": 60,
+   "part": 3,
+   "answer": "C",
+   "group": "59-61",
+   "textEn": "60. What does the man say about his company? (A) It ensures customer satisfaction. (B) It has been in business for three years. (C) It operates 24 hours a day. (D) It is family owned.",
+   "transcript": "W: Dula Commercial Cleaners. How can I help you?\nM: Hi, I'm running a new bed-and-breakfast in town, and I'm looking for a company to wash, dry, and fold our linens. I have a few questions.\nW: Sure.\nM: How do you work in terms of scheduling?\nW: We work around the clock to guarantee a 24-hour turnaround. We run three separate shifts.\nM: That's good to hear.\nW: Could I ask where you're located?\nM: Oh, we're at 647 Pond Street.\nW: In that case, pickup and delivery will not add to your service charge, since you're within a fifteen-kilometer radius of our company.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n60. Người đàn ông nói gì về công ty của anh ấy?\n(A) Công ty đảm bảo sự hài lòng của khách hàng.\n(B) Công ty đã hoạt động được ba năm.\n(C) Công ty hoạt động 24 giờ mỗi ngày.\n(D) Công ty là doanh nghiệp gia đình.\n\nDịch hội thoại:\nNữ: Dula Commercial Cleaners. Tôi có thể giúp gì cho quý khách?\nNam: Chào, tôi đang vận hành một nhà nghỉ kiểu bed-and-breakfast mới trong thị trấn, và tôi đang tìm một công ty để giặt, sấy và gấp đồ vải. Tôi có vài câu hỏi.\nNữ: Vâng, được.\nNam: Quý công ty làm việc thế nào về lịch trình?\nNữ: Chúng tôi làm việc 24/7 để đảm bảo hoàn thành trong vòng 24 giờ. Chúng tôi có ba ca làm việc riêng biệt.\nNam: Nghe tốt quá.\nNữ: Tôi có thể hỏi quý vị ở đâu không?\nNam: À, chúng tôi ở 647 Pond Street.\nNữ: Trong trường hợp đó, việc lấy và giao hàng sẽ không tính thêm phí dịch vụ, vì quý vị nằm trong bán kính 15km của công ty chúng tôi."
+  },
+  {
+   "number": 61,
+   "part": 3,
+   "answer": "B",
+   "group": "59-61",
+   "textEn": "61. According to the man, what will his company provide? (A) Directions to a facility (B) Pickup and delivery (C) A member discount (D) An updated receipt",
+   "transcript": "W: Dula Commercial Cleaners. How can I help you?\nM: Hi, I'm running a new bed-and-breakfast in town, and I'm looking for a company to wash, dry, and fold our linens. I have a few questions.\nW: Sure.\nM: How do you work in terms of scheduling?\nW: We work around the clock to guarantee a 24-hour turnaround. We run three separate shifts.\nM: That's good to hear.\nW: Could I ask where you're located?\nM: Oh, we're at 647 Pond Street.\nW: In that case, pickup and delivery will not add to your service charge, since you're within a fifteen-kilometer radius of our company.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n61. Theo người đàn ông, công ty của anh ấy sẽ cung cấp điều gì?\n(A) Chỉ đường đến cơ sở\n(B) Dịch vụ nhận và giao hàng\n(C) Giảm giá cho thành viên\n(D) Hóa đơn cập nhật\n\nDịch hội thoại:\nNữ: Dula Commercial Cleaners. Tôi có thể giúp gì cho quý khách?\nNam: Chào, tôi đang vận hành một nhà nghỉ kiểu bed-and-breakfast mới trong thị trấn, và tôi đang tìm một công ty để giặt, sấy và gấp đồ vải. Tôi có vài câu hỏi.\nNữ: Vâng, được.\nNam: Quý công ty làm việc thế nào về lịch trình?\nNữ: Chúng tôi làm việc 24/7 để đảm bảo hoàn thành trong vòng 24 giờ. Chúng tôi có ba ca làm việc riêng biệt.\nNam: Nghe tốt quá.\nNữ: Tôi có thể hỏi quý vị ở đâu không?\nNam: À, chúng tôi ở 647 Pond Street.\nNữ: Trong trường hợp đó, việc lấy và giao hàng sẽ không tính thêm phí dịch vụ, vì quý vị nằm trong bán kính 15km của công ty chúng tôi."
+  },
+  {
+   "number": 62,
+   "part": 3,
+   "answer": "B",
+   "group": "62-64",
+   "textEn": "62. Where is the conversation taking place? (A) At a department store (B) At a fitness center (C) At a library (D) At a restaurant",
+   "transcript": "M: Welcome to Centerville Fitness Center.\nW: Hi. I hear you're having a fund-raising campaign.\nM: Yes, today's the start of our annual fund-raiser. All proceeds go toward the purchase of new sports equipment for the center. You'll be entered into a raffle to win a prize based on your donation amount.\nW: Sounds great. I'd like to donate $50.\nM: Wonderful! Just fill out the donation form, and I'll get you your raffle ticket.\nW: How will I find out if I won?\nM: The drawing's on Friday, and winners will receive a phone call from the organizers.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n62. Cuộc hội thoại diễn ra ở đâu?\n(A) Ở cửa hàng bách hóa\n(B) Ở trung tâm thể hình\n(C) Ở thư viện\n(D) Ở nhà hàng\n\nDịch hội thoại:\nNam: Chào mừng đến với Trung tâm Thể hình Centerville.\nNữ: Chào. Tôi nghe nói trung tâm đang tổ chức một chiến dịch gây quỹ.\nNam: Đúng rồi, hôm nay là ngày khởi động gây quỹ thường niên của chúng tôi. Toàn bộ số tiền thu được sẽ dùng để mua thiết bị thể thao mới cho trung tâm. Quý vị sẽ được tham gia rút thăm trúng thưởng dựa trên số tiền đóng góp.\nNữ: Nghe tuyệt quá. Tôi muốn đóng góp 50 đô la.\nNam: Tuyệt vời! Chỉ cần điền vào mẫu đóng góp, và tôi sẽ đưa vé rút thăm cho bạn.\nNữ: Làm thế nào tôi biết mình có trúng thưởng không?\nNam: Buổi rút thăm sẽ diễn ra vào thứ Sáu, và những người trúng thưởng sẽ nhận được cuộc gọi từ ban tổ chức."
+  },
+  {
+   "number": 63,
+   "part": 3,
+   "answer": "A",
+   "group": "62-64",
+   "textEn": "63. Look at the graphic. Which prize could the woman win? (A) A bicycle (B) Theater tickets (C) A camera (D) A weekend getaway",
+   "transcript": "M: Welcome to Centerville Fitness Center.\nW: Hi. I hear you're having a fund-raising campaign.\nM: Yes, today's the start of our annual fund-raiser. All proceeds go toward the purchase of new sports equipment for the center. You'll be entered into a raffle to win a prize based on your donation amount.\nW: Sounds great. I'd like to donate $50.\nM: Wonderful! Just fill out the donation form, and I'll get you your raffle ticket.\nW: How will I find out if I won?\nM: The drawing's on Friday, and winners will receive a phone call from the organizers.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n63. Nhìn vào biểu đồ. Người phụ nữ có thể thắng giải nào?\n(A) Xe đạp\n(B) Vé xem kịch\n(C) Máy ảnh\n(D) Chuyến nghỉ cuối tuần\n\nDịch hội thoại:\nNam: Chào mừng đến với Trung tâm Thể hình Centerville.\nNữ: Chào. Tôi nghe nói trung tâm đang tổ chức một chiến dịch gây quỹ.\nNam: Đúng rồi, hôm nay là ngày khởi động gây quỹ thường niên của chúng tôi. Toàn bộ số tiền thu được sẽ dùng để mua thiết bị thể thao mới cho trung tâm. Quý vị sẽ được tham gia rút thăm trúng thưởng dựa trên số tiền đóng góp.\nNữ: Nghe tuyệt quá. Tôi muốn đóng góp 50 đô la.\nNam: Tuyệt vời! Chỉ cần điền vào mẫu đóng góp, và tôi sẽ đưa vé rút thăm cho bạn.\nNữ: Làm thế nào tôi biết mình có trúng thưởng không?\nNam: Buổi rút thăm sẽ diễn ra vào thứ Sáu, và những người trúng thưởng sẽ nhận được cuộc gọi từ ban tổ chức."
+  },
+  {
+   "number": 64,
+   "part": 3,
+   "answer": "A",
+   "group": "62-64",
+   "textEn": "64. How will winners be notified? (A) By telephone (B) By text message (C) By e-mail (D) By letter",
+   "transcript": "M: Welcome to Centerville Fitness Center.\nW: Hi. I hear you're having a fund-raising campaign.\nM: Yes, today's the start of our annual fund-raiser. All proceeds go toward the purchase of new sports equipment for the center. You'll be entered into a raffle to win a prize based on your donation amount.\nW: Sounds great. I'd like to donate $50.\nM: Wonderful! Just fill out the donation form, and I'll get you your raffle ticket.\nW: How will I find out if I won?\nM: The drawing's on Friday, and winners will receive a phone call from the organizers.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n64. Người thắng cuộc sẽ được thông báo bằng cách nào?\n(A) Bằng điện thoại\n(B) Bằng tin nhắn\n(C) Bằng email\n(D) Bằng thư\n\nDịch hội thoại:\nNam: Chào mừng đến với Trung tâm Thể hình Centerville.\nNữ: Chào. Tôi nghe nói trung tâm đang tổ chức một chiến dịch gây quỹ.\nNam: Đúng rồi, hôm nay là ngày khởi động gây quỹ thường niên của chúng tôi. Toàn bộ số tiền thu được sẽ dùng để mua thiết bị thể thao mới cho trung tâm. Quý vị sẽ được tham gia rút thăm trúng thưởng dựa trên số tiền đóng góp.\nNữ: Nghe tuyệt quá. Tôi muốn đóng góp 50 đô la.\nNam: Tuyệt vời! Chỉ cần điền vào mẫu đóng góp, và tôi sẽ đưa vé rút thăm cho bạn.\nNữ: Làm thế nào tôi biết mình có trúng thưởng không?\nNam: Buổi rút thăm sẽ diễn ra vào thứ Sáu, và những người trúng thưởng sẽ nhận được cuộc gọi từ ban tổ chức."
+  },
+  {
+   "number": 65,
+   "part": 3,
+   "answer": "D",
+   "group": "65-67",
+   "textEn": "65. Why does the woman want to purchase flowers? (A) To decorate a building lobby (B) To observe a company anniversary (C) To mark the completion of a work project (D) To celebrate a coworker's promotion",
+   "transcript": "W: Hi. Some of us at work decided to get together to buy some flowers here. They're for a colleague who just received a promotion.\nM: We have a nice selection of arrangements that are appropriate for an event like that. Here's a list of the most popular, in a range of prices.\nW: Oh, I have enough money for the Harmony arrangement. Can you make that while I wait?\nM: Sure, I'll have it made for you now. And will you want a greeting card to go with that?\nW: Actually, no card is needed. We already have one that we've all signed.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n65. Tại sao người phụ nữ muốn mua hoa?\n(A) Để trang trí sảnh tòa nhà\n(B) Để kỷ niệm ngày thành lập công ty\n(C) Để đánh dấu hoàn thành dự án\n(D) Để chúc mừng đồng nghiệp thăng chức\n\nDịch hội thoại:\nNữ: Chào. Một vài người trong công ty chúng tôi quyết định cùng nhau mua hoa ở đây. Hoa dành cho một đồng nghiệp vừa được thăng chức.\nNam: Chúng tôi có nhiều mẫu hoa đẹp phù hợp cho sự kiện như vậy. Đây là danh sách những mẫu phổ biến nhất, với nhiều mức giá khác nhau.\nNữ: À, tôi có đủ tiền cho mẫu Harmony. Bạn có thể làm ngay trong khi tôi chờ không?\nNam: Chắc chắn rồi, tôi sẽ làm ngay cho bạn. Và bạn có muốn kèm theo một tấm thiệp không?\nNữ: Thực ra không cần thiệp. Chúng tôi đã có một tấm mà tất cả mọi người đã ký rồi."
+  },
+  {
+   "number": 66,
+   "part": 3,
+   "answer": "C",
+   "group": "65-67",
+   "textEn": "66. Look at the graphic. How much will the woman pay for the flower arrangement? (A) $45 (B) $60 (C) $75 (D) $110",
+   "transcript": "W: Hi. Some of us at work decided to get together to buy some flowers here. They're for a colleague who just received a promotion.\nM: We have a nice selection of arrangements that are appropriate for an event like that. Here's a list of the most popular, in a range of prices.\nW: Oh, I have enough money for the Harmony arrangement. Can you make that while I wait?\nM: Sure, I'll have it made for you now. And will you want a greeting card to go with that?\nW: Actually, no card is needed. We already have one that we've all signed.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n66. Nhìn vào biểu đồ. Người phụ nữ sẽ trả bao nhiêu cho bó hoa?\n(A) $45\n(B) $60\n(C) $75\n(D) $110\n\nDịch hội thoại:\nNữ: Chào. Một vài người trong công ty chúng tôi quyết định cùng nhau mua hoa ở đây. Hoa dành cho một đồng nghiệp vừa được thăng chức.\nNam: Chúng tôi có nhiều mẫu hoa đẹp phù hợp cho sự kiện như vậy. Đây là danh sách những mẫu phổ biến nhất, với nhiều mức giá khác nhau.\nNữ: À, tôi có đủ tiền cho mẫu Harmony. Bạn có thể làm ngay trong khi tôi chờ không?\nNam: Chắc chắn rồi, tôi sẽ làm ngay cho bạn. Và bạn có muốn kèm theo một tấm thiệp không?\nNữ: Thực ra không cần thiệp. Chúng tôi đã có một tấm mà tất cả mọi người đã ký rồi."
+  },
+  {
+   "number": 67,
+   "part": 3,
+   "answer": "B",
+   "group": "65-67",
+   "textEn": "67. What additional items do the speakers discuss? (A) A chocolate bar (B) A greeting card (C) A bunch of balloons (D) A decorative bow",
+   "transcript": "W: Hi. Some of us at work decided to get together to buy some flowers here. They're for a colleague who just received a promotion.\nM: We have a nice selection of arrangements that are appropriate for an event like that. Here's a list of the most popular, in a range of prices.\nW: Oh, I have enough money for the Harmony arrangement. Can you make that while I wait?\nM: Sure, I'll have it made for you now. And will you want a greeting card to go with that?\nW: Actually, no card is needed. We already have one that we've all signed.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n67. Hai người nói thảo luận thêm món gì?\n(A) Thanh socola\n(B) Thiệp chúc mừng\n(C) Chùm bóng bay\n(D) Nơ trang trí\n\nDịch hội thoại:\nNữ: Chào. Một vài người trong công ty chúng tôi quyết định cùng nhau mua hoa ở đây. Hoa dành cho một đồng nghiệp vừa được thăng chức.\nNam: Chúng tôi có nhiều mẫu hoa đẹp phù hợp cho sự kiện như vậy. Đây là danh sách những mẫu phổ biến nhất, với nhiều mức giá khác nhau.\nNữ: À, tôi có đủ tiền cho mẫu Harmony. Bạn có thể làm ngay trong khi tôi chờ không?\nNam: Chắc chắn rồi, tôi sẽ làm ngay cho bạn. Và bạn có muốn kèm theo một tấm thiệp không?\nNữ: Thực ra không cần thiệp. Chúng tôi đã có một tấm mà tất cả mọi người đã ký rồi."
+  },
+  {
+   "number": 68,
+   "part": 3,
+   "answer": "A",
+   "group": "68-70",
+   "textEn": "68. Who most likely is the man? (A) A new employee (B) An investor (C) A university professor (D) A business owner",
+   "transcript": "W: Hi, Andrew. How have you enjoyed your first week here at Jebreen Farms?\nM: It's been great. I'm definitely learning a lot about commercial agriculture.\nW: So glad to hear that. Let's go over to where we'll store the upcoming corn harvest. As you know, we sell a lot of corn as feed for livestock farms in the area.\nM: Yes. I'm eager to get some hands-on experience with drying and storing the corn.\nW: Good. If the process is done right, it can be stored for long periods, but conditions inside the grain bin have to be just right.\nM: How long will the drying process take after the harvest?\nW: About four to six weeks.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n68. Người đàn ông có khả năng là ai?\n(A) Nhân viên mới\n(B) Nhà đầu tư\n(C) Giáo sư đại học\n(D) Chủ doanh nghiệp\n\nDịch hội thoại:\nNữ: Chào Andrew. Bạn cảm thấy thế nào trong tuần đầu tiên ở Jebreen Farms?\nNam: Rất tuyệt. Tôi chắc chắn học được nhiều điều về nông nghiệp thương mại.\nNữ: Thật vui khi nghe vậy. Chúng ta hãy đi đến nơi sẽ lưu trữ vụ thu hoạch ngô sắp tới. Như bạn biết, chúng tôi bán rất nhiều ngô làm thức ăn cho các trang trại chăn nuôi trong khu vực.\nNam: Vâng. Tôi háo hức muốn có kinh nghiệm thực tế về việc sấy và lưu trữ ngô.\nNữ: Tốt. Nếu quá trình này được thực hiện đúng cách, ngô có thể được lưu trữ trong thời gian dài, nhưng điều kiện bên trong silo phải hoàn hảo.\nNam: Quá trình sấy sau thu hoạch sẽ mất bao lâu?\nNữ: Khoảng bốn đến sáu tuần."
+  },
+  {
+   "number": 69,
+   "part": 3,
+   "answer": "C",
+   "group": "68-70",
+   "textEn": "69. Look at the graphic. Where will the upcoming harvest be stored? (A) Bin 1 (B) Bin 2 (C) Bin 3 (D) Bin 4",
+   "transcript": "W: Hi, Andrew. How have you enjoyed your first week here at Jebreen Farms?\nM: It's been great. I'm definitely learning a lot about commercial agriculture.\nW: So glad to hear that. Let's go over to where we'll store the upcoming corn harvest. As you know, we sell a lot of corn as feed for livestock farms in the area.\nM: Yes. I'm eager to get some hands-on experience with drying and storing the corn.\nW: Good. If the process is done right, it can be stored for long periods, but conditions inside the grain bin have to be just right.\nM: How long will the drying process take after the harvest?\nW: About four to six weeks.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n69. Nhìn vào biểu đồ. Vụ thu hoạch sắp tới sẽ được lưu trữ ở đâu?\n(A) Thùng 1\n(B) Thùng 2\n(C) Thùng 3\n(D) Thùng 4\n\nDịch hội thoại:\nNữ: Chào Andrew. Bạn cảm thấy thế nào trong tuần đầu tiên ở Jebreen Farms?\nNam: Rất tuyệt. Tôi chắc chắn học được nhiều điều về nông nghiệp thương mại.\nNữ: Thật vui khi nghe vậy. Chúng ta hãy đi đến nơi sẽ lưu trữ vụ thu hoạch ngô sắp tới. Như bạn biết, chúng tôi bán rất nhiều ngô làm thức ăn cho các trang trại chăn nuôi trong khu vực.\nNam: Vâng. Tôi háo hức muốn có kinh nghiệm thực tế về việc sấy và lưu trữ ngô.\nNữ: Tốt. Nếu quá trình này được thực hiện đúng cách, ngô có thể được lưu trữ trong thời gian dài, nhưng điều kiện bên trong silo phải hoàn hảo.\nNam: Quá trình sấy sau thu hoạch sẽ mất bao lâu?\nNữ: Khoảng bốn đến sáu tuần."
+  },
+  {
+   "number": 70,
+   "part": 3,
+   "answer": "B",
+   "group": "68-70",
+   "textEn": "70. What does the man ask about? (A) When some work will begin (B) How long a process will take (C) Who will buy a product (D) When a delivery will arrive",
+   "transcript": "W: Hi, Andrew. How have you enjoyed your first week here at Jebreen Farms?\nM: It's been great. I'm definitely learning a lot about commercial agriculture.\nW: So glad to hear that. Let's go over to where we'll store the upcoming corn harvest. As you know, we sell a lot of corn as feed for livestock farms in the area.\nM: Yes. I'm eager to get some hands-on experience with drying and storing the corn.\nW: Good. If the process is done right, it can be stored for long periods, but conditions inside the grain bin have to be just right.\nM: How long will the drying process take after the harvest?\nW: About four to six weeks.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n70. Người đàn ông hỏi về điều gì?\n(A) Khi nào một công việc sẽ bắt đầu\n(B) Một quy trình sẽ mất bao lâu\n(C) Ai sẽ mua sản phẩm\n(D) Khi nào hàng giao đến\n\nDịch hội thoại:\nNữ: Chào Andrew. Bạn cảm thấy thế nào trong tuần đầu tiên ở Jebreen Farms?\nNam: Rất tuyệt. Tôi chắc chắn học được nhiều điều về nông nghiệp thương mại.\nNữ: Thật vui khi nghe vậy. Chúng ta hãy đi đến nơi sẽ lưu trữ vụ thu hoạch ngô sắp tới. Như bạn biết, chúng tôi bán rất nhiều ngô làm thức ăn cho các trang trại chăn nuôi trong khu vực.\nNam: Vâng. Tôi háo hức muốn có kinh nghiệm thực tế về việc sấy và lưu trữ ngô.\nNữ: Tốt. Nếu quá trình này được thực hiện đúng cách, ngô có thể được lưu trữ trong thời gian dài, nhưng điều kiện bên trong silo phải hoàn hảo.\nNam: Quá trình sấy sau thu hoạch sẽ mất bao lâu?\nNữ: Khoảng bốn đến sáu tuần."
+  },
+  {
+   "number": 71,
+   "part": 4,
+   "answer": "C",
+   "group": "71-73",
+   "textEn": "71. What does Schneider Technology produce? (A) Automobile engines (B) Audio equipment (C) Navigation devices (D) Medical equipment",
+   "transcript": "Welcome to your first day of work at Schneider Technology. Our navigation devices enable vehicles to direct drivers to their destination by taking into consideration a variety of factors such as distance, weather, and traffic conditions. Moritz Schneider, the president of the company, will be here in person at ten o'clock to welcome you and tell you all about the company's history. But first, I'll help you set up your computer accounts. Cybersecurity is very important to us, so we've added extra steps to verify your identity.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n71. Schneider Technology sản xuất gì?\n(A) Động cơ ô tô\n(B) Thiết bị âm thanh\n(C) Thiết bị dẫn đường\n(D) Thiết bị y tế\n\nDịch bài nói:\nNam: Chào mừng bạn đến với ngày làm việc đầu tiên tại Schneider Technology. Các thiết bị định vị của chúng tôi giúp phương tiện hướng dẫn lái xe đến điểm đến, đồng thời xem xét nhiều yếu tố như khoảng cách, thời tiết và tình trạng giao thông. Moritz Schneider, chủ tịch công ty, sẽ có mặt trực tiếp lúc mười giờ để chào mừng bạn và giới thiệu về lịch sử công ty. Nhưng trước tiên, tôi sẽ giúp bạn thiết lập tài khoản máy tính. An ninh mạng rất quan trọng đối với chúng tôi, vì vậy chúng tôi đã thêm các bước xác minh bổ sung để đảm bảo danh tính của bạn."
+  },
+  {
+   "number": 72,
+   "part": 4,
+   "answer": "B",
+   "group": "71-73",
+   "textEn": "72. Who will the listeners meet with at ten o’clock? (A) An important client (B) The company president (C) The head of security (D) A government official",
+   "transcript": "Welcome to your first day of work at Schneider Technology. Our navigation devices enable vehicles to direct drivers to their destination by taking into consideration a variety of factors such as distance, weather, and traffic conditions. Moritz Schneider, the president of the company, will be here in person at ten o'clock to welcome you and tell you all about the company's history. But first, I'll help you set up your computer accounts. Cybersecurity is very important to us, so we've added extra steps to verify your identity.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n72. Người nghe sẽ gặp ai vào lúc 10 giờ?\n(A) Một khách hàng quan trọng\n(B) Chủ tịch công ty\n(C) Trưởng bộ phận an ninh\n(D) Một quan chức chính phủ\n\nDịch bài nói:\nNam: Chào mừng bạn đến với ngày làm việc đầu tiên tại Schneider Technology. Các thiết bị định vị của chúng tôi giúp phương tiện hướng dẫn lái xe đến điểm đến, đồng thời xem xét nhiều yếu tố như khoảng cách, thời tiết và tình trạng giao thông. Moritz Schneider, chủ tịch công ty, sẽ có mặt trực tiếp lúc mười giờ để chào mừng bạn và giới thiệu về lịch sử công ty. Nhưng trước tiên, tôi sẽ giúp bạn thiết lập tài khoản máy tính. An ninh mạng rất quan trọng đối với chúng tôi, vì vậy chúng tôi đã thêm các bước xác minh bổ sung để đảm bảo danh tính của bạn."
+  },
+  {
+   "number": 73,
+   "part": 4,
+   "answer": "A",
+   "group": "71-73",
+   "textEn": "73. What will the listeners do next? (A) Set up their computer accounts (B) Receive their security badges (C) Tour a facility (D) Watch a demonstration",
+   "transcript": "Welcome to your first day of work at Schneider Technology. Our navigation devices enable vehicles to direct drivers to their destination by taking into consideration a variety of factors such as distance, weather, and traffic conditions. Moritz Schneider, the president of the company, will be here in person at ten o'clock to welcome you and tell you all about the company's history. But first, I'll help you set up your computer accounts. Cybersecurity is very important to us, so we've added extra steps to verify your identity.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n73. Người nghe sẽ làm gì tiếp theo?\n(A) Cài đặt tài khoản máy tính\n(B) Nhận thẻ an ninh\n(C) Tham quan cơ sở\n(D) Xem một buổi trình diễn\n\nDịch bài nói:\nNam: Chào mừng bạn đến với ngày làm việc đầu tiên tại Schneider Technology. Các thiết bị định vị của chúng tôi giúp phương tiện hướng dẫn lái xe đến điểm đến, đồng thời xem xét nhiều yếu tố như khoảng cách, thời tiết và tình trạng giao thông. Moritz Schneider, chủ tịch công ty, sẽ có mặt trực tiếp lúc mười giờ để chào mừng bạn và giới thiệu về lịch sử công ty. Nhưng trước tiên, tôi sẽ giúp bạn thiết lập tài khoản máy tính. An ninh mạng rất quan trọng đối với chúng tôi, vì vậy chúng tôi đã thêm các bước xác minh bổ sung để đảm bảo danh tính của bạn."
+  },
+  {
+   "number": 74,
+   "part": 4,
+   "answer": "C",
+   "group": "74-76",
+   "textEn": "74. Where does the announcement most likely take place? (A) On a train (B) On a ship (C) On an airplane (D) On a bus",
+   "transcript": "Good afternoon. This is Captain Jeong giving you a heads-up on our plane's departure status. As you can see, there's a light dusting of snow on the ground. Air traffic control is holding us here at the gate while the snowplows clear the runway. It should take just a few minutes, then we'll be cleared for takeoff. I apologize for the delay. And a reminder: please ensure that children remain seated with their seat belts fastened throughout the flight.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n74. Thông báo khả năng cao diễn ra ở đâu?\n(A) Trên tàu hỏa\n(B) Trên tàu thủy\n(C) Trên máy bay\n(D) Trên xe buýt\n\nDịch bài nói:\nNữ: Chào buổi chiều. Tôi là cơ trưởng Jeong, thông báo tình trạng khởi hành của chuyến bay. Như quý vị có thể thấy, trên mặt đất có một lớp tuyết mỏng. Kiểm soát không lưu đang giữ chúng ta tại cổng trong khi xe dọn tuyết làm sạch đường băng. Quá trình này chỉ mất vài phút, sau đó chúng ta sẽ được phép cất cánh. Tôi xin lỗi vì sự chậm trễ. Và xin nhắc lại: vui lòng đảm bảo trẻ em ngồi yên tại chỗ với dây an toàn thắt chặt trong suốt chuyến bay."
+  },
+  {
+   "number": 75,
+   "part": 4,
+   "answer": "A",
+   "group": "74-76",
+   "textEn": "75. What is causing a delay? (A) Weather conditions (B) Heavy traffic (C) Malfunctioning equipment (D) A staff shortage",
+   "transcript": "Good afternoon. This is Captain Jeong giving you a heads-up on our plane's departure status. As you can see, there's a light dusting of snow on the ground. Air traffic control is holding us here at the gate while the snowplows clear the runway. It should take just a few minutes, then we'll be cleared for takeoff. I apologize for the delay. And a reminder: please ensure that children remain seated with their seat belts fastened throughout the flight.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n75. Điều gì đang gây ra sự chậm trễ?\n(A) Điều kiện thời tiết\n(B) Giao thông đông đúc\n(C) Thiết bị bị trục trặc\n(D) Thiếu nhân viên\n\nDịch bài nói:\nNữ: Chào buổi chiều. Tôi là cơ trưởng Jeong, thông báo tình trạng khởi hành của chuyến bay. Như quý vị có thể thấy, trên mặt đất có một lớp tuyết mỏng. Kiểm soát không lưu đang giữ chúng ta tại cổng trong khi xe dọn tuyết làm sạch đường băng. Quá trình này chỉ mất vài phút, sau đó chúng ta sẽ được phép cất cánh. Tôi xin lỗi vì sự chậm trễ. Và xin nhắc lại: vui lòng đảm bảo trẻ em ngồi yên tại chỗ với dây an toàn thắt chặt trong suốt chuyến bay."
+  },
+  {
+   "number": 76,
+   "part": 4,
+   "answer": "D",
+   "group": "74-76",
+   "textEn": "76. What does the speaker remind the listeners to do? (A) Store luggage in overhead compartments (B) Show tickets to an attendant (C) Avoid eating and drinking (D) Keep children in their seats",
+   "transcript": "Good afternoon. This is Captain Jeong giving you a heads-up on our plane's departure status. As you can see, there's a light dusting of snow on the ground. Air traffic control is holding us here at the gate while the snowplows clear the runway. It should take just a few minutes, then we'll be cleared for takeoff. I apologize for the delay. And a reminder: please ensure that children remain seated with their seat belts fastened throughout the flight.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n76. Người nói nhắc người nghe làm gì?\n(A) Cất hành lý vào khoang phía trên\n(B) Xuất trình vé cho nhân viên\n(C) Tránh ăn uống\n(D) Giữ trẻ em ngồi yên tại chỗ\n\nDịch bài nói:\nNữ: Chào buổi chiều. Tôi là cơ trưởng Jeong, thông báo tình trạng khởi hành của chuyến bay. Như quý vị có thể thấy, trên mặt đất có một lớp tuyết mỏng. Kiểm soát không lưu đang giữ chúng ta tại cổng trong khi xe dọn tuyết làm sạch đường băng. Quá trình này chỉ mất vài phút, sau đó chúng ta sẽ được phép cất cánh. Tôi xin lỗi vì sự chậm trễ. Và xin nhắc lại: vui lòng đảm bảo trẻ em ngồi yên tại chỗ với dây an toàn thắt chặt trong suốt chuyến bay."
+  },
+  {
+   "number": 77,
+   "part": 4,
+   "answer": "B",
+   "group": "77-79",
+   "textEn": "77. What project does the speaker mention? (A) The addition of traffic lights (B) The renovation of a museum (C) The expansion of a sports stadium (D) The construction of a bridge",
+   "transcript": "Good morning, and thanks for tuning in to News at Four. We've just learned that the Natural Zoological Museum, one of Springfield's most popular museums, will soon close for a renovation project. To those who are planning to visit the exhibits in person, be aware that the workers arrive in six weeks. But if you miss that window, don't worry. You can still visit the museum virtually during the renovation period. Video tours will soon be available on the museum's Web site, and videos showing the progress of the project will also be posted regularly.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n77. Người nói đề cập đến dự án nào?\n(A) Lắp thêm đèn giao thông\n(B) Tân trang một bảo tàng\n(C) Mở rộng sân vận động\n(D) Xây dựng một cây cầu\n\nDịch bài nói:\nNam: Chào buổi sáng, và cảm ơn quý vị đã theo dõi bản Tin tức Lúc Bốn Giờ. Chúng tôi vừa nhận được thông tin rằng Bảo tàng Động vật Học Tự nhiên, một trong những bảo tàng nổi tiếng nhất của Springfield, sẽ sớm đóng cửa để thực hiện dự án cải tạo. Những ai có kế hoạch tham quan trực tiếp các triển lãm, xin lưu ý rằng công nhân sẽ bắt đầu đến sau sáu tuần nữa. Nhưng nếu bạn bỏ lỡ khoảng thời gian đó, đừng lo lắng. Bạn vẫn có thể tham quan bảo tàng trực tuyến trong suốt thời gian cải tạo. Các chuyến tham quan bằng video sẽ sớm có trên trang web của bảo tàng, và các video cập nhật tiến độ dự án cũng sẽ được đăng thường xuyên."
+  },
+  {
+   "number": 78,
+   "part": 4,
+   "answer": "C",
+   "group": "77-79",
+   "textEn": "78. What does the speaker imply when he says, “the workers arrive in six weeks”? (A) The listeners should attend a welcome reception. (B) Some training will be offered soon. (C) The listeners have a limited amount of time. (D) A hiring need has already been fulfilled.",
+   "transcript": "Good morning, and thanks for tuning in to News at Four. We've just learned that the Natural Zoological Museum, one of Springfield's most popular museums, will soon close for a renovation project. To those who are planning to visit the exhibits in person, be aware that the workers arrive in six weeks. But if you miss that window, don't worry. You can still visit the museum virtually during the renovation period. Video tours will soon be available on the museum's Web site, and videos showing the progress of the project will also be posted regularly.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n78. Người nói ngụ ý điều gì khi nói “các công nhân sẽ đến trong sáu tuần nữa”?\n(A) Người nghe nên tham dự buổi chào đón\n(B) Sẽ có một khóa đào tạo sớm\n(C) Người nghe chỉ còn ít thời gian\n(D) Nhu cầu tuyển dụng đã được đáp ứng\n\nDịch bài nói:\nNam: Chào buổi sáng, và cảm ơn quý vị đã theo dõi bản Tin tức Lúc Bốn Giờ. Chúng tôi vừa nhận được thông tin rằng Bảo tàng Động vật Học Tự nhiên, một trong những bảo tàng nổi tiếng nhất của Springfield, sẽ sớm đóng cửa để thực hiện dự án cải tạo. Những ai có kế hoạch tham quan trực tiếp các triển lãm, xin lưu ý rằng công nhân sẽ bắt đầu đến sau sáu tuần nữa. Nhưng nếu bạn bỏ lỡ khoảng thời gian đó, đừng lo lắng. Bạn vẫn có thể tham quan bảo tàng trực tuyến trong suốt thời gian cải tạo. Các chuyến tham quan bằng video sẽ sớm có trên trang web của bảo tàng, và các video cập nhật tiến độ dự án cũng sẽ được đăng thường xuyên."
+  },
+  {
+   "number": 79,
+   "part": 4,
+   "answer": "A",
+   "group": "77-79",
+   "textEn": "79. What does the speaker assure the listeners of? (A) Videos will be available online. (B) Prices will not increase. (C) Roads will remain open. (D) A schedule will not change.",
+   "transcript": "Good morning, and thanks for tuning in to News at Four. We've just learned that the Natural Zoological Museum, one of Springfield's most popular museums, will soon close for a renovation project. To those who are planning to visit the exhibits in person, be aware that the workers arrive in six weeks. But if you miss that window, don't worry. You can still visit the museum virtually during the renovation period. Video tours will soon be available on the museum's Web site, and videos showing the progress of the project will also be posted regularly.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n79. Người nói đảm bảo với người nghe điều gì?\n(A) Video sẽ có trên mạng\n(B) Giá sẽ không tăng\n(C) Đường sá sẽ vẫn mở\n(D) Lịch trình sẽ không thay đổi\n\nDịch bài nói:\nNam: Chào buổi sáng, và cảm ơn quý vị đã theo dõi bản Tin tức Lúc Bốn Giờ. Chúng tôi vừa nhận được thông tin rằng Bảo tàng Động vật Học Tự nhiên, một trong những bảo tàng nổi tiếng nhất của Springfield, sẽ sớm đóng cửa để thực hiện dự án cải tạo. Những ai có kế hoạch tham quan trực tiếp các triển lãm, xin lưu ý rằng công nhân sẽ bắt đầu đến sau sáu tuần nữa. Nhưng nếu bạn bỏ lỡ khoảng thời gian đó, đừng lo lắng. Bạn vẫn có thể tham quan bảo tàng trực tuyến trong suốt thời gian cải tạo. Các chuyến tham quan bằng video sẽ sớm có trên trang web của bảo tàng, và các video cập nhật tiến độ dự án cũng sẽ được đăng thường xuyên."
+  },
+  {
+   "number": 80,
+   "part": 4,
+   "answer": "B",
+   "group": "80-82",
+   "textEn": "80. What does the company make? (A) Clothing (B) Jewelry (C) Eyeglass frames (D) Ceramic vases",
+   "transcript": "At Jin-Ah's Jewelers, we create custom-made jewelry that showcases your style and celebrates the most important moments in your life. Meet for a video consultation with one of our talented artists, who can design earrings, bracelets, and more, just for you. And unlike our competitors, who only send you a sketch, we'll send you a simple metal prototype. You can approve or request changes to the sample before your final piece is made. To get your order started, just enter your information on our Web site, and one of our designers will contact you.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n80. Công ty sản xuất gì?\n(A) Quần áo\n(B) Trang sức\n(C) Gọng kính\n(D) Lọ gốm sứ\n\nDịch bài nói:\nNữ: Tại Jin-Ah's Jewelers, chúng tôi tạo ra những món trang sức làm theo yêu cầu, thể hiện phong cách của bạn và kỷ niệm những khoảnh khắc quan trọng nhất trong cuộc sống. Hẹn gặp trực tuyến với một trong những nghệ nhân tài năng của chúng tôi, người có thể thiết kế bông tai, vòng tay và nhiều món khác chỉ dành riêng cho bạn. Và khác với các đối thủ cạnh tranh, những người chỉ gửi bạn bản phác thảo, chúng tôi sẽ gửi một mẫu kim loại đơn giản. Bạn có thể duyệt hoặc yêu cầu thay đổi mẫu trước khi sản phẩm cuối cùng được chế tác. Để bắt đầu đơn hàng, chỉ cần nhập thông tin của bạn trên trang web, và một trong những nhà thiết kế của chúng tôi sẽ liên hệ với bạn."
+  },
+  {
+   "number": 81,
+   "part": 4,
+   "answer": "D",
+   "group": "80-82",
+   "textEn": "81. How is the company different from its competitors? (A) It uses eco-friendly materials. (B) It offers online consultations. (C) It promises one-week delivery. (D) It provides product prototypes.",
+   "transcript": "At Jin-Ah's Jewelers, we create custom-made jewelry that showcases your style and celebrates the most important moments in your life. Meet for a video consultation with one of our talented artists, who can design earrings, bracelets, and more, just for you. And unlike our competitors, who only send you a sketch, we'll send you a simple metal prototype. You can approve or request changes to the sample before your final piece is made. To get your order started, just enter your information on our Web site, and one of our designers will contact you.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n81. Công ty khác đối thủ như thế nào?\n(A) Sử dụng vật liệu thân thiện môi trường\n(B) Cung cấp tư vấn trực tuyến\n(C) Hứa giao hàng trong một tuần\n(D) Cung cấp mẫu sản phẩm thử\n\nDịch bài nói:\nNữ: Tại Jin-Ah's Jewelers, chúng tôi tạo ra những món trang sức làm theo yêu cầu, thể hiện phong cách của bạn và kỷ niệm những khoảnh khắc quan trọng nhất trong cuộc sống. Hẹn gặp trực tuyến với một trong những nghệ nhân tài năng của chúng tôi, người có thể thiết kế bông tai, vòng tay và nhiều món khác chỉ dành riêng cho bạn. Và khác với các đối thủ cạnh tranh, những người chỉ gửi bạn bản phác thảo, chúng tôi sẽ gửi một mẫu kim loại đơn giản. Bạn có thể duyệt hoặc yêu cầu thay đổi mẫu trước khi sản phẩm cuối cùng được chế tác. Để bắt đầu đơn hàng, chỉ cần nhập thông tin của bạn trên trang web, và một trong những nhà thiết kế của chúng tôi sẽ liên hệ với bạn."
+  },
+  {
+   "number": 82,
+   "part": 4,
+   "answer": "C",
+   "group": "80-82",
+   "textEn": "82. Why should the listeners visit a Web site? (A) To enter a contest (B) To receive a discount code (C) To start an order (D) To view some photographs",
+   "transcript": "At Jin-Ah's Jewelers, we create custom-made jewelry that showcases your style and celebrates the most important moments in your life. Meet for a video consultation with one of our talented artists, who can design earrings, bracelets, and more, just for you. And unlike our competitors, who only send you a sketch, we'll send you a simple metal prototype. You can approve or request changes to the sample before your final piece is made. To get your order started, just enter your information on our Web site, and one of our designers will contact you.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n82. Người nghe nên truy cập trang web để làm gì?\n(A) Tham gia cuộc thi\n(B) Nhận mã giảm giá\n(C) Bắt đầu một đơn đặt hàng\n(D) Xem một số hình ảnh\n\nDịch bài nói:\nNữ: Tại Jin-Ah's Jewelers, chúng tôi tạo ra những món trang sức làm theo yêu cầu, thể hiện phong cách của bạn và kỷ niệm những khoảnh khắc quan trọng nhất trong cuộc sống. Hẹn gặp trực tuyến với một trong những nghệ nhân tài năng của chúng tôi, người có thể thiết kế bông tai, vòng tay và nhiều món khác chỉ dành riêng cho bạn. Và khác với các đối thủ cạnh tranh, những người chỉ gửi bạn bản phác thảo, chúng tôi sẽ gửi một mẫu kim loại đơn giản. Bạn có thể duyệt hoặc yêu cầu thay đổi mẫu trước khi sản phẩm cuối cùng được chế tác. Để bắt đầu đơn hàng, chỉ cần nhập thông tin của bạn trên trang web, và một trong những nhà thiết kế của chúng tôi sẽ liên hệ với bạn."
+  },
+  {
+   "number": 83,
+   "part": 4,
+   "answer": "A",
+   "group": "83-85",
+   "textEn": "83. What is the focus of the podcast? (A) Real estate (B) Food services (C) Graphic design (D) Tourism",
+   "transcript": "On today's episode of our podcast, we'll be talking to Rebecca Taylor, the chair and founder of Real Estate Investments LLC. As we know, the housing market has had its ups and downs in recent years. Ms. Taylor is widely known for her ability to correctly predict trends in the real estate market. Her opinion is highly valued. We are fortunate to be able to interview her today before she travels to the National Real Estate Conference in Chicago, where she has been invited to deliver the keynote speech.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n83. Chủ đề chính của podcast là gì?\n(A) Bất động sản\n(B) Dịch vụ ăn uống\n(C) Thiết kế đồ họa\n(D) Du lịch\n\nDịch bài nói:\nNam: Trong tập podcast hôm nay, chúng tôi sẽ trò chuyện với Rebecca Taylor, chủ tịch kiêm người sáng lập Real Estate Investments LLC. Như chúng ta biết, thị trường bất động sản đã trải qua những thăng trầm trong những năm gần đây. Bà Taylor nổi tiếng với khả năng dự đoán chính xác các xu hướng trên thị trường bất động sản. Ý kiến của bà được đánh giá rất cao. Chúng tôi thật may mắn khi có cơ hội phỏng vấn bà hôm nay trước khi bà tham dự Hội nghị Bất động sản Quốc gia tại Chicago, nơi bà được mời đọc bài phát biểu chính."
+  },
+  {
+   "number": 84,
+   "part": 4,
+   "answer": "D",
+   "group": "83-85",
+   "textEn": "84. What does the speaker say Rebecca Taylor is known for? (A) Organizing workshops (B) Providing technology support (C) Promoting products (D) Predicting market trends",
+   "transcript": "On today's episode of our podcast, we'll be talking to Rebecca Taylor, the chair and founder of Real Estate Investments LLC. As we know, the housing market has had its ups and downs in recent years. Ms. Taylor is widely known for her ability to correctly predict trends in the real estate market. Her opinion is highly valued. We are fortunate to be able to interview her today before she travels to the National Real Estate Conference in Chicago, where she has been invited to deliver the keynote speech.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n84. Người nói cho biết Rebecca Taylor nổi tiếng với điều gì?\n(A) Tổ chức các buổi hội thảo\n(B) Cung cấp hỗ trợ kỹ thuật\n(C) Quảng bá sản phẩm\n(D) Dự đoán xu hướng thị trường\n\nDịch bài nói:\nNam: Trong tập podcast hôm nay, chúng tôi sẽ trò chuyện với Rebecca Taylor, chủ tịch kiêm người sáng lập Real Estate Investments LLC. Như chúng ta biết, thị trường bất động sản đã trải qua những thăng trầm trong những năm gần đây. Bà Taylor nổi tiếng với khả năng dự đoán chính xác các xu hướng trên thị trường bất động sản. Ý kiến của bà được đánh giá rất cao. Chúng tôi thật may mắn khi có cơ hội phỏng vấn bà hôm nay trước khi bà tham dự Hội nghị Bất động sản Quốc gia tại Chicago, nơi bà được mời đọc bài phát biểu chính."
+  },
+  {
+   "number": 85,
+   "part": 4,
+   "answer": "B",
+   "group": "83-85",
+   "textEn": "85. According to the speaker, what will Ms. Taylor do in Chicago? (A) Release a book (B) Speak at a conference (C) Appear on television (D) Announce an award winner",
+   "transcript": "On today's episode of our podcast, we'll be talking to Rebecca Taylor, the chair and founder of Real Estate Investments LLC. As we know, the housing market has had its ups and downs in recent years. Ms. Taylor is widely known for her ability to correctly predict trends in the real estate market. Her opinion is highly valued. We are fortunate to be able to interview her today before she travels to the National Real Estate Conference in Chicago, where she has been invited to deliver the keynote speech.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n85. Theo người nói, cô Taylor sẽ làm gì ở Chicago?\n(A) Phát hành một cuốn sách\n(B) Nói chuyện tại hội nghị\n(C) Xuất hiện trên truyền hình\n(D) Công bố người chiến thắng giải thưởng\n\nDịch bài nói:\nNam: Trong tập podcast hôm nay, chúng tôi sẽ trò chuyện với Rebecca Taylor, chủ tịch kiêm người sáng lập Real Estate Investments LLC. Như chúng ta biết, thị trường bất động sản đã trải qua những thăng trầm trong những năm gần đây. Bà Taylor nổi tiếng với khả năng dự đoán chính xác các xu hướng trên thị trường bất động sản. Ý kiến của bà được đánh giá rất cao. Chúng tôi thật may mắn khi có cơ hội phỏng vấn bà hôm nay trước khi bà tham dự Hội nghị Bất động sản Quốc gia tại Chicago, nơi bà được mời đọc bài phát biểu chính."
+  },
+  {
+   "number": 86,
+   "part": 4,
+   "answer": "D",
+   "group": "86-88",
+   "textEn": "86. What is the main topic of the workshop? (A) Creating new advertisements (B) Designing Web sites (C) Giving effective presentations (D) Writing for business communication",
+   "transcript": "The topic for today's workshop is writing business correspondence. Business correspondence has different guidelines than the informal type of writing you use when writing to a friend. For example, when writing to a friend you might address them by their first name or perhaps include emojis. You know—symbols like smiley faces that are commonly used to express feelings. However, emojis are considered inappropriate in business writing. Also, business correspondence should always include the recipient's title and last name. Remember, we don't want to offend our clients. Now, I will project some slides of informally worded e-mails. In your notebooks, rewrite the e-mails using wording and style appropriate for business correspondence.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n86. Chủ đề chính của buổi hội thảo là gì?\n(A) Tạo quảng cáo mới\n(B) Thiết kế trang web\n(C) Thuyết trình hiệu quả\n(D) Viết trong giao tiếp doanh nghiệp\n\nDịch bài nói:\nNữ: Chủ đề của buổi hội thảo hôm nay là viết thư từ công việc. Thư từ công việc có những hướng dẫn khác với cách viết không chính thức mà bạn dùng khi viết cho bạn bè. Ví dụ, khi viết cho bạn bè, bạn có thể gọi họ bằng tên riêng hoặc thậm chí dùng emoji—những biểu tượng như mặt cười thường được dùng để thể hiện cảm xúc. Tuy nhiên, emoji được coi là không phù hợp trong văn bản công việc. Ngoài ra, thư từ công việc luôn phải bao gồm chức danh và họ của người nhận. Hãy nhớ, chúng ta không muốn gây khó chịu cho khách hàng. Bây giờ, tôi sẽ trình chiếu một số email được viết theo cách không chính thức. Trong sổ tay của mình, hãy viết lại các email đó sử dụng cách diễn đạt và phong cách phù hợp với thư từ công việc."
+  },
+  {
+   "number": 87,
+   "part": 4,
+   "answer": "A",
+   "group": "86-88",
+   "textEn": "87. Why does the speaker say, “we don’t want to offend our clients”? (A) To stress the importance of some guidelines (B) To announce a change (C) To request feedback (D) To propose that a meeting be rescheduled",
+   "transcript": "The topic for today's workshop is writing business correspondence. Business correspondence has different guidelines than the informal type of writing you use when writing to a friend. For example, when writing to a friend you might address them by their first name or perhaps include emojis. You know—symbols like smiley faces that are commonly used to express feelings. However, emojis are considered inappropriate in business writing. Also, business correspondence should always include the recipient's title and last name. Remember, we don't want to offend our clients. Now, I will project some slides of informally worded e-mails. In your notebooks, rewrite the e-mails using wording and style appropriate for business correspondence.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n87. Tại sao người nói nói “chúng ta không muốn làm phật lòng khách hàng”?\n(A) Để nhấn mạnh tầm quan trọng của các hướng dẫn\n(B) Để thông báo một thay đổi\n(C) Để yêu cầu phản hồi\n(D) Để đề nghị dời cuộc họp\n\nDịch bài nói:\nNữ: Chủ đề của buổi hội thảo hôm nay là viết thư từ công việc. Thư từ công việc có những hướng dẫn khác với cách viết không chính thức mà bạn dùng khi viết cho bạn bè. Ví dụ, khi viết cho bạn bè, bạn có thể gọi họ bằng tên riêng hoặc thậm chí dùng emoji—những biểu tượng như mặt cười thường được dùng để thể hiện cảm xúc. Tuy nhiên, emoji được coi là không phù hợp trong văn bản công việc. Ngoài ra, thư từ công việc luôn phải bao gồm chức danh và họ của người nhận. Hãy nhớ, chúng ta không muốn gây khó chịu cho khách hàng. Bây giờ, tôi sẽ trình chiếu một số email được viết theo cách không chính thức. Trong sổ tay của mình, hãy viết lại các email đó sử dụng cách diễn đạt và phong cách phù hợp với thư từ công việc."
+  },
+  {
+   "number": 88,
+   "part": 4,
+   "answer": "B",
+   "group": "86-88",
+   "textEn": "88. What are the listeners asked to do? (A) Update some contact information (B) Rewrite some e-mails (C) Do an online search (D) Download some software",
+   "transcript": "The topic for today's workshop is writing business correspondence. Business correspondence has different guidelines than the informal type of writing you use when writing to a friend. For example, when writing to a friend you might address them by their first name or perhaps include emojis. You know—symbols like smiley faces that are commonly used to express feelings. However, emojis are considered inappropriate in business writing. Also, business correspondence should always include the recipient's title and last name. Remember, we don't want to offend our clients. Now, I will project some slides of informally worded e-mails. In your notebooks, rewrite the e-mails using wording and style appropriate for business correspondence.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n88. Người nghe được yêu cầu làm gì?\n(A) Cập nhật một số thông tin liên lạc\n(B) Viết lại một số email\n(C) Tìm kiếm trực tuyến\n(D) Tải phần mềm\n\nDịch bài nói:\nNữ: Chủ đề của buổi hội thảo hôm nay là viết thư từ công việc. Thư từ công việc có những hướng dẫn khác với cách viết không chính thức mà bạn dùng khi viết cho bạn bè. Ví dụ, khi viết cho bạn bè, bạn có thể gọi họ bằng tên riêng hoặc thậm chí dùng emoji—những biểu tượng như mặt cười thường được dùng để thể hiện cảm xúc. Tuy nhiên, emoji được coi là không phù hợp trong văn bản công việc. Ngoài ra, thư từ công việc luôn phải bao gồm chức danh và họ của người nhận. Hãy nhớ, chúng ta không muốn gây khó chịu cho khách hàng. Bây giờ, tôi sẽ trình chiếu một số email được viết theo cách không chính thức. Trong sổ tay của mình, hãy viết lại các email đó sử dụng cách diễn đạt và phong cách phù hợp với thư từ công việc."
+  },
+  {
+   "number": 89,
+   "part": 4,
+   "answer": "A",
+   "group": "89-91",
+   "textEn": "89. Why is Clementine Stores in the news report? (A) It filed a complaint. (B) It closed some factories. (C) It merged with another company. (D) It started an internship program.",
+   "transcript": "In the world of business, athletic retailer Clementine Stores has filed a complaint against software firm Stephion. Clementine claims that the Stephion logo, which is round and orange, is too similar to its own. However, a Stephion public relations representative, Friedrich Weber, responded by saying that the two company logos were similar but not similar enough to confuse consumers. Furthermore, Weber maintained that the Stephion design was not problematic because the two companies are in completely different markets. Our in-house legal analyst will join us next.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n89. Tại sao Clementine Stores xuất hiện trên bản tin?\n(A) Họ đã nộp đơn khiếu nại\n(B) Họ đã đóng cửa một số nhà máy\n(C) Họ đã sáp nhập với công ty khác\n(D) Họ đã khởi động một chương trình thực tập\n\nDịch bài nói:\nNữ: Trong thế giới kinh doanh, chuỗi cửa hàng thể thao Clementine Stores đã nộp đơn khiếu nại đối với công ty phần mềm Stephion. Clementine cho rằng logo của Stephion, có hình tròn và màu cam, quá giống với logo của họ. Tuy nhiên, đại diện quan hệ công chúng của Stephion, Friedrich Weber, trả lời rằng hai logo có sự tương đồng nhưng không đủ để làm khách hàng nhầm lẫn. Hơn nữa, Weber khẳng định thiết kế của Stephion không gây vấn đề vì hai công ty hoạt động hoàn toàn trong các thị trường khác nhau. Chuyên viên phân tích pháp lý nội bộ của chúng tôi sẽ tham gia cùng chúng tôi ngay sau đây."
+  },
+  {
+   "number": 90,
+   "part": 4,
+   "answer": "D",
+   "group": "89-91",
+   "textEn": "90. According to the report, what do the companies have in common? (A) They have international clients. (B) They are family-owned businesses. (C) They sell athletic clothing. (D) They have similar logos.",
+   "transcript": "In the world of business, athletic retailer Clementine Stores has filed a complaint against software firm Stephion. Clementine claims that the Stephion logo, which is round and orange, is too similar to its own. However, a Stephion public relations representative, Friedrich Weber, responded by saying that the two company logos were similar but not similar enough to confuse consumers. Furthermore, Weber maintained that the Stephion design was not problematic because the two companies are in completely different markets. Our in-house legal analyst will join us next.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n90. Theo bản tin, các công ty có điểm gì giống nhau?\n(A) Có khách hàng quốc tế\n(B) Là doanh nghiệp gia đình\n(C) Bán quần áo thể thao\n(D) Có logo tương tự\n\nDịch bài nói:\nNữ: Trong thế giới kinh doanh, chuỗi cửa hàng thể thao Clementine Stores đã nộp đơn khiếu nại đối với công ty phần mềm Stephion. Clementine cho rằng logo của Stephion, có hình tròn và màu cam, quá giống với logo của họ. Tuy nhiên, đại diện quan hệ công chúng của Stephion, Friedrich Weber, trả lời rằng hai logo có sự tương đồng nhưng không đủ để làm khách hàng nhầm lẫn. Hơn nữa, Weber khẳng định thiết kế của Stephion không gây vấn đề vì hai công ty hoạt động hoàn toàn trong các thị trường khác nhau. Chuyên viên phân tích pháp lý nội bộ của chúng tôi sẽ tham gia cùng chúng tôi ngay sau đây."
+  },
+  {
+   "number": 91,
+   "part": 4,
+   "answer": "B",
+   "group": "89-91",
+   "textEn": "91. Who is Friedrich Weber? (A) A news reporter (B) A public relations associate (C) A corporate attorney (D) A graphic designer",
+   "transcript": "In the world of business, athletic retailer Clementine Stores has filed a complaint against software firm Stephion. Clementine claims that the Stephion logo, which is round and orange, is too similar to its own. However, a Stephion public relations representative, Friedrich Weber, responded by saying that the two company logos were similar but not similar enough to confuse consumers. Furthermore, Weber maintained that the Stephion design was not problematic because the two companies are in completely different markets. Our in-house legal analyst will join us next.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n91. Friedrich Weber là ai?\n(A) Một phóng viên tin tức\n(B) Một nhân viên quan hệ công chúng\n(C) Một luật sư doanh nghiệp\n(D) Một nhà thiết kế đồ họa\n\nDịch bài nói:\nNữ: Trong thế giới kinh doanh, chuỗi cửa hàng thể thao Clementine Stores đã nộp đơn khiếu nại đối với công ty phần mềm Stephion. Clementine cho rằng logo của Stephion, có hình tròn và màu cam, quá giống với logo của họ. Tuy nhiên, đại diện quan hệ công chúng của Stephion, Friedrich Weber, trả lời rằng hai logo có sự tương đồng nhưng không đủ để làm khách hàng nhầm lẫn. Hơn nữa, Weber khẳng định thiết kế của Stephion không gây vấn đề vì hai công ty hoạt động hoàn toàn trong các thị trường khác nhau. Chuyên viên phân tích pháp lý nội bộ của chúng tôi sẽ tham gia cùng chúng tôi ngay sau đây."
+  },
+  {
+   "number": 92,
+   "part": 4,
+   "answer": "A",
+   "group": "92-94",
+   "textEn": "92. Where does the speaker most likely work? (A) At a café (B) At an appliance store (C) At a food manufacturing plant (D) At a repair shop",
+   "transcript": "Thanks for coming in early this morning. I wanted to update you on the café refrigerators that our customers use. We recently installed a new temperature monitoring system. I've noticed that every increase in temperature can be traced to the refrigerator doors being left open for extended periods of time. This is alarming because it compromises the freshness and safety of our food. We all know that customers often take a while to make their selection. I'll be meeting with the management team to discuss ways to address this.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n92. Người nói nhiều khả năng làm việc ở đâu?\n(A) Quán cà phê\n(B) Cửa hàng điện gia dụng\n(C) Nhà máy chế biến thực phẩm\n(D) Tiệm sửa chữa\n\nDịch bài nói:\nNam: Cảm ơn các bạn đã đến sớm sáng nay. Tôi muốn cập nhật cho các bạn về tủ lạnh tại quán cà phê mà khách hàng thường sử dụng. Gần đây, chúng tôi đã lắp đặt một hệ thống giám sát nhiệt độ mới. Tôi nhận thấy rằng mỗi lần nhiệt độ tăng đều có nguyên nhân từ việc cửa tủ lạnh bị để mở trong thời gian dài. Điều này đáng lo ngại vì nó ảnh hưởng đến độ tươi và an toàn của thực phẩm. Chúng ta đều biết rằng khách hàng thường mất một lúc để chọn món. Tôi sẽ họp với ban quản lý để thảo luận các cách giải quyết vấn đề này."
+  },
+  {
+   "number": 93,
+   "part": 4,
+   "answer": "B",
+   "group": "92-94",
+   "textEn": "93. What is the speaker concerned about? (A) Package labeling (B) Increased temperature readings (C) Product costs (D) Limited business hours",
+   "transcript": "Thanks for coming in early this morning. I wanted to update you on the café refrigerators that our customers use. We recently installed a new temperature monitoring system. I've noticed that every increase in temperature can be traced to the refrigerator doors being left open for extended periods of time. This is alarming because it compromises the freshness and safety of our food. We all know that customers often take a while to make their selection. I'll be meeting with the management team to discuss ways to address this.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n93. Người nói lo lắng điều gì?\n(A) Nhãn bao bì\n(B) Chỉ số nhiệt độ tăng\n(C) Chi phí sản phẩm\n(D) Giờ mở cửa hạn chế\n\nDịch bài nói:\nNam: Cảm ơn các bạn đã đến sớm sáng nay. Tôi muốn cập nhật cho các bạn về tủ lạnh tại quán cà phê mà khách hàng thường sử dụng. Gần đây, chúng tôi đã lắp đặt một hệ thống giám sát nhiệt độ mới. Tôi nhận thấy rằng mỗi lần nhiệt độ tăng đều có nguyên nhân từ việc cửa tủ lạnh bị để mở trong thời gian dài. Điều này đáng lo ngại vì nó ảnh hưởng đến độ tươi và an toàn của thực phẩm. Chúng ta đều biết rằng khách hàng thường mất một lúc để chọn món. Tôi sẽ họp với ban quản lý để thảo luận các cách giải quyết vấn đề này."
+  },
+  {
+   "number": 94,
+   "part": 4,
+   "answer": "C",
+   "group": "92-94",
+   "textEn": "94. Why does the speaker say, “customers often take a while to make their selection”? (A) To recommend rearranging a display (B) To encourage staff to be attentive (C) To emphasize a problem (D) To remind staff of a policy",
+   "transcript": "Thanks for coming in early this morning. I wanted to update you on the café refrigerators that our customers use. We recently installed a new temperature monitoring system. I've noticed that every increase in temperature can be traced to the refrigerator doors being left open for extended periods of time. This is alarming because it compromises the freshness and safety of our food. We all know that customers often take a while to make their selection. I'll be meeting with the management team to discuss ways to address this.",
+   "explanationVi": "Đáp án đúng: C\n\nDịch câu hỏi:\n94. Tại sao người nói nói “khách hàng thường mất thời gian để chọn hàng”?\n(A) Để khuyến nghị thay đổi cách trưng bày\n(B) Để khuyến khích nhân viên chú ý hơn\n(C) Để nhấn mạnh một vấn đề\n(D) Để nhắc nhân viên về một quy định\n\nDịch bài nói:\nNam: Cảm ơn các bạn đã đến sớm sáng nay. Tôi muốn cập nhật cho các bạn về tủ lạnh tại quán cà phê mà khách hàng thường sử dụng. Gần đây, chúng tôi đã lắp đặt một hệ thống giám sát nhiệt độ mới. Tôi nhận thấy rằng mỗi lần nhiệt độ tăng đều có nguyên nhân từ việc cửa tủ lạnh bị để mở trong thời gian dài. Điều này đáng lo ngại vì nó ảnh hưởng đến độ tươi và an toàn của thực phẩm. Chúng ta đều biết rằng khách hàng thường mất một lúc để chọn món. Tôi sẽ họp với ban quản lý để thảo luận các cách giải quyết vấn đề này."
+  },
+  {
+   "number": 95,
+   "part": 4,
+   "answer": "D",
+   "group": "95-97",
+   "textEn": "95. How does the speaker begin the meeting? (A) By announcing contest winners (B) By reading a new policy (C) By distributing a sign-up sheet (D) By introducing new employees",
+   "transcript": "First, I'd like to welcome our new employees. Won-Sang Kwon has joined the human resources department as a junior associate, and So-Jin Cho is our newest chief of building security. Welcome! Next, I want to inform everyone about an upcoming recommended safety workshop. Links to the registration form have been e-mailed. When filling out the registration form, you do not need to fill in the street address. Leave that field blank. Do enter your work e-mail in the appropriate place. Finally, don't forget that the cafeteria will be closed next week, so you'll need to bring your lunch.",
+   "explanationVi": "Đáp án đúng: D\n\nDịch câu hỏi:\n95. Người nói bắt đầu buổi họp bằng cách nào?\n(A) Công bố người thắng cuộc thi\n(B) Đọc một chính sách mới\n(C) Phát danh sách đăng ký\n(D) Giới thiệu nhân viên mới\n\nDịch bài nói:\nNữ: Trước tiên, tôi muốn chào mừng các nhân viên mới. Won-Sang Kwon đã gia nhập phòng nhân sự với vai trò cộng sự cấp dưới, và So-Jin Cho là trưởng bộ phận an ninh tòa nhà mới nhất của chúng ta. Chào mừng các bạn! Tiếp theo, tôi muốn thông báo đến mọi người về một buổi hội thảo về an toàn sắp tới được khuyến nghị. Liên kết đến mẫu đăng ký đã được gửi qua email. Khi điền vào mẫu đăng ký, bạn không cần điền địa chỉ đường phố. Hãy để trống ô đó. Nhưng hãy nhập email công việc của bạn vào vị trí thích hợp. Cuối cùng, đừng quên rằng căng tin sẽ đóng cửa vào tuần tới, vì vậy bạn sẽ cần mang theo bữa trưa."
+  },
+  {
+   "number": 96,
+   "part": 4,
+   "answer": "B",
+   "group": "95-97",
+   "textEn": "96. Look at the graphic. Which section does the speaker say the listeners should leave blank? (A) Section 1 (B) Section 2 (C) Section 3 (D) Section 4",
+   "transcript": "First, I'd like to welcome our new employees. Won-Sang Kwon has joined the human resources department as a junior associate, and So-Jin Cho is our newest chief of building security. Welcome! Next, I want to inform everyone about an upcoming recommended safety workshop. Links to the registration form have been e-mailed. When filling out the registration form, you do not need to fill in the street address. Leave that field blank. Do enter your work e-mail in the appropriate place. Finally, don't forget that the cafeteria will be closed next week, so you'll need to bring your lunch.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n96. Nhìn vào biểu mẫu. Người nói yêu cầu để trống mục nào?\n(A) Mục 1\n(B) Mục 2\n(C) Mục 3\n(D) Mục 4\n\nDịch bài nói:\nNữ: Trước tiên, tôi muốn chào mừng các nhân viên mới. Won-Sang Kwon đã gia nhập phòng nhân sự với vai trò cộng sự cấp dưới, và So-Jin Cho là trưởng bộ phận an ninh tòa nhà mới nhất của chúng ta. Chào mừng các bạn! Tiếp theo, tôi muốn thông báo đến mọi người về một buổi hội thảo về an toàn sắp tới được khuyến nghị. Liên kết đến mẫu đăng ký đã được gửi qua email. Khi điền vào mẫu đăng ký, bạn không cần điền địa chỉ đường phố. Hãy để trống ô đó. Nhưng hãy nhập email công việc của bạn vào vị trí thích hợp. Cuối cùng, đừng quên rằng căng tin sẽ đóng cửa vào tuần tới, vì vậy bạn sẽ cần mang theo bữa trưa."
+  },
+  {
+   "number": 97,
+   "part": 4,
+   "answer": "A",
+   "group": "95-97",
+   "textEn": "97. What does the speaker say will happen next week? (A) A cafeteria will be closed. (B) Free snacks will be provided. (C) Certificates will be distributed. (D) New ID badges will be issued.",
+   "transcript": "First, I'd like to welcome our new employees. Won-Sang Kwon has joined the human resources department as a junior associate, and So-Jin Cho is our newest chief of building security. Welcome! Next, I want to inform everyone about an upcoming recommended safety workshop. Links to the registration form have been e-mailed. When filling out the registration form, you do not need to fill in the street address. Leave that field blank. Do enter your work e-mail in the appropriate place. Finally, don't forget that the cafeteria will be closed next week, so you'll need to bring your lunch.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n97. Người nói cho biết điều gì sẽ xảy ra vào tuần tới?\n(A) Một căng tin sẽ đóng cửa\n(B) Có phục vụ đồ ăn nhẹ miễn phí\n(C) Sẽ phát chứng nhận\n(D) Sẽ cấp thẻ ID mới\n\nDịch bài nói:\nNữ: Trước tiên, tôi muốn chào mừng các nhân viên mới. Won-Sang Kwon đã gia nhập phòng nhân sự với vai trò cộng sự cấp dưới, và So-Jin Cho là trưởng bộ phận an ninh tòa nhà mới nhất của chúng ta. Chào mừng các bạn! Tiếp theo, tôi muốn thông báo đến mọi người về một buổi hội thảo về an toàn sắp tới được khuyến nghị. Liên kết đến mẫu đăng ký đã được gửi qua email. Khi điền vào mẫu đăng ký, bạn không cần điền địa chỉ đường phố. Hãy để trống ô đó. Nhưng hãy nhập email công việc của bạn vào vị trí thích hợp. Cuối cùng, đừng quên rằng căng tin sẽ đóng cửa vào tuần tới, vì vậy bạn sẽ cần mang theo bữa trưa."
+  },
+  {
+   "number": 98,
+   "part": 4,
+   "answer": "A",
+   "group": "98-100",
+   "textEn": "98. Where does the speaker work? (A) At a hair salon (B) At a doctor’s office (C) At a talent agency (D) At a photographer’s studio",
+   "transcript": "Hi, Marta. This is Oleg from Sola Salon returning your call. You wanted to know about my availability for haircuts—yes, I am accepting new clients. This week, I can fit you in on Wednesday at four o'clock. Please let me know whether that day and time work for you. And in case you didn't know, there's a parking garage with reasonable rates right under our building. A full styling session takes about one and a half hours, so you won't need to park for more than two hours in the garage.",
+   "explanationVi": "Đáp án đúng: A\n\nDịch câu hỏi:\n98. Người nói làm việc ở đâu?\n(A) Tiệm làm tóc\n(B) Phòng khám\n(C) Công ty đào tạo tài năng\n(D) Studio nhiếp ảnh\n\nDịch bài nói:\nNam: Chào Marta. Tôi là Oleg từ Sola Salon, gọi lại cho bạn. Bạn muốn biết về lịch rảnh của tôi để cắt tóc—vâng, tôi đang nhận khách mới. Tuần này, tôi có thể sắp xếp cho bạn vào lúc 4 giờ chiều thứ Tư. Hãy cho tôi biết liệu ngày giờ đó có phù hợp với bạn không. Và nếu bạn chưa biết, có một bãi đậu xe với mức phí hợp lý ngay dưới tòa nhà của chúng tôi. Một buổi làm tóc đầy đủ mất khoảng một tiếng rưỡi, vì vậy bạn không cần phải gửi xe hơn hai tiếng trong bãi."
+  },
+  {
+   "number": 99,
+   "part": 4,
+   "answer": "B",
+   "group": "98-100",
+   "textEn": "99. What does the speaker ask the listener to do? (A) Write an online review (B) Confirm an appointment (C) Submit a form (D) Download an application",
+   "transcript": "Hi, Marta. This is Oleg from Sola Salon returning your call. You wanted to know about my availability for haircuts—yes, I am accepting new clients. This week, I can fit you in on Wednesday at four o'clock. Please let me know whether that day and time work for you. And in case you didn't know, there's a parking garage with reasonable rates right under our building. A full styling session takes about one and a half hours, so you won't need to park for more than two hours in the garage.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n99. Người nói yêu cầu người nghe làm gì?\n(A) Viết đánh giá trực tuyến\n(B) Xác nhận lịch hẹn\n(C) Gửi một biểu mẫu\n(D) Tải một ứng dụng\n\nDịch bài nói:\nNam: Chào Marta. Tôi là Oleg từ Sola Salon, gọi lại cho bạn. Bạn muốn biết về lịch rảnh của tôi để cắt tóc—vâng, tôi đang nhận khách mới. Tuần này, tôi có thể sắp xếp cho bạn vào lúc 4 giờ chiều thứ Tư. Hãy cho tôi biết liệu ngày giờ đó có phù hợp với bạn không. Và nếu bạn chưa biết, có một bãi đậu xe với mức phí hợp lý ngay dưới tòa nhà của chúng tôi. Một buổi làm tóc đầy đủ mất khoảng một tiếng rưỡi, vì vậy bạn không cần phải gửi xe hơn hai tiếng trong bãi."
+  },
+  {
+   "number": 100,
+   "part": 4,
+   "answer": "B",
+   "group": "98-100",
+   "textEn": "100. Look at the graphic. How much will the listener most likely pay for parking? (A) $3.00 (B) $5.00 (C) $7.00 (D) $9.00",
+   "transcript": "Hi, Marta. This is Oleg from Sola Salon returning your call. You wanted to know about my availability for haircuts—yes, I am accepting new clients. This week, I can fit you in on Wednesday at four o'clock. Please let me know whether that day and time work for you. And in case you didn't know, there's a parking garage with reasonable rates right under our building. A full styling session takes about one and a half hours, so you won't need to park for more than two hours in the garage.",
+   "explanationVi": "Đáp án đúng: B\n\nDịch câu hỏi:\n100. Nhìn vào bảng giá. Người nghe có thể sẽ trả bao nhiêu tiền gửi xe?\n(A) $3.00\n(B) $5.00\n(C) $7.00\n(D) $9.00\n## Bảng đáp án\n| Câu | Đáp án | Câu | Đáp án | Câu | Đáp án | Câu | Đáp án | Câu | Đáp án |\n|---|---|---|---|---|---|---|---|---|---|\n| 1 | D | 21 | B | 41 | D | 61 | B | 81 | D |\n| 2 | C | 22 | C | 42 | B | 62 | B | 82 | C |\n| 3 | C | 23 | C | 43 | A | 63 | A | 83 | A |\n| 4 | D | 24 | C | 44 | C | 64 | A | 84 | D |\n| 5 | B | 25 | B | 45 | A | 65 | D | 85 | B |\n| 6 | B | 26 | A | 46 | B | 66 | C | 86 | D |\n| 7 | A | 27 | B | 47 | D | 67 | B | 87 | A |\n| 8 | A | 28 | A | 48 | C | 68 | A | 88 | B |\n| 9 | B | 29 | A | 49 | D | 69 | C | 89 | A |\n| 10 | B | 30 | C | 50 | A | 70 | B | 90 | D |\n| 11 | B | 31 | C | 51 | C | 71 | C | 91 | B |\n| 12 | B | 32 | A | 52 | D | 72 | B | 92 | A |\n| 13 | B | 33 | C | 53 | C | 73 | A | 93 | B |\n| 14 | C | 34 | B | 54 | B | 74 | C | 94 | C |\n| 15 | A | 35 | C | 55 | D | 75 | A | 95 | D |\n| 16 | C | 36 | B | 56 | A | 76 | D | 96 | B |\n| 17 | B | 37 | B | 57 | D | 77 | B | 97 | A |\n| 18 | A | 38 | B | 58 | D | 78 | C | 98 | A |\n| 19 | A | 39 | D | 59 | A | 79 | A | 99 | B |\n| 20 | A | 40 | C | 60 | C | 80 | B | 100 | B |\n\nDịch bài nói:\nNam: Chào Marta. Tôi là Oleg từ Sola Salon, gọi lại cho bạn. Bạn muốn biết về lịch rảnh của tôi để cắt tóc—vâng, tôi đang nhận khách mới. Tuần này, tôi có thể sắp xếp cho bạn vào lúc 4 giờ chiều thứ Tư. Hãy cho tôi biết liệu ngày giờ đó có phù hợp với bạn không. Và nếu bạn chưa biết, có một bãi đậu xe với mức phí hợp lý ngay dưới tòa nhà của chúng tôi. Một buổi làm tóc đầy đủ mất khoảng một tiếng rưỡi, vì vậy bạn không cần phải gửi xe hơn hai tiếng trong bãi."
   }
  ]
 };
