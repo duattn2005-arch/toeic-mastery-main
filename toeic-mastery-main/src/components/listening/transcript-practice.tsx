@@ -27,8 +27,8 @@ interface PartResult {
   at: string | null;
 }
 
-/** Answers kept in this browser before they were saved to the account —
- * still read once so nothing typed earlier is lost. */
+/** This browser's copy of the answers — the only storage before answers
+ * were saved to the account (same key as then, so that work is found). */
 function legacyStorageKey(setKey: string, testNumber: number) {
   return `transcript:${setKey}:${testNumber}`;
 }
@@ -97,18 +97,55 @@ export function TranscriptPractice({
   const audioRef = React.useRef<HTMLAudioElement>(null);
   const saveTimers = React.useRef<Record<number, ReturnType<typeof setTimeout>>>({});
 
-  // One-time pickup of answers typed before progress was saved server-side.
+  const loadedRef = React.useRef(false);
+
+  // Browser copy kept as a backup of the account copy (e.g. a save that
+  // failed offline is still there on reload). Declared before the loader
+  // so on mount it sees loadedRef unset and doesn't overwrite the stored
+  // answers before they've been read.
   React.useEffect(() => {
-    if (Object.keys(savedParts).length > 0) return;
+    if (!loadedRef.current) return;
+    try {
+      window.localStorage.setItem(legacyStorageKey(setKey, test.number), JSON.stringify(answers));
+    } catch {
+      // Ignore — the account copy still has it.
+    }
+  }, [answers, setKey, test.number]);
+
+  // Picks up answers this browser kept before progress was saved to the
+  // account (and anything not yet saved): Part by Part, a Part with nothing
+  // on the server takes the browser's answers and uploads them right away,
+  // so half-finished work typed before this update is never lost — even if
+  // another Part has already been saved server-side.
+  React.useEffect(() => {
+    if (loadedRef.current) return;
+    loadedRef.current = true;
+    let local: Answers = {};
     try {
       const raw = window.localStorage.getItem(legacyStorageKey(setKey, test.number));
-      // Hydrating from browser-only storage after mount is the point here.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (raw) setAnswers(JSON.parse(raw) as Answers);
+      if (raw) local = JSON.parse(raw) as Answers;
     } catch {
-      // Storage unavailable or malformed — start empty.
+      // Storage unavailable or malformed — nothing to recover.
     }
-  }, [savedParts, setKey, test.number]);
+    const adopted: Answers = {};
+    for (const p of test.parts) {
+      if (savedParts[p.part]) continue;
+      const fromBrowser = partAnswers(local, p.part);
+      if (Object.keys(fromBrowser).length === 0) continue;
+      Object.assign(adopted, fromBrowser);
+      void saveTranscriptProgressAction({
+        setKey,
+        testNumber: test.number,
+        part: p.part,
+        total: Math.max(1, blankKeys(p.part, p.groups).length),
+        answers: fromBrowser,
+        checked: false,
+      }).catch(() => undefined);
+    }
+    // Hydrating from browser-only storage after mount is the point here.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (Object.keys(adopted).length > 0) setAnswers((prev) => ({ ...adopted, ...prev }));
+  }, [savedParts, setKey, test]);
 
   React.useEffect(() => {
     const timers = saveTimers.current;
