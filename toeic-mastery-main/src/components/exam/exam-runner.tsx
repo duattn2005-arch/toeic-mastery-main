@@ -250,12 +250,12 @@ export function ExamRunner({ data }: { data: ExamData }) {
   return (
     <div className="flex flex-col gap-4">
       {dictionaryHint}
-      <div className="sticky top-16 z-20 -mx-4 flex items-center justify-between gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-sm sm:mx-0 sm:rounded-2xl sm:border sm:px-4">
+      <div className="sticky top-16 z-20 -mx-4 flex items-center justify-between gap-2 border-b border-border bg-background/95 px-3 py-2.5 backdrop-blur-sm sm:mx-0 sm:gap-3 sm:rounded-2xl sm:border sm:px-4 sm:py-3">
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{data.testTitle}</p>
-          <p className="text-xs text-muted-foreground">{data.mode === "PRACTICE" ? "Chế độ luyện tập" : "Chế độ thi thử"}</p>
+          <p className="hidden text-xs text-muted-foreground sm:block">{data.mode === "PRACTICE" ? "Chế độ luyện tập" : "Chế độ thi thử"}</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1 sm:gap-2">
           {/* Doesn't submit or lose anything — the attempt just stays
              IN_PROGRESS and resumable, same as closing the tab would, but
              a learner who wants to abandon this scope and pick a different
@@ -265,10 +265,10 @@ export function ExamRunner({ data }: { data: ExamData }) {
              so neither the periodic sync nor `beforeunload` is guaranteed to
              have just run, and the timer must resume exactly where this
              leaves it, not up to SYNC_INTERVAL_MS stale. */}
-          <Button variant="ghost" size="sm" onClick={() => void flushNow()} asChild>
-            <Link href={`/practice/${data.testId}`}>
+          <Button variant="ghost" size="sm" onClick={() => void flushNow()} asChild className="px-2 sm:px-3">
+            <Link href={`/practice/${data.testId}`} aria-label="Thoát">
               <LogOut className="size-4" />
-              Thoát
+              <span className="hidden sm:inline">Thoát</span>
             </Link>
           </Button>
           <ExamTimer remainingSec={remainingSec} />
@@ -277,10 +277,10 @@ export function ExamRunner({ data }: { data: ExamData }) {
               <Button
                 variant="outline"
                 size="sm"
-                className="gap-1.5 border-primary/40 bg-primary/10 text-primary hover:bg-primary/15 hover:text-primary"
+                className="gap-1.5 border-primary/40 bg-primary/10 px-2 text-primary hover:bg-primary/15 hover:text-primary sm:px-3"
                 aria-label="Xem danh sách câu hỏi"
               >
-                <LayoutGrid className="size-4" />
+                <LayoutGrid className="hidden size-4 sm:block" />
                 {currentIndex + 1}/{questions.length}
               </Button>
             </SheetTrigger>
@@ -310,7 +310,7 @@ export function ExamRunner({ data }: { data: ExamData }) {
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
             <div
               className={cn(
-                "rounded-2xl border border-border bg-card p-5 shadow-soft lg:sticky lg:top-32 lg:shrink-0",
+                "rounded-2xl border border-border bg-card p-4 shadow-soft sm:p-5 lg:sticky lg:top-32 lg:shrink-0",
                 passageHasVisualContent ? "lg:w-[75%]" : "lg:w-[320px]"
               )}
             >
@@ -322,7 +322,7 @@ export function ExamRunner({ data }: { data: ExamData }) {
                  area (same height budget as the question column opposite
                  it) keeps a real scrollbar on the images instead of the
                  whole sticky sidebar just overflowing off-screen. */}
-              <div className="scrollbar-thin max-h-[70vh] overflow-y-auto pr-1 lg:max-h-[calc(100vh-9rem)]">
+              <div className="scrollbar-thin max-h-[60svh] overflow-y-auto pr-1 lg:max-h-[calc(100vh-9rem)]">
                 <PassageStimulus
                   key={activeGroup.passageId}
                   passage={passage}
@@ -332,7 +332,7 @@ export function ExamRunner({ data }: { data: ExamData }) {
                 />
               </div>
             </div>
-            <div className="scrollbar-thin flex max-h-[70vh] flex-1 flex-col gap-4 overflow-y-auto pr-1 lg:max-h-[calc(100vh-9rem)]">
+            <div className="scrollbar-thin flex flex-1 flex-col gap-4 lg:max-h-[calc(100vh-9rem)] lg:overflow-y-auto lg:pr-1">
               {activeGroup.items.map((q, i) => {
                 const answer = answers[q.id];
                 return (
@@ -371,7 +371,7 @@ export function ExamRunner({ data }: { data: ExamData }) {
             />
           )}
 
-        <div className="flex items-center justify-between gap-3">
+        <div className="sticky bottom-16 z-10 -mx-4 flex items-center justify-between gap-3 border-t border-border bg-background/95 px-4 py-2.5 backdrop-blur-sm sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
           <Button variant="outline" onClick={goToPrevGroup} disabled={groupIndex <= 0}>
             <ChevronLeft className="size-4" /> Nhóm trước
           </Button>

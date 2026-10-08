@@ -86,7 +86,7 @@ export function SavedQuestionsManager({ questions, isPro }: { questions: Mistake
         })}
       </div>
 
-      <div className="sticky bottom-4 flex items-center justify-between gap-3 rounded-2xl border border-border bg-card/95 p-3 shadow-soft backdrop-blur-sm">
+      <div className="sticky bottom-20 z-10 lg:bottom-4 flex items-center justify-between gap-3 rounded-2xl border border-border bg-card/95 p-3 shadow-soft backdrop-blur-sm">
         <span className="text-sm text-muted-foreground">
           Đã chọn <strong className="text-foreground">{selected.size}</strong> câu
         </span>

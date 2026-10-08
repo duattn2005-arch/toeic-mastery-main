@@ -156,7 +156,7 @@ export function PathDayRunner({
           onBack={() => setShowOverview(false)}
         />
       ) : activeStep === null && dayComplete ? (
-        <div className="flex flex-col items-center gap-4 rounded-3xl border border-success/30 bg-success/10 p-8 text-center">
+        <div className="flex flex-col items-center gap-4 rounded-3xl border border-success/30 bg-success/10 p-6 text-center sm:p-8">
           <ConfettiBurst />
           <span className="flex size-16 items-center justify-center rounded-full bg-success/20 text-success">
             <PartyPopper className="size-8" />
