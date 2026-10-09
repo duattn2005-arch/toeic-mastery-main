@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Crown, Flame, Settings, ShieldCheck, Target, User } from "lucide-react";
+import { Crown, Flame, Headset, Settings, ShieldCheck, Target, User } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { MAIN_NAV } from "@/lib/constants/nav";
@@ -75,6 +75,19 @@ export function AppSidebar({ profile }: { profile: SidebarProfile }) {
             Quản trị
           </Link>
         )}
+
+        <Link
+          href="/contact"
+          className={cn(
+            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+            isActive(pathname, "/contact")
+              ? "bg-sidebar-active-bg text-sidebar-active"
+              : "text-sidebar-muted-foreground hover:bg-sidebar-active-bg/60 hover:text-sidebar-foreground"
+          )}
+        >
+          <Headset className="size-[18px] shrink-0" />
+          Liên hệ
+        </Link>
       </nav>
 
       <div className="flex flex-col gap-3 px-3 pb-4">
