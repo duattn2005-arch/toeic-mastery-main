@@ -40,7 +40,7 @@ function toStudyItem(item: ReviewItem): StudyItem {
 
 /**
  * The daily spaced-repetition due queue, run through the shared StudyFlow
- * (Flashcard -> Nối từ -> Blast -> Kiểm tra) — no per-day persistence: a
+ * (Flashcard -> Nối từ -> Blast -> Bong bóng -> Kiểm tra) — no per-day persistence: a
  * fresh due queue is generated every visit, so progress is local state.
  */
 export function ReviewSession({
@@ -58,7 +58,7 @@ export function ReviewSession({
   // through a server action, whose revalidation re-renders this page with
   // a fresh due queue — which empties as words are rated. Following those
   // new props would drop the learner out of the session (to the "nothing
-  // due" screen) right after the flashcards, before Nối từ/Blast/Kiểm tra.
+  // due" screen) right after the flashcards, before Nối từ/Blast/Bong bóng/Kiểm tra.
   const [session] = React.useState(() => ({ due: items, studied: practiceItems }));
   const { due, studied } = session;
 
@@ -71,7 +71,7 @@ export function ReviewSession({
       <h2 className="text-lg font-semibold">Không có từ nào đến hạn ôn hôm nay!</h2>
       <p className="max-w-md text-sm text-muted-foreground">
         {studied.length > 0
-          ? `Bạn vẫn có thể ôn lại ${studied.length} từ đã học với thẻ ghi nhớ, Nối từ, Blast và bài Kiểm tra.`
+          ? `Bạn vẫn có thể ôn lại ${studied.length} từ đã học với thẻ ghi nhớ, Nối từ, Blast, Bong bóng và bài Kiểm tra.`
           : "Học vài từ mới trước đã — sau đó bạn có thể quay lại đây để ôn bằng game."}
       </p>
       <div className="mt-2 flex flex-wrap justify-center gap-2">
