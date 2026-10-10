@@ -64,7 +64,7 @@ export function PathDayRunner({
   const [pending, setPending] = React.useState(false);
   const [reviewItems, setReviewItems] = React.useState<StudyItem[] | null>(null);
   // Step 2 "Luyện tập" plays the games in turn: Nối từ, Blast, Bong bóng
-  // (Blast and Bong bóng split a long list — see splitArcadeWords).
+  // (Blast and Bong bóng share the words half each — see splitArcadeWords).
   const [practiceGame, setPracticeGame] = React.useState<"match" | "blast" | "balloon">("match");
   const [arcade] = React.useState(() => splitArcadeWords(items));
   const [showOverview, setShowOverview] = React.useState(false);
@@ -235,7 +235,7 @@ export function PathDayRunner({
                   <MatchingGame items={items} onFinish={() => setPracticeGame("blast")} onItemResult={handleItemResult} />
                 ) : (
                   practiceGame === "blast" ? (
-                    <BlastGame items={arcade.blast} distractorPool={items} onFinish={() => setPracticeGame("balloon")} onItemResult={handleItemResult} />
+                    <BlastGame items={arcade.blast} distractorPool={items} onFinish={() => (arcade.balloon.length > 0 ? setPracticeGame("balloon") : void finishStep(2))} onItemResult={handleItemResult} />
                   ) : (
                     <BalloonGame items={arcade.balloon} distractorPool={items} onFinish={() => void finishStep(2)} onItemResult={handleItemResult} />
                   )

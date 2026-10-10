@@ -151,8 +151,8 @@ export function BalloonGame({
       <div className="flex flex-col items-center gap-4 text-center">
         <ConfettiBurst />
         <span className="relative flex size-16 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-400 via-purple-500 to-indigo-600 text-2xl shadow-[0_0_30px_rgba(192,132,252,0.6)]">
-          <span className="absolute left-3 top-2.5 size-3 rounded-full bg-white/80" />
-          🫧
+          <span className="absolute left-3 top-2.5 h-3 w-4 -rotate-[30deg] rounded-full bg-white/80" />
+          <span className="absolute bottom-3.5 right-4 size-1.5 rounded-full bg-white/60" />
         </span>
         <div>
           <p className="text-2xl font-bold">Nổ hết bong bóng rồi!</p>

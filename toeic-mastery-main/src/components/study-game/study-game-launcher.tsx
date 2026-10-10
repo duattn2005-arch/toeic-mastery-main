@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { ArrowLeft, BookOpenCheck, CircleDot, Grid3x3, ListChecks, Rocket, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { ARCADE_SPLIT_AT, canPlayQuiz, type StudyItem } from "@/lib/services/study-game";
+import { canPlayQuiz, type StudyItem } from "@/lib/services/study-game";
 import { logStudySessionAction, practiceVocabularyWordAction } from "@/lib/actions/vocabulary";
 import type { ReviewRating } from "@/lib/services/spaced-repetition";
 import { FlashcardBrowse } from "@/components/study-game/flashcard-browse";
@@ -184,7 +184,7 @@ export function StudyGameLauncher({
           <span className="text-sm font-semibold">Học đủ các bước (khuyên dùng)</span>
           <span className="text-xs text-muted-foreground">
             Flashcard → Nối từ → Blast → Bong bóng → Kiểm tra, với cả {items.length} từ
-            {items.length >= ARCADE_SPLIT_AT && <> (Blast và Bong bóng mỗi game {Math.ceil(items.length / 2)} từ)</>}
+            {items.length >= 2 && <> (Blast {Math.ceil(items.length / 2)} từ + Bong bóng {Math.floor(items.length / 2)} từ)</>}
           </span>
         </span>
       </button>
