@@ -34,9 +34,9 @@ export function playableSteps(count: number, poolSize: number): FlowStep[] {
 /** The one review flow every "Ôn tập lại" / "Ôn từ đang học" / "Ôn tập lại
  * tất cả" button runs, wherever the words come from (path day, IIG day,
  * topic, Đã lưu, daily review): Flashcard -> Nối từ -> Blast -> Bong bóng
- * -> Kiểm tra, every step over every word in `items` — except that from
- * ARCADE_SPLIT_AT words on, Blast and Bong bóng split the list in half
- * (splitArcadeWords). Done steps can be replayed from the step bar. */
+ * -> Kiểm tra, every step over every word in `items` — except Blast and
+ * Bong bóng, which split the list in half between them (splitArcadeWords).
+ * Done steps can be replayed from the step bar. */
 export function StudyFlow({
   items,
   onItemResult,
@@ -55,8 +55,11 @@ export function StudyFlow({
   autoStar?: boolean;
 }) {
   const poolSize = new Set([...items, ...(distractorPool ?? [])].map((i) => i.id)).size;
-  const steps = React.useMemo(() => playableSteps(items.length, poolSize), [items.length, poolSize]);
   const [arcade] = React.useState(() => splitArcadeWords(items));
+  const steps = React.useMemo(
+    () => playableSteps(items.length, poolSize).filter((s) => s !== "balloon" || arcade.balloon.length > 0),
+    [items.length, poolSize, arcade]
+  );
   const [index, setIndex] = React.useState(0);
   const [doneUpTo, setDoneUpTo] = React.useState(-1);
   // Remounts the step's game when a finished step is replayed.

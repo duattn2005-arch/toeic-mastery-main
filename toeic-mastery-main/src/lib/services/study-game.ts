@@ -107,15 +107,11 @@ export function buildBlast(items: StudyItem[], distractorPool: StudyItem[] = ite
   });
 }
 
-/** From this many words on, Blast and Bong bóng each take half the list
- * instead of both replaying all of it — keeps a long review varied
- * without doubling its length (e.g. 30 words -> 15 Blast + 15 Bong bóng). */
-export const ARCADE_SPLIT_AT = 30;
-
-/** Which words go to Blast and which to Bong bóng (see ARCADE_SPLIT_AT).
- * Below the threshold both games get every word. */
+/** Splits the words between Blast and Bong bóng — each word is played in
+ * exactly one of the two, half each (10 -> 5 + 5, 11 -> 6 + 5), so the two
+ * games share the list instead of both replaying all of it. A single word
+ * goes to Blast and Bong bóng is skipped. */
 export function splitArcadeWords(items: StudyItem[]): { blast: StudyItem[]; balloon: StudyItem[] } {
-  if (items.length < ARCADE_SPLIT_AT) return { blast: items, balloon: items };
   const mixed = shuffle(items);
   const half = Math.ceil(mixed.length / 2);
   return { blast: mixed.slice(0, half), balloon: mixed.slice(half) };
