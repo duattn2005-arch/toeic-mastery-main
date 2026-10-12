@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Award, BookOpenCheck, GraduationCap, Layers, Link2, ListChecks, Trophy } from "lucide-react";
+import { Award, BookOpenCheck, School, GraduationCap, Layers, Link2, ListChecks, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CATEGORY_ORDER, TopicGrid, groupTopicsByCategory, type VocabularyTopicRow } from "@/components/vocabulary/topic-section-grid";
 import { PathOverviewContent } from "@/components/vocabulary/path/path-overview-content";
@@ -17,6 +17,7 @@ const COLLECTION_TAB_PREFIX = "collection:";
 const COLLECTION_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   iig: GraduationCap,
   "ets-2026": Award,
+  thpt: School,
 };
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {

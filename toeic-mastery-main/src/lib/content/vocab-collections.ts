@@ -1,5 +1,6 @@
 import { IIG_TOPICS, IIG_WORDS_PER_DAY } from "@/lib/content/iig-vocab";
 import { ETS_2026_TOPICS } from "@/lib/content/ets-2026";
+import { THPT_TOPICS } from "@/lib/content/thpt-vocab";
 import type { IigTopic } from "@/lib/content/iig-vocab/types";
 
 /** A static word collection (IIG Vocab, ETS 2026, ...) that gets its own
@@ -45,7 +46,19 @@ export const ETS_2026_COLLECTION: VocabCollection = {
   topics: ETS_2026_TOPICS,
 };
 
-export const VOCAB_COLLECTIONS = [IIG_COLLECTION, ETS_2026_COLLECTION];
+export const THPT_COLLECTION: VocabCollection = {
+  key: "thpt",
+  label: "THPT",
+  shortLabel: "THPT",
+  description:
+    "Từ vựng Tiếng Anh THPT theo sách Global Success — Lớp 11 (10 Unit) và Lớp 9 (12 Unit). Mỗi Unit có lộ trình học theo ngày (Học → Luyện tập → Kiểm tra), ôn tập ghi nhớ theo lịch lặp lại ngắt quãng và Học & Chơi.",
+  category: "THPT",
+  dbPrefix: "thpt",
+  orderBase: 3000,
+  topics: THPT_TOPICS,
+};
+
+export const VOCAB_COLLECTIONS = [IIG_COLLECTION, ETS_2026_COLLECTION, THPT_COLLECTION];
 export const VOCAB_COLLECTION_CATEGORIES = VOCAB_COLLECTIONS.map((c) => c.category);
 
 export function getVocabCollection(key: string): VocabCollection | null {
