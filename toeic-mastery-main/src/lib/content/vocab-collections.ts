@@ -22,6 +22,8 @@ export interface VocabCollection {
   /** Show the groups as sub-tabs (topics hidden until one is picked)
    * instead of listing every group's topics at once. */
   groupTabs?: boolean;
+  /** Words per day in each topic's daily path (default IIG_WORDS_PER_DAY). */
+  wordsPerDay?: number;
   topics: IigTopic[];
 }
 
@@ -54,11 +56,12 @@ export const THPT_COLLECTION: VocabCollection = {
   label: "THPT",
   shortLabel: "THPT",
   description:
-    "Từ vựng Tiếng Anh THPT theo sách Global Success — Lớp 11 (10 Unit) và Lớp 9 (12 Unit). Mỗi Unit có lộ trình học theo ngày (Học → Luyện tập → Kiểm tra), ôn tập ghi nhớ theo lịch lặp lại ngắt quãng và Học & Chơi.",
+    "Từ vựng Tiếng Anh THPT theo sách Global Success — Lớp 11 (10 Unit) và Lớp 9 (12 Unit). Unit nhiều từ được tách thành phần Chính và Mở rộng. Mỗi phần có lộ trình học 15 từ/ngày (Học → Luyện tập → Kiểm tra), ôn tập ghi nhớ theo lịch lặp lại ngắt quãng và Học & Chơi.",
   category: "THPT",
   dbPrefix: "thpt",
   orderBase: 3000,
   groupTabs: true,
+  wordsPerDay: 15,
   topics: THPT_TOPICS,
 };
 
@@ -77,8 +80,12 @@ export function collectionDbSlug(collection: VocabCollection, topicSlug: string)
   return `${collection.dbPrefix}-${topicSlug}`;
 }
 
-export function collectionDayCount(topic: IigTopic) {
-  return Math.ceil(topic.words.length / IIG_WORDS_PER_DAY);
+export function collectionWordsPerDay(collection: VocabCollection) {
+  return collection.wordsPerDay ?? IIG_WORDS_PER_DAY;
+}
+
+export function collectionDayCount(collection: VocabCollection, topic: IigTopic) {
+  return Math.ceil(topic.words.length / collectionWordsPerDay(collection));
 }
 
 export function getCollectionTopic(collection: VocabCollection, slug: string) {
@@ -122,7 +129,7 @@ export function summarizeCollection(collection: VocabCollection): CollectionSumm
       // Sub-tabbed groups are browsed one at a time, so number within the group.
       number: collection.groupTabs ? group.topics.length + 1 : index + 1,
       wordCount: topic.words.length,
-      dayCount: collectionDayCount(topic),
+      dayCount: collectionDayCount(collection, topic),
       quizCount: topic.quiz.length,
     });
   });

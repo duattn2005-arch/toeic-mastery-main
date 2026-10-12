@@ -1,8 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { IIG_WORDS_PER_DAY } from "@/lib/content/iig-vocab";
 import type { IigTopic } from "@/lib/content/iig-vocab/types";
-import { collectionDayCount, collectionDbSlug, type VocabCollection } from "@/lib/content/vocab-collections";
+import { collectionDayCount, collectionDbSlug, collectionWordsPerDay, type VocabCollection } from "@/lib/content/vocab-collections";
 
 const syncPromises = new Map<string, Promise<void>>();
 
@@ -10,7 +9,7 @@ const syncPromises = new Map<string, Promise<void>>();
  * available, no db:seed needed), but the daily path, SRS review and study
  * games all run on the DB vocabulary tables. This mirrors every topic of a
  * collection into those tables — a VocabularyTopic + VocabularyWords, and a
- * VocabularyPath of IIG_WORDS_PER_DAY-word days — idempotently, once per
+ * VocabularyPath of collectionWordsPerDay()-word days — idempotently, once per
  * server process (i.e. once after each deploy), the first time one of its
  * pages is opened. Word ids stay stable across syncs, so users' SRS/day
  * progress is kept. */
@@ -27,23 +26,68 @@ export function ensureCollectionSynced(collection: VocabCollection): Promise<voi
 }
 
 async function syncCollection(collection: VocabCollection) {
+  await relocateMovedWords(collection);
   for (const [index, topic] of collection.topics.entries()) {
     await syncTopic(collection, topic, index);
   }
 }
 
-async function syncTopic(collection: VocabCollection, topic: IigTopic, index: number) {
-  const slug = collectionDbSlug(collection, topic.slug);
-  const topicFields = {
+/** When content moves a word from one topic to another (e.g. a THPT Unit
+ * split into its main list and a "Mở rộng" topic), its DB row would stay in
+ * the old topic — still showing up in that topic's games and review — while
+ * the new topic got a fresh row without the learner's progress. Moving the
+ * existing row instead keeps its SRS history. Rows whose word no longer
+ * appears anywhere in the collection are left alone. */
+async function relocateMovedWords(collection: VocabCollection) {
+  const slugs = collection.topics.map((t) => collectionDbSlug(collection, t.slug));
+  const existing = await db.vocabularyTopic.findMany({ where: { slug: { in: slugs } }, select: { id: true, slug: true } });
+  if (existing.length === 0) return;
+
+  // Every topic a moved word could land in must exist first.
+  const topicIdBySlug = new Map(existing.map((t) => [t.slug, t.id]));
+  for (const [index, topic] of collection.topics.entries()) {
+    const slug = collectionDbSlug(collection, topic.slug);
+    if (topicIdBySlug.has(slug)) continue;
+    const created = await db.vocabularyTopic.create({ data: { slug, ...topicFields(collection, topic, index) }, select: { id: true } });
+    topicIdBySlug.set(slug, created.id);
+  }
+
+  const staticWords = new Map<string, Set<string>>(); // topicId -> words
+  const ownersByWord = new Map<string, string[]>(); // word -> topicIds listing it
+  for (const topic of collection.topics) {
+    const topicId = topicIdBySlug.get(collectionDbSlug(collection, topic.slug))!;
+    staticWords.set(topicId, new Set(topic.words.map(([word]) => word)));
+    for (const [word] of topic.words) ownersByWord.set(word, [...(ownersByWord.get(word) ?? []), topicId]);
+  }
+
+  const rows = await db.vocabularyWord.findMany({ where: { topicId: { in: [...topicIdBySlug.values()] } }, select: { id: true, topicId: true, word: true } });
+  const present = new Set(rows.map((r) => `${r.topicId}|${r.word}`));
+  for (const row of rows) {
+    if (staticWords.get(row.topicId)?.has(row.word)) continue;
+    const target = ownersByWord.get(row.word)?.find((topicId) => !present.has(`${topicId}|${row.word}`));
+    if (!target) continue;
+    await db.vocabularyWord.update({ where: { id: row.id }, data: { topicId: target } });
+    present.delete(`${row.topicId}|${row.word}`);
+    present.add(`${target}|${row.word}`);
+  }
+}
+
+function topicFields(collection: VocabCollection, topic: IigTopic, index: number) {
+  return {
     name: `${collection.shortLabel} · ${topic.title}`,
     description: `${topic.titleVi} — ${topic.summary}`,
     category: collection.category,
     orderIndex: collection.orderBase + index,
   };
+}
+
+async function syncTopic(collection: VocabCollection, topic: IigTopic, index: number) {
+  const slug = collectionDbSlug(collection, topic.slug);
+  const fields = topicFields(collection, topic, index);
   const dbTopic = await db.vocabularyTopic.upsert({
     where: { slug },
-    create: { slug, ...topicFields },
-    update: topicFields,
+    create: { slug, ...fields },
+    update: fields,
   });
 
   const existing = await db.vocabularyWord.findMany({ where: { topicId: dbTopic.id } });
@@ -94,10 +138,11 @@ async function syncTopic(collection: VocabCollection, topic: IigTopic, index: nu
   const idByWord = new Map(words.map((w) => [w.word, w.id]));
   const orderedIds = topic.words.map(([word]) => idByWord.get(word)).filter((id): id is string => Boolean(id));
 
-  const dayCount = collectionDayCount(topic);
+  const wordsPerDay = collectionWordsPerDay(collection);
+  const dayCount = collectionDayCount(collection, topic);
   const pathFields = {
     title: `Lộ trình ${topic.title} (${dayCount} ngày)`,
-    description: `Học ${topic.words.length} từ ${collection.label} — ${topic.titleVi}, mỗi ngày ${IIG_WORDS_PER_DAY} từ.`,
+    description: `Học ${topic.words.length} từ ${collection.label} — ${topic.titleVi}, mỗi ngày ${wordsPerDay} từ.`,
   };
   const path = await db.vocabularyPath.upsert({
     where: { slug },
@@ -107,7 +152,7 @@ async function syncTopic(collection: VocabCollection, topic: IigTopic, index: nu
 
   for (let d = 0; d < dayCount; d++) {
     const dayNumber = d + 1;
-    const dayWordIds = orderedIds.slice(d * IIG_WORDS_PER_DAY, (d + 1) * IIG_WORDS_PER_DAY);
+    const dayWordIds = orderedIds.slice(d * wordsPerDay, (d + 1) * wordsPerDay);
     const day = await db.vocabularyPathDay.upsert({
       where: { pathId_dayNumber: { pathId: path.id, dayNumber } },
       create: { pathId: path.id, dayNumber, tierLabel: topic.title },

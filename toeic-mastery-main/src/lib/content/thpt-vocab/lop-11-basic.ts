@@ -2,7 +2,7 @@ import type { ThptRow } from "./helpers";
 
 /** Phần còn lại của danh sách Unit 1–5 (Tiếng Anh 11 Global Success): từ cơ
  * bản, từ đồng/trái nghĩa và cụm cấu trúc đi kèm mà lop-11-more.ts chưa tách
- * thành mục riêng. Từ nào đã có ở Lớp 11 thì withExtraWords() tự bỏ qua. */
+ * thành mục riêng. Từ nào đã có ở Lớp 11 thì withExtensionTopics() tự bỏ qua. */
 export const LOP_11_BASIC: Record<number, ThptRow[]> = {
   1: [
     ["probable", "adj", "ˈprɒbəbl", "có thể xảy ra, có khả năng", "= possible = likely"],

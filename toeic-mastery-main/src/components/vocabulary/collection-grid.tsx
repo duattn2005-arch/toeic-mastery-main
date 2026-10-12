@@ -49,7 +49,7 @@ export function CollectionGrid({ collection }: { collection: CollectionSummary }
           })}
         </div>
         {selected ? (
-          <TopicCards basePath={collection.basePath} group={selected} />
+          <TopicCards basePath={collection.basePath} group={selected} showNumber={false} />
         ) : (
           <p className="text-sm text-muted-foreground">Chọn một lớp để xem các Unit.</p>
         )}
@@ -70,7 +70,9 @@ export function CollectionGrid({ collection }: { collection: CollectionSummary }
   );
 }
 
-function TopicCards({ basePath, group }: { basePath: string; group: Group }) {
+/** showNumber=false for sub-tabbed groups (THPT), whose titles already carry
+ * the Unit number — a "Mở rộng" topic would otherwise shift every #n. */
+function TopicCards({ basePath, group, showNumber = true }: { basePath: string; group: Group; showNumber?: boolean }) {
   return (
     <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
       {group.topics.map((topic) => (
@@ -83,7 +85,7 @@ function TopicCards({ basePath, group }: { basePath: string; group: Group }) {
             <BookText className="size-5" />
           </span>
           <div>
-            <p className="text-xs font-bold text-primary">#{topic.number}</p>
+            {showNumber && <p className="text-xs font-bold text-primary">#{topic.number}</p>}
             <p className="text-sm font-semibold">{topic.title}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">{topic.titleVi}</p>
             <p className="mt-1 text-xs text-muted-foreground">

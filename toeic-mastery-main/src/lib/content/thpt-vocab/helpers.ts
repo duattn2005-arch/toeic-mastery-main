@@ -30,21 +30,35 @@ export function thptUnit(grade: 9 | 11, unit: number, title: string, titleVi: st
   };
 }
 
-/** Appends extra words to the end of each Unit (keyed by Unit number), so
- * the existing daily-path days stay as they were. A word already anywhere
- * in the grade — in the base lists or in an earlier Unit's extras — is
- * skipped (case-insensitive), since the sync keys words by their text. */
-export function withExtraWords(grade: 9 | 11, units: IigTopic[], extras: Record<number, ThptRow[]>): IigTopic[] {
+/** Splits each Unit's extra words (keyed by Unit number) into its own
+ * "Mở rộng" topic right after the Unit, so the main list stays short. The
+ * extra lists are applied in order; a word already anywhere in the grade —
+ * in the main lists or in earlier extras — is skipped (case-insensitive),
+ * since the sync keys words by their text. */
+export function withExtensionTopics(grade: 9 | 11, units: IigTopic[], extraLists: Record<number, ThptRow[]>[]): IigTopic[] {
   const seen = new Set(units.flatMap((u) => u.words.map(([word]) => word.toLowerCase())));
-  return units.map((unit, index) => {
-    const rows = (extras[index + 1] ?? []).filter(([word]) => {
-      const key = word.toLowerCase();
-      if (seen.has(key)) return false;
-      seen.add(key);
-      return true;
+  const extraRows = units.map(() => [] as ThptRow[]);
+  for (const extras of extraLists) {
+    units.forEach((_, index) => {
+      for (const row of extras[index + 1] ?? []) {
+        const key = row[0].toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        extraRows[index].push(row);
+      }
     });
-    if (rows.length === 0) return unit;
-    const words = [...unit.words, ...thptWords(rows)];
-    return { ...unit, words, summary: unitSummary(grade, index + 1, words.length) };
+  }
+  return units.flatMap((unit, index) => {
+    const rows = extraRows[index];
+    if (rows.length === 0) return [unit];
+    const extension: IigTopic = {
+      ...unit,
+      slug: `${unit.slug}-mo-rong`,
+      title: `${unit.title} · Mở rộng`,
+      titleVi: `${unit.titleVi} · Mở rộng`,
+      summary: `${rows.length} từ mở rộng Unit ${index + 1} (họ từ, đồng/trái nghĩa, cụm từ, cấu trúc) — Tiếng Anh ${grade} Global Success.`,
+      words: thptWords(rows),
+    };
+    return [unit, extension];
   });
 }

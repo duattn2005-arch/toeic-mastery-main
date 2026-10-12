@@ -1,5 +1,5 @@
 import type { IigTopic } from "@/lib/content/iig-vocab/types";
-import { thptUnit, withExtraWords } from "./helpers";
+import { thptUnit, withExtensionTopics } from "./helpers";
 import { LOP_11_MORE } from "./lop-11-more";
 import { LOP_11_BASIC } from "./lop-11-basic";
 
@@ -271,6 +271,6 @@ const LOP_11_BASE: IigTopic[] = [
   ]),
 ];
 
-/** Lớp 11 with the extra Unit 1–5 words appended (duplicates skipped):
- * first the main additions, then the basic words and patterns. */
-export const LOP_11: IigTopic[] = withExtraWords(11, withExtraWords(11, LOP_11_BASE, LOP_11_MORE), LOP_11_BASIC);
+/** Lớp 11: Unit 1–5 each get a "Mở rộng" topic with the extra words
+ * (main additions first, then basic words and patterns; duplicates skipped). */
+export const LOP_11: IigTopic[] = withExtensionTopics(11, LOP_11_BASE, [LOP_11_MORE, LOP_11_BASIC]);

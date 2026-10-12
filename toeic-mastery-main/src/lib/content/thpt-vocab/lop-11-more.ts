@@ -3,7 +3,7 @@ import type { ThptRow } from "./helpers";
 /** Từ vựng mở rộng Tiếng Anh 11 Global Success, Unit 1–5 (Vocabulary &
  * Structures). Từ loại/nghĩa/phiên âm (Anh-Anh) đã được soát lại; họ từ được
  * tách thành từng mục, đồng nghĩa / trái nghĩa / cấu trúc nằm ở ghi chú.
- * Từ nào đã có ở Lớp 11 thì withExtraWords() tự bỏ qua. */
+ * Từ nào đã có ở Lớp 11 thì withExtensionTopics() tự bỏ qua. */
 export const LOP_11_MORE: Record<number, ThptRow[]> = {
   1: [
     ["fit", "adj", "fɪt", "khoẻ mạnh, cân đối; vừa vặn", "keep fit: giữ dáng, giữ gìn sức khoẻ"],
