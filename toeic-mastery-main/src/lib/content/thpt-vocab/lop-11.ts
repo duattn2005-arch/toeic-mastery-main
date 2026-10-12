@@ -1,8 +1,9 @@
 import type { IigTopic } from "@/lib/content/iig-vocab/types";
-import { thptUnit } from "./helpers";
+import { thptUnit, withExtraWords } from "./helpers";
+import { LOP_11_MORE } from "./lop-11-more";
 
-/** Tiếng Anh 11 Global Success — từ vựng 10 Unit. */
-export const LOP_11: IigTopic[] = [
+/** Tiếng Anh 11 Global Success — từ vựng 10 Unit (danh sách gốc). */
+const LOP_11_BASE: IigTopic[] = [
   thptUnit(11, 1, "A Long & Healthy Life", "Cuộc sống khoẻ mạnh và trường thọ", [
     ["antibiotic", "n", "ˌæntɪbaɪˈɒtɪk", "thuốc kháng sinh"],
     ["bacteria", "n", "bækˈtɪərɪə", "vi khuẩn"],
@@ -268,3 +269,6 @@ export const LOP_11: IigTopic[] = [
     ["wildlife", "n", "ˈwaɪldlaɪf", "động vật hoang dã"],
   ]),
 ];
+
+/** Lớp 11 with the extra Unit 1–5 words appended (duplicates skipped). */
+export const LOP_11: IigTopic[] = withExtraWords(11, LOP_11_BASE, LOP_11_MORE);
