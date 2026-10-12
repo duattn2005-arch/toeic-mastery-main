@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import type { IigTopic } from "@/lib/content/iig-vocab/types";
-import { collectionDayCount, collectionDbSlug, collectionWordsPerDay, type VocabCollection } from "@/lib/content/vocab-collections";
+import { collectionDbSlug, topicDaySizes, topicWordsPerDayLabel, type VocabCollection } from "@/lib/content/vocab-collections";
 
 const syncPromises = new Map<string, Promise<void>>();
 
@@ -9,7 +9,7 @@ const syncPromises = new Map<string, Promise<void>>();
  * available, no db:seed needed), but the daily path, SRS review and study
  * games all run on the DB vocabulary tables. This mirrors every topic of a
  * collection into those tables — a VocabularyTopic + VocabularyWords, and a
- * VocabularyPath of collectionWordsPerDay()-word days — idempotently, once per
+ * VocabularyPath split into days by topicDaySizes() — idempotently, once per
  * server process (i.e. once after each deploy), the first time one of its
  * pages is opened. Word ids stay stable across syncs, so users' SRS/day
  * progress is kept. */
@@ -138,11 +138,11 @@ async function syncTopic(collection: VocabCollection, topic: IigTopic, index: nu
   const idByWord = new Map(words.map((w) => [w.word, w.id]));
   const orderedIds = topic.words.map(([word]) => idByWord.get(word)).filter((id): id is string => Boolean(id));
 
-  const wordsPerDay = collectionWordsPerDay(collection);
-  const dayCount = collectionDayCount(collection, topic);
+  const daySizes = topicDaySizes(collection, topic);
+  const dayCount = daySizes.length;
   const pathFields = {
     title: `Lộ trình ${topic.title} (${dayCount} ngày)`,
-    description: `Học ${topic.words.length} từ ${collection.label} — ${topic.titleVi}, mỗi ngày ${wordsPerDay} từ.`,
+    description: `Học ${topic.words.length} từ ${collection.label} — ${topic.titleVi}, mỗi ngày ${topicWordsPerDayLabel(collection, topic)} từ.`,
   };
   const path = await db.vocabularyPath.upsert({
     where: { slug },
@@ -152,7 +152,8 @@ async function syncTopic(collection: VocabCollection, topic: IigTopic, index: nu
 
   for (let d = 0; d < dayCount; d++) {
     const dayNumber = d + 1;
-    const dayWordIds = orderedIds.slice(d * wordsPerDay, (d + 1) * wordsPerDay);
+    const start = daySizes.slice(0, d).reduce((sum, size) => sum + size, 0);
+    const dayWordIds = orderedIds.slice(start, start + daySizes[d]);
     const day = await db.vocabularyPathDay.upsert({
       where: { pathId_dayNumber: { pathId: path.id, dayNumber } },
       create: { pathId: path.id, dayNumber, tierLabel: topic.title },

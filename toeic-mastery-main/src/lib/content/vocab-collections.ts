@@ -56,7 +56,7 @@ export const THPT_COLLECTION: VocabCollection = {
   label: "THPT",
   shortLabel: "THPT",
   description:
-    "Từ vựng Tiếng Anh THPT theo sách Global Success — Lớp 11 (10 Unit) và Lớp 9 (12 Unit). Unit nhiều từ được tách thành phần Chính và Mở rộng. Mỗi phần có lộ trình học 15 từ/ngày (Học → Luyện tập → Kiểm tra), ôn tập ghi nhớ theo lịch lặp lại ngắt quãng và Học & Chơi.",
+    "Từ vựng Tiếng Anh THPT theo sách Global Success — Lớp 11 (10 Unit) và Lớp 9 (12 Unit). Unit nhiều từ được tách thành phần Chính và Mở rộng. Mỗi phần có lộ trình học theo ngày — Lớp 11: 15–20 từ/ngày, Lớp 9: 15 từ/ngày (Học → Luyện tập → Kiểm tra), ôn tập ghi nhớ theo lịch lặp lại ngắt quãng và Học & Chơi.",
   category: "THPT",
   dbPrefix: "thpt",
   orderBase: 3000,
@@ -84,8 +84,34 @@ export function collectionWordsPerDay(collection: VocabCollection) {
   return collection.wordsPerDay ?? IIG_WORDS_PER_DAY;
 }
 
+/** How many words each day of a topic's path gets. A fixed wordsPerDay
+ * fills every day but the last; a topic's dayWordRange instead spreads the
+ * words evenly over as few days as keep every day within [min, max] — or,
+ * when no split fits, over the day count that comes closest. */
+export function topicDaySizes(collection: VocabCollection, topic: IigTopic): number[] {
+  const total = topic.words.length;
+  if (!topic.dayWordRange) {
+    const perDay = collectionWordsPerDay(collection);
+    return Array.from({ length: Math.ceil(total / perDay) }, (_, d) => Math.min(perDay, total - d * perDay));
+  }
+  const [min, max] = topic.dayWordRange;
+  const split = (days: number) => Array.from({ length: days }, (_, d) => Math.floor(total / days) + (d < total % days ? 1 : 0));
+  // When no split fits the range exactly (e.g. 25 words: 1 day is too many,
+  // 2 days too few), take the one that strays from it the least.
+  const offBy = (sizes: number[]) => Math.max(0, Math.max(...sizes) - max) + Math.max(0, min - Math.min(...sizes));
+  const most = Math.max(1, Math.ceil(total / max));
+  const fewer = split(Math.max(1, most - 1));
+  const more = split(most);
+  return offBy(fewer) <= offBy(more) ? fewer : more;
+}
+
+/** "15" or "15–20" — the per-day word count shown in path descriptions. */
+export function topicWordsPerDayLabel(collection: VocabCollection, topic: IigTopic) {
+  return topic.dayWordRange ? `${topic.dayWordRange[0]}–${topic.dayWordRange[1]}` : String(collectionWordsPerDay(collection));
+}
+
 export function collectionDayCount(collection: VocabCollection, topic: IigTopic) {
-  return Math.ceil(topic.words.length / collectionWordsPerDay(collection));
+  return topicDaySizes(collection, topic).length;
 }
 
 export function getCollectionTopic(collection: VocabCollection, slug: string) {

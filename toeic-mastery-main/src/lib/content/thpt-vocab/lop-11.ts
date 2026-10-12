@@ -271,6 +271,10 @@ const LOP_11_BASE: IigTopic[] = [
   ]),
 ];
 
-/** Lớp 11: Unit 1–5 each get a "Mở rộng" topic with the extra words
+/** Lớp 11 (15–20 words a day): Unit 1–5 each get a "Mở rộng" topic with the extra words
  * (main additions first, then basic words and patterns; duplicates skipped). */
-export const LOP_11: IigTopic[] = withExtensionTopics(11, LOP_11_BASE, [LOP_11_MORE, LOP_11_BASIC]);
+export const LOP_11: IigTopic[] = withExtensionTopics(11, LOP_11_BASE, [LOP_11_MORE, LOP_11_BASIC]).map((topic) => ({
+  ...topic,
+  // Lớp 11 learns 15–20 words a day (Lớp 9 keeps the collection's 15).
+  dayWordRange: [15, 20],
+}));
