@@ -37,13 +37,21 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             (app.secureprivacy.ai/script/6a9942ee4e74644db5656e70.js) set Google
             Consent Mode to analytics_storage "denied" by default before gtag
             loaded, and its banner's Accept button has never worked for this
-            domain — so GA4 recorded nothing. GA4 below runs with full consent. */}
+            domain — so GA4 recorded nothing. GA4 below grants full consent itself. */}
         <Providers>{children}</Providers>
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />
         <Script id="google-analytics" strategy="afterInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
+            // The Google tag's account-side settings default every consent
+            // type to "denied" (gcs=G100: no _ga cookie, only anonymous pings,
+            // so reports showed 0) — even on a bare page with just this ID.
+            // Granting here, before config, makes the very first page_view a
+            // full hit (gcs=G111) and lets GA4 set its cookies.
+            var granted = { ad_storage: 'granted', ad_user_data: 'granted', ad_personalization: 'granted', analytics_storage: 'granted', functionality_storage: 'granted', personalization_storage: 'granted', security_storage: 'granted' };
+            gtag('consent', 'default', granted);
+            gtag('consent', 'update', granted);
             gtag('js', new Date());
             gtag('config', '${GA_MEASUREMENT_ID}');
           `}
