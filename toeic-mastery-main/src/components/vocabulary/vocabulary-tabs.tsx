@@ -74,7 +74,7 @@ export function VocabularyTabs({
       {activeTab === PATH_TAB ? (
         <PathOverviewContent data={pathOverview} />
       ) : activeCollection ? (
-        <CollectionGrid collection={activeCollection} />
+        <CollectionGrid key={activeCollection.key} collection={activeCollection} />
       ) : activeTab === CATEGORY_ORDER[0] ? (
         <div className="flex flex-col gap-8">
           <TopicGrid topics={sections.get(activeTab) ?? []} />

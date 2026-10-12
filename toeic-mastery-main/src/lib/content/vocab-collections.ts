@@ -19,6 +19,9 @@ export interface VocabCollection {
   /** DB slug prefix for the mirrored VocabularyTopic/VocabularyPath. */
   dbPrefix: string;
   orderBase: number;
+  /** Show the groups as sub-tabs (topics hidden until one is picked)
+   * instead of listing every group's topics at once. */
+  groupTabs?: boolean;
   topics: IigTopic[];
 }
 
@@ -55,6 +58,7 @@ export const THPT_COLLECTION: VocabCollection = {
   category: "THPT",
   dbPrefix: "thpt",
   orderBase: 3000,
+  groupTabs: true,
   topics: THPT_TOPICS,
 };
 
@@ -95,6 +99,7 @@ export interface CollectionSummary {
   label: string;
   description: string;
   basePath: string;
+  groupTabs: boolean;
   groups: {
     label: string | null;
     topics: { slug: string; title: string; titleVi: string; number: number; wordCount: number; dayCount: number; quizCount: number }[];
@@ -114,11 +119,12 @@ export function summarizeCollection(collection: VocabCollection): CollectionSumm
       slug: topic.slug,
       title: topic.title,
       titleVi: topic.titleVi,
-      number: index + 1,
+      // Sub-tabbed groups are browsed one at a time, so number within the group.
+      number: collection.groupTabs ? group.topics.length + 1 : index + 1,
       wordCount: topic.words.length,
       dayCount: collectionDayCount(topic),
       quizCount: topic.quiz.length,
     });
   });
-  return { key: collection.key, label: collection.label, description: collection.description, basePath: collectionBasePath(collection), groups };
+  return { key: collection.key, label: collection.label, description: collection.description, basePath: collectionBasePath(collection), groupTabs: Boolean(collection.groupTabs), groups };
 }
