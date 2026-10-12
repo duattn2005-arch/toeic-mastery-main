@@ -21,9 +21,9 @@ import { completePathStepAction } from "@/lib/actions/vocabulary-path";
 import { useLiveVocabStatus } from "@/hooks/use-live-vocab-status";
 
 const STEPS = [
-  { step: 1 as const, label: "Học", icon: BookOpenCheck },
-  { step: 2 as const, label: "Nối từ · Blast · Bong bóng", icon: Grid3x3 },
-  { step: 3 as const, label: "Kiểm tra", icon: ListChecks },
+  { step: 1 as const, label: "Học", shortLabel: "Học", icon: BookOpenCheck },
+  { step: 2 as const, label: "Nối từ · Blast · Bong bóng", shortLabel: "Luyện tập", icon: Grid3x3 },
+  { step: 3 as const, label: "Kiểm tra", shortLabel: "Kiểm tra", icon: ListChecks },
 ];
 
 export function PathDayRunner({
@@ -160,7 +160,7 @@ export function PathDayRunner({
           onBack={() => setShowOverview(false)}
         />
       ) : activeStep === null && dayComplete ? (
-        <div className="flex flex-col items-center gap-4 rounded-3xl border border-success/30 bg-success/10 p-8 text-center">
+        <div className="flex flex-col items-center gap-4 rounded-3xl border border-success/30 bg-success/10 p-5 text-center sm:p-8">
           <ConfettiBurst />
           <span className="flex size-16 items-center justify-center rounded-full bg-success/20 text-success">
             <PartyPopper className="size-8" />
@@ -180,7 +180,7 @@ export function PathDayRunner({
             </p>
           )}
 
-          <div className="flex flex-wrap justify-center gap-2">
+          <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-center">
             <Button variant="outline" onClick={() => setShowOverview(true)}>
               <RotateCcw className="size-4" /> Ôn tập lại
             </Button>
@@ -197,21 +197,22 @@ export function PathDayRunner({
       ) : (
         <>
           <div className="flex items-center gap-2">
-            {STEPS.map(({ step, label, icon: Icon }) => {
+            {STEPS.map(({ step, label, shortLabel, icon: Icon }) => {
               const done = stepsCompleted >= step;
               const active = activeStep === step;
               return (
                 <div
                   key={step}
                   className={cn(
-                    "flex flex-1 items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium",
+                    "flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl border px-2 py-2.5 text-xs font-medium sm:justify-start sm:gap-2 sm:px-3 sm:text-sm",
                     done && "border-success/40 bg-success/10 text-success",
                     active && !done && "border-primary/40 bg-accent",
                     !active && !done && "border-border text-muted-foreground"
                   )}
                 >
                   <Icon className="size-4 shrink-0" />
-                  <span className="truncate">{label}</span>
+                  <span className="truncate sm:hidden">{shortLabel}</span>
+                  <span className="hidden truncate sm:inline">{label}</span>
                 </div>
               );
             })}
