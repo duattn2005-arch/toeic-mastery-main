@@ -22,6 +22,10 @@ function isPublicAsset(pathname: string) {
     pathname.startsWith("/_next") ||
     pathname.startsWith("/auth/callback") ||
     pathname === "/favicon.ico" ||
+    // Crawlers fetch these without a session — redirecting them to /login
+    // hid the sitemap from Google entirely.
+    pathname === "/robots.txt" ||
+    pathname === "/sitemap.xml" ||
     /\.(svg|png|jpg|jpeg|gif|webp|mp3|ico)$/.test(pathname)
   );
 }

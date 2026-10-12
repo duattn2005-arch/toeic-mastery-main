@@ -4,6 +4,34 @@ import { redirect } from "next/navigation";
 import { HeaderAuthButtons, HeroAuthButtons } from "@/components/marketing/landing-auth-buttons";
 import { SiteThemeBackground } from "@/components/layout/site-theme-background";
 import { DEFAULT_SITE_THEME_ID } from "@/lib/constants/site-themes";
+import type { Metadata } from "next";
+import { SITE_URL } from "@/lib/site-url";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+
+/** schema.org data so search engines know this is an online TOEIC course
+ * site (name, logo, search box) rather than guessing from the page text. */
+const STRUCTURED_DATA = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "EducationalOrganization",
+      "@id": `${SITE_URL}/#organization`,
+      name: "TOEIC Mastery",
+      url: `${SITE_URL}/`,
+      logo: `${SITE_URL}/icon.png`,
+      description: "Nền tảng luyện thi TOEIC online: đề thi thử sát thực tế, từ vựng theo lộ trình, AI Mentor và phân tích điểm yếu theo Part.",
+    },
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_URL}/#website`,
+      name: "TOEIC Mastery",
+      url: `${SITE_URL}/`,
+      inLanguage: "vi",
+      publisher: { "@id": `${SITE_URL}/#organization` },
+    },
+  ],
+};
 
 const FEATURES = [
   {
@@ -34,6 +62,7 @@ export default async function LandingPage() {
 
   return (
     <div className="flex min-h-svh flex-col">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }} />
       {/* Same ambient wallpaper the logged-in app shell shows by default
           (mèo đen bên hồ sen) — landing page reuses it so a visitor sees
           the same look the app itself has, not a plain dark page. */}
