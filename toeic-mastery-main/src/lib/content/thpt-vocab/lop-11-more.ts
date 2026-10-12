@@ -596,7 +596,7 @@ export const LOP_11_MORE: Record<number, ThptRow[]> = {
     ["talk show", "n", "ˈtɔːk ʃəʊ", "chương trình toạ đàm"],
     ["practical skill", "n", "ˌpræktɪkl ˈskɪl", "kĩ năng thực hành"],
     ["make friends with", "", "ˌmeɪk ˈfrendz wɪð", "kết bạn với"],
-    ["present", "v", "prɪˈzent", "trình bày, thuyết trình"],
+    ["present", "v / adj", "prɪˈzent", "trình bày, thuyết trình; (tính từ /ˈpreznt/) hiện tại, có mặt", "present (adj) = current"],
     ["presentation", "n", "ˌpreznˈteɪʃn", "bài thuyết trình, sự trình bày"],
     ["audience", "n", "ˈɔːdiəns", "khán giả (trong khán phòng)", "viewer: người xem truyền hình; spectator: khán giả xem thể thao"],
     ["viewer", "n", "ˈvjuːə", "người xem (truyền hình)"],
