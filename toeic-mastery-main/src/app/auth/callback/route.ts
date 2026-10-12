@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { exchangeGoogleCode } from "@/lib/auth/google";
 import { SESSION_COOKIE, sessionCookieOptions, signSessionToken } from "@/lib/auth/session";
+import { AUTH_EVENT_COOKIE, authEventCookieOptions } from "@/lib/analytics";
 
 const STATE_COOKIE = "oauth_state";
 const NEXT_COOKIE = "oauth_next";
@@ -42,8 +43,9 @@ export async function GET(request: Request) {
   // password auth (pre-migration) auto-links here if the emails match — see
   // the plan's decision on dropping password auth entirely. `googleId` is
   // backfilled on every sign-in so it's always in sync even if it was null.
+  const existing = await db.profile.findUnique({ where: { email: google.email } });
   const profile =
-    (await db.profile.findUnique({ where: { email: google.email } })) ??
+    existing ??
     (await db.profile.create({
       data: { email: google.email, googleId: google.sub, fullName: google.name, avatarUrl: google.picture },
     }));
@@ -54,6 +56,7 @@ export async function GET(request: Request) {
 
   const token = await signSessionToken({ sub: profile.id, email: profile.email });
   cookieStore.set(SESSION_COOKIE, token, sessionCookieOptions);
+  cookieStore.set(AUTH_EVENT_COOKIE, `${existing ? "login" : "sign_up"}:google`, authEventCookieOptions);
 
   return NextResponse.redirect(`${origin}${next}`);
 }

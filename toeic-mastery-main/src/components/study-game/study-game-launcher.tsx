@@ -6,6 +6,7 @@ import { ArrowLeft, BookOpenCheck, CircleDot, Grid3x3, ListChecks, Rocket, Spark
 import { Button } from "@/components/ui/button";
 import { canPlayQuiz, type StudyItem } from "@/lib/services/study-game";
 import { logStudySessionAction, practiceVocabularyWordAction } from "@/lib/actions/vocabulary";
+import { trackEvent } from "@/lib/analytics";
 import type { ReviewRating } from "@/lib/services/spaced-repetition";
 import { FlashcardBrowse } from "@/components/study-game/flashcard-browse";
 import { QuizMode } from "@/components/study-game/quiz-mode";
@@ -76,6 +77,7 @@ export function StudyGameLauncher({
   }
 
   function finishSession() {
+    trackEvent("study_game_complete", { game: mode, title, word_count: items.length });
     logElapsed();
     setMode(null);
     setShowOverview(true);

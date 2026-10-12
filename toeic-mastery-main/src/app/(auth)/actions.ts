@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { Prisma } from "@/generated/prisma/client";
 import { SESSION_COOKIE, sessionCookieOptions, signSessionToken } from "@/lib/auth/session";
+import { AUTH_EVENT_COOKIE, authEventCookieOptions } from "@/lib/analytics";
 import { hashPassword, verifyPassword, generateResetCode, hashResetCode, verifyResetCode } from "@/lib/auth/password";
 import { sendPasswordResetCodeEmail } from "@/lib/services/emailjs";
 import {
@@ -24,10 +25,11 @@ export interface ActionResult {
 
 const RESET_CODE_TTL_MINUTES = 15;
 
-async function establishSession(profile: { id: string; email: string }): Promise<void> {
+async function establishSession(profile: { id: string; email: string }, gaEvent: "sign_up" | "login"): Promise<void> {
   const token = await signSessionToken({ sub: profile.id, email: profile.email });
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, token, sessionCookieOptions);
+  cookieStore.set(AUTH_EVENT_COOKIE, `${gaEvent}:email`, authEventCookieOptions);
 }
 
 export async function signOutAction(): Promise<void> {
@@ -48,7 +50,7 @@ export async function registerAction(input: RegisterInput): Promise<ActionResult
 
   try {
     const profile = await db.profile.create({ data: { email, fullName, passwordHash } });
-    await establishSession(profile);
+    await establishSession(profile, "sign_up");
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002") {
       return { error: "Email này đã được đăng ký" };
@@ -74,7 +76,7 @@ export async function loginAction(input: LoginInput): Promise<ActionResult> {
   const valid = await verifyPassword(password, profile.passwordHash);
   if (!valid) return { error: "Email hoặc mật khẩu không đúng" };
 
-  await establishSession(profile);
+  await establishSession(profile, "login");
   redirect("/dashboard");
 }
 
@@ -135,6 +137,6 @@ export async function resetPasswordAction(input: ResetPasswordInput): Promise<Ac
     data: { passwordHash, resetCodeHash: null, resetCodeExpiresAt: null },
   });
 
-  await establishSession(updated);
+  await establishSession(updated, "login");
   redirect("/dashboard");
 }

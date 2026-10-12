@@ -19,6 +19,7 @@ import { VocabularyReviewOverview } from "@/components/vocabulary/vocabulary-rev
 import { logStudySessionAction, practiceVocabularyWordAction } from "@/lib/actions/vocabulary";
 import { completePathStepAction } from "@/lib/actions/vocabulary-path";
 import { useLiveVocabStatus } from "@/hooks/use-live-vocab-status";
+import { trackEvent } from "@/lib/analytics";
 
 const STEPS = [
   { step: 1 as const, label: "Học", shortLabel: "Học", icon: BookOpenCheck },
@@ -117,6 +118,15 @@ export function PathDayRunner({
       startedAtRef.current = null;
     }
     const result = await completePathStepAction(dayId, step, quizResult);
+    if (step === 3) {
+      trackEvent("vocab_day_complete", {
+        path: title ?? backLabel,
+        day_number: dayNumber,
+        stars: result.stars,
+        word_count: items.length,
+        quiz_correct: quizResult?.correct,
+      });
+    }
     if (result.stepsCompleted !== undefined) setStepsCompleted(result.stepsCompleted);
     if (result.stars !== undefined) setStars(result.stars);
     setActiveStep(step < 3 ? ((step + 1) as 1 | 2 | 3) : null);

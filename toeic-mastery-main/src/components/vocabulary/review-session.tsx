@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { trackEvent } from "@/lib/analytics";
 import Link from "next/link";
 import { PartyPopper, Rocket, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -129,6 +130,7 @@ function ReviewRunner({ items, starredTerms, doneLabel }: { items: ReviewItem[];
   }
 
   function finishFlow() {
+    trackEvent("vocab_review_complete", { word_count: flowItems?.length ?? 0 });
     if (startedAtRef.current !== null) {
       void logStudySessionAction(Math.round((Date.now() - startedAtRef.current) / 1000));
       startedAtRef.current = null;

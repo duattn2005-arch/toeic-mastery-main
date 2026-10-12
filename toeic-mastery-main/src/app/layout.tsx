@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { AuthEventTracker } from "@/components/shared/auth-event-tracker";
 
 const GA_MEASUREMENT_ID = "G-GDBZE58K1G";
 
@@ -39,8 +40,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             loaded, and its banner's Accept button has never worked for this
             domain — so GA4 recorded nothing. GA4 below grants full consent itself. */}
         <Providers>{children}</Providers>
+        <AuthEventTracker />
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />
-        <Script id="google-analytics" strategy="afterInteractive">
+        {/* beforeInteractive: the consent + config commands must be queued
+            before any React code runs, or an early trackEvent() (e.g. the
+            sign_up / login event AuthEventTracker sends on hydration) lands
+            on dataLayer ahead of config and GA4 drops it. */}
+        <Script id="google-analytics" strategy="beforeInteractive">
           {`
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}

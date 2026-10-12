@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { trackEvent } from "@/lib/analytics";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useMentorChatStore } from "@/store/mentor-chat-store";
@@ -93,6 +94,7 @@ export function useMentorSend(conversationId: string) {
             }
             if (eventName === "done") {
               sawDone = true;
+              trackEvent("mentor_message");
               await queryClient.invalidateQueries({ queryKey: ["mentor-messages", conversationId] });
               finishStreaming();
             } else if (typeof payload.delta === "string") {
