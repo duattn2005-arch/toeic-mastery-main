@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Award, BookOpenCheck, School, GraduationCap, Layers, Link2, ListChecks, Trophy } from "lucide-react";
+import { Award, BookOpenCheck, School, GraduationCap, Layers, Link2, Trophy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { CATEGORY_ORDER, TopicGrid, groupTopicsByCategory, type VocabularyTopicRow } from "@/components/vocabulary/topic-section-grid";
 import { PathOverviewContent } from "@/components/vocabulary/path/path-overview-content";
@@ -21,11 +21,13 @@ const COLLECTION_ICONS: Record<string, React.ComponentType<{ className?: string 
 };
 
 const CATEGORY_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
-  [CATEGORY_ORDER[0]]: Layers,
   [CATEGORY_ORDER[1]]: Trophy,
-  [CATEGORY_ORDER[2]]: ListChecks,
   [CATEGORY_ORDER[3]]: Link2,
 };
+
+/** Topic categories that no longer get their own tab ("Theo chủ đề",
+ * "Theo Part"). Their topic pages still exist at /vocabulary/topic/[slug]. */
+const HIDDEN_CATEGORY_TABS = new Set([CATEGORY_ORDER[0], CATEGORY_ORDER[2]]);
 
 /** Pill-style horizontal tab bar switching between the 20-day path and each
  * topic category — the 20-day path is the default/first tab. Data for every
@@ -46,7 +48,9 @@ export function VocabularyTabs({
 
   const tabs = [
     { key: PATH_TAB, label: "Từ vựng 20 ngày", icon: BookOpenCheck },
-    ...orderedKeys.map((key) => ({ key, label: key, icon: CATEGORY_ICONS[key] ?? Layers })),
+    ...orderedKeys
+      .filter((key) => !HIDDEN_CATEGORY_TABS.has(key))
+      .map((key) => ({ key, label: key, icon: CATEGORY_ICONS[key] ?? Layers })),
     ...collections.map((c) => ({ key: COLLECTION_TAB_PREFIX + c.key, label: c.label, icon: COLLECTION_ICONS[c.key] ?? GraduationCap })),
   ];
 
@@ -75,21 +79,6 @@ export function VocabularyTabs({
         <PathOverviewContent data={pathOverview} />
       ) : activeCollection ? (
         <CollectionGrid key={activeCollection.key} collection={activeCollection} />
-      ) : activeTab === CATEGORY_ORDER[0] ? (
-        <div className="flex flex-col gap-8">
-          <TopicGrid topics={sections.get(activeTab) ?? []} />
-          {collections.map((collection) => {
-            const Icon = COLLECTION_ICONS[collection.key] ?? GraduationCap;
-            return (
-              <section key={collection.key} className="flex flex-col gap-3">
-                <h2 className="flex items-center gap-2 text-lg font-semibold">
-                  <Icon className="size-5 text-primary" /> {collection.label}
-                </h2>
-                <CollectionGrid collection={collection} />
-              </section>
-            );
-          })}
-        </div>
       ) : (
         <TopicGrid topics={sections.get(activeTab) ?? []} />
       )}
