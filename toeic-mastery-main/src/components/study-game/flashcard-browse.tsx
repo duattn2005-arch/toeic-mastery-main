@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { Volume2, VolumeX } from "lucide-react";
+import { Check, Keyboard, Volume2, VolumeX, X } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import type { StudyItem } from "@/lib/services/study-game";
@@ -11,8 +11,22 @@ import { RATING_BUTTONS } from "@/components/vocabulary/flash-card";
 import { ensureSavedWordAction, unsaveWordIfExistsAction } from "@/lib/actions/dictionary";
 import { useDictionaryHintTutorial } from "@/hooks/use-dictionary-hint-tutorial";
 import { formatIpa, pronounce } from "@/lib/pronounce";
+import { useStudyPreferences } from "@/hooks/use-study-preferences";
+import { StudySettings } from "@/components/study-game/study-settings";
 
-const AUTO_SPEAK_KEY = "flashcard:auto-speak";
+/** Two-button mode: "Đã biết" counts as a normal successful recall. */
+const TWO_BUTTONS: { rating: ReviewRating; label: string; key: string }[] = [
+  { rating: "AGAIN", label: "Học lại", key: "←" },
+  { rating: "GOOD", label: "Đã biết", key: "→" },
+];
+
+/** True when a key press belongs to something else on the page: typing in a
+ * field, or using the settings popover / a dialog. */
+function isForeignTarget(target: EventTarget | null) {
+  if (!(target instanceof HTMLElement)) return false;
+  if (target.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName)) return true;
+  return !!target.closest('[data-radix-popper-content-wrapper], [role="dialog"], [role="menu"]');
+}
 
 interface QueueEntry extends StudyItem {
   queueKey: string;
@@ -28,6 +42,7 @@ export function FlashcardBrowse({
   onFinish,
   onItemResult,
   autoStar = true,
+  showSettings = true,
 }: {
   items: StudyItem[];
   onFinish: () => void;
@@ -38,7 +53,10 @@ export function FlashcardBrowse({
    * VocabularyWords), where "needs review" genuinely means "add/remove from
    * Đã lưu". */
   autoStar?: boolean;
+  /** Off inside StudyFlow, whose own settings button also covers stages. */
+  showSettings?: boolean;
 }) {
+  const [prefs, updatePrefs] = useStudyPreferences();
   const [queue, setQueue] = React.useState<QueueEntry[]>(() => items.map((item, i) => ({ ...item, queueKey: `${item.id}-${i}` })));
   const [index, setIndex] = React.useState(0);
   const [flipped, setFlipped] = React.useState(false);
@@ -74,32 +92,52 @@ export function FlashcardBrowse({
     setIndex((i) => i - 1);
   }
 
-  // Each new card reads its word aloud (opening a card is always a click,
-  // so the browser allows it); learners can mute this, remembered per browser.
-  const [autoSpeak, setAutoSpeak] = React.useState(true);
+  // Each new card reads its word aloud when "Tự phát âm" is on (opening a
+  // card always follows a click or key press, so the browser allows it).
   React.useEffect(() => {
-    try {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      if (window.localStorage.getItem(AUTO_SPEAK_KEY) === "off") setAutoSpeak(false);
-    } catch {
-      // Storage unavailable — keep the default.
-    }
-  }, []);
-  function toggleAutoSpeak() {
-    setAutoSpeak((on) => {
-      try {
-        window.localStorage.setItem(AUTO_SPEAK_KEY, on ? "off" : "on");
-      } catch {
-        // Ignore — the choice just won't persist.
-      }
-      return !on;
-    });
-  }
-  React.useEffect(() => {
-    if (autoSpeak && item) pronounce(item.term, item.audioUrl);
+    if (prefs.autoSpeak && item) pronounce(item.term, item.audioUrl);
     // Only when the card changes, not when the setting is toggled.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [item?.queueKey]);
+
+  function flip() {
+    setFlipped((f) => !f);
+    if (prefs.autoSpeak) pronounce(item.term, item.audioUrl);
+  }
+
+  // Keyboard: Space/Enter flips from anywhere on the page; 2-mode sorts with
+  // left/right arrows (even before flipping, like Quizlet); 4-mode rates
+  // with 1-4 once flipped. A ref keeps the window listener on fresh state.
+  const keyHandler = React.useRef<(e: KeyboardEvent) => void>(() => {});
+  React.useEffect(() => {
+    keyHandler.current = (e: KeyboardEvent) => {
+      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey || isForeignTarget(e.target)) return;
+      if (e.key === " " || e.key === "Enter") {
+        e.preventDefault();
+        flip();
+        return;
+      }
+      if (prefs.ratingMode === "two") {
+        if (e.key === "ArrowLeft") {
+          e.preventDefault();
+          handleRate("AGAIN");
+        } else if (e.key === "ArrowRight") {
+          e.preventDefault();
+          handleRate("GOOD");
+        }
+        return;
+      }
+      if (flipped && ["1", "2", "3", "4"].includes(e.key)) {
+        e.preventDefault();
+        handleRate(RATING_BUTTONS[Number(e.key) - 1].rating);
+      }
+    };
+  });
+  React.useEffect(() => {
+    const listener = (e: KeyboardEvent) => keyHandler.current(e);
+    window.addEventListener("keydown", listener, true);
+    return () => window.removeEventListener("keydown", listener, true);
+  }, []);
 
   function playAudio() {
     pronounce(item.term, item.audioUrl);
@@ -123,13 +161,8 @@ export function FlashcardBrowse({
       <div
         role="button"
         tabIndex={0}
-        onClick={() => setFlipped((f) => !f)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            setFlipped((f) => !f);
-          }
-        }}
+        onClick={flip}
+        aria-label={flipped ? "Lật về mặt từ vựng" : "Lật xem nghĩa"}
         className="relative flex min-h-64 w-full max-w-sm cursor-pointer touch-manipulation select-none flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-card px-6 py-12 text-center shadow-soft transition-transform hover:-translate-y-0.5"
       >
         {!flipped ? (
@@ -139,7 +172,7 @@ export function FlashcardBrowse({
             {item.partOfSpeech && (
               <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-medium text-accent-foreground">{item.partOfSpeech}</span>
             )}
-            <p className="mt-2 text-xs text-muted-foreground">Bấm để xem nghĩa</p>
+            <p className="mt-2 text-xs text-muted-foreground">Bấm thẻ hoặc nhấn Space để xem nghĩa</p>
           </>
         ) : (
           <>
@@ -160,27 +193,51 @@ export function FlashcardBrowse({
         </button>
       </div>
 
-      <AnimatePresence>
-        {flipped && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            className="grid w-full max-w-sm grid-cols-4 gap-2"
-          >
-            {RATING_BUTTONS.map((btn) => (
-              <button
-                key={btn.rating}
-                type="button"
-                onClick={() => handleRate(btn.rating)}
-                className={cn("touch-manipulation rounded-xl px-2 py-3 text-sm font-semibold transition-colors sm:py-2.5 sm:text-xs", btn.className)}
-              >
-                {btn.label}
-              </button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {prefs.ratingMode === "two" ? (
+        <div className="grid w-full max-w-sm grid-cols-2 gap-3">
+          {TWO_BUTTONS.map((btn) => (
+            <button
+              key={btn.rating}
+              type="button"
+              onClick={() => handleRate(btn.rating)}
+              className={cn(
+                "flex touch-manipulation items-center justify-center gap-2 rounded-2xl py-3.5 text-sm font-bold transition-[background-color,transform] duration-300 active:scale-[0.97]",
+                btn.rating === "AGAIN"
+                  ? "bg-destructive/10 text-destructive ring-1 ring-destructive/30 hover:bg-destructive/15"
+                  : "bg-success/10 text-success ring-1 ring-success/30 hover:bg-success/15"
+              )}
+            >
+              {btn.rating === "AGAIN" ? <X className="size-4" strokeWidth={2.5} /> : <Check className="size-4" strokeWidth={2.5} />}
+              {btn.label}
+              <kbd className="ml-1 hidden rounded-md bg-background/70 px-1.5 py-0.5 text-[11px] font-semibold sm:inline">{btn.key}</kbd>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <AnimatePresence>
+          {flipped && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              className="grid w-full max-w-sm grid-cols-4 gap-2"
+            >
+              {RATING_BUTTONS.map((btn, i) => (
+                <button
+                  key={btn.rating}
+                  type="button"
+                  onClick={() => handleRate(btn.rating)}
+                  className={cn("touch-manipulation rounded-xl px-2 py-3 text-sm font-semibold transition-colors sm:py-2.5 sm:text-xs", btn.className)}
+                >
+                  {btn.label}
+                  <span className="ml-1 hidden opacity-70 sm:inline">({i + 1})</span>
+                </button>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      )}
+
       <div className="flex items-center gap-3">
         <button
           type="button"
@@ -196,16 +253,35 @@ export function FlashcardBrowse({
         </button>
         <button
           type="button"
-          onClick={toggleAutoSpeak}
-          aria-pressed={autoSpeak}
+          onClick={() => updatePrefs({ autoSpeak: !prefs.autoSpeak })}
+          aria-pressed={prefs.autoSpeak}
           className="flex h-10 items-center gap-1.5 rounded-lg border border-input px-3 text-xs text-muted-foreground hover:text-foreground"
         >
-          {autoSpeak ? <Volume2 className="size-3.5" /> : <VolumeX className="size-3.5" />}
-          Tự đọc: {autoSpeak ? "Bật" : "Tắt"}
+          {prefs.autoSpeak ? <Volume2 className="size-3.5" /> : <VolumeX className="size-3.5" />}
+          Tự đọc: {prefs.autoSpeak ? "Bật" : "Tắt"}
         </button>
+        {showSettings && <StudySettings />}
       </div>
 
-      {!flipped && isLast && <p className="text-xs text-muted-foreground">Lật thẻ cuối cùng để tự đánh giá và hoàn thành.</p>}
+      <p className="hidden items-center gap-1.5 rounded-full bg-muted/70 px-4 py-1.5 text-xs text-muted-foreground sm:flex">
+        <Keyboard className="size-3.5" />
+        <kbd className="rounded bg-background px-1.5 font-semibold text-foreground">Space</kbd> lật thẻ
+        {prefs.ratingMode === "two" ? (
+          <>
+            , <kbd className="rounded bg-background px-1.5 font-semibold text-foreground">←</kbd> học lại,{" "}
+            <kbd className="rounded bg-background px-1.5 font-semibold text-foreground">→</kbd> đã biết
+          </>
+        ) : (
+          <>
+            , <kbd className="rounded bg-background px-1.5 font-semibold text-foreground">1</kbd>-
+            <kbd className="rounded bg-background px-1.5 font-semibold text-foreground">4</kbd> tự đánh giá
+          </>
+        )}
+      </p>
+
+      {!flipped && isLast && prefs.ratingMode === "four" && (
+        <p className="text-xs text-muted-foreground">Lật thẻ cuối cùng để tự đánh giá và hoàn thành.</p>
+      )}
     </div>
   );
 }
