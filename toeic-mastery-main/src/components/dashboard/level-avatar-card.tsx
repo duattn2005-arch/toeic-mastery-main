@@ -2,6 +2,8 @@ import { Flame, Sparkles, User as UserIcon } from "lucide-react";
 import { AnimatedNumber } from "@/components/dashboard/animated-number";
 import { ProgressRing } from "@/components/dashboard/progress-ring";
 import { AccountAvatar } from "@/components/shared/account-avatar";
+import { XpShopItemVisual } from "@/components/shop/xp-shop-item-visual";
+import { XP_SHOP_ITEMS } from "@/lib/constants/xp-shop";
 import { XP_LEVELS, XP_WEIGHTS, type XpProgress } from "@/lib/services/xp";
 import { cn } from "@/lib/utils";
 
@@ -32,6 +34,7 @@ export function LevelAvatarCard({
 }) {
   const { level, nextLevel, percentToNext, xpToNext, xp } = xpProgress;
   const currentIndex = XP_LEVELS.findIndex((l) => l.name === level.name);
+  const equippedItem = equippedShopItemId ? XP_SHOP_ITEMS.find((i) => i.id === equippedShopItemId) : undefined;
 
   return (
     <section className="relative flex h-full flex-col overflow-hidden rounded-[2rem] border border-border/60 bg-card p-6 shadow-soft">
@@ -39,14 +42,21 @@ export function LevelAvatarCard({
 
       <div className="relative flex items-center gap-5">
         <ProgressRing value={percentToNext} size={104} stroke={7} trackClassName="stroke-muted" indicatorClassName="stroke-primary">
-          <span className="flex size-[78px] items-center justify-center overflow-hidden rounded-full bg-muted ring-2 ring-card">
-            <AccountAvatar
-              avatarUrl={avatarUrl}
-              equippedShopItemId={equippedShopItemId}
-              size={78}
-              fallback={<UserIcon className="size-8 text-muted-foreground" />}
-            />
-          </span>
+          {equippedItem ? (
+            // The equipped XP shop frame draws its own ring and decorations
+            // (waves, crowns, petals) beyond its box, so it must not be
+            // clipped to a circle like a plain photo avatar.
+            <XpShopItemVisual id={equippedItem.id} rarity={equippedItem.rarity} size={72} />
+          ) : (
+            <span className="flex size-[78px] items-center justify-center overflow-hidden rounded-full bg-muted ring-2 ring-card">
+              <AccountAvatar
+                avatarUrl={avatarUrl}
+                equippedShopItemId={null}
+                size={78}
+                fallback={<UserIcon className="size-8 text-muted-foreground" />}
+              />
+            </span>
+          )}
         </ProgressRing>
 
         <div className="min-w-0">
