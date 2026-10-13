@@ -5,7 +5,10 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { AuthEventTracker } from "@/components/shared/auth-event-tracker";
 
-const GA_MEASUREMENT_ID = "G-XNZY09JDNQ";
+/** Every GA4 property that must receive the site's data. Each one is
+ * configured below, so page views and every trackEvent() go to all of them
+ * (gtag sends an event to every configured ID unless send_to says otherwise). */
+const GA_MEASUREMENT_IDS = ["G-XNZY09JDNQ", "G-CCTBJ73HK1", "G-GDBZE58K1G"];
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -41,7 +44,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             domain — so GA4 recorded nothing. GA4 below grants full consent itself. */}
         <Providers>{children}</Providers>
         <AuthEventTracker />
-        <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />
+        <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_IDS[0]}`} strategy="afterInteractive" />
         {/* beforeInteractive: the consent + config commands must be queued
             before any React code runs, or an early trackEvent() (e.g. the
             sign_up / login event AuthEventTracker sends on hydration) lands
@@ -59,7 +62,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             gtag('consent', 'default', granted);
             gtag('consent', 'update', granted);
             gtag('js', new Date());
-            gtag('config', '${GA_MEASUREMENT_ID}');
+            ${GA_MEASUREMENT_IDS.map((id) => `gtag('config', '${id}');`).join(" ")}
           `}
         </Script>
       </body>
