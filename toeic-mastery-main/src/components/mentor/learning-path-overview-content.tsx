@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowUpRight, Calendar, Check, Lock, RotateCcw, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ThemeScene } from "@/components/layout/theme-scene";
+import { DEFAULT_SITE_THEME_ID } from "@/lib/constants/site-themes";
 import { PART_META } from "@/lib/constants/toeic";
 import type { LearningPathOverview, LearningPathDaySummary } from "@/lib/data/learning-path";
 
@@ -44,9 +46,18 @@ export function LearningPathOverviewContent({ data }: { data: LearningPathOvervi
       {data.currentDay && currentDayNumber && (
         <Link
           href={`/mentor/path/day/${currentDayNumber}`}
-          className="group relative flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-[1.75rem] bg-gradient-to-r from-primary to-[#14b8a6] p-6 text-primary-foreground shadow-lift"
+          className="group relative isolate flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-[1.75rem] bg-gradient-to-r from-primary to-[#14b8a6] p-6 text-primary-foreground shadow-lift"
         >
-          <div aria-hidden className="pointer-events-none absolute -top-16 -right-10 size-56 rounded-full bg-white/25 blur-3xl" />
+          {/* The lily-pond cat on the right half, fading into the teal
+              toward the copy on the left */}
+          <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 isolate w-[60%] sm:w-1/2">
+            <ThemeScene
+              themeId={DEFAULT_SITE_THEME_ID}
+              size="cover"
+              position="56% 64%"
+              className="[mask-image:linear-gradient(to_right,transparent,black_45%)]"
+            />
+          </div>
           <div className="relative">
             <p className="text-xs font-bold tracking-wide uppercase opacity-80">Hôm nay</p>
             <p className="mt-1 text-2xl font-extrabold tracking-tight">
