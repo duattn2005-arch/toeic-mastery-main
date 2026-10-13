@@ -1,6 +1,4 @@
-import Link from "next/link";
-import { HeaderAuthButtons } from "@/components/marketing/landing-auth-buttons";
-import { LogoMark } from "@/components/shared/logo-mark";
+import { LandingNav } from "@/components/marketing/landing-nav";
 
 /**
  * Minimal shell for `(app)` routes visited while logged out — used only by
@@ -12,16 +10,8 @@ import { LogoMark } from "@/components/shared/logo-mark";
 export function PublicAppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-svh flex-col bg-background">
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
-        <Link href="/" className="flex items-center gap-2.5">
-          <LogoMark size={36} />
-          <span className="text-lg font-semibold tracking-tight">TOEIC Mastery</span>
-        </Link>
-        <div className="flex items-center gap-2">
-          <HeaderAuthButtons />
-        </div>
-      </header>
-      <main className="mx-auto w-full max-w-6xl flex-1 px-6 pb-16">{children}</main>
+      <LandingNav />
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 pt-10 pb-16 md:px-6">{children}</main>
     </div>
   );
 }

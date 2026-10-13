@@ -1,9 +1,22 @@
-import { User as UserIcon, Rocket, Flame } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { Flame, Sparkles, User as UserIcon } from "lucide-react";
 import { AnimatedNumber } from "@/components/dashboard/animated-number";
+import { ProgressRing } from "@/components/dashboard/progress-ring";
 import { AccountAvatar } from "@/components/shared/account-avatar";
-import type { XpProgress } from "@/lib/services/xp";
+import { XP_LEVELS, XP_WEIGHTS, type XpProgress } from "@/lib/services/xp";
+import { cn } from "@/lib/utils";
 
+const EARN_RULES = [
+  { label: "Mỗi câu đúng", xp: XP_WEIGHTS.perCorrectAnswer },
+  { label: "Xong 1 đề", xp: XP_WEIGHTS.perCompletedAttempt },
+  { label: "Học 1 từ mới", xp: XP_WEIGHTS.perVocabularyLearned },
+  { label: "Mỗi ngày chuỗi", xp: XP_WEIGHTS.perStreakDay },
+];
+
+/**
+ * Level card: avatar wrapped in an XP ring toward the next level, the XP
+ * total, and the full Rookie → Master path so a learner sees where they are
+ * and what comes next.
+ */
 export function LevelAvatarCard({
   avatarUrl,
   equippedShopItemId,
@@ -18,61 +31,103 @@ export function LevelAvatarCard({
   streakCount: number;
 }) {
   const { level, nextLevel, percentToNext, xpToNext, xp } = xpProgress;
+  const currentIndex = XP_LEVELS.findIndex((l) => l.name === level.name);
 
   return (
-    <div className="flex w-full max-w-[280px] flex-col items-center gap-4 rounded-2xl bg-white/10 p-5 text-center backdrop-blur-sm">
-      <div className="relative">
-        <span className="absolute inset-0 -m-1.5 rounded-full bg-white/25 blur-lg" aria-hidden />
-        <span className="relative flex size-24 items-center justify-center overflow-hidden rounded-full border-[3px] border-white/50 bg-white/20 shadow-lg">
-          <AccountAvatar
-            avatarUrl={avatarUrl}
-            equippedShopItemId={equippedShopItemId}
-            size={96}
-            fallback={<UserIcon className="size-9 text-white/80" />}
-          />
-        </span>
-      </div>
+    <section className="relative flex h-full flex-col overflow-hidden rounded-[2rem] border border-border/60 bg-card p-6 shadow-soft">
+      <div aria-hidden className="pointer-events-none absolute -top-24 -right-20 size-64 rounded-full bg-primary/15 blur-3xl" />
 
-      <div>
-        <p className="text-xs font-bold tracking-[0.2em] text-white/70 uppercase">{level.name}</p>
-        <p className="text-4xl font-bold tracking-tight text-white">
-          <AnimatedNumber value={xp} />
-        </p>
-        <p className="text-xs font-medium text-white/70">XP</p>
-      </div>
+      <div className="relative flex items-center gap-5">
+        <ProgressRing value={percentToNext} size={104} stroke={7} trackClassName="stroke-muted" indicatorClassName="stroke-primary">
+          <span className="flex size-[78px] items-center justify-center overflow-hidden rounded-full bg-muted ring-2 ring-card">
+            <AccountAvatar
+              avatarUrl={avatarUrl}
+              equippedShopItemId={equippedShopItemId}
+              size={78}
+              fallback={<UserIcon className="size-8 text-muted-foreground" />}
+            />
+          </span>
+        </ProgressRing>
 
-      <div className="w-full">
-        <div className="mb-1.5 flex items-center justify-between text-[10px] font-bold tracking-wide text-white/70 uppercase">
-          <span>{level.name}</span>
-          {nextLevel && <span className="text-white">{percentToNext}%</span>}
-          <span>{nextLevel?.name ?? "Max"}</span>
-        </div>
-        <Progress value={percentToNext} className="h-2 bg-white/20" indicatorClassName="bg-white" />
-      </div>
-
-      {nextLevel && xpToNext !== null ? (
-        <p className="flex items-center gap-1 text-xs text-white/85">
-          Còn <span className="font-semibold text-white">{xpToNext}</span> XP để lên{" "}
-          <span className="font-semibold text-white">{nextLevel.name}</span>! <Rocket className="size-3.5" />
-        </p>
-      ) : (
-        <p className="text-xs text-white/85">Bạn đã đạt cấp cao nhất! 🏆</p>
-      )}
-
-      <div className="flex w-full items-center justify-around border-t border-white/15 pt-3">
-        <div>
-          <p className="text-[10px] font-semibold tracking-wide text-white/60 uppercase">Hôm nay</p>
-          <p className="text-sm font-bold text-warning">+{todayXp} XP</p>
-        </div>
-        <div className="h-7 w-px bg-white/15" aria-hidden />
-        <div>
-          <p className="text-[10px] font-semibold tracking-wide text-white/60 uppercase">Chuỗi</p>
-          <p className="flex items-center justify-center gap-1 text-sm font-bold text-white">
-            <Flame className="glow-pulse size-3.5 text-orange-300" />
-            {streakCount} ngày
+        <div className="min-w-0">
+          <span className="inline-flex items-center gap-1 rounded-md bg-accent px-2 py-0.5 text-xs font-bold text-accent-foreground">
+            <Sparkles className="size-3" strokeWidth={2} />
+            {level.name}
+          </span>
+          <p className="mt-1.5 text-4xl leading-none font-extrabold tracking-tight tabular-nums">
+            <AnimatedNumber value={xp} />
+            <span className="ml-1 text-base font-semibold text-muted-foreground">XP</span>
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {nextLevel && xpToNext !== null ? (
+              <>
+                Còn <span className="font-bold text-foreground tabular-nums">{xpToNext}</span> XP để lên{" "}
+                <span className="font-bold text-primary">{nextLevel.name}</span>
+              </>
+            ) : (
+              "Bạn đã đạt cấp cao nhất"
+            )}
           </p>
         </div>
       </div>
-    </div>
+
+      {/* Level path: every tier as a node, filled up to the current one */}
+      <ol className="relative mt-7 grid grid-cols-5" aria-label="Lộ trình cấp độ">
+        <span aria-hidden className="absolute top-[9px] right-[10%] left-[10%] h-0.5 rounded-full bg-muted" />
+        <span
+          aria-hidden
+          className="absolute top-[9px] left-[10%] h-0.5 rounded-full bg-primary"
+          style={{ width: `${(Math.max(0, currentIndex) / (XP_LEVELS.length - 1)) * 80}%` }}
+        />
+        {XP_LEVELS.map((l, i) => {
+          const reached = i <= currentIndex;
+          const current = i === currentIndex;
+          return (
+            <li key={l.name} className="relative flex flex-col items-center gap-1.5" aria-current={current ? "step" : undefined}>
+              <span
+                className={cn(
+                  "flex size-5 items-center justify-center rounded-full border-2",
+                  reached ? "border-primary bg-primary" : "border-muted bg-card",
+                  current && "ring-4 ring-primary/25"
+                )}
+              >
+                {reached && <span className="size-1.5 rounded-full bg-primary-foreground" />}
+              </span>
+              <span className={cn("text-[11px] font-semibold", current ? "text-foreground" : "text-muted-foreground")}>
+                {l.name}
+              </span>
+            </li>
+          );
+        })}
+      </ol>
+
+      {/* How to earn XP: the real weights from computeXp, so the numbers
+          always match what a learner actually gets. */}
+      <div className="mt-6">
+        <p className="mb-2 text-xs font-semibold text-muted-foreground">Cách kiếm XP</p>
+        <ul className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs">
+          {EARN_RULES.map((rule) => (
+            <li key={rule.label} className="flex items-center justify-between gap-2">
+              <span className="truncate text-muted-foreground">{rule.label}</span>
+              <span className="shrink-0 font-bold text-primary tabular-nums">+{rule.xp}</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <div className="mt-auto grid grid-cols-2 gap-2 pt-6">
+        <div className="rounded-2xl bg-muted/60 px-4 py-3">
+          <p className="text-[11px] font-medium text-muted-foreground">Hôm nay</p>
+          <p className="text-lg font-extrabold text-primary tabular-nums">+{todayXp} XP</p>
+        </div>
+        <div className="rounded-2xl bg-muted/60 px-4 py-3">
+          <p className="text-[11px] font-medium text-muted-foreground">Chuỗi ngày</p>
+          <p className="flex items-center gap-1 text-lg font-extrabold tabular-nums">
+            <Flame className="size-4 text-orange-400" />
+            {streakCount}
+          </p>
+        </div>
+      </div>
+    </section>
   );
 }

@@ -30,6 +30,13 @@ export interface SiteTheme {
   previewSrc?: string;
   /** Public path to the full-res background photo (media: "image"). */
   imageSrc?: string;
+  /** Optional still version of an animated image, used blurred behind app
+   * pages (SiteThemeBackground "ambient"); falls back to imageSrc. */
+  stillSrc?: string;
+  /** Optional daytime versions shown in light mode (see ThemeScene); fall
+   * back to the night assets above. */
+  imageSrcDay?: string;
+  stillSrcDay?: string;
   /** Public path to the looping background video (media: "video"). */
   videoSrc?: string;
   /** Gradient fallback shown while/if the real asset is missing. */
@@ -57,6 +64,9 @@ export const SITE_THEMES: SiteTheme[] = [
     media: "image",
     previewSrc: "/themes/lily-pond-cat/background.svg",
     imageSrc: "/themes/lily-pond-cat/background.svg",
+    stillSrc: "/themes/lily-pond-cat/background-still.svg",
+    imageSrcDay: "/themes/lily-pond-cat/background-day.svg",
+    stillSrcDay: "/themes/lily-pond-cat/background-day-still.svg",
     swatchFrom: "#3c6e52",
     swatchTo: "#1f3d2e",
   },

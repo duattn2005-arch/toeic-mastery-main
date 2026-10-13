@@ -43,7 +43,7 @@ export function generateRecommendations(input: RecommendationInput): Recommendat
     const meta = PART_META[p.part];
     recs.push({
       title: `Luyện tập ${meta.label}`,
-      description: `Độ chính xác hiện tại ${Math.round(p.accuracy * 100)}% trên ${p.attempted} câu — thấp hơn mức mục tiêu 60%.`,
+      description: `Độ chính xác hiện tại ${Math.round(p.accuracy * 100)}% trên ${p.attempted} câu, thấp hơn mức mục tiêu 60%.`,
       href: hrefForPart(p.part),
       priority: 1 - p.accuracy,
     });
@@ -61,7 +61,7 @@ export function generateRecommendations(input: RecommendationInput): Recommendat
   if (recs.length === 0) {
     recs.push({
       title: "Làm một đề thi thử đầy đủ",
-      description: "Chưa đủ dữ liệu để phân tích điểm yếu — hãy hoàn thành thêm bài luyện tập.",
+      description: "Chưa đủ dữ liệu để phân tích điểm yếu. Hãy hoàn thành thêm bài luyện tập.",
       href: "/practice",
       priority: 0,
     });

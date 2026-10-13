@@ -19,7 +19,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "rounded-2xl border border-border bg-card p-4 shadow-soft transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lg",
+        "rounded-2xl border border-border/70 bg-card p-4 shadow-soft transition-[transform,box-shadow] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5 hover:shadow-lift",
         className
       )}
     >
@@ -27,17 +27,17 @@ export function StatCard({
         <span className="text-xs font-medium text-muted-foreground">{label}</span>
         <span
           className={cn(
-            "flex size-9 items-center justify-center rounded-full",
+            "flex size-9 items-center justify-center rounded-xl",
             accent === "primary" && "bg-accent text-accent-foreground",
             accent === "success" && "bg-success/10 text-success",
             accent === "info" && "bg-info/10 text-info",
             accent === "warning" && "bg-warning/10 text-warning"
           )}
         >
-          <Icon className="size-4" />
+          <Icon className="size-4" strokeWidth={1.75} />
         </span>
       </div>
-      <p className="mt-2.5 text-2xl font-semibold tracking-tight">{value}</p>
+      <p className="mt-2.5 text-2xl font-bold tracking-tight tabular-nums">{value}</p>
       {hint && <p className="mt-0.5 text-xs text-muted-foreground">{hint}</p>}
     </div>
   );

@@ -2,7 +2,10 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Bell, Clock, Crown, Gem, Headset, LogOut, Menu, Search, Settings, User as UserIcon, Users } from "lucide-react";
+import { usePathname } from "next/navigation";
+import { Bell, Clock, Crown, Gem, Headset, LogOut, Menu, Search, Settings, ShieldCheck, User as UserIcon, Users } from "lucide-react";
+
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -45,7 +48,7 @@ function ReminderBell({ reminder }: { reminder: VocabularyReminder }) {
         <DropdownMenuLabel>Nhắc ôn từ vựng</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {total === 0 ? (
-          <p className="px-2 py-3 text-sm text-muted-foreground">Không có từ nào cần ôn — bạn đang theo kịp lịch ôn tập!</p>
+          <p className="px-2 py-3 text-sm text-muted-foreground">Không có từ nào cần ôn. Bạn đang theo kịp lịch ôn tập.</p>
         ) : (
           <div className="flex flex-col gap-2 px-2 py-2 text-sm">
             {reminder.dueTodayCount > 0 && (
@@ -85,9 +88,12 @@ export function TopHeader({
   // imported into this client component; duplicating a one-line boolean
   // check is cheaper than threading a computed prop through every caller.
   const isPro = profile.plan === "PRO" && (!profile.proExpiresAt || profile.proExpiresAt > new Date());
+  const pathname = usePathname();
+  const isActive = (href: string) =>
+    href === "/dashboard" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border bg-background/80 px-4 backdrop-blur-sm sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-white/[0.06] bg-background/45 px-4 backdrop-blur-2xl backdrop-saturate-150 sm:px-6">
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Mở menu">
@@ -97,24 +103,37 @@ export function TopHeader({
         <SheetContent side="left" className="w-72 bg-sidebar p-0 text-sidebar-foreground [&_svg]:text-current">
           <SheetHeader className="flex-row items-center gap-2.5 px-6 py-6 space-y-0">
             <EquippableLogoMark size={32} equippedShopItemId={profile.equippedShopItemId} />
-            <SheetTitle className="text-white">TOEIC Mastery</SheetTitle>
+            <SheetTitle className="text-sidebar-active">TOEIC Mastery</SheetTitle>
           </SheetHeader>
           <nav className="flex flex-col gap-1 px-3">
             {MAIN_NAV.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-muted-foreground hover:bg-sidebar-active-bg/60 hover:text-white"
+                aria-current={isActive(item.href) ? "page" : undefined}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-300",
+                  isActive(item.href)
+                    ? "bg-sidebar-active-bg text-sidebar-active"
+                    : "text-sidebar-foreground hover:bg-sidebar-active-bg/60 hover:text-sidebar-active"
+                )}
               >
-                <item.icon className="size-[18px]" />
+                <item.icon className="size-[18px]" strokeWidth={1.75} />
                 {item.label}
               </Link>
             ))}
             {profile.role === "ADMIN" && (
               <Link
                 href="/admin"
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-muted-foreground hover:bg-sidebar-active-bg/60 hover:text-white"
+                aria-current={isActive("/admin") ? "page" : undefined}
+                className={cn(
+                  "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-300",
+                  isActive("/admin")
+                    ? "bg-sidebar-active-bg text-sidebar-active"
+                    : "text-sidebar-foreground hover:bg-sidebar-active-bg/60 hover:text-sidebar-active"
+                )}
               >
+                <ShieldCheck className="size-[18px]" strokeWidth={1.75} />
                 Quản trị
               </Link>
             )}
@@ -132,30 +151,26 @@ export function TopHeader({
       <button
         type="button"
         onClick={onOpenSearch}
-        className="flex flex-1 items-center gap-2 rounded-xl border border-input bg-muted/50 px-3.5 py-2 text-sm text-muted-foreground transition-colors hover:bg-muted sm:max-w-sm"
+        className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-border/70 bg-card/70 px-4 py-2 text-sm text-muted-foreground transition-colors duration-300 hover:border-primary/30 hover:bg-card sm:max-w-sm"
       >
         <Search className="size-4" />
         <span className="hidden sm:inline">Tìm đề thi, từ vựng, ngữ pháp...</span>
-        <span className="sm:hidden">Tìm kiếm</span>
+        <span className="whitespace-nowrap sm:hidden">Tìm kiếm</span>
         <kbd className="ml-auto hidden rounded-md border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:inline">
           Ctrl K
         </kbd>
       </button>
 
       <div className="ml-auto flex items-center gap-2">
-        <Button asChild data-tour="dashboard-quick-study" size="sm" className="glow-pulse-blue hidden bg-blue-500 text-white hover:bg-blue-400 sm:flex">
+        <Button asChild data-tour="dashboard-quick-study" size="sm" className="hidden rounded-full sm:flex">
           <Link href="/quick-study">
             <Clock className="size-4" /> Quick Study
           </Link>
         </Button>
         {!isPro && (
-          <Button
-            asChild
-            size="sm"
-            className="hidden bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-[0_0_16px_-2px_rgba(249,115,22,0.6)] hover:from-amber-400 hover:to-orange-400 sm:flex"
-          >
+          <Button asChild size="sm" variant="outline" className="hidden rounded-full sm:flex">
             <Link href="/pricing">
-              <Crown className="size-4" /> Nâng cấp
+              <Crown className="size-4 text-warning" /> Nâng cấp
             </Link>
           </Button>
         )}

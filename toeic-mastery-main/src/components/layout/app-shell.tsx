@@ -33,8 +33,8 @@ export function AppShell({
 
   return (
     <div className={`min-h-svh ${theme.media === "gradient" ? "bg-background" : ""}`}>
-      <SiteThemeBackground themeId={siteThemeId} />
-      <AppSidebar profile={profile} />
+      <SiteThemeBackground themeId={siteThemeId} variant="ambient" />
+      <AppSidebar profile={profile} siteThemeId={siteThemeId} />
       <div className="flex min-h-svh flex-col lg:pl-64">
         <TopHeader
           profile={profile}
