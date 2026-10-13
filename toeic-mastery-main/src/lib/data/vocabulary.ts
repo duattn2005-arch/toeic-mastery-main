@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import type { StudyItem } from "@/lib/services/study-game";
 import { VOCAB_COLLECTION_CATEGORIES } from "@/lib/content/vocab-collections";
-import { srsDueCutoff, vocabStatus } from "@/lib/services/spaced-repetition";
+import { DAILY_REVIEW_LIMIT, srsDay, srsDayKey, srsDueCutoff, vocabStatus } from "@/lib/services/spaced-repetition";
 
 /** Excludes the DB mirror of collection topics (IIG Vocab, ETS 2026) —
  * those have their own tabs and pages (see ensureCollectionSynced). */
@@ -91,11 +91,55 @@ export async function getTopicStudyItems(
 }
 
 /** `topicSlug` narrows the queue to one topic (e.g. an IIG topic's own review). */
-export async function getDueReviewQueue(userId: string, limit = 30, topicSlug?: string) {
+/** How far ahead spreadDueReviews may push overflow (days). */
+const SPREAD_HORIZON_DAYS = 120;
+
+/**
+ * Caps today's review load at DAILY_REVIEW_LIMIT: when more words are due
+ * (missed days pile up, or a big batch was learned together), the ones
+ * that matter most stay today — "Đang học" first, then the longest overdue —
+ * and the rest are moved to the following days, each filled only up to the
+ * same limit. Idempotent and cheap when nothing is over the limit (one
+ * count), so it can run on every page load.
+ */
+export async function spreadDueReviews(userId: string) {
+  const today = srsDueCutoff();
+  const dueCount = await db.userVocabulary.count({ where: { userId, nextReviewDate: { lte: today } } });
+  if (dueCount <= DAILY_REVIEW_LIMIT) return;
+
+  const due = await db.userVocabulary.findMany({
+    where: { userId, nextReviewDate: { lte: today } },
+    select: { id: true },
+    orderBy: [{ isLearned: "asc" }, { nextReviewDate: "asc" }, { id: "asc" }],
+  });
+  const overflow = due.slice(DAILY_REVIEW_LIMIT).map((d) => d.id);
+
+  const ahead = await db.userVocabulary.groupBy({
+    by: ["nextReviewDate"],
+    where: { userId, nextReviewDate: { gt: today, lte: srsDay(SPREAD_HORIZON_DAYS) } },
+    _count: { _all: true },
+  });
+  const load = new Map(ahead.map((a) => [srsDayKey(a.nextReviewDate), a._count._all]));
+
+  const moves: { day: Date; ids: string[] }[] = [];
+  let next = 0;
+  for (let offset = 1; next < overflow.length; offset++) {
+    const day = srsDay(offset);
+    // Past the horizon, just keep filling day by day at the limit.
+    const room = DAILY_REVIEW_LIMIT - (offset <= SPREAD_HORIZON_DAYS ? (load.get(srsDayKey(day)) ?? 0) : 0);
+    if (room <= 0) continue;
+    moves.push({ day, ids: overflow.slice(next, next + room) });
+    next += room;
+  }
+  await db.$transaction(moves.map((m) => db.userVocabulary.updateMany({ where: { id: { in: m.ids } }, data: { nextReviewDate: m.day } })));
+}
+
+export async function getDueReviewQueue(userId: string, limit = DAILY_REVIEW_LIMIT, topicSlug?: string) {
+  await spreadDueReviews(userId);
   return db.userVocabulary.findMany({
     where: { userId, nextReviewDate: { lte: srsDueCutoff() }, ...(topicSlug ? { vocabularyWord: { topic: { slug: topicSlug } } } : {}) },
     include: { vocabularyWord: true },
-    orderBy: { nextReviewDate: "asc" },
+    orderBy: [{ isLearned: "asc" }, { nextReviewDate: "asc" }],
     take: limit,
   });
 }
@@ -126,6 +170,7 @@ export interface VocabularyReminder {
  * hours on a `@db.Date` column reads back as the previous calendar day for
  * any positive UTC offset (all of Vietnam) — the Vietnam day, see srsDueCutoff(). */
 export async function getVocabularyReminder(userId: string): Promise<VocabularyReminder> {
+  await spreadDueReviews(userId);
   const todayStart = srsDueCutoff();
   const tomorrowStart = new Date(todayStart);
   tomorrowStart.setUTCDate(tomorrowStart.getUTCDate() + 1);

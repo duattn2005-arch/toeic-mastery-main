@@ -100,3 +100,40 @@ export const VOCAB_STATUS_LABEL: Record<VocabStatus, string> = {
 export function srsDueCutoff(now: Date = new Date()) {
   return vnDay(now, 0);
 }
+
+/** Most words a learner is asked to review in one day. Anything due beyond
+ * this is moved to the following days (see spreadDueReviews), learning
+ * words and the longest-overdue first — so missing a day or two never
+ * turns into a 50–70 word wall. */
+export const DAILY_REVIEW_LIMIT = 35;
+
+/** The Vietnam calendar day `offset` days after today, as stored in the
+ * `@db.Date` column (UTC midnight). */
+export function srsDay(offset: number, now: Date = new Date()) {
+  return vnDay(now, offset);
+}
+
+/** "YYYY-MM-DD" of a stored review date — the key for per-day load maps. */
+export function srsDayKey(date: Date) {
+  return date.toISOString().slice(0, 10);
+}
+
+/**
+ * Load balancing for a mastered word's next review: instead of exactly
+ * `intervalDays` out (so every word learned on one day comes back on one
+ * day), pick the least-loaded day within ±20% of it (at least ±1 day, never
+ * sooner than 2 days), ties going to the day closest to the interval.
+ * `loadByDay` holds how many of the learner's words are already due on each
+ * day ("YYYY-MM-DD" -> count).
+ */
+export function balancedReviewDay(intervalDays: number, loadByDay: Map<string, number>, now: Date = new Date()): { day: Date; offset: number } {
+  const fuzz = Math.max(1, Math.round(intervalDays * 0.2));
+  let best = { day: vnDay(now, intervalDays), offset: intervalDays, load: Infinity };
+  for (let offset = Math.max(2, intervalDays - fuzz); offset <= intervalDays + fuzz; offset++) {
+    const day = vnDay(now, offset);
+    const load = loadByDay.get(srsDayKey(day)) ?? 0;
+    const closer = Math.abs(offset - intervalDays) < Math.abs(best.offset - intervalDays);
+    if (load < best.load || (load === best.load && closer)) best = { day, offset, load };
+  }
+  return { day: best.day, offset: best.offset };
+}

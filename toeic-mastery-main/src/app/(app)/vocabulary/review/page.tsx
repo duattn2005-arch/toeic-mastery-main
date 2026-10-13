@@ -10,7 +10,7 @@ export default async function VocabularyReviewPage({ searchParams }: { searchPar
   const { topic: topicSlug } = await searchParams;
   const profile = await requireUser();
   const [due, topic] = await Promise.all([
-    getDueReviewQueue(profile.id, 200, topicSlug),
+    getDueReviewQueue(profile.id, undefined, topicSlug),
     topicSlug ? db.vocabularyTopic.findUnique({ where: { slug: topicSlug }, select: { name: true } }) : Promise.resolve(null),
   ]);
 
