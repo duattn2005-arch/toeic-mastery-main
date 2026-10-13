@@ -206,9 +206,9 @@ export function QuizMode({
         <Progress value={(results.length / totalUnique) * 100} className="h-1.5" />
       </div>
 
-      <div className="w-full max-w-sm rounded-3xl border border-border bg-card p-6 text-center shadow-soft">
+      <div className="w-full max-w-sm rounded-3xl border border-border bg-card p-5 text-center shadow-soft sm:p-6">
         <p className="text-xs font-medium text-muted-foreground">Từ này có nghĩa là gì?</p>
-        <p className="mt-2 text-3xl font-bold tracking-tight">{question.item.term}</p>
+        <p className="mt-2 break-words text-2xl font-bold tracking-tight sm:text-3xl">{question.item.term}</p>
         {formatIpa(question.item.ipa) && <p className="mt-1 text-sm text-muted-foreground">{formatIpa(question.item.ipa)}</p>}
       </div>
 
@@ -224,7 +224,7 @@ export function QuizMode({
               onClick={() => pick(i)}
               disabled={revealed}
               className={cn(
-                "flex items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-medium transition-colors",
+                "flex min-h-12 touch-manipulation items-center justify-between rounded-xl border px-4 py-3 text-left text-sm font-medium transition-colors",
                 !revealed && "border-border bg-card hover:border-primary/40 hover:bg-accent/40",
                 revealed && isCorrect && "border-success bg-success/10 text-success",
                 revealed && isPicked && !isCorrect && "border-destructive bg-destructive/10 text-destructive",

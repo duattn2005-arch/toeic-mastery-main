@@ -3,9 +3,9 @@ import { Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/providers";
-import { AnalyticsGuard } from "@/components/analytics-guard";
-import { GA_DISABLE_FLAG, GA_MEASUREMENT_ID } from "@/lib/analytics";
-const SECURE_PRIVACY_SRC = "https://app.secureprivacy.ai/script/6a9942ee4e74644db5656e70.js";
+import { AuthEventTracker } from "@/components/shared/auth-event-tracker";
+
+const GA_MEASUREMENT_ID = "G-GDBZE58K1G";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -34,24 +34,30 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="vi" className={`${inter.variable} h-full antialiased`} suppressHydrationWarning>
       <body className="min-h-full bg-background font-sans text-foreground" suppressHydrationWarning>
-        {/* beforeInteractive scripts are always injected as high as possible in
-            <head>, ahead of everything else, regardless of where they sit in
-            this tree — that's what a cookie consent manager needs (load before
-            any other tracking script gets a chance to run). Secure Privacy
-            replaces CookieHub (removed) — running two consent managers at
-            once would fight over showing/dismissing their own banners, the
-            same class of stacking bug already found and fixed for the
-            onboarding tour. */}
-        <Script src={SECURE_PRIVACY_SRC} strategy="beforeInteractive" />
+        {/* No cookie-consent manager here on purpose: Secure Privacy's script
+            (app.secureprivacy.ai/script/6a9942ee4e74644db5656e70.js) set Google
+            Consent Mode to analytics_storage "denied" by default before gtag
+            loaded, and its banner's Accept button has never worked for this
+            domain — so GA4 recorded nothing. GA4 below grants full consent itself. */}
         <Providers>{children}</Providers>
-        <AnalyticsGuard />
+        <AuthEventTracker />
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />
-        <Script id="google-analytics" strategy="afterInteractive">
+        {/* beforeInteractive: the consent + config commands must be queued
+            before any React code runs, or an early trackEvent() (e.g. the
+            sign_up / login event AuthEventTracker sends on hydration) lands
+            on dataLayer ahead of config and GA4 drops it. */}
+        <Script id="google-analytics" strategy="beforeInteractive">
           {`
-            // No GA on admin pages (see analytics-guard.tsx); every other page counts.
-            window['${GA_DISABLE_FLAG}'] = location.pathname === '/admin' || location.pathname.indexOf('/admin/') === 0;
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
+            // The Google tag's account-side settings default every consent
+            // type to "denied" (gcs=G100: no _ga cookie, only anonymous pings,
+            // so reports showed 0) — even on a bare page with just this ID.
+            // Granting here, before config, makes the very first page_view a
+            // full hit (gcs=G111) and lets GA4 set its cookies.
+            var granted = { ad_storage: 'granted', ad_user_data: 'granted', ad_personalization: 'granted', analytics_storage: 'granted', functionality_storage: 'granted', personalization_storage: 'granted', security_storage: 'granted' };
+            gtag('consent', 'default', granted);
+            gtag('consent', 'update', granted);
             gtag('js', new Date());
             gtag('config', '${GA_MEASUREMENT_ID}');
           `}

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { trackEvent } from "@/lib/analytics";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -22,6 +23,7 @@ export function ActivationCodeForm() {
         toast.error(result.error);
         return;
       }
+      trackEvent("redeem_pro_code");
       toast.success("Kích hoạt Pro thành công!");
       setCode("");
       router.refresh();

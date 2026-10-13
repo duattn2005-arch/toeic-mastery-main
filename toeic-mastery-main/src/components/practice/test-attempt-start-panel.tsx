@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { trackEvent } from "@/lib/analytics";
 import { BookOpen, FileText, Headphones, Loader2 } from "lucide-react";
 import { startAttemptAction } from "@/lib/actions/attempts";
 import { Button } from "@/components/ui/button";
@@ -80,6 +81,7 @@ function ModeOptions({
   async function start(key: string, parts: TestPart[]) {
     if (pendingKey) return;
     setPendingKey(key);
+    trackEvent("test_start", { test_id: testId, mode, part_count: parts.length || 7 });
     try {
       await startAttemptAction(testId, mode, parts);
     } finally {

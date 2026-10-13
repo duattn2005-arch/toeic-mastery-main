@@ -130,11 +130,11 @@ export function FlashcardBrowse({
             setFlipped((f) => !f);
           }
         }}
-        className="relative flex h-64 cursor-pointer w-full max-w-sm flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-card p-6 text-center shadow-soft transition-transform hover:-translate-y-0.5"
+        className="relative flex min-h-64 w-full max-w-sm cursor-pointer touch-manipulation select-none flex-col items-center justify-center gap-3 rounded-3xl border border-border bg-card px-6 py-12 text-center shadow-soft transition-transform hover:-translate-y-0.5"
       >
         {!flipped ? (
           <>
-            <p className="text-3xl font-bold tracking-tight">{item.term}</p>
+            <p className="max-w-full break-words text-2xl font-bold tracking-tight sm:text-3xl">{item.term}</p>
             {ipa && <p className="text-base text-muted-foreground">{ipa}</p>}
             {item.partOfSpeech && (
               <span className="rounded-full bg-accent px-2.5 py-1 text-xs font-medium text-accent-foreground">{item.partOfSpeech}</span>
@@ -143,7 +143,7 @@ export function FlashcardBrowse({
           </>
         ) : (
           <>
-            <p className="text-2xl font-bold text-primary">{item.meaningVi}</p>
+            <p className="max-w-full break-words text-xl font-bold text-primary sm:text-2xl">{item.meaningVi}</p>
             {item.exampleEn && <p className="mt-1 max-w-xs text-sm italic text-muted-foreground">&ldquo;{item.exampleEn}&rdquo;</p>}
           </>
         )}
@@ -160,30 +160,6 @@ export function FlashcardBrowse({
         </button>
       </div>
 
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          onClick={goPrev}
-          disabled={index === 0}
-          aria-label="Từ trước"
-          className="flex size-9 items-center justify-center rounded-lg border border-input disabled:opacity-40"
-        >
-          ‹
-        </button>
-        <button type="button" onClick={playAudio} aria-label="Phát âm" className="flex size-9 items-center justify-center rounded-lg border border-input">
-          <Volume2 className="size-4" />
-        </button>
-        <button
-          type="button"
-          onClick={toggleAutoSpeak}
-          aria-pressed={autoSpeak}
-          className="flex h-9 items-center gap-1.5 rounded-lg border border-input px-3 text-xs text-muted-foreground hover:text-foreground"
-        >
-          {autoSpeak ? <Volume2 className="size-3.5" /> : <VolumeX className="size-3.5" />}
-          Tự đọc: {autoSpeak ? "Bật" : "Tắt"}
-        </button>
-      </div>
-
       <AnimatePresence>
         {flipped && (
           <motion.div
@@ -197,7 +173,7 @@ export function FlashcardBrowse({
                 key={btn.rating}
                 type="button"
                 onClick={() => handleRate(btn.rating)}
-                className={cn("rounded-xl px-2 py-2.5 text-xs font-semibold transition-colors", btn.className)}
+                className={cn("touch-manipulation rounded-xl px-2 py-3 text-sm font-semibold transition-colors sm:py-2.5 sm:text-xs", btn.className)}
               >
                 {btn.label}
               </button>
@@ -205,6 +181,30 @@ export function FlashcardBrowse({
           </motion.div>
         )}
       </AnimatePresence>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={goPrev}
+          disabled={index === 0}
+          aria-label="Từ trước"
+          className="flex size-10 items-center justify-center rounded-lg border border-input disabled:opacity-40"
+        >
+          ‹
+        </button>
+        <button type="button" onClick={playAudio} aria-label="Phát âm" className="flex size-10 items-center justify-center rounded-lg border border-input">
+          <Volume2 className="size-4" />
+        </button>
+        <button
+          type="button"
+          onClick={toggleAutoSpeak}
+          aria-pressed={autoSpeak}
+          className="flex h-10 items-center gap-1.5 rounded-lg border border-input px-3 text-xs text-muted-foreground hover:text-foreground"
+        >
+          {autoSpeak ? <Volume2 className="size-3.5" /> : <VolumeX className="size-3.5" />}
+          Tự đọc: {autoSpeak ? "Bật" : "Tắt"}
+        </button>
+      </div>
+
       {!flipped && isLast && <p className="text-xs text-muted-foreground">Lật thẻ cuối cùng để tự đánh giá và hoàn thành.</p>}
     </div>
   );

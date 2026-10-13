@@ -10,7 +10,7 @@ export default async function VocabularyReviewPage({ searchParams }: { searchPar
   const { topic: topicSlug } = await searchParams;
   const profile = await requireUser();
   const [due, topic] = await Promise.all([
-    getDueReviewQueue(profile.id, 200, topicSlug),
+    getDueReviewQueue(profile.id, undefined, topicSlug),
     topicSlug ? db.vocabularyTopic.findUnique({ where: { slug: topicSlug }, select: { name: true } }) : Promise.resolve(null),
   ]);
 
@@ -42,7 +42,7 @@ export default async function VocabularyReviewPage({ searchParams }: { searchPar
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Ôn tập từ vựng{topic ? ` — ${topic.name}` : ""}</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Flashcard → Nối từ → Blast → Kiểm tra, theo lịch lặp lại ngắt quãng (spaced repetition).</p>
+        <p className="mt-1 text-sm text-muted-foreground">Flashcard → Nối từ → Blast → Bong bóng → Kiểm tra, theo lịch lặp lại ngắt quãng (spaced repetition).</p>
       </div>
       <ReviewSession items={items} practiceItems={practiceItems} starredTerms={starredMatches.map((s) => s.word)} />
     </div>

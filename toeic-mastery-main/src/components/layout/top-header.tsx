@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Bell, Clock, Crown, Gem, LogOut, Menu, Search, Settings, User as UserIcon, Users } from "lucide-react";
+import { Bell, Clock, Crown, Gem, Headset, LogOut, Menu, Search, Settings, User as UserIcon, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -118,6 +118,13 @@ export function TopHeader({
                 Quản trị
               </Link>
             )}
+            <Link
+              href="/contact"
+              className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-muted-foreground hover:bg-sidebar-active-bg/60 hover:text-white"
+            >
+              <Headset className="size-[18px]" />
+              Liên hệ
+            </Link>
           </nav>
         </SheetContent>
       </Sheet>

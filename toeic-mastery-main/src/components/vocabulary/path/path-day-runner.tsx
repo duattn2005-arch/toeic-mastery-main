@@ -12,16 +12,19 @@ import { FlashcardBrowse } from "@/components/study-game/flashcard-browse";
 import { QuizMode } from "@/components/study-game/quiz-mode";
 import { MatchingGame } from "@/components/study-game/matching-game";
 import { BlastGame } from "@/components/study-game/blast-game";
+import { BalloonGame } from "@/components/study-game/balloon-game";
+import { splitArcadeWords } from "@/lib/services/study-game";
 import { StudyFlow } from "@/components/study-game/study-flow";
 import { VocabularyReviewOverview } from "@/components/vocabulary/vocabulary-review-overview";
 import { logStudySessionAction, practiceVocabularyWordAction } from "@/lib/actions/vocabulary";
 import { completePathStepAction } from "@/lib/actions/vocabulary-path";
 import { useLiveVocabStatus } from "@/hooks/use-live-vocab-status";
+import { trackEvent } from "@/lib/analytics";
 
 const STEPS = [
-  { step: 1 as const, label: "Học", icon: BookOpenCheck },
-  { step: 2 as const, label: "Nối từ & Blast", icon: Grid3x3 },
-  { step: 3 as const, label: "Kiểm tra", icon: ListChecks },
+  { step: 1 as const, label: "Học", shortLabel: "Học", icon: BookOpenCheck },
+  { step: 2 as const, label: "Nối từ · Blast · Bong bóng", shortLabel: "Luyện tập", icon: Grid3x3 },
+  { step: 3 as const, label: "Kiểm tra", shortLabel: "Kiểm tra", icon: ListChecks },
 ];
 
 export function PathDayRunner({
@@ -61,8 +64,10 @@ export function PathDayRunner({
   const [stars, setStars] = React.useState(initialStars);
   const [pending, setPending] = React.useState(false);
   const [reviewItems, setReviewItems] = React.useState<StudyItem[] | null>(null);
-  // Step 2 "Luyện tập" plays both games: Nối từ, then Blast.
-  const [practiceGame, setPracticeGame] = React.useState<"match" | "blast">("match");
+  // Step 2 "Luyện tập" plays the games in turn: Nối từ, Blast, Bong bóng
+  // (Blast and Bong bóng share the words half each — see splitArcadeWords).
+  const [practiceGame, setPracticeGame] = React.useState<"match" | "blast" | "balloon">("match");
+  const [arcade] = React.useState(() => splitArcadeWords(items));
   const [showOverview, setShowOverview] = React.useState(false);
   // Mirrors the star/unstar side effect FlashcardBrowse/QuizMode trigger
   // server-side, so the overview's counts update immediately instead of
@@ -113,6 +118,15 @@ export function PathDayRunner({
       startedAtRef.current = null;
     }
     const result = await completePathStepAction(dayId, step, quizResult);
+    if (step === 3) {
+      trackEvent("vocab_day_complete", {
+        path: title ?? backLabel,
+        day_number: dayNumber,
+        stars: result.stars,
+        word_count: items.length,
+        quiz_correct: quizResult?.correct,
+      });
+    }
     if (result.stepsCompleted !== undefined) setStepsCompleted(result.stepsCompleted);
     if (result.stars !== undefined) setStars(result.stars);
     setActiveStep(step < 3 ? ((step + 1) as 1 | 2 | 3) : null);
@@ -156,7 +170,7 @@ export function PathDayRunner({
           onBack={() => setShowOverview(false)}
         />
       ) : activeStep === null && dayComplete ? (
-        <div className="flex flex-col items-center gap-4 rounded-3xl border border-success/30 bg-success/10 p-6 text-center sm:p-8">
+        <div className="flex flex-col items-center gap-4 rounded-3xl border border-success/30 bg-success/10 p-5 text-center sm:p-8">
           <ConfettiBurst />
           <span className="flex size-16 items-center justify-center rounded-full bg-success/20 text-success">
             <PartyPopper className="size-8" />
@@ -176,7 +190,7 @@ export function PathDayRunner({
             </p>
           )}
 
-          <div className="flex flex-wrap justify-center gap-2">
+          <div className="flex w-full flex-col-reverse gap-2 sm:w-auto sm:flex-row sm:flex-wrap sm:justify-center">
             <Button variant="outline" onClick={() => setShowOverview(true)}>
               <RotateCcw className="size-4" /> Ôn tập lại
             </Button>
@@ -193,21 +207,22 @@ export function PathDayRunner({
       ) : (
         <>
           <div className="flex items-center gap-2">
-            {STEPS.map(({ step, label, icon: Icon }) => {
+            {STEPS.map(({ step, label, shortLabel, icon: Icon }) => {
               const done = stepsCompleted >= step;
               const active = activeStep === step;
               return (
                 <div
                   key={step}
                   className={cn(
-                    "flex flex-1 items-center gap-2 rounded-xl border px-3 py-2.5 text-sm font-medium",
+                    "flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-xl border px-2 py-2.5 text-xs font-medium sm:justify-start sm:gap-2 sm:px-3 sm:text-sm",
                     done && "border-success/40 bg-success/10 text-success",
                     active && !done && "border-primary/40 bg-accent",
                     !active && !done && "border-border text-muted-foreground"
                   )}
                 >
                   <Icon className="size-4 shrink-0" />
-                  <span className="truncate">{label}</span>
+                  <span className="truncate sm:hidden">{shortLabel}</span>
+                  <span className="hidden truncate sm:inline">{label}</span>
                 </div>
               );
             })}
@@ -230,7 +245,11 @@ export function PathDayRunner({
                 (practiceGame === "match" && items.length >= 2 ? (
                   <MatchingGame items={items} onFinish={() => setPracticeGame("blast")} onItemResult={handleItemResult} />
                 ) : (
-                  <BlastGame items={items} onFinish={() => void finishStep(2)} onItemResult={handleItemResult} />
+                  practiceGame === "blast" ? (
+                    <BlastGame items={arcade.blast} distractorPool={items} onFinish={() => (arcade.balloon.length > 0 ? setPracticeGame("balloon") : void finishStep(2))} onItemResult={handleItemResult} />
+                  ) : (
+                    <BalloonGame items={arcade.balloon} distractorPool={items} onFinish={() => void finishStep(2)} onItemResult={handleItemResult} />
+                  )
                 ))}
               {activeStep === 3 && (
                 <QuizMode items={items} onFinish={(result) => void finishStep(3, result)} onItemResult={handleItemResult} />

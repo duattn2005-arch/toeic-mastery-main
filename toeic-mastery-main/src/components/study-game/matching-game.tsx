@@ -102,7 +102,7 @@ export function MatchingGame({
         {rounds.length > 1 && <>Vòng {round + 1}/{rounds.length} · </>}
         Đã ghép {pairsBefore + solvedPairs}/{totalPairs} cặp · {moves} lượt bấm
       </p>
-      <div className="grid w-full max-w-2xl grid-cols-2 gap-2.5 sm:grid-cols-4">
+      <div className="grid w-full max-w-2xl grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-2.5">
         {board.map((tile) => {
           const isSolved = solved.has(tile.key);
           const isSelected = selected.includes(tile.key);
@@ -114,7 +114,7 @@ export function MatchingGame({
               onClick={() => select(tile)}
               disabled={isSolved}
               className={cn(
-                "flex min-h-20 items-center justify-center rounded-xl border p-3 text-center text-sm font-medium transition-all",
+                "flex min-h-14 touch-manipulation items-center justify-center break-words rounded-xl border p-2.5 text-center text-sm font-medium leading-snug transition-all sm:min-h-20 sm:p-3",
                 isSolved && "border-success/40 bg-success/10 text-success/70 opacity-60",
                 isWrong && "border-destructive bg-destructive/10 text-destructive",
                 !isSolved && !isWrong && isSelected && "border-primary bg-accent",

@@ -30,6 +30,7 @@ import { groupQuestionsByPassage } from "@/lib/exam/group-questions";
 import { cn } from "@/lib/utils";
 import { PART_META } from "@/lib/constants/toeic";
 import type { ExamData } from "@/lib/data/exam";
+import { trackEvent } from "@/lib/analytics";
 import type { TestPart } from "@/generated/prisma/enums";
 
 export function ExamRunner({ data }: { data: ExamData }) {
@@ -207,13 +208,14 @@ export function ExamRunner({ data }: { data: ExamData }) {
 
       const res = await fetch(`/api/attempts/${data.attemptId}/submit`, { method: "POST" });
       if (!res.ok) throw new Error("Nộp bài thất bại, vui lòng thử lại.");
+      trackEvent("test_submit", { test_title: data.testTitle, mode: data.mode, answered: Object.keys(finalState.answers).length });
       localStorage.removeItem(`toeic-mastery:exam:${data.attemptId}`);
       router.push(`/history/${data.attemptId}`);
     } catch {
       toast.error("Nộp bài thất bại, vui lòng kiểm tra kết nối mạng và thử lại.");
       setSubmitting(false);
     }
-  }, [data.attemptId, router]);
+  }, [data.attemptId, data.mode, data.testTitle, router]);
 
   React.useEffect(() => {
     // `hydrated` gates this: before hydration, remainingSec sits at the

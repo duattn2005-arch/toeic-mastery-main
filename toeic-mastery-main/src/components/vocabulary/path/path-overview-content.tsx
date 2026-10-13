@@ -46,7 +46,7 @@ export function PathOverviewContent({
       )}
 
       {data.currentDay && (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/10 p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-primary/30 bg-primary/10 p-4 sm:p-5">
           <div className="flex items-center gap-3">
             <span className="flex size-10 items-center justify-center rounded-xl bg-primary/20 text-primary">
               <Target className="size-5" />
@@ -60,7 +60,7 @@ export function PathOverviewContent({
           </div>
           <Link
             href={`${dayBasePath}/${data.currentDay.dayNumber}`}
-            className="rounded-xl bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90"
+            className="w-full rounded-xl bg-primary px-4 py-2.5 text-center text-sm font-semibold text-primary-foreground shadow-soft transition-colors hover:bg-primary/90 sm:w-auto sm:py-2"
           >
             Học ngay →
           </Link>
@@ -77,7 +77,7 @@ export function PathOverviewContent({
               {tier.days.filter((d) => d.isCompleted).length}/{tier.days.length}
             </span>
           </div>
-          <div className="flex gap-4 overflow-x-auto pb-2">
+          <div className="-mx-4 flex snap-x snap-mandatory scroll-px-4 gap-3 overflow-x-auto px-4 pb-2 sm:mx-0 sm:snap-none sm:gap-4 sm:px-0">
             {tier.days.map((day) => (
               <DayCard key={day.dayNumber} day={day} href={`${dayBasePath}/${day.dayNumber}`} />
             ))}
@@ -109,7 +109,7 @@ function DayCard({
   const content = (
     <div
       className={cn(
-        "flex w-64 shrink-0 flex-col gap-3 rounded-2xl border p-4 shadow-soft transition-all",
+        "flex w-56 shrink-0 snap-start flex-col gap-3 rounded-2xl border p-4 shadow-soft transition-all sm:w-64",
         day.isUnlocked ? "border-border bg-card hover:-translate-y-0.5 hover:border-primary/40" : "border-border/60 bg-card/40"
       )}
     >

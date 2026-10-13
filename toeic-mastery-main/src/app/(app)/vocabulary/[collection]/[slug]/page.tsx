@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { BrainCircuit, ChevronLeft, ChevronRight, Gamepad2, GraduationCap } from "lucide-react";
+import { BrainCircuit, ChevronDown, ChevronLeft, ChevronRight, Gamepad2, GraduationCap } from "lucide-react";
 import { requireUser } from "@/lib/auth";
 import { collectionBasePath, collectionDbSlug, getCollectionTopic, getVocabCollection } from "@/lib/content/vocab-collections";
 import { ensureCollectionSynced } from "@/lib/content/vocab-collection-sync";
@@ -49,6 +49,24 @@ export default async function CollectionTopicPage({ params }: { params: Params }
   const basePath = `${collectionPath}/${slug}`;
   const hasDetails = topic.words.some(([, , , , example]) => example);
   const statusByWord = new Map(dbWords.map((w) => [w.word, vocabStatus(w.isTracked ? w : null)]));
+  const shownWords = topic.words.length > 30 ? 12 : topic.words.length;
+  const gridClass = cn("grid gap-3", hasDetails ? "md:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3");
+  const wordCard = ([word, pos, ipa, meaning, example, note]: (typeof topic.words)[number]) => (
+    <div key={word} className={cn("flex flex-col rounded-2xl border border-border bg-card shadow-soft", hasDetails ? "gap-2 p-4" : "gap-1 p-3")}>
+      <div className="flex items-start gap-1">
+        <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
+          <span className="break-words text-base font-semibold">{word}</span>
+          {pos && <span className="text-xs italic text-muted-foreground">({pos})</span>}
+          {formatIpa(ipa) && <span className="text-xs text-muted-foreground">{formatIpa(ipa)}</span>}
+        </div>
+        <StatusBadge status={statusByWord.get(word) ?? "new"} />
+        <PronounceButton term={word} className="-mr-1 -mt-1" />
+      </div>
+      <p className="text-sm font-medium text-primary">{meaning}</p>
+      {example && <p className="text-sm text-muted-foreground">E.g. {example}</p>}
+      {note && <p className="rounded-xl bg-accent/50 p-3 text-xs leading-relaxed">{note}</p>}
+    </div>
+  );
 
   return (
     <div className="flex flex-col gap-8">
@@ -63,7 +81,7 @@ export default async function CollectionTopicPage({ params }: { params: Params }
 
         <div>
           <p className="text-xs font-semibold uppercase tracking-wide text-primary">Chủ đề #{index + 1}</p>
-          <h1 className="text-2xl font-semibold tracking-tight">
+          <h1 className="text-xl font-semibold tracking-tight sm:text-2xl">
             {topic.title} <span className="text-muted-foreground">· {topic.titleVi}</span>
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">{topic.summary}</p>
@@ -97,24 +115,19 @@ export default async function CollectionTopicPage({ params }: { params: Params }
         <h2 className="mb-3 text-sm font-semibold uppercase text-muted-foreground">
           Danh sách từ <span className="font-normal normal-case">({topic.words.length} từ)</span>
         </h2>
-        <div className={cn("grid gap-3", hasDetails ? "md:grid-cols-2" : "sm:grid-cols-2 lg:grid-cols-3")}>
-          {topic.words.map(([word, pos, ipa, meaning, example, note]) => (
-            <div key={word} className={cn("flex flex-col rounded-2xl border border-border bg-card shadow-soft", hasDetails ? "gap-2 p-4" : "gap-1 p-3")}>
-              <div className="flex items-start gap-1">
-                <div className="flex min-w-0 flex-1 flex-wrap items-baseline gap-x-2">
-                  <span className="text-base font-semibold">{word}</span>
-                  {pos && <span className="text-xs italic text-muted-foreground">({pos})</span>}
-                  {formatIpa(ipa) && <span className="text-xs text-muted-foreground">{formatIpa(ipa)}</span>}
-                </div>
-                <StatusBadge status={statusByWord.get(word) ?? "new"} />
-                <PronounceButton term={word} className="-mr-1 -mt-1" />
-              </div>
-              <p className="text-sm font-medium text-primary">{meaning}</p>
-              {example && <p className="text-sm text-muted-foreground">E.g. {example}</p>}
-              {note && <p className="rounded-xl bg-accent/50 p-3 text-xs leading-relaxed">{note}</p>}
-            </div>
-          ))}
-        </div>
+        <div className={gridClass}>{topic.words.slice(0, shownWords).map((row) => wordCard(row))}</div>
+        {topic.words.length > shownWords && (
+          // Long lists (THPT "Mở rộng" topics run to 300+ words) stay folded so
+          // the page — the daily path above all — isn't an endless scroll on a phone.
+          <details className="group mt-3">
+            <summary className="flex cursor-pointer list-none items-center justify-center gap-1 rounded-xl border border-border bg-card px-4 py-3 text-sm font-medium text-primary shadow-soft [&::-webkit-details-marker]:hidden">
+              <span className="group-open:hidden">Xem tất cả {topic.words.length} từ</span>
+              <span className="hidden group-open:inline">Thu gọn</span>
+              <ChevronDown className="size-4 transition-transform group-open:rotate-180" />
+            </summary>
+            <div className={cn(gridClass, "mt-3")}>{topic.words.slice(shownWords).map((row) => wordCard(row))}</div>
+          </details>
+        )}
       </section>
 
       {topic.quiz.length > 0 && (

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { trackEvent } from "@/lib/analytics";
 import { Check, Copy, Crown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,12 @@ export function ProCard({ offer }: { offer: NewMemberOfferState }) {
       const result = await checkPaymentStatusAction(order.orderId);
       if ("error" in result) return; // transient/unexpected — just try again next tick
       if (result.status === "SUCCESS") {
+        trackEvent("purchase", {
+          transaction_id: order.orderId,
+          value: order.amount,
+          currency: "VND",
+          items: [{ item_id: order.planKey, item_name: `Pro ${PRO_PLANS[order.planKey].label}`, price: order.amount, quantity: 1 }],
+        });
         setConfirmed(true);
         setPaidAt(result.paidAt);
         toast.success("Thanh toán thành công! Tài khoản của bạn đã được nâng cấp Pro 🎉");
@@ -92,6 +99,11 @@ export function ProCard({ offer }: { offer: NewMemberOfferState }) {
       setConfirmed(false);
       setPaidAt(null);
       setOrder({ orderId: result.orderId, planKey, amount: result.amount });
+      trackEvent("begin_checkout", {
+        value: result.amount,
+        currency: "VND",
+        items: [{ item_id: planKey, item_name: `Pro ${PRO_PLANS[planKey].label}`, price: result.amount, quantity: 1 }],
+      });
     });
   }
 

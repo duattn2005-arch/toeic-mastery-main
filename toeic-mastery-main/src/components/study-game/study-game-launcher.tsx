@@ -2,21 +2,23 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowLeft, BookOpenCheck, Grid3x3, ListChecks, Rocket, Sparkles } from "lucide-react";
+import { ArrowLeft, BookOpenCheck, CircleDot, Grid3x3, ListChecks, Rocket, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { canPlayQuiz, type StudyItem } from "@/lib/services/study-game";
 import { logStudySessionAction, practiceVocabularyWordAction } from "@/lib/actions/vocabulary";
+import { trackEvent } from "@/lib/analytics";
 import type { ReviewRating } from "@/lib/services/spaced-repetition";
 import { FlashcardBrowse } from "@/components/study-game/flashcard-browse";
 import { QuizMode } from "@/components/study-game/quiz-mode";
 import { MatchingGame } from "@/components/study-game/matching-game";
 import { BlastGame } from "@/components/study-game/blast-game";
+import { BalloonGame } from "@/components/study-game/balloon-game";
 import { StudyFlow } from "@/components/study-game/study-flow";
 import { VocabularyReviewOverview } from "@/components/vocabulary/vocabulary-review-overview";
 import { cn } from "@/lib/utils";
 import { useLiveVocabStatus } from "@/hooks/use-live-vocab-status";
 
-type Mode = "flow" | "flashcard" | "quiz" | "match" | "blast";
+type Mode = "flow" | "flashcard" | "quiz" | "match" | "blast" | "balloon";
 
 const MIN_ITEMS_FOR_MATCH = 3;
 
@@ -75,6 +77,7 @@ export function StudyGameLauncher({
   }
 
   function finishSession() {
+    trackEvent("study_game_complete", { game: mode, title, word_count: items.length });
     logElapsed();
     setMode(null);
     setShowOverview(true);
@@ -153,6 +156,7 @@ export function StudyGameLauncher({
         {mode === "quiz" && <QuizMode items={items} onFinish={finishSession} onItemResult={handleItemResult} autoStar={trackable} />}
         {mode === "match" && <MatchingGame items={items} onFinish={finishSession} onItemResult={handleItemResult} />}
         {mode === "blast" && <BlastGame items={items} onFinish={finishSession} onItemResult={handleItemResult} />}
+        {mode === "balloon" && <BalloonGame items={items} onFinish={finishSession} onItemResult={handleItemResult} />}
       </div>
     );
   }
@@ -179,13 +183,16 @@ export function StudyGameLauncher({
           <Sparkles className="size-5" />
         </span>
         <span className="flex flex-col gap-0.5">
-          <span className="text-sm font-semibold">Học đủ 4 bước (khuyên dùng)</span>
-          <span className="text-xs text-muted-foreground">Flashcard → Nối từ → Blast → Kiểm tra, với cả {items.length} từ</span>
+          <span className="text-sm font-semibold">Học đủ các bước (khuyên dùng)</span>
+          <span className="text-xs text-muted-foreground">
+            Flashcard → Nối từ → Blast → Bong bóng → Kiểm tra, với cả {items.length} từ
+            {items.length >= 2 && <> (Blast {Math.ceil(items.length / 2)} từ + Bong bóng {Math.floor(items.length / 2)} từ)</>}
+          </span>
         </span>
       </button>
 
       <p className="text-xs font-medium text-muted-foreground">Hoặc chơi riêng từng chế độ:</p>
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <ModeCard
           icon={BookOpenCheck}
           label="Học thẻ ghi nhớ"
@@ -211,6 +218,13 @@ export function StudyGameLauncher({
           label="Blast"
           description={matchReady ? "Bắn nổ thiên thạch mang từ đúng trước khi hết giờ" : "Cần ít nhất 3 từ"}
           onClick={() => start("blast")}
+          disabled={!matchReady}
+        />
+        <ModeCard
+          icon={CircleDot}
+          label="Bong bóng"
+          description={matchReady ? "Chạm bong bóng mang từ đúng trước khi nó bay mất" : "Cần ít nhất 3 từ"}
+          onClick={() => start("balloon")}
           disabled={!matchReady}
         />
       </div>

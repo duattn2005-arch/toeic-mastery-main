@@ -14,7 +14,12 @@ import { EmptyState } from "@/components/shared/empty-state";
 import { PracticeTour } from "@/components/practice/practice-tour";
 import { LoginRequiredGate } from "@/components/practice/login-required-gate";
 
-export const metadata: Metadata = { title: "Luyện đề" };
+export const metadata: Metadata = {
+  title: "Luyện đề TOEIC online",
+  description:
+    "Kho đề thi thử TOEIC Listening & Reading đủ 7 Part theo bộ ETS, chấm điểm và giải thích chi tiết từng câu, luyện theo Part hoặc thi thử 200 câu như thật.",
+  alternates: { canonical: "/practice" },
+};
 
 /** Real count, rounded UP — worded "Gần" (nearly) whenever rounding moved
  * it, so the headline stays true: 1234 → "Gần 1,3k", 1300 → "1,3k",

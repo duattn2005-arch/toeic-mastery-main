@@ -99,10 +99,20 @@ export interface BlastQuestion {
 
 /** One Blast question per item (every word in the session): the meaning is
  * the prompt, the asteroids carry the correct term + real distractor terms. */
-export function buildBlast(items: StudyItem[], distractorPool: StudyItem[] = items): BlastQuestion[] {
+export function buildBlast(items: StudyItem[], distractorPool: StudyItem[] = items, optionCount = 4): BlastQuestion[] {
   return shuffle(items).map((item) => {
     const pool = uniqueBy([...items, ...distractorPool], (i) => i.term).filter((i) => i.id !== item.id && i.term !== item.term);
-    const distractors = shuffle(pool).slice(0, 3);
+    const distractors = shuffle(pool).slice(0, optionCount - 1);
     return { item, options: shuffle([item, ...distractors]) };
   });
+}
+
+/** Splits the words between Blast and Bong bóng — each word is played in
+ * exactly one of the two, half each (10 -> 5 + 5, 11 -> 6 + 5), so the two
+ * games share the list instead of both replaying all of it. A single word
+ * goes to Blast and Bong bóng is skipped. */
+export function splitArcadeWords(items: StudyItem[]): { blast: StudyItem[]; balloon: StudyItem[] } {
+  const mixed = shuffle(items);
+  const half = Math.ceil(mixed.length / 2);
+  return { blast: mixed.slice(0, half), balloon: mixed.slice(half) };
 }
