@@ -59,7 +59,7 @@ export function ScoreResultHeader({
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               transition={{ duration: 0.4 }}
-              className="text-5xl font-bold tracking-tight text-primary"
+              className="text-4xl font-bold tracking-tight text-primary sm:text-5xl"
             >
               <AnimatedNumber value={totalScore} />
               <span className="text-xl font-medium text-muted-foreground"> / 990</span>

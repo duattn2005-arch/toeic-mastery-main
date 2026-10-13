@@ -135,7 +135,7 @@ export function AudioPlayer({
               type="button"
               onClick={() => setSpeed(s)}
               className={cn(
-                "rounded-md px-1.5 py-0.5 text-[11px] font-medium",
+                "rounded-md px-2 py-1 text-[11px] font-medium sm:px-1.5 sm:py-0.5",
                 speed === s ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
               )}
             >

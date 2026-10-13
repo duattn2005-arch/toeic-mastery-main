@@ -55,7 +55,7 @@ export function PracticeFilters() {
 
       <div className="flex flex-wrap gap-2">
         <Select value={difficulty} onValueChange={(v) => updateParam("difficulty", v)}>
-          <SelectTrigger size="sm" className="w-[150px]">
+          <SelectTrigger size="sm" className="w-[calc(50%-0.25rem)] sm:w-[150px]">
             <SelectValue placeholder="Độ khó" />
           </SelectTrigger>
           <SelectContent>
@@ -67,7 +67,7 @@ export function PracticeFilters() {
         </Select>
 
         <Select value={completion} onValueChange={(v) => updateParam("completion", v)}>
-          <SelectTrigger size="sm" className="w-[170px]">
+          <SelectTrigger size="sm" className="w-[calc(50%-0.25rem)] sm:w-[170px]">
             <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>
           <SelectContent>
@@ -78,7 +78,7 @@ export function PracticeFilters() {
         </Select>
 
         <Select value={sort} onValueChange={(v) => updateParam("sort", v)}>
-          <SelectTrigger size="sm" className="w-[150px]">
+          <SelectTrigger size="sm" className="w-[calc(50%-0.25rem)] sm:w-[150px]">
             <SelectValue placeholder="Sắp xếp" />
           </SelectTrigger>
           <SelectContent>

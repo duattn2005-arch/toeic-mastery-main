@@ -177,7 +177,7 @@ export function VocabularyReviewOverview({
         </div>
       )}
 
-      <div className="sticky bottom-4 flex flex-wrap justify-center gap-2 rounded-2xl border border-border bg-card/95 p-3 shadow-soft backdrop-blur-sm">
+      <div className="sticky bottom-20 z-10 lg:bottom-4 flex flex-wrap justify-center gap-2 rounded-2xl border border-border bg-card/95 p-3 shadow-soft backdrop-blur-sm">
         <Button variant="outline" onClick={() => onStartReview(needsReview)} disabled={needsReview.length === 0}>
           {hasStatus ? "Ôn từ đang học" : "Ôn từ chưa nhớ"} ({needsReview.length})
         </Button>
