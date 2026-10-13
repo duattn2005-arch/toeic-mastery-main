@@ -9,6 +9,7 @@ import { ConfettiBurst } from "@/components/shared/confetti-burst";
 import { cn } from "@/lib/utils";
 import type { StudyItem } from "@/lib/services/study-game";
 import { FlashcardBrowse } from "@/components/study-game/flashcard-browse";
+import { StudySettings } from "@/components/study-game/study-settings";
 import { QuizMode } from "@/components/study-game/quiz-mode";
 import { MatchingGame } from "@/components/study-game/matching-game";
 import { BlastGame } from "@/components/study-game/blast-game";
@@ -226,6 +227,7 @@ export function PathDayRunner({
                 </div>
               );
             })}
+            <StudySettings />
           </div>
 
           {pending ? (
@@ -240,7 +242,9 @@ export function PathDayRunner({
             </div>
           ) : (
             <>
-              {activeStep === 1 && <FlashcardBrowse items={items} onFinish={() => void finishStep(1)} onItemResult={handleItemResult} />}
+              {activeStep === 1 && (
+                <FlashcardBrowse items={items} onFinish={() => void finishStep(1)} onItemResult={handleItemResult} showSettings={false} />
+              )}
               {activeStep === 2 &&
                 (practiceGame === "match" && items.length >= 2 ? (
                   <MatchingGame items={items} onFinish={() => setPracticeGame("blast")} onItemResult={handleItemResult} />

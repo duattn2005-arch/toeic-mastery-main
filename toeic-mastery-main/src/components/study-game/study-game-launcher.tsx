@@ -9,6 +9,7 @@ import { logStudySessionAction, practiceVocabularyWordAction } from "@/lib/actio
 import { trackEvent } from "@/lib/analytics";
 import type { ReviewRating } from "@/lib/services/spaced-repetition";
 import { FlashcardBrowse } from "@/components/study-game/flashcard-browse";
+import { StudySettings } from "@/components/study-game/study-settings";
 import { QuizMode } from "@/components/study-game/quiz-mode";
 import { MatchingGame } from "@/components/study-game/matching-game";
 import { BlastGame } from "@/components/study-game/blast-game";
@@ -148,11 +149,16 @@ export function StudyGameLauncher({
   if (mode) {
     return (
       <div className="flex flex-col gap-5">
-        <button type="button" onClick={finishSession} className="flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="size-4" /> Chọn chế độ khác
-        </button>
+        <div className="flex items-center justify-between gap-3">
+          <button type="button" onClick={finishSession} className="flex w-fit items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground">
+            <ArrowLeft className="size-4" /> Chọn chế độ khác
+          </button>
+          {mode !== "flow" && <StudySettings />}
+        </div>
         {mode === "flow" && <StudyFlow items={items} onFinish={finishSession} onItemResult={handleItemResult} autoStar={trackable} />}
-        {mode === "flashcard" && <FlashcardBrowse items={items} onFinish={finishSession} onItemResult={handleItemResult} autoStar={trackable} />}
+        {mode === "flashcard" && (
+          <FlashcardBrowse items={items} onFinish={finishSession} onItemResult={handleItemResult} autoStar={trackable} showSettings={false} />
+        )}
         {mode === "quiz" && <QuizMode items={items} onFinish={finishSession} onItemResult={handleItemResult} autoStar={trackable} />}
         {mode === "match" && <MatchingGame items={items} onFinish={finishSession} onItemResult={handleItemResult} />}
         {mode === "blast" && <BlastGame items={items} onFinish={finishSession} onItemResult={handleItemResult} />}

@@ -23,7 +23,13 @@ export async function saveStudyPreferencesAction(input: unknown): Promise<{ ok: 
   const profile = await getCurrentProfile();
   if (!profile) return { ok: false };
   const prefs = normalizeStudyPreferences(input);
-  const data: Prisma.InputJsonObject = { ratingMode: prefs.ratingMode, autoSpeak: prefs.autoSpeak, stages: prefs.stages };
+  const data: Prisma.InputJsonObject = {
+    ratingMode: prefs.ratingMode,
+    autoSpeak: prefs.autoSpeak,
+    stages: prefs.stages,
+    gameSpeak: prefs.gameSpeak,
+    gameSfx: prefs.gameSfx,
+  };
   try {
     await db.studyPreference.upsert({
       where: { userId: profile.id },

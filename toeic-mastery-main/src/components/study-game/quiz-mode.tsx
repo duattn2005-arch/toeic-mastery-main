@@ -11,6 +11,7 @@ import type { ReviewRating } from "@/lib/services/spaced-repetition";
 import { ensureSavedWordAction, unsaveWordIfExistsAction } from "@/lib/actions/dictionary";
 import { useDictionaryHintTutorial } from "@/hooks/use-dictionary-hint-tutorial";
 import { formatIpa, pronounce } from "@/lib/pronounce";
+import { useGameFeedback } from "@/hooks/use-game-feedback";
 
 /** Quizlet's rule: right on the first try counts as recalled; missed even
  * once — even if answered right on a later retry — means the word is still
@@ -53,6 +54,7 @@ export function QuizMode({
 }) {
   const [queue, setQueue] = React.useState<QueueEntry[]>(() => buildQuiz(items, distractorPool).map((question) => ({ question, wrongCount: 0 })));
   const [index, setIndex] = React.useState(0);
+  const feedback = useGameFeedback();
   const [picked, setPicked] = React.useState<number | null>(null);
   const [firstTryCorrect, setFirstTryCorrect] = React.useState(0);
   const [results, setResults] = React.useState<ResultRow[]>([]);
@@ -93,6 +95,8 @@ export function QuizMode({
   function pick(optionIndex: number) {
     if (picked !== null || !current) return;
     setPicked(optionIndex);
+    if (optionIndex === current.question.correctIndex) feedback.correct(current.question.item);
+    else feedback.wrong();
     if (optionIndex === current.question.correctIndex && current.wrongCount === 0) {
       setFirstTryCorrect((s) => s + 1);
     }

@@ -5,6 +5,7 @@ import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfettiBurst } from "@/components/shared/confetti-burst";
 import { cn } from "@/lib/utils";
+import { useGameFeedback } from "@/hooks/use-game-feedback";
 import { buildMatchRounds, type StudyItem } from "@/lib/services/study-game";
 import type { ReviewRating } from "@/lib/services/spaced-repetition";
 
@@ -28,6 +29,7 @@ export function MatchingGame({
   const board = rounds[round] ?? [];
   const [selected, setSelected] = React.useState<string[]>([]);
   const [wrongPair, setWrongPair] = React.useState<string[]>([]);
+  const feedback = useGameFeedback();
   const [solved, setSolved] = React.useState<Set<string>>(new Set());
   const [moves, setMoves] = React.useState(0);
   // Words involved in a wrong pairing: still "Đang học" once matched.
@@ -67,10 +69,12 @@ export function MatchingGame({
       setSolved((prev) => new Set(prev).add(first.key).add(tile.key));
       setSelected([]);
       onItemResult?.(first.itemId, missed.current.has(first.itemId) ? "AGAIN" : "GOOD");
+      feedback.correct(items.find((i) => i.id === first.itemId));
     } else {
       missed.current.add(first.itemId).add(tile.itemId);
       setSelected([firstKey, tile.key]);
       setWrongPair([firstKey, tile.key]);
+      feedback.wrong();
       setTimeout(() => {
         setWrongPair([]);
         setSelected([]);
