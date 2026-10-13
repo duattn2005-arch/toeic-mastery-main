@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { getCurrentProfile } from "@/lib/auth";
-import { computeNextReview, type ReviewRating } from "@/lib/services/spaced-repetition";
+import { balancedReviewDay, computeNextReview, srsDay, srsDayKey, type ReviewRating } from "@/lib/services/spaced-repetition";
 import { touchStudyStreak } from "@/lib/services/study-streak";
 
 export interface ActionResult {
@@ -35,10 +35,39 @@ export async function startLearningWordsAction(vocabularyWordIds: string[]): Pro
 /** Shared by the graded review flow and the flashcard/quiz/matching games —
  * one SRS update, one place. `existing` must already belong to `profile`. */
 async function applyReview(
-  existing: { id: string; repetitions: number; intervalDays: number; easeFactor: number; isLearned: boolean; lastReviewedAt: Date | null; nextReviewDate: Date },
+  existing: {
+    id: string;
+    userId: string;
+    repetitions: number;
+    intervalDays: number;
+    easeFactor: number;
+    isLearned: boolean;
+    lastReviewedAt: Date | null;
+    nextReviewDate: Date;
+  },
   rating: ReviewRating
 ) {
   const result = computeNextReview(existing, rating);
+
+  // A freshly scheduled mastered review lands on the least busy day around
+  // its interval (balancedReviewDay), so words learned together don't all
+  // come back together. Same-day repeats keep their schedule untouched.
+  const rescheduled = result.isLearned && result.intervalDays >= 4 && result.nextReviewDate.getTime() !== existing.nextReviewDate.getTime();
+  if (rescheduled) {
+    const fuzz = Math.max(1, Math.round(result.intervalDays * 0.2));
+    const load = await db.userVocabulary.groupBy({
+      by: ["nextReviewDate"],
+      where: {
+        userId: existing.userId,
+        id: { not: existing.id },
+        nextReviewDate: { gte: srsDay(Math.max(2, result.intervalDays - fuzz)), lte: srsDay(result.intervalDays + fuzz) },
+      },
+      _count: { _all: true },
+    });
+    const { day, offset } = balancedReviewDay(result.intervalDays, new Map(load.map((l) => [srsDayKey(l.nextReviewDate), l._count._all])));
+    result.nextReviewDate = day;
+    result.intervalDays = offset;
+  }
 
   await db.$transaction([
     db.userVocabulary.update({
