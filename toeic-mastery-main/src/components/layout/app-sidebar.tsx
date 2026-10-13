@@ -29,13 +29,9 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-/** Darkens the top (logo + menu) for legible labels and fades out lower
- * down, where the scene's subject (the cat on its lily pad, by default)
- * sits between the menu and the streak card. */
-const SIDEBAR_SCRIM_DARK =
-  "linear-gradient(180deg, rgba(5,11,9,0.82) 0%, rgba(5,11,9,0.72) 50%, rgba(5,11,9,0.12) 66%, rgba(5,11,9,0.5) 100%)";
-const SIDEBAR_SCRIM_LIGHT =
-  "linear-gradient(180deg, rgba(238,247,243,0.92) 0%, rgba(238,247,243,0.86) 50%, rgba(238,247,243,0.08) 66%, rgba(238,247,243,0.4) 100%), linear-gradient(180deg, #e9f6f1 36%, transparent 52%)";
+/** Fades the scene into the sidebar at the top of the free space below the
+ * menu, so it has no hard edge however long the menu is. */
+const SCENE_FADE = "[mask-image:linear-gradient(to_bottom,transparent,black_38%)]";
 
 export function AppSidebar({ profile, siteThemeId }: { profile: SidebarProfile; siteThemeId: string }) {
   const pathname = usePathname();
@@ -46,21 +42,13 @@ export function AppSidebar({ profile, siteThemeId }: { profile: SidebarProfile; 
   const isPro = profile.plan === "PRO" && (!profile.proExpiresAt || profile.proExpiresAt > new Date());
 
   // The sidebar carries the same Live theme scene as the dashboard hero
-  // (animated for lily-pond-cat), under a scrim that keeps menu text crisp.
+  // (animated for lily-pond-cat). It lives in the free space between the
+  // menu and the streak card, so it never sits under menu labels.
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 isolate hidden w-64 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex dark:border-white/[0.06]">
-      {/* Scene at half height (the whole pond fits), lifted above the streak
-          card so the cat is not hidden; the scrim's fade hides where the
-          scene starts. Day art in light mode, night art in dark mode. */}
-      <ThemeScene
-        themeId={siteThemeId}
-        size="auto 50%"
-        position="59% calc(100% - 140px)"
-        scrim={{
-          light: SIDEBAR_SCRIM_LIGHT,
-          dark: `${SIDEBAR_SCRIM_DARK}, linear-gradient(180deg, ${theme.swatchTo} 36%, transparent 52%)`,
-        }}
-      />
+    <aside
+      className="fixed inset-y-0 left-0 z-40 hidden w-64 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex dark:border-white/[0.06]"
+      style={{ backgroundImage: `linear-gradient(180deg, transparent 40%, color-mix(in oklab, ${theme.swatchTo} 35%, transparent))` }}
+    >
       <Link href="/dashboard" className="flex items-center gap-2.5 px-6 py-6">
         <EquippableLogoMark size={36} equippedShopItemId={profile.equippedShopItemId} />
         <span className="flex items-baseline gap-1 text-lg leading-[1.1] whitespace-nowrap">
@@ -71,7 +59,7 @@ export function AppSidebar({ profile, siteThemeId }: { profile: SidebarProfile; 
         </span>
       </Link>
 
-      <nav data-tour="dashboard-sidebar-nav" className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 dark:[text-shadow:0_1px_2px_rgba(0,0,0,0.55)]">
+      <nav data-tour="dashboard-sidebar-nav" className="flex min-h-0 shrink flex-col gap-1 overflow-y-auto px-3">
         {MAIN_NAV.map((item) => {
           const active = isActive(pathname, item.href);
           return (
@@ -121,6 +109,12 @@ export function AppSidebar({ profile, siteThemeId }: { profile: SidebarProfile; 
           Liên hệ
         </Link>
       </nav>
+
+      {/* Scene: crop centred on the cat, scaled to whatever room is left.
+          Day art in light mode, night art in dark mode. */}
+      <div aria-hidden className="relative isolate -mb-3 min-h-0 flex-1">
+        <ThemeScene themeId={siteThemeId} size="auto 175%" position="56% 66%" className={SCENE_FADE} />
+      </div>
 
       <div className="flex flex-col gap-3 px-3 pb-4">
         <div className="rounded-2xl border border-sidebar-border bg-white/80 shadow-sm dark:border-white/[0.08] dark:bg-[#050b09]/70 dark:shadow-none p-3.5">

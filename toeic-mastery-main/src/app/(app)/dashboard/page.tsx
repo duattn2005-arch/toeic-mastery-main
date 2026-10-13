@@ -45,26 +45,27 @@ function getGreeting() {
   return "Chào buổi tối";
 }
 
-/** The single most useful next step, shown as the hero's main button. */
-function getPrimaryAction(data: DashboardData, score: number | null | undefined): HeroAction {
-  if (data.continueAttempt) return { href: `/exam/${data.continueAttempt.id}`, label: "Làm tiếp đề đang dở" };
-  if (score == null) return { href: "/practice/start", label: "Làm bài test đầu tiên" };
-  return { href: "/practice", label: "Luyện đề ngay" };
+/** Hero buttons, in priority order: due vocabulary review first (it decays
+ * if skipped), then the in-progress test, then a first test / practice. */
+function getHeroActions(data: DashboardData, score: number | null | undefined): { primary: HeroAction; secondary: HeroAction } {
+  const due = data.vocabularyReminder.dueTodayCount;
+  const review: HeroAction = { href: "/vocabulary/review", label: `Ôn ${due} từ` };
+  const resume: HeroAction | null = data.continueAttempt
+    ? { href: `/exam/${data.continueAttempt.id}`, label: "Làm tiếp đề đang dở" }
+    : null;
+  const practice: HeroAction = score == null ? { href: "/practice/start", label: "Làm bài test đầu tiên" } : { href: "/practice", label: "Luyện đề ngay" };
+  const quickStudy: HeroAction = { href: "/quick-study", label: "Quick Study" };
+
+  if (due > 0) return { primary: review, secondary: resume ?? practice };
+  if (resume) return { primary: resume, secondary: quickStudy };
+  return { primary: practice, secondary: quickStudy };
 }
 
 function getQuests(data: DashboardData, todayMinutes: number, dailyGoal: number): Quest[] {
   const due = data.vocabularyReminder.dueTodayCount;
   const attempt = data.continueAttempt;
 
-  return [
-    {
-      icon: Timer,
-      title: `Học đủ ${dailyGoal} phút`,
-      progressLabel: `${Math.min(todayMinutes, dailyGoal)}/${dailyGoal} phút`,
-      progress: dailyGoal > 0 ? (todayMinutes / dailyGoal) * 100 : 0,
-      done: dailyGoal > 0 && todayMinutes >= dailyGoal,
-      href: "/quick-study",
-    },
+  const quests: Quest[] = [
     due > 0
       ? { icon: Layers, title: `Ôn ${due} từ đến hạn`, progressLabel: `còn ${due} từ`, progress: 0, done: false, href: "/vocabulary/review" }
       : { icon: Layers, title: "Ôn từ đến hạn", progressLabel: "Đã xong", progress: 100, done: true, href: "/vocabulary/review" },
@@ -78,7 +79,18 @@ function getQuests(data: DashboardData, todayMinutes: number, dailyGoal: number)
           href: `/exam/${attempt.id}`,
         }
       : { icon: ListChecks, title: "Làm 1 đề luyện tập", progressLabel: "0/1 đề", progress: 0, done: false, href: "/practice" },
+    {
+      icon: Timer,
+      title: `Học đủ ${dailyGoal} phút`,
+      progressLabel: `${Math.min(todayMinutes, dailyGoal)}/${dailyGoal} phút`,
+      progress: dailyGoal > 0 ? (todayMinutes / dailyGoal) * 100 : 0,
+      done: dailyGoal > 0 && todayMinutes >= dailyGoal,
+      href: "/quick-study",
+    },
   ];
+  // Review first, then the test, then study time; finished quests sink to
+  // the bottom (stable sort keeps that order within each group).
+  return [...quests].sort((a, b) => Number(a.done) - Number(b.done));
 }
 
 /**
@@ -105,6 +117,7 @@ export default async function DashboardPage() {
   const todayMinutes = data.activityHeatmap[data.activityHeatmap.length - 1]?.minutes ?? 0;
   const dailyGoal = data.profile.dailyStudyTargetMinutes;
   const due = data.vocabularyReminder.dueTodayCount;
+  const heroActions = getHeroActions(data, score);
   const hasSkillData = data.partAccuracies.some((p) => p.attempted > 0);
 
   return (
@@ -121,10 +134,8 @@ export default async function DashboardPage() {
             weeklyStudyMinutes={data.weeklyStudyMinutes}
             weeklyGoalMinutes={dailyGoal * 7}
             activityHeatmap={data.activityHeatmap}
-            primaryAction={getPrimaryAction(data, score)}
-            secondaryAction={
-              due > 0 ? { href: "/vocabulary/review", label: `Ôn ${due} từ` } : { href: "/quick-study", label: "Quick Study" }
-            }
+            primaryAction={heroActions.primary}
+            secondaryAction={heroActions.secondary}
           />
         </div>
         <div className="lg:col-span-4">
