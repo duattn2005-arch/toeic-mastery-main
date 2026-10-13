@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { preload } from "react-dom";
 import Image from "next/image";
 import { HeaderAuthButtons } from "@/components/marketing/landing-auth-buttons";
 import { cn } from "@/lib/utils";
@@ -19,7 +20,15 @@ const LINKS = [
  * Scroll state comes from an IntersectionObserver on a sentinel at the top of
  * the page (no scroll listener).
  */
+/** The login popup's banner art (HeaderAuthButtons opens it ~1s after load).
+ * It's a CSS background, so the browser only discovers it once the popup
+ * renders — and as the biggest thing painted it then became the page's
+ * Largest Contentful Paint, 4+ seconds late on a phone. Hinting it here makes
+ * it ready by the time the popup opens. */
+const POPUP_ART = "/themes/lily-pond-cat/background.svg";
+
 export function LandingNav() {
+  preload(POPUP_ART, { as: "image" });
   const sentinelRef = React.useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = React.useState(false);
 
