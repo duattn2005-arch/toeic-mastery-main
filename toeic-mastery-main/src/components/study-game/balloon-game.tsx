@@ -6,6 +6,7 @@ import { Flame, Heart, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfettiBurst } from "@/components/shared/confetti-burst";
 import { cn } from "@/lib/utils";
+import { useGameFeedback } from "@/hooks/use-game-feedback";
 import { buildBlast, type BlastQuestion, type StudyItem } from "@/lib/services/study-game";
 import type { ReviewRating } from "@/lib/services/spaced-repetition";
 
@@ -61,6 +62,7 @@ export function BalloonGame({
 }) {
   const [questions] = React.useState<BlastQuestion[]>(() => buildBlast(items, distractorPool, OPTIONS));
   const [index, setIndex] = React.useState(0);
+  const feedback = useGameFeedback();
   const [phase, setPhase] = React.useState<Phase>("play");
   const [popped, setPopped] = React.useState<Set<string>>(new Set());
   const [missedWord, setMissedWord] = React.useState(false);
@@ -118,6 +120,8 @@ export function BalloonGame({
   function tap(e: React.MouseEvent<HTMLButtonElement>, option: StudyItem) {
     if (phase !== "play" || popped.has(option.id)) return;
     setPopped((prev) => new Set(prev).add(option.id));
+    if (option.id === current.item.id) feedback.correct(current.item);
+    else feedback.wrong();
 
     if (option.id === current.item.id) {
       const clean = !missedWord;

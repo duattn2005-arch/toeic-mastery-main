@@ -21,8 +21,32 @@ const MODES: { value: RatingMode; title: string; hint: string }[] = [
   { value: "two", title: "2 mức", hint: "Học lại (←) hoặc Đã biết (→)" },
 ];
 
-/** Gear button with the learner's study settings. Changes apply at once and
- * are remembered for their account (useStudyPreferences). */
+function SettingSwitch({
+  title,
+  hint,
+  checked,
+  onChange,
+}: {
+  title: string;
+  hint: string;
+  checked: boolean;
+  onChange: (on: boolean) => void;
+}) {
+  return (
+    <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl bg-muted/60 px-3 py-2">
+      <span>
+        <span className="block text-sm font-semibold">{title}</span>
+        <span className="block text-[11px] text-muted-foreground">{hint}</span>
+      </span>
+      <Switch checked={checked} onCheckedChange={onChange} />
+    </label>
+  );
+}
+
+/** Gear button with all of the learner's study settings (rating mode,
+ * sounds, stages), placed at the right end of each study screen's step bar.
+ * Changes apply at once and are remembered for their account
+ * (useStudyPreferences). */
 export function StudySettings({
   stages,
   className,
@@ -54,7 +78,7 @@ export function StudySettings({
           <Settings2 className="size-4" />
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-80 rounded-2xl p-4">
+      <PopoverContent align="end" className="max-h-[80vh] w-80 overflow-y-auto rounded-2xl p-4">
         <p className="text-sm font-extrabold">Cài đặt học</p>
         <p className="mt-0.5 text-xs text-muted-foreground">Được lưu cho tài khoản, lần sau học vẫn giữ.</p>
 
@@ -78,13 +102,27 @@ export function StudySettings({
           ))}
         </div>
 
-        <label className="mt-4 flex items-center justify-between gap-3 rounded-xl bg-muted/60 px-3 py-2.5">
-          <span>
-            <span className="block text-sm font-semibold">Tự phát âm</span>
-            <span className="block text-[11px] text-muted-foreground">Đọc từ khi sang thẻ mới và mỗi lần lật thẻ</span>
-          </span>
-          <Switch checked={prefs.autoSpeak} onCheckedChange={(on) => update({ autoSpeak: on })} />
-        </label>
+        <p className="mt-4 mb-2 text-xs font-bold text-foreground/80">Âm thanh</p>
+        <div className="flex flex-col gap-1.5">
+          <SettingSwitch
+            title="Tự phát âm thẻ"
+            hint="Đọc từ khi sang thẻ mới và mỗi lần lật thẻ"
+            checked={prefs.autoSpeak}
+            onChange={(on) => update({ autoSpeak: on })}
+          />
+          <SettingSwitch
+            title="Đọc từ khi chọn đúng"
+            hint="Trong mọi trò chơi và phần Kiểm tra"
+            checked={prefs.gameSpeak}
+            onChange={(on) => update({ gameSpeak: on })}
+          />
+          <SettingSwitch
+            title="Âm báo khi chọn sai"
+            hint="Một tiếng báo ngắn khi trả lời sai"
+            checked={prefs.gameSfx}
+            onChange={(on) => update({ gameSfx: on })}
+          />
+        </div>
 
         {stages && stages.length > 1 && (
           <>

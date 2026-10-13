@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { ConfettiBurst } from "@/components/shared/confetti-burst";
 import { cn } from "@/lib/utils";
+import { useGameFeedback } from "@/hooks/use-game-feedback";
 import { buildBlast, type BlastQuestion, type StudyItem } from "@/lib/services/study-game";
 import type { ReviewRating } from "@/lib/services/spaced-repetition";
 
@@ -60,6 +61,7 @@ export function BlastGame({
 }) {
   const [questions] = React.useState<BlastQuestion[]>(() => buildBlast(items, distractorPool));
   const [index, setIndex] = React.useState(0);
+  const feedback = useGameFeedback();
   const [phase, setPhase] = React.useState<Phase>("aim");
   const [missed, setMissed] = React.useState<Set<string>>(new Set());
   const [laserTo, setLaserTo] = React.useState<number | null>(null);
@@ -106,6 +108,8 @@ export function BlastGame({
     if (phase !== "aim" || missed.has(`${current.item.id}:${option.id}`)) return;
     setLaserTo(slot);
     setShotKey((k) => k + 1);
+    if (option.id === current.item.id) feedback.correct(current.item);
+    else feedback.wrong();
 
     if (option.id === current.item.id) {
       const clean = !wrongThisWord;

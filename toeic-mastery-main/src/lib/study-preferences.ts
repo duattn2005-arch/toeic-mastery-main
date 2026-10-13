@@ -15,12 +15,18 @@ export interface StudyPreferences {
   autoSpeak: boolean;
   /** Stages the learner wants in the study flow; never empty. */
   stages: StudyStage[];
+  /** Games and quiz: read the English word aloud on a right answer. */
+  gameSpeak: boolean;
+  /** Games and quiz: short buzz on a wrong answer. */
+  gameSfx: boolean;
 }
 
 export const DEFAULT_STUDY_PREFERENCES: StudyPreferences = {
   ratingMode: "four",
   autoSpeak: true,
   stages: [...STUDY_STAGES],
+  gameSpeak: true,
+  gameSfx: true,
 };
 
 const schema = z.object({
@@ -33,6 +39,8 @@ const schema = z.object({
       const unique = STUDY_STAGES.filter((stage) => s.includes(stage));
       return unique.length > 0 ? unique : [...DEFAULT_STUDY_PREFERENCES.stages];
     }),
+  gameSpeak: z.boolean().catch(DEFAULT_STUDY_PREFERENCES.gameSpeak),
+  gameSfx: z.boolean().catch(DEFAULT_STUDY_PREFERENCES.gameSfx),
 });
 
 /** Coerces anything (stored JSON, localStorage, client input) into valid
