@@ -5,7 +5,7 @@ import "./globals.css";
 import { Providers } from "@/components/providers";
 import { AuthEventTracker } from "@/components/shared/auth-event-tracker";
 
-const GA_MEASUREMENT_ID = "G-GDBZE58K1G";
+const GA_MEASUREMENT_ID = "G-XNZY09JDNQ";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
