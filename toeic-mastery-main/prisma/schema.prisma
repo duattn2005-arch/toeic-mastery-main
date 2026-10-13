@@ -375,6 +375,7 @@ model Profile {
   payments            Payment[]
   redeemedCodes       ActivationCode[]
   shopItems           UserShopItem[]
+  studyPreference     StudyPreference?
   mentorConversations MentorConversation[]
   mentorMemory        MentorMemory?
   skillMastery        SkillMastery[]
@@ -1625,4 +1626,18 @@ model UserExerciseProgress {
 
   @@unique([userId, exerciseKey])
   @@map("user_exercise_progress")
+}
+
+/// Per-learner flashcard / study-flow settings (rating mode, auto
+/// pronunciation, which study stages to play), chosen from the settings
+/// button while learning words. Kept in its own table, as validated JSON,
+/// so new options don't need a migration and Profile queries stay untouched.
+model StudyPreference {
+  userId    String   @id @map("user_id") @db.Uuid
+  data      Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user Profile @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("study_preferences")
 }

@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { ArrowUpRight, Check, Lock, RotateCcw, Sparkles, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ThemeScene } from "@/components/layout/theme-scene";
+import { DEFAULT_SITE_THEME_ID } from "@/lib/constants/site-themes";
 import type { getVocabularyPathOverview } from "@/lib/data/vocabulary-path";
 
 type PathOverview = Awaited<ReturnType<typeof getVocabularyPathOverview>>;
@@ -67,9 +69,18 @@ export function PathOverviewContent({
       {data.currentDay && currentDayNumber && (
         <Link
           href={`${dayBasePath}/${currentDayNumber}`}
-          className="group relative flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-[1.75rem] bg-gradient-to-r from-primary to-[#14b8a6] p-5 text-primary-foreground shadow-lift sm:p-6"
+          className="group relative isolate flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-[1.75rem] bg-gradient-to-r from-primary to-[#14b8a6] p-5 text-primary-foreground shadow-lift sm:p-6"
         >
-          <div aria-hidden className="pointer-events-none absolute -top-16 -right-10 size-56 rounded-full bg-white/25 blur-3xl" />
+          {/* The lily-pond cat on the right half, fading into the teal
+              toward the copy on the left */}
+          <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 isolate w-[60%] sm:w-1/2">
+            <ThemeScene
+              themeId={DEFAULT_SITE_THEME_ID}
+              size="cover"
+              position="56% 64%"
+              className="[mask-image:linear-gradient(to_right,transparent,black_45%)]"
+            />
+          </div>
           <div className="relative">
             <p className="text-xs font-bold tracking-wide uppercase opacity-80">Hôm nay</p>
             <p className="mt-1 text-2xl font-extrabold tracking-tight">Ngày {currentDayNumber}</p>
