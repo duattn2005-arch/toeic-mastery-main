@@ -228,6 +228,80 @@
   }
 }
 
+/* Study games (Blast, Bong bóng): every looping motion is a CSS animation on
+   transform/opacity so it runs on the compositor instead of re-rendering React
+   every frame. One-shot effects (explosions, shakes) stay in framer-motion. */
+@keyframes game-twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+.game-twinkle {
+  animation: game-twinkle 3.2s ease-in-out infinite;
+  will-change: opacity;
+}
+
+@keyframes asteroid-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+  }
+  50% {
+    transform: translate3d(0, -8px, 0) rotate(2deg);
+  }
+}
+.asteroid-float {
+  animation: asteroid-float 3s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* The lane wrapper is as tall as the arena: translating it by its own height
+   carries the bubble from just below the arena to above it. */
+@keyframes bubble-rise {
+  from {
+    transform: translate3d(0, 100%, 0);
+  }
+  to {
+    transform: translate3d(0, -32%, 0);
+  }
+}
+.bubble-rise {
+  animation: bubble-rise linear both;
+  will-change: transform;
+}
+@keyframes bubble-sway {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(10px, 0, 0);
+  }
+}
+.bubble-sway {
+  animation: bubble-sway 3.2s ease-in-out infinite;
+}
+.game-paused {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .game-twinkle,
+  .asteroid-float,
+  .bubble-sway {
+    animation: none;
+  }
+  /* Bubbles stay put mid-arena instead of rising; the timer still runs. */
+  .bubble-rise {
+    animation: none;
+    transform: translate3d(0, 45%, 0);
+  }
+}
+
 /* Gentle, continuous idle motion for the study mascot — small amplitude and
    slow, so it reads as "alive" without being distracting. */
 @keyframes mascot-float {

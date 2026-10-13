@@ -54,7 +54,7 @@ export function QuizMode({
 }) {
   const [queue, setQueue] = React.useState<QueueEntry[]>(() => buildQuiz(items, distractorPool).map((question) => ({ question, wrongCount: 0 })));
   const [index, setIndex] = React.useState(0);
-  const feedback = useGameFeedback();
+  const feedback = useGameFeedback(items);
   const [picked, setPicked] = React.useState<number | null>(null);
   const [firstTryCorrect, setFirstTryCorrect] = React.useState(0);
   const [results, setResults] = React.useState<ResultRow[]>([]);

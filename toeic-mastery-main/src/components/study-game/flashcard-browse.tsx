@@ -10,7 +10,7 @@ import type { ReviewRating } from "@/lib/services/spaced-repetition";
 import { RATING_BUTTONS } from "@/components/vocabulary/flash-card";
 import { ensureSavedWordAction, unsaveWordIfExistsAction } from "@/lib/actions/dictionary";
 import { useDictionaryHintTutorial } from "@/hooks/use-dictionary-hint-tutorial";
-import { formatIpa, pronounce } from "@/lib/pronounce";
+import { formatIpa, preloadPronunciations, pronounce } from "@/lib/pronounce";
 import { useStudyPreferences } from "@/hooks/use-study-preferences";
 import { StudySettings } from "@/components/study-game/study-settings";
 
@@ -91,6 +91,12 @@ export function FlashcardBrowse({
     setFlipped(false);
     setIndex((i) => i - 1);
   }
+
+  // Fetch every card's audio up front so flips and new cards speak at once.
+  React.useEffect(() => {
+    preloadPronunciations(items);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Each new card reads its word aloud when "Tự phát âm" is on (opening a
   // card always follows a click or key press, so the browser allows it).

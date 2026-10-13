@@ -4,11 +4,49 @@
  * can always be heard, even ones (most collection words) with no audio file. */
 export function pronounce(term: string, audioUrl?: string | null) {
   if (typeof window === "undefined") return;
+  stopAll();
   if (audioUrl) {
-    new Audio(audioUrl).play().catch(() => speak(term));
+    const audio = cachedAudio(audioUrl);
+    audio.currentTime = 0;
+    playing = audio;
+    audio.play().catch(() => speak(term));
     return;
   }
   speak(term);
+}
+
+/** Recorded pronunciations are fetched once and reused, so a tap plays them
+ * at once instead of waiting on the network every time. */
+const audioCache = new Map<string, HTMLAudioElement>();
+let playing: HTMLAudioElement | null = null;
+
+function cachedAudio(url: string) {
+  let audio = audioCache.get(url);
+  if (!audio) {
+    audio = new Audio(url);
+    audio.preload = "auto";
+    audioCache.set(url, audio);
+  }
+  return audio;
+}
+
+/** Cuts off whatever is still being read, so the newest tap is heard right
+ * away rather than queued behind the previous word. */
+function stopAll() {
+  if (playing) {
+    playing.pause();
+    playing = null;
+  }
+  const synth = window.speechSynthesis;
+  if (synth && (synth.speaking || synth.pending)) synth.cancel();
+}
+
+/** Warm up a round's words before they are tapped: start downloading their
+ * recorded audio and pick the speech voice ahead of time. */
+export function preloadPronunciations(words: { audioUrl?: string | null }[]) {
+  if (typeof window === "undefined") return;
+  for (const word of words) if (word.audioUrl) cachedAudio(word.audioUrl);
+  if (window.speechSynthesis) pickVoice(window.speechSynthesis);
 }
 
 /** Natural-sounding British voices by name (macOS/iOS, Chrome, Edge/Windows,
@@ -54,7 +92,6 @@ function speak(term: string) {
   utterance.rate = 0.9;
   const voice = pickVoice(synth);
   if (voice) utterance.voice = voice;
-  synth.cancel();
   synth.speak(utterance);
 }
 
