@@ -1,7 +1,12 @@
-import { BarChart3, BookA, Headphones, Layers, ShieldCheck, Sparkles } from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
+import { ArrowUpRight, ShieldCheck } from "lucide-react";
 import { getCurrentProfile } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { HeaderAuthButtons, HeroAuthButtons } from "@/components/marketing/landing-auth-buttons";
+import { HeroAuthButtons } from "@/components/marketing/landing-auth-buttons";
+import { LandingNav } from "@/components/marketing/landing-nav";
+import { Reveal } from "@/components/marketing/reveal";
+import { FeatureBento } from "@/components/marketing/feature-bento";
 import { SiteThemeBackground } from "@/components/layout/site-theme-background";
 import { DEFAULT_SITE_THEME_ID } from "@/lib/constants/site-themes";
 import type { Metadata } from "next";
@@ -33,26 +38,18 @@ const STRUCTURED_DATA = {
   ],
 };
 
-const FEATURES = [
+const STEPS = [
   {
-    icon: Headphones,
-    title: "Đề thi thử sát thực tế",
-    description: "200 câu, 120 phút, giao diện thi giống thật với timer bền vững và tự động lưu bài làm.",
+    title: "Làm bài chẩn đoán",
+    description: "Một bài thi ngắn cho biết trình độ hiện tại của bạn ở cả Listening và Reading.",
   },
   {
-    icon: BookA,
-    title: "Từ điển thông minh toàn trang",
-    description: "Bôi đen bất kỳ từ tiếng Anh nào trên trang để tra nghĩa ngay lập tức, không rời trang.",
+    title: "Xem điểm yếu từng Part",
+    description: "Biểu đồ radar chỉ ra Part nào đang kéo điểm xuống và dạng câu nào bạn hay sai.",
   },
   {
-    icon: Layers,
-    title: "Từ vựng lặp lại ngắt quãng",
-    description: "Flashcard theo thuật toán SM-2, nhắc ôn đúng lúc để nhớ lâu hơn.",
-  },
-  {
-    icon: BarChart3,
-    title: "Phân tích điểm yếu theo Part",
-    description: "Radar chart 7 Part, gợi ý luyện tập theo dữ liệu thực tế của bạn.",
+    title: "Luyện đúng chỗ cần luyện",
+    description: "Lộ trình hằng ngày gồm đề, từ vựng và ngữ pháp, tự điều chỉnh sau mỗi bài làm.",
   },
 ];
 
@@ -64,53 +61,134 @@ export default async function LandingPage() {
     <div className="flex min-h-svh flex-col">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(STRUCTURED_DATA) }} />
       {/* Same ambient wallpaper the logged-in app shell shows by default
-          (mèo đen bên hồ sen) — landing page reuses it so a visitor sees
-          the same look the app itself has, not a plain dark page. */}
+          (mèo đen bên hồ sen), so a visitor sees the look the app itself has. */}
       <SiteThemeBackground themeId={DEFAULT_SITE_THEME_ID} />
-      <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-6 py-6">
-        <div className="flex items-center gap-2.5">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Headphones className="size-5" />
-          </span>
-          <span className="text-lg font-semibold tracking-tight">TOEIC Mastery</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <HeaderAuthButtons />
-        </div>
-      </header>
 
-      <section className="mx-auto flex w-full max-w-4xl flex-col items-center gap-6 px-6 py-20 text-center">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
-          <Sparkles className="size-3.5" /> Nền tảng luyện thi TOEIC toàn diện
-        </span>
-        <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-          Chinh phục điểm TOEIC mục tiêu <br className="hidden sm:block" /> với lộ trình cá nhân hóa
-        </h1>
-        <p className="max-w-2xl text-lg text-muted-foreground text-balance">
-          Luyện đề đầy đủ 7 Part, từ điển thông minh ngay trên trang, flashcard lặp lại ngắt quãng và phân tích
-          điểm yếu chi tiết — tất cả trong một nền tảng, hoàn toàn miễn phí để bắt đầu.
-        </p>
-        <div className="flex flex-wrap items-center justify-center gap-3">
-          <HeroAuthButtons />
-        </div>
-      </section>
+      <LandingNav />
 
-      <section className="mx-auto grid w-full max-w-6xl grid-cols-1 gap-4 px-6 pb-24 sm:grid-cols-2 lg:grid-cols-4">
-        {FEATURES.map((feature) => (
-          <div key={feature.title} className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-accent text-accent-foreground">
-              <feature.icon className="size-5" />
-            </span>
-            <h3 className="mt-4 text-sm font-semibold">{feature.title}</h3>
-            <p className="mt-1.5 text-sm text-muted-foreground">{feature.description}</p>
+      <main id="main">
+        {/* HERO: asymmetric split, copy left, real artwork right */}
+        <section className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pt-16 pb-24 md:px-6 lg:min-h-[min(calc(100dvh-6rem),52rem)] lg:grid-cols-12 lg:gap-8 lg:pt-8">
+          <div className="flex flex-col items-start gap-6 lg:col-span-6">
+            <Reveal>
+              <span className="inline-flex items-center rounded-full border border-primary/20 bg-accent px-3 py-1 text-[11px] font-semibold tracking-[0.14em] text-accent-foreground uppercase">
+                Luyện thi TOEIC toàn diện
+              </span>
+            </Reveal>
+            <Reveal delay={0.08}>
+              <h1 className="text-4xl leading-[1.08] font-extrabold md:text-5xl lg:text-6xl">
+                Chinh phục điểm TOEIC mục tiêu bằng lộ trình của riêng bạn
+              </h1>
+            </Reveal>
+            <Reveal delay={0.16}>
+              <p className="max-w-[48ch] text-base leading-relaxed text-muted-foreground md:text-lg">
+                Đề đủ 7 Part, từ điển ngay trên trang, flashcard ôn đúng lúc và phân tích điểm yếu theo từng Part.
+              </p>
+            </Reveal>
+            <Reveal delay={0.24} className="flex flex-wrap items-center gap-3">
+              <HeroAuthButtons />
+            </Reveal>
           </div>
-        ))}
-      </section>
 
-      <footer className="mt-auto border-t border-border px-6 py-8">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 text-sm text-muted-foreground sm:flex-row">
+          <Reveal delay={0.2} className="lg:col-span-6">
+            {/* Double-bezel: outer tray + inner plate with concentric radii */}
+            <div className="rounded-[2rem] border border-border/60 bg-card/60 p-2 shadow-lift">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-[calc(2rem-0.5rem)] bg-muted">
+                <Image
+                  src="/themes/lily-pond-cat/background.svg"
+                  alt="Chú mèo đen ngồi bên hồ sen, mascot của TOEIC Mastery"
+                  fill
+                  priority
+                  sizes="(min-width: 1024px) 560px, 100vw"
+                  className="object-cover"
+                />
+              </div>
+            </div>
+          </Reveal>
+        </section>
+
+        {/* FEATURES: asymmetric bento (7+5 / 5+7), each cell a live preview */}
+        <section id="features" className="mx-auto scroll-mt-28 w-full max-w-6xl px-4 pb-28 md:px-6">
+          <Reveal className="mb-10 max-w-2xl">
+            <h2 className="text-3xl font-extrabold md:text-4xl">Mọi công cụ ôn thi trong một nơi</h2>
+            <p className="mt-3 max-w-[60ch] text-muted-foreground">
+              Từ làm đề đến ghi nhớ từ vựng, mỗi tính năng bám theo cách người học TOEIC thực sự ôn tập.
+            </p>
+          </Reveal>
+
+          <FeatureBento />
+        </section>
+
+        {/* HOW IT WORKS: sticky heading left, stacked rows right */}
+        <section id="how" className="mx-auto scroll-mt-28 w-full max-w-6xl px-4 pb-28 md:px-6">
+          <div className="grid gap-10 rounded-[2.5rem] border border-border/60 bg-card p-8 shadow-soft md:p-14 lg:grid-cols-12">
+            <Reveal className="lg:col-span-5">
+              <div className="lg:sticky lg:top-28">
+                <h2 className="text-3xl font-extrabold md:text-4xl">Học đúng chỗ, tiến bộ thấy được</h2>
+                <p className="mt-3 max-w-[40ch] text-muted-foreground">
+                  Ba việc lặp lại mỗi ngày, mỗi lần ngắn nhưng đều đặn.
+                </p>
+              </div>
+            </Reveal>
+            <ol className="flex flex-col gap-3 lg:col-span-7">
+              {STEPS.map((step, i) => (
+                <li key={step.title}>
+                  <Reveal delay={i * 0.08}>
+                    <div className="rounded-2xl bg-muted/70 p-6 transition-colors duration-500 hover:bg-accent">
+                      <h3 className="text-lg font-bold">{step.title}</h3>
+                      <p className="mt-1.5 max-w-[52ch] text-sm leading-relaxed text-muted-foreground">
+                        {step.description}
+                      </p>
+                    </div>
+                  </Reveal>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
+
+        {/* FINAL CTA: mascot + one action, same label as the hero CTA */}
+        <section className="mx-auto w-full max-w-6xl px-4 pb-24 md:px-6">
+          <Reveal>
+            <div className="relative flex flex-col items-start gap-8 overflow-hidden rounded-[2.5rem] bg-[#0c1815] p-8 text-[#c5d3cf] md:flex-row md:items-center md:justify-between md:p-14">
+              <div
+                aria-hidden
+                className="absolute -bottom-32 left-1/3 size-96 rounded-full bg-primary/30 blur-3xl"
+              />
+              <div className="relative max-w-xl">
+                <h2 className="text-3xl font-extrabold text-white md:text-4xl">
+                  Bắt đầu từ một bài thi thử hôm nay
+                </h2>
+                <p className="mt-3 max-w-[44ch] text-[#9fb2ab]">
+                  Miễn phí để bắt đầu. Không cần thẻ, không cần cài đặt.
+                </p>
+                <Link
+                  href="/practice"
+                  className="group mt-7 inline-flex items-center gap-3 rounded-full bg-primary py-2 pr-2 pl-6 text-[15px] font-semibold text-primary-foreground transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:bg-[var(--primary-hover)] active:scale-[0.98]"
+                >
+                  Bắt đầu luyện tập ngay
+                  <span className="flex size-9 items-center justify-center rounded-full bg-black/15 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-px group-hover:scale-105">
+                    <ArrowUpRight className="size-4" strokeWidth={2} />
+                  </span>
+                </Link>
+              </div>
+              <Image
+                src="/mascot-avatar.png"
+                alt="Mascot mèo đen của TOEIC Mastery"
+                width={176}
+                height={176}
+                className="relative size-36 shrink-0 rounded-[2rem] object-cover md:size-44"
+              />
+            </div>
+          </Reveal>
+        </section>
+      </main>
+
+      <footer className="mt-auto border-t border-border/60 px-4 py-8 md:px-6">
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center">
           <span className="flex items-center gap-1.5">
-            <ShieldCheck className="size-4" /> Nội dung TOEIC-style nguyên bản, không sao chép đề thi có bản quyền.
+            <ShieldCheck className="size-4 shrink-0" strokeWidth={1.75} />
+            Nội dung TOEIC-style nguyên bản, không sao chép đề thi có bản quyền.
           </span>
           <span>© {new Date().getFullYear()} TOEIC Mastery</span>
         </div>

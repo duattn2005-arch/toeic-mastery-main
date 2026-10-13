@@ -74,7 +74,7 @@ export function ResetPasswordForm() {
         <Button
           type="submit"
           disabled={isSubmitting}
-          className="h-12 w-full rounded-full bg-gradient-to-r from-emerald-600 to-teal-500 text-base font-semibold text-white shadow-md hover:opacity-95 disabled:opacity-60"
+          className="h-12 w-full rounded-full bg-primary text-base font-semibold text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] transition-[background-color,transform] duration-300 hover:bg-[var(--primary-hover)] active:scale-[0.98] disabled:opacity-60"
         >
           {isSubmitting ? <Loader2 className="size-4 animate-spin" /> : null}
           Đặt Lại Mật Khẩu
@@ -84,7 +84,7 @@ export function ResetPasswordForm() {
 
       <p className="text-center text-xs text-muted-foreground">
         Chưa nhận được mã?{" "}
-        <Link href="/forgot-password" className="font-semibold text-emerald-700 hover:underline">
+        <Link href="/forgot-password" className="font-semibold text-primary hover:underline">
           Gửi lại
         </Link>
       </p>

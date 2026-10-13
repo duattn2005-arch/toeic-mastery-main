@@ -7,107 +7,110 @@
 :root {
   --radius: 1rem;
 
-  /* Base surfaces */
-  --background: #f5f7fb;
-  --foreground: #1c2033;
+  /* Base surfaces: cool neutral with a faint green cast (one gray family) */
+  --background: #eaf2ee;
+  --foreground: #0d1a17;
   --card: #ffffff;
-  --card-foreground: #1c2033;
+  --card-foreground: #13201d;
   --popover: #ffffff;
-  --popover-foreground: #1c2033;
+  --popover-foreground: #13201d;
 
-  /* Brand: violet / indigo */
-  --primary: #5b4bf0;
+  /* Brand: deep teal (single accent) */
+  --primary: #0f766e;
   --primary-foreground: #ffffff;
-  --primary-hover: #4c3cdc;
-  --secondary: #eef0fd;
-  --secondary-foreground: #4638d6;
-  --accent: #f0edff;
-  --accent-foreground: #5b4bf0;
+  --primary-hover: #0b5f58;
+  --secondary: #e0ece9;
+  --secondary-foreground: #0a524c;
+  --accent: #d9eee9;
+  --accent-foreground: #0a524c;
 
-  --muted: #eef1f7;
-  --muted-foreground: #6b7280;
+  --muted: #e7edeb;
+  --muted-foreground: #45534f;
 
-  --destructive: #e5484d;
+  --destructive: #d93f45;
   --destructive-foreground: #ffffff;
-  --success: #17a673;
+  --success: #16a36f;
   --success-foreground: #ffffff;
-  --warning: #f5a524;
-  --warning-foreground: #1c2033;
-  --info: #2f8fe0;
+  --warning: #e9a020;
+  --warning-foreground: #1c1400;
+  --info: #2f7fd0;
   --info-foreground: #ffffff;
 
-  --border: #e5e9f2;
-  --input: #e5e9f2;
-  --ring: #9b8afb;
+  --border: #d3ddd9;
+  --input: #cbd6d2;
+  --ring: #2aa396;
 
-  /* Sidebar: deep navy */
-  --sidebar: #10152b;
-  --sidebar-foreground: #cbd1eb;
-  --sidebar-muted-foreground: #8890b5;
-  --sidebar-active: #ffffff;
-  --sidebar-active-bg: #262d54;
-  --sidebar-border: #232a4d;
-  --sidebar-ring: #7c6cf5;
+  /* Sidebar: light morning glass (dark mode overrides below) */
+  --sidebar: #eef7f3;
+  --sidebar-foreground: #2a3a35;
+  --sidebar-muted-foreground: #4b5a55;
+  --sidebar-active: #0d1a17;
+  --sidebar-active-bg: #d4ece5;
+  --sidebar-border: #d3e3dd;
+  --sidebar-ring: #0f766e;
 
   /* Chart palette */
-  --chart-1: #5b4bf0;
-  --chart-2: #2f8fe0;
-  --chart-3: #17a673;
-  --chart-4: #f5a524;
-  --chart-5: #e5484d;
+  --chart-1: #0f766e;
+  --chart-2: #2f7fd0;
+  --chart-3: #16a36f;
+  --chart-4: #e9a020;
+  --chart-5: #d93f45;
 
-  --shadow-color: 222 47% 30%;
+  --shadow-color: 168 30% 14%;
+
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .dark {
-  --background: #0b0e1c;
-  --foreground: #e7e9f7;
-  --card: #131730;
-  --card-foreground: #e7e9f7;
-  --popover: #131730;
-  --popover-foreground: #e7e9f7;
+  --background: #08100e;
+  --foreground: #eef6f3;
+  --card: #10211c;
+  --card-foreground: #eef6f3;
+  --popover: #10211c;
+  --popover-foreground: #e4eeea;
 
-  --primary: #7c6cf5;
-  --primary-foreground: #ffffff;
-  --primary-hover: #8f81f7;
-  --secondary: #1c2140;
-  --secondary-foreground: #cdc7ff;
-  --accent: #1c2140;
-  --accent-foreground: #a89bff;
+  --primary: #2dd4bf;
+  --primary-foreground: #052622;
+  --primary-hover: #5eead4;
+  --secondary: #173a32;
+  --secondary-foreground: #a7f0e4;
+  --accent: #143d35;
+  --accent-foreground: #5eead4;
 
-  --muted: #1a1e38;
-  --muted-foreground: #9298bd;
+  --muted: #172c27;
+  --muted-foreground: #a5bab3;
 
   --destructive: #f2555a;
   --destructive-foreground: #ffffff;
   --success: #21c58c;
   --success-foreground: #071912;
-  --warning: #f7b64c;
+  --warning: #f2b24c;
   --warning-foreground: #1c1400;
   --info: #4da3ea;
   --info-foreground: #04141f;
 
-  --border: #232849;
-  --input: #232849;
-  --ring: #7c6cf5;
+  --border: #26443d;
+  --input: #26443d;
+  --ring: #2dd4bf;
 
-  --sidebar: #070a17;
-  --sidebar-foreground: #cbd1eb;
-  --sidebar-muted-foreground: #7d84ac;
+  --sidebar: #050b09;
+  --sidebar-foreground: #c5d3cf;
+  --sidebar-muted-foreground: #7a8f86;
   --sidebar-active: #ffffff;
-  --sidebar-active-bg: #1e2447;
-  --sidebar-border: #171b34;
-  --sidebar-ring: #7c6cf5;
+  --sidebar-active-bg: #142520;
+  --sidebar-border: #101c19;
+  --sidebar-ring: #2dd4bf;
 
-  --chart-1: #8f81f7;
+  --chart-1: #2dd4bf;
   --chart-2: #4da3ea;
   --chart-3: #21c58c;
-  --chart-4: #f7b64c;
+  --chart-4: #f2b24c;
   --chart-5: #f2555a;
 }
 
 @theme inline {
-  --font-sans: var(--font-inter);
+  --font-sans: var(--font-jakarta);
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -158,13 +161,30 @@
   --radius-xl: calc(var(--radius) + 4px);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "cv11", "ss01";
+    font-feature-settings: "tnum" 0;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
+    letter-spacing: -0.02em;
+  }
+  p {
+    text-wrap: pretty;
   }
   ::selection {
     background-color: color-mix(in oklab, var(--primary) 25%, transparent);
@@ -173,10 +193,38 @@
 
 @layer utilities {
   .shadow-soft {
-    box-shadow: 0 1px 2px hsl(var(--shadow-color) / 0.04), 0 4px 16px -4px hsl(var(--shadow-color) / 0.08);
+    box-shadow: 0 1px 2px hsl(var(--shadow-color) / 0.04), 0 8px 24px -8px hsl(var(--shadow-color) / 0.1);
+  }
+  .shadow-lift {
+    box-shadow: 0 1px 0 hsl(0 0% 100% / 0.6) inset, 0 2px 4px hsl(var(--shadow-color) / 0.04),
+      0 24px 48px -16px hsl(var(--shadow-color) / 0.16);
+  }
+  .ease-spring {
+    transition-timing-function: var(--ease-spring);
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
   }
   .scrollbar-thin {
     scrollbar-width: thin;
+  }
+}
+
+/* Progress rings / gauges draw in once on mount. The element sets
+   --ring-from (its empty dash offset) and its final stroke-dashoffset inline. */
+@keyframes ring-draw {
+  from {
+    stroke-dashoffset: var(--ring-from);
+  }
+}
+
+.ring-draw {
+  animation: ring-draw 1.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ring-draw {
+    animation: none;
   }
 }
 
@@ -218,7 +266,7 @@
 }
 
 .hero-ambient {
-  background-image: linear-gradient(120deg, #6a4bf0, #4c3cdc, #2f8fe0, #4c6cf0, #6a4bf0);
+  background-image: linear-gradient(120deg, #0f766e, #0b5f58, #167d8c, #1f8f78, #0f766e);
   background-size: 400% 400%;
   animation: hero-gradient-shift 9s ease-in-out infinite;
 }
@@ -235,74 +283,6 @@
 
 .hero-blob {
   animation: hero-blob-drift 8s ease-in-out infinite;
-}
-
-/* Ambient life for a photo/video Live theme hero (SiteThemeOverlay) —
- * drifting clouds, a bird crossing the sky, moonlight sweeping the water —
- * layered over an otherwise-static background so it reads as alive rather
- * than a still image. `left`/`top` are animated (not `transform`) because
- * these need to travel the actual width/height of whatever hero renders
- * them, which varies by layout — a transform distance is relative to the
- * element's own tiny box, not the container, so it can't express "all the
- * way across" without knowing the container's real size up front. */
-@keyframes cloud-drift {
-  from {
-    left: -25%;
-  }
-  to {
-    left: 115%;
-  }
-}
-.cloud-drift {
-  position: absolute;
-  animation: cloud-drift 70s linear infinite;
-}
-
-@keyframes bird-flight {
-  0% {
-    left: -8%;
-    top: 22%;
-    opacity: 0;
-  }
-  8% {
-    opacity: 1;
-  }
-  50% {
-    top: 16%;
-  }
-  92% {
-    opacity: 1;
-  }
-  100% {
-    left: 108%;
-    top: 26%;
-    opacity: 0;
-  }
-}
-.bird-flight {
-  position: absolute;
-  animation: bird-flight 24s ease-in-out infinite;
-}
-
-@keyframes water-shimmer-sweep {
-  0% {
-    left: -40%;
-    opacity: 0;
-  }
-  20% {
-    opacity: 0.5;
-  }
-  80% {
-    opacity: 0.5;
-  }
-  100% {
-    left: 130%;
-    opacity: 0;
-  }
-}
-.water-shimmer {
-  position: absolute;
-  animation: water-shimmer-sweep 10s ease-in-out infinite;
 }
 
 /* Pulsing glow for "lit up" accents (streak flame, level-up moments). */
@@ -807,9 +787,6 @@
 @media (prefers-reduced-motion: reduce) {
   .hero-ambient,
   .hero-blob,
-  .cloud-drift,
-  .bird-flight,
-  .water-shimmer,
   .glow-pulse,
   .glow-pulse-blue,
   .glow-pulse-primary,

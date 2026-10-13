@@ -12,7 +12,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
         <div className="mx-auto w-full max-w-sm">{children}</div>
       </div>
 
-      <div className="relative hidden overflow-hidden bg-sidebar lg:block">
+      <div className="relative hidden overflow-hidden bg-[#0c1815] lg:block">
         <div
           className="absolute inset-0 opacity-60"
           style={{
@@ -20,12 +20,12 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
               "radial-gradient(60% 50% at 20% 20%, color-mix(in oklab, var(--primary) 35%, transparent), transparent), radial-gradient(50% 40% at 80% 70%, color-mix(in oklab, var(--info) 30%, transparent), transparent)",
           }}
         />
-        <div className="relative flex h-full flex-col items-start justify-end gap-4 p-16 text-sidebar-foreground">
+        <div className="relative flex h-full flex-col items-start justify-end gap-4 p-16 text-[#c5d3cf]">
           <p className="text-3xl leading-snug font-semibold text-white">
             Chinh phục 990 điểm TOEIC <br /> với lộ trình cá nhân hóa.
           </p>
-          <p className="max-w-md text-sm text-sidebar-muted-foreground">
-            Luyện đề sát thực tế, từ điển thông minh ngay trên trang, và phân tích điểm yếu theo từng Part —
+          <p className="max-w-md text-sm text-[#9fb2ab]">
+            Luyện đề sát thực tế, từ điển thông minh ngay trên trang, và phân tích điểm yếu theo từng Part,
             tất cả trong một nền tảng.
           </p>
         </div>

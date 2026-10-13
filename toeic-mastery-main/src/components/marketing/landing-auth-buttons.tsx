@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AuthDialog, type AuthDialogTab } from "@/components/auth/auth-dialog";
 
@@ -58,12 +58,26 @@ export function HeaderAuthButtons() {
 
   return (
     <>
-      <Button variant="ghost" onClick={() => openWith("login")}>
+      <Button variant="ghost" className="hidden rounded-full px-4 hover:bg-white/5 sm:inline-flex" onClick={() => openWith("login")}>
         Đăng nhập
       </Button>
-      <Button onClick={() => openWith("register")}>
-        Bắt đầu miễn phí <ArrowRight />
-      </Button>
+      {/* Island CTA: label + arrow nested in its own circle; a light sweep
+          crosses the pill on hover. */}
+      <button
+        type="button"
+        onClick={() => openWith("register")}
+        className="group relative inline-flex h-10 items-center gap-2 overflow-hidden rounded-full bg-primary py-1 pr-1 pl-4 text-sm font-semibold whitespace-nowrap text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_8px_24px_-8px_rgba(45,212,191,0.55)] transition-[transform,background-color] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] outline-none hover:bg-[var(--primary-hover)] focus-visible:ring-[3px] focus-visible:ring-ring/50 active:scale-[0.97]"
+      >
+        <span
+          aria-hidden
+          className="pointer-events-none absolute inset-y-0 -left-1/2 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/35 to-transparent transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-[400%] motion-reduce:hidden"
+        />
+        <span className="relative sm:hidden">Bắt đầu</span>
+        <span className="relative hidden sm:inline">Bắt đầu miễn phí</span>
+        <span className="relative flex size-8 items-center justify-center rounded-full bg-black/15 transition-transform duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:translate-x-0.5 group-hover:-translate-y-px group-hover:scale-105">
+          <ArrowUpRight className="size-4" strokeWidth={2.25} />
+        </span>
+      </button>
       <AuthDialog open={open} onOpenChange={handleOpenChange} tab={tab} onTabChange={setTab} />
     </>
   );

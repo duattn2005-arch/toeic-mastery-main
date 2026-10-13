@@ -9,7 +9,7 @@ export default function NotFound() {
         <Compass className="size-8" />
       </span>
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight">404 — Không tìm thấy trang</h1>
+        <h1 className="text-3xl font-semibold tracking-tight">404: Không tìm thấy trang</h1>
         <p className="mt-2 text-sm text-muted-foreground">Trang bạn tìm không tồn tại hoặc đã được di chuyển.</p>
       </div>
       <div className="flex gap-3">

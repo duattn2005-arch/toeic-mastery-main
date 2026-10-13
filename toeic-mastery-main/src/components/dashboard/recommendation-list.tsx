@@ -9,7 +9,7 @@ export function RecommendationList({ recommendations }: { recommendations: Recom
         <Link
           key={rec.title}
           href={rec.href}
-          className="group flex items-start gap-3 rounded-xl border border-border bg-card p-3.5 transition-colors hover:border-primary/40 hover:bg-accent/40"
+          className="group flex items-start gap-3 rounded-xl border border-border/70 bg-card p-3.5 transition-colors duration-300 hover:border-primary/40 hover:bg-accent/40"
         >
           <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent text-accent-foreground">
             <Lightbulb className="size-4" />
