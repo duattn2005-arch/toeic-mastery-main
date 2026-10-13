@@ -26,6 +26,8 @@ function isPublicAsset(pathname: string) {
     // hid the sitemap from Google entirely.
     pathname === "/robots.txt" ||
     pathname === "/sitemap.xml" ||
+    // Google Search Console ownership file (public/google<token>.html).
+    /^\/google[0-9a-f]+\.html$/.test(pathname) ||
     /\.(svg|png|jpg|jpeg|gif|webp|mp3|ico)$/.test(pathname)
   );
 }
