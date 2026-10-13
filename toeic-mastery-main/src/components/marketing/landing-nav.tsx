@@ -8,8 +8,9 @@ import { cn } from "@/lib/utils";
 
 const LINKS = [
   { href: "/#features", label: "Tính năng" },
-  { href: "/#how", label: "Lộ trình" },
   { href: "/practice", label: "Luyện đề" },
+  { href: "/tu-vung", label: "Từ vựng" },
+  { href: "/huong-dan", label: "Hướng dẫn" },
 ];
 
 /**

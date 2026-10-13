@@ -10,6 +10,10 @@ const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password
 // /practice/[testId] and /practice/mistakes are unaffected and still
 // require a session.
 const PUBLIC_ROUTES = ["/", "/practice", "/practice/start", ...AUTH_ROUTES];
+// Public content for search engines and first-time visitors (word lists,
+// guides, the free quiz — see src/app/(public)). Whole subtrees, unlike the
+// exact matches above, since the pages are keyed by slug.
+const PUBLIC_PREFIXES = ["/tu-vung", "/huong-dan", "/thi-thu-mien-phi"];
 
 /** First-touch attribution cookie: whichever referral link a visitor
  * clicks first is kept for 60 days, even if they later click a different
@@ -111,7 +115,7 @@ export async function updateSession(request: NextRequest, event: NextFetchEvent)
     return withReferralCookie(response, referralCodeToPersist);
   }
 
-  const isPublic = PUBLIC_ROUTES.includes(pathname);
+  const isPublic = PUBLIC_ROUTES.includes(pathname) || PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
   const isAuthRoute = AUTH_ROUTES.includes(pathname);
 
   if (!session && !isPublic) {

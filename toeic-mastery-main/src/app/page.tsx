@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowUpRight, ShieldCheck } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 import { getCurrentProfile } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { HeroAuthButtons } from "@/components/marketing/landing-auth-buttons";
@@ -11,6 +11,7 @@ import { SiteThemeBackground } from "@/components/layout/site-theme-background";
 import { DEFAULT_SITE_THEME_ID } from "@/lib/constants/site-themes";
 import type { Metadata } from "next";
 import { SITE_URL } from "@/lib/site-url";
+import { SiteFooter } from "@/components/public/site-footer";
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
@@ -50,6 +51,27 @@ const STEPS = [
   {
     title: "Luyện đúng chỗ cần luyện",
     description: "Lộ trình hằng ngày gồm đề, từ vựng và ngữ pháp, tự điều chỉnh sau mỗi bài làm.",
+  },
+];
+
+const FREE_RESOURCES = [
+  {
+    href: "/thi-thu-mien-phi",
+    title: "Thi thử Part 5 miễn phí",
+    description: "10 câu ngữ pháp TOEIC, chấm điểm ngay và giải thích từng câu.",
+    cta: "Làm thử ngay",
+  },
+  {
+    href: "/huong-dan",
+    title: "Hướng dẫn luyện thi TOEIC",
+    description: "Cấu trúc đề, cách tính điểm, lộ trình học và mẹo làm bài từng Part.",
+    cta: "Đọc hướng dẫn",
+  },
+  {
+    href: "/tu-vung",
+    title: "Từ vựng Tiếng Anh THPT",
+    description: "Từ vựng Lớp 11 và Lớp 9 theo từng Unit, có phiên âm và nghĩa.",
+    cta: "Xem từ vựng",
   },
 ];
 
@@ -147,6 +169,37 @@ export default async function LandingPage() {
           </div>
         </section>
 
+        {/* FREE RESOURCES: crawlable entry points into the public content */}
+        <section aria-labelledby="free-heading" className="mx-auto w-full max-w-6xl px-4 pb-28 md:px-6">
+          <Reveal className="mb-8 max-w-2xl">
+            <h2 id="free-heading" className="text-3xl font-extrabold md:text-4xl">
+              Học thử miễn phí, không cần đăng nhập
+            </h2>
+            <p className="mt-3 max-w-[60ch] text-muted-foreground">
+              Làm bài kiểm tra ngữ pháp, đọc hướng dẫn luyện thi và xem từ vựng theo từng Unit trước khi quyết định học lâu dài.
+            </p>
+          </Reveal>
+          <ul className="grid gap-4 md:grid-cols-3">
+            {FREE_RESOURCES.map((item) => (
+              <li key={item.href}>
+                <Link
+                  href={item.href}
+                  className="group flex h-full flex-col justify-between gap-6 rounded-2xl bg-muted/70 p-6 transition-colors duration-500 hover:bg-accent"
+                >
+                  <span>
+                    <span className="text-lg font-bold">{item.title}</span>
+                    <span className="mt-1.5 block text-sm leading-relaxed text-muted-foreground">{item.description}</span>
+                  </span>
+                  <span className="flex items-center gap-1.5 text-sm font-semibold text-primary">
+                    {item.cta}
+                    <ArrowUpRight className="size-4 transition-transform duration-500 group-hover:translate-x-0.5 group-hover:-translate-y-px" strokeWidth={2} />
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+
         {/* FINAL CTA: mascot + one action, same label as the hero CTA */}
         <section className="mx-auto w-full max-w-6xl px-4 pb-24 md:px-6">
           <Reveal>
@@ -184,15 +237,7 @@ export default async function LandingPage() {
         </section>
       </main>
 
-      <footer className="mt-auto border-t border-border/60 px-4 py-8 md:px-6">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center">
-          <span className="flex items-center gap-1.5">
-            <ShieldCheck className="size-4 shrink-0" strokeWidth={1.75} />
-            Nội dung TOEIC-style nguyên bản, không sao chép đề thi có bản quyền.
-          </span>
-          <span>© {new Date().getFullYear()} TOEIC Mastery</span>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
