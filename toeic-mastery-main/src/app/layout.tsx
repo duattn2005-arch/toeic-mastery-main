@@ -4,6 +4,7 @@ import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/providers";
 import { AuthEventTracker } from "@/components/shared/auth-event-tracker";
+import { CookieNotice } from "@/components/shared/cookie-notice";
 
 const GA_MEASUREMENT_ID = "G-XNZY09JDNQ";
 
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             domain — so GA4 recorded nothing. GA4 below grants full consent itself. */}
         <Providers>{children}</Providers>
         <AuthEventTracker />
+        <CookieNotice />
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />
         {/* beforeInteractive: the consent + config commands must be queued
             before any React code runs, or an early trackEvent() (e.g. the
