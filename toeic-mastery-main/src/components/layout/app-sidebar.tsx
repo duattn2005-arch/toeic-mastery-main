@@ -10,6 +10,7 @@ import { EquippableLogoMark } from "@/components/shared/logo-mark";
 import { AccountAvatar } from "@/components/shared/account-avatar";
 import { getSiteTheme } from "@/lib/constants/site-themes";
 import { ThemeScene } from "@/components/layout/theme-scene";
+import { FACEBOOK_URL } from "@/lib/constants/contact";
 
 export interface SidebarProfile {
   fullName: string | null;
@@ -108,18 +109,15 @@ export function AppSidebar({ profile, siteThemeId }: { profile: SidebarProfile; 
           </Link>
         )}
 
-        <Link
-          href="/contact"
-          className={cn(
-            "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
-            isActive(pathname, "/contact")
-              ? "bg-sidebar-active-bg text-sidebar-active"
-              : "text-sidebar-muted-foreground hover:bg-sidebar-active-bg/60 hover:text-sidebar-foreground"
-          )}
+        <a
+          href={FACEBOOK_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-muted-foreground transition-colors hover:bg-sidebar-active-bg/60 hover:text-sidebar-foreground"
         >
           <Headset className="size-[18px] shrink-0" />
           Liên hệ
-        </Link>
+        </a>
       </nav>
 
       <div className="flex flex-col gap-3 px-3 pb-4">

@@ -8,11 +8,13 @@ export interface ContactChannel {
   icon: LucideIcon;
 }
 
+export const FACEBOOK_URL = "https://www.facebook.com/profile.php?id=61594632153439";
+
 export const CONTACT_CHANNELS: ContactChannel[] = [
   {
     label: "Facebook",
     value: "TOEIC Mastery",
-    href: "https://www.facebook.com/profile.php?id=61594632153439",
+    href: FACEBOOK_URL,
     description: "Nhắn tin để được hỗ trợ tài khoản, thanh toán và góp ý nội dung.",
     icon: Globe,
   },

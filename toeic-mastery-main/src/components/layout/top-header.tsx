@@ -26,6 +26,7 @@ import type { SidebarProfile } from "@/components/layout/app-sidebar";
 import type { VocabularyReminder } from "@/lib/data/vocabulary";
 import { EquippableLogoMark } from "@/components/shared/logo-mark";
 import { AccountAvatar } from "@/components/shared/account-avatar";
+import { FACEBOOK_URL } from "@/lib/constants/contact";
 
 function ReminderBell({ reminder }: { reminder: VocabularyReminder }) {
   const total = reminder.dueTodayCount + reminder.dueTomorrowCount;
@@ -137,13 +138,15 @@ export function TopHeader({
                 Quản trị
               </Link>
             )}
-            <Link
-              href="/contact"
+            <a
+              href={FACEBOOK_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-muted-foreground hover:bg-sidebar-active-bg/60 hover:text-white"
             >
               <Headset className="size-[18px]" />
               Liên hệ
-            </Link>
+            </a>
           </nav>
         </SheetContent>
       </Sheet>
