@@ -6,6 +6,7 @@ import { Crown, Flame, Headset, Settings, ShieldCheck, Target, User } from "luci
 
 import { cn } from "@/lib/utils";
 import { MAIN_NAV } from "@/lib/constants/nav";
+import { FACEBOOK_URL } from "@/lib/constants/contact";
 import { EquippableLogoMark } from "@/components/shared/logo-mark";
 import { AccountAvatar } from "@/components/shared/account-avatar";
 import { getSiteTheme } from "@/lib/constants/site-themes";
@@ -108,20 +109,16 @@ export function AppSidebar({ profile, siteThemeId }: { profile: SidebarProfile; 
           </Link>
         )}
 
-        <Link
-          href="/contact"
-          aria-current={isActive(pathname, "/contact") ? "page" : undefined}
-          className={cn(
-            "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-300",
-            isActive(pathname, "/contact")
-              ? "bg-white/80 font-semibold text-sidebar-active shadow-sm dark:bg-white/[0.12] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] before:absolute before:top-1/2 before:left-0 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-sidebar-ring"
-              : // Sits over the scene's dark ground strip, so it gets its own backdrop to stay legible.
-                "bg-white/70 text-sidebar-foreground backdrop-blur-sm hover:bg-white/90 hover:text-sidebar-active dark:bg-black/40 dark:text-white/85 dark:hover:bg-black/55 dark:hover:text-white"
-          )}
+        {/* Sits over the scene's dark ground strip, so it gets its own backdrop to stay legible. */}
+        <a
+          href={FACEBOOK_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center gap-3 rounded-xl bg-white/70 px-3 py-2.5 text-sm font-medium text-sidebar-foreground backdrop-blur-sm transition-colors duration-300 hover:bg-white/90 hover:text-sidebar-active dark:bg-black/40 dark:text-white/85 dark:hover:bg-black/55 dark:hover:text-white"
         >
           <Headset className="size-[18px] shrink-0" />
           Liên hệ
-        </Link>
+        </a>
       </nav>
 
       <div className="flex flex-col gap-3 px-3 pb-4">
