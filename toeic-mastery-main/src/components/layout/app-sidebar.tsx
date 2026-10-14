@@ -115,7 +115,8 @@ export function AppSidebar({ profile, siteThemeId }: { profile: SidebarProfile; 
             "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-300",
             isActive(pathname, "/contact")
               ? "bg-white/80 font-semibold text-sidebar-active shadow-sm dark:bg-white/[0.12] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] before:absolute before:top-1/2 before:left-0 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-sidebar-ring"
-              : "text-sidebar-foreground hover:bg-white/60 hover:text-sidebar-active dark:text-white/75 dark:hover:bg-white/[0.08] dark:hover:text-white"
+              : // Sits over the scene's dark ground strip, so it gets its own backdrop to stay legible.
+                "bg-white/70 text-sidebar-foreground backdrop-blur-sm hover:bg-white/90 hover:text-sidebar-active dark:bg-black/40 dark:text-white/85 dark:hover:bg-black/55 dark:hover:text-white"
           )}
         >
           <Headset className="size-[18px] shrink-0" />
