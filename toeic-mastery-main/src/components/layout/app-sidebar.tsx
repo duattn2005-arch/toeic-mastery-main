@@ -10,7 +10,6 @@ import { EquippableLogoMark } from "@/components/shared/logo-mark";
 import { AccountAvatar } from "@/components/shared/account-avatar";
 import { getSiteTheme } from "@/lib/constants/site-themes";
 import { ThemeScene } from "@/components/layout/theme-scene";
-import { FACEBOOK_URL } from "@/lib/constants/contact";
 
 export interface SidebarProfile {
   fullName: string | null;
@@ -109,15 +108,19 @@ export function AppSidebar({ profile, siteThemeId }: { profile: SidebarProfile; 
           </Link>
         )}
 
-        <a
-          href={FACEBOOK_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-sidebar-muted-foreground transition-colors hover:bg-sidebar-active-bg/60 hover:text-sidebar-foreground"
+        <Link
+          href="/contact"
+          aria-current={isActive(pathname, "/contact") ? "page" : undefined}
+          className={cn(
+            "relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-300",
+            isActive(pathname, "/contact")
+              ? "bg-white/80 font-semibold text-sidebar-active shadow-sm dark:bg-white/[0.12] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] before:absolute before:top-1/2 before:left-0 before:h-5 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-sidebar-ring"
+              : "text-sidebar-foreground hover:bg-white/60 hover:text-sidebar-active dark:text-white/75 dark:hover:bg-white/[0.08] dark:hover:text-white"
+          )}
         >
           <Headset className="size-[18px] shrink-0" />
           Liên hệ
-        </a>
+        </Link>
       </nav>
 
       <div className="flex flex-col gap-3 px-3 pb-4">
