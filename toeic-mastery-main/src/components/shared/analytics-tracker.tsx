@@ -65,7 +65,10 @@ export function AnalyticsTracker() {
       for (const step of SCROLL_STEPS) {
         if (percent >= step && scrollable > 0 && !sent.has(step)) {
           sent.add(step);
-          trackEvent("scroll_depth", { percent: step, page_path: pathname });
+          // percent_scrolled is the parameter GA4's own scroll event uses (it only
+          // reports 90); reusing the name lets one "Mức cuộn trang" dimension
+          // cover both that and these 25 / 50 / 75 / 100 steps.
+          trackEvent("scroll_depth", { percent_scrolled: step, page_path: pathname });
         }
       }
     }
