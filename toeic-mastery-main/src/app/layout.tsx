@@ -6,7 +6,13 @@ import { Providers } from "@/components/providers";
 import { AuthEventTracker } from "@/components/shared/auth-event-tracker";
 import { CookieNotice } from "@/components/shared/cookie-notice";
 
-const GA_MEASUREMENT_ID = "G-XNZY09JDNQ";
+// The site reports to every property below, so whichever one is open in the
+// GA4 dashboard shows the numbers. The first ID loads gtag.js; the second
+// (the property used until 2026-10-13, which also forwards to its linked
+// G-CCTBJ73HK1) keeps receiving hits — after the switch to the new ID its
+// reports silently dropped to zero.
+const GA_MEASUREMENT_IDS = ["G-XNZY09JDNQ", "G-GDBZE58K1G"];
+const GA_MEASUREMENT_ID = GA_MEASUREMENT_IDS[0];
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -61,7 +67,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             gtag('consent', 'default', granted);
             gtag('consent', 'update', granted);
             gtag('js', new Date());
-            gtag('config', '${GA_MEASUREMENT_ID}');
+            ${GA_MEASUREMENT_IDS.map((id) => `gtag('config', '${id}');`).join("\n            ")}
           `}
         </Script>
       </body>
