@@ -180,7 +180,10 @@ export function ProCard({ offer }: { offer: NewMemberOfferState }) {
                 <button
                   key={key}
                   type="button"
-                  onClick={() => setPlanKey(key)}
+                  onClick={() => {
+                    setPlanKey(key);
+                    trackEvent("select_plan", { plan: key });
+                  }}
                   className={cn(
                     "relative rounded-xl border p-2.5 text-center text-xs font-medium transition-colors",
                     active ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:bg-muted"

@@ -18,6 +18,7 @@ import type { QuickStudyItem } from "@/lib/data/quick-study";
 import type { ReviewRating } from "@/lib/services/spaced-repetition";
 import { cn } from "@/lib/utils";
 import { useDictionaryHintTutorial } from "@/hooks/use-dictionary-hint-tutorial";
+import { trackEvent } from "@/lib/analytics";
 
 const AUDIO_ONLY_PARTS = new Set(["PART1", "PART2"]);
 const AUTO_ADVANCE_MS = 1400;
@@ -71,6 +72,7 @@ export function QuickStudyRunner({
     // Elapsed = how much of the countdown was actually used — avoids
     // reaching for wall-clock time (Date.now()) during render/callbacks,
     // which React's purity rule flags as an impure call.
+    trackEvent("quick_study_complete", { duration_sec: durationSec - remainingSecRef.current });
     void completeQuickStudySessionAction(durationSec - remainingSecRef.current);
   }, [durationSec]);
 
@@ -123,6 +125,7 @@ export function QuickStudyRunner({
   function handleVocabRate(rating: ReviewRating) {
     if (!current || current.type !== "vocab") return;
     setVocabReviewed((v) => v + 1);
+    trackEvent("vocab_word_rated", { rating, source: "quick_study" });
     void practiceVocabularyWordAction(current.vocabularyWordId, rating);
     if (rating === "AGAIN") {
       void ensureSavedWordAction(current.word);

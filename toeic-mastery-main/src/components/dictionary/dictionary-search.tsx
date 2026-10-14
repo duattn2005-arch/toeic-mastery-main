@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Search } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { trackEvent } from "@/lib/analytics";
 
 export function DictionarySearch({ defaultValue = "" }: { defaultValue?: string }) {
   const [value, setValue] = React.useState(defaultValue);
@@ -14,6 +15,7 @@ export function DictionarySearch({ defaultValue = "" }: { defaultValue?: string 
     e.preventDefault();
     const trimmed = value.trim();
     if (!trimmed) return;
+    trackEvent("search", { search_term: trimmed, search_type: "dictionary" });
     router.push(`/dictionary/${encodeURIComponent(trimmed)}`);
   }
 

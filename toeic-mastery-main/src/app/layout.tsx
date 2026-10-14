@@ -3,13 +3,11 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/providers";
+import { GA_MEASUREMENT_ID } from "@/lib/ga-config";
 import { AuthEventTracker } from "@/components/shared/auth-event-tracker";
+import { AnalyticsTracker, WebVitalsReporter } from "@/components/shared/analytics-tracker";
 import { CookieNotice } from "@/components/shared/cookie-notice";
 
-// GA4 measurement ID. This tag is also linked (in the Google tag settings, not
-// here) to G-CCTBJ73HK1, so every hit lands in both properties. Don't add a
-// second gtag('config') for that ID or its numbers would be doubled.
-const GA_MEASUREMENT_ID = "G-GDBZE58K1G";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -45,6 +43,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             domain — so GA4 recorded nothing. GA4 below grants full consent itself. */}
         <Providers>{children}</Providers>
         <AuthEventTracker />
+        <AnalyticsTracker />
+        <WebVitalsReporter />
         <CookieNotice />
         <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} strategy="afterInteractive" />
         {/* beforeInteractive: the consent + config commands must be queued

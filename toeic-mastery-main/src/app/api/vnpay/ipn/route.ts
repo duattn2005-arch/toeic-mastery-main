@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { verifySignature } from "@/lib/services/vnpay";
 import { grantProDays } from "@/lib/services/pro-grant";
 import { recordReferralCommission } from "@/lib/services/referral-commission";
+import { trackPaymentConfirmed } from "@/lib/services/ga-server";
 
 /**
  * VNPay's server-to-server IPN callback — the only source of truth for
@@ -52,6 +53,7 @@ export async function GET(request: NextRequest) {
   if (isSuccess) {
     await grantProDays(payment.userId, payment.planDurationDays);
     await recordReferralCommission(updatedPayment);
+    void trackPaymentConfirmed(updatedPayment, "vnpay");
   }
 
   return NextResponse.json({ RspCode: "00", Message: "Confirm Success" });

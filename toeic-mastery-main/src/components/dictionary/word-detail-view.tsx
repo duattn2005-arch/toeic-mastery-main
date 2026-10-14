@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { WordAudioButton } from "@/components/dictionary/word-audio-button";
 import { toggleSaveWordAction, toggleFavoriteWordAction, updateSavedWordNoteAction } from "@/lib/actions/dictionary";
 import type { DictionaryResult } from "@/lib/types/dictionary";
+import { trackEvent } from "@/lib/analytics";
 
 export function WordDetailView({
   result,
@@ -41,6 +42,7 @@ export function WordDetailView({
         return;
       }
       setSaved(!!res.saved);
+      trackEvent(res.saved ? "word_save" : "word_unsave", { search_term: result.word, source: "detail" });
       router.refresh();
     });
   }
@@ -56,6 +58,7 @@ export function WordDetailView({
         toast.error(res.error);
         return;
       }
+      trackEvent("word_favorite_toggle", { search_term: result.word });
       setFavorite((f) => !f);
     });
   }

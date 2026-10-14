@@ -13,6 +13,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { isSuperAdmin, requireAdmin } from "@/lib/auth";
+import { AnalyticsIdentity } from "@/components/shared/analytics-tracker";
 
 const ADMIN_NAV = [
   { label: "Tổng quan", href: "/admin", icon: LayoutDashboard },
@@ -37,6 +38,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="min-h-svh bg-background">
+      <AnalyticsIdentity userId={admin.id} plan={admin.plan} role={admin.role} />
       <div className="flex min-h-svh">
         <aside className="hidden w-60 shrink-0 flex-col border-r border-border bg-card px-3 py-6 lg:flex">
           <Link href="/dashboard" className="mb-6 px-3 text-xs font-medium text-muted-foreground hover:text-foreground">

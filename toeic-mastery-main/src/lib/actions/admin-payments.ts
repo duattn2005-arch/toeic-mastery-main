@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { requireAdmin } from "@/lib/auth";
 import { grantProDays } from "@/lib/services/pro-grant";
 import { recordReferralCommission } from "@/lib/services/referral-commission";
+import { trackPaymentConfirmed } from "@/lib/services/ga-server";
 
 export interface ActionResult {
   error?: string;
@@ -38,6 +39,7 @@ export async function approvePaymentAction(paymentId: string): Promise<ActionRes
   });
   await grantProDays(payment.userId, payment.planDurationDays);
   await recordReferralCommission(updatedPayment);
+  void trackPaymentConfirmed(updatedPayment, "admin_approval");
 
   revalidatePath("/admin/payments");
   return {};

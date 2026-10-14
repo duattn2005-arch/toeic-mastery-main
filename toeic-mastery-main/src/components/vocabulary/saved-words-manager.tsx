@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { AddCustomWordsDialog } from "@/components/vocabulary/add-custom-words-dialog";
 import { setSavedWordCategoryAction } from "@/lib/actions/dictionary";
 import { cn } from "@/lib/utils";
+import { trackEvent } from "@/lib/analytics";
 
 export interface SavedWordRow {
   id: string;
@@ -164,6 +165,7 @@ export function SavedWordsManager({
       a.click();
       a.remove();
       URL.revokeObjectURL(url);
+      trackEvent("vocab_pdf_export", { word_count: exportWordIds.length });
       setExportOpen(false);
     } finally {
       setExporting(false);

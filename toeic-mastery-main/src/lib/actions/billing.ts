@@ -8,6 +8,7 @@ import { requireUser } from "@/lib/auth";
 import { buildPaymentUrl } from "@/lib/services/vnpay";
 import { grantProDays } from "@/lib/services/pro-grant";
 import { getNewMemberOfferState } from "@/lib/services/new-member-offer";
+import { sendGaServerEvent } from "@/lib/services/ga-server";
 import { getReferralDiscountState } from "@/lib/services/referral-discount";
 import { PRO_PLANS, discountedPriceVnd, referralDiscountedPriceVnd, type ProPlanKey } from "@/lib/constants/billing";
 
@@ -41,6 +42,7 @@ export async function redeemActivationCodeAction(rawCode: string): Promise<Actio
   if (claim.count === 0) return { error: "Mã kích hoạt này đã được sử dụng" };
 
   await grantProDays(profile.id, record.planDurationDays);
+  void sendGaServerEvent(profile.id, "pro_code_redeemed", { plan_days: record.planDurationDays });
   revalidatePath("/pricing");
   return {};
 }

@@ -11,6 +11,7 @@ import { useDictionaryLookup } from "@/hooks/use-dictionary-lookup";
 import { toggleSaveWordAction } from "@/lib/actions/dictionary";
 import { FREE_DICTIONARY_LOOKUPS_PER_DAY } from "@/lib/constants/limits";
 import { cn } from "@/lib/utils";
+import { trackEvent } from "@/lib/analytics";
 
 /** Maps the English part-of-speech tags providers return (dictionaryapi.dev,
  * Wiktionary) to the Vietnamese abbreviation learners expect — neither
@@ -61,6 +62,7 @@ export function DictionaryPopupContent({
         return;
       }
       setSaved(!!result.saved);
+      trackEvent(result.saved ? "word_save" : "word_unsave", { search_term: word, source: "popup" });
       toast.success(result.saved ? `Đã lưu "${word}"` : `Đã bỏ lưu "${word}"`);
     });
   }

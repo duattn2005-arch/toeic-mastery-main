@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { db } from "@/lib/db";
 import { grantProDays } from "@/lib/services/pro-grant";
 import { recordReferralCommission } from "@/lib/services/referral-commission";
+import { trackPaymentConfirmed } from "@/lib/services/ga-server";
 
 /**
  * SePay's bank-transaction webhook — the personal-MB-Bank-account
@@ -108,6 +109,7 @@ export async function POST(request: NextRequest) {
 
   await grantProDays(payment.userId, payment.planDurationDays);
   await recordReferralCommission(updatedPayment);
+  void trackPaymentConfirmed(updatedPayment, "sepay");
 
   return NextResponse.json({ success: true });
 }

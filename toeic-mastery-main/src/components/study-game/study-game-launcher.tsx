@@ -103,6 +103,7 @@ export function StudyGameLauncher({
   const handleItemResult = React.useCallback(
     async (itemId: string, rating: ReviewRating) => {
       recordStatus(itemId, rating);
+      trackEvent("vocab_word_rated", { rating, source: "study_game" });
       if (trackable) await practiceVocabularyWordAction(itemId, rating);
       const term = items.find((i) => i.id === itemId)?.term.toLowerCase();
       if (!term) return;

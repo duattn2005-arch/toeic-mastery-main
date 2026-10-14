@@ -5,6 +5,7 @@ import { Check, Copy } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { trackEvent } from "@/lib/analytics";
 
 export function ReferralLinkCard({ referralLink, referralCode }: { referralLink: string; referralCode: string | null }) {
   const [copied, setCopied] = React.useState(false);
@@ -13,6 +14,7 @@ export function ReferralLinkCard({ referralLink, referralCode }: { referralLink:
     try {
       await navigator.clipboard.writeText(referralLink);
       setCopied(true);
+      trackEvent("referral_link_copy");
       toast.success("Đã sao chép link giới thiệu");
       setTimeout(() => setCopied(false), 2000);
       fetch("/api/referrals/copy", { method: "POST" }).catch(() => {});

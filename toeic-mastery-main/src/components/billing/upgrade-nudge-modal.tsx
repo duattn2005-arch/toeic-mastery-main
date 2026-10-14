@@ -7,6 +7,7 @@ import { Check, Crown, X } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { PRO_PLANS, planSavingsPercent } from "@/lib/constants/billing";
+import { trackEvent } from "@/lib/analytics";
 
 const SESSION_SHOWN_KEY = "upgrade_nudge_shown_session_v1";
 const DASHBOARD_TOUR_DONE_KEY = "tour_dashboard_done";
@@ -68,6 +69,7 @@ export function UpgradeNudgeModal() {
 
     function reveal() {
       markSessionShown();
+      trackEvent("upgrade_nudge_view");
       setOpen(true);
     }
 

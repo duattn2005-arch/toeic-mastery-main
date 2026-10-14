@@ -4,6 +4,7 @@ import { getNewMemberOfferState } from "@/lib/services/new-member-offer";
 import { getSiteThemeId } from "@/lib/data/site-theme";
 import { AppShell } from "@/components/layout/app-shell";
 import { PublicAppShell } from "@/components/layout/public-app-shell";
+import { AnalyticsIdentity } from "@/components/shared/analytics-tracker";
 
 /**
  * Every route here still requires login by default — pages enforce that
@@ -46,6 +47,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       newMemberOfferDeadline={newMemberOffer.deadline}
       siteThemeId={siteThemeId}
     >
+      <AnalyticsIdentity userId={profile.id} plan={profile.plan} role={profile.role} />
       {children}
     </AppShell>
   );

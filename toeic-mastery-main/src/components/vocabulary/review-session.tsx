@@ -118,6 +118,7 @@ function ReviewRunner({ items, starredTerms, doneLabel }: { items: ReviewItem[];
   function handleItemResult(vocabularyWordId: string, rating: ReviewRating) {
     if (startedAtRef.current === null) startedAtRef.current = Date.now();
     recordStatus(vocabularyWordId, rating);
+    trackEvent("vocab_word_rated", { rating, source: "review" });
     void practiceVocabularyWordAction(vocabularyWordId, rating);
     const term = studyItems.find((i) => i.id === vocabularyWordId)?.term.toLowerCase();
     if (term) setSessionOverrides((prev) => ({ ...prev, [term]: rating === "AGAIN" }));

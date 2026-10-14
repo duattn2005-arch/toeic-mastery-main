@@ -7,6 +7,7 @@ import { Gift, Sparkles, X, Zap } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { NEW_MEMBER_OFFER_PERCENT } from "@/lib/constants/billing";
+import { trackEvent } from "@/lib/analytics";
 
 const VIEW_COUNT_KEY = "welcome_offer_view_count_v2";
 const MAX_VIEWS = 5;
@@ -124,6 +125,7 @@ export function WelcomeOfferModal({ deadline }: { deadline: string }) {
       // pattern as theme-toggle.tsx's mounted flag.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setViewNumber(count);
+      trackEvent("welcome_offer_view", { view_number: count });
       setOpen(true);
       return;
     }
@@ -133,6 +135,7 @@ export function WelcomeOfferModal({ deadline }: { deadline: string }) {
       if (isDashboardTourDone() || Date.now() - startedAt > TOUR_WAIT_TIMEOUT_MS) {
         clearInterval(id);
         setViewNumber(count);
+        trackEvent("welcome_offer_view", { view_number: count });
         setOpen(true);
       }
     }, TOUR_POLL_INTERVAL_MS);

@@ -94,6 +94,7 @@ export function PathDayRunner({
   const handleItemResult = React.useCallback(
     async (itemId: string, rating: Parameters<typeof practiceVocabularyWordAction>[1]) => {
       recordStatus(itemId, rating);
+      trackEvent("vocab_word_rated", { rating, source: "path" });
       await practiceVocabularyWordAction(itemId, rating);
       const term = items.find((i) => i.id === itemId)?.term.toLowerCase();
       if (!term) return;
@@ -128,6 +129,7 @@ export function PathDayRunner({
         quiz_correct: quizResult?.correct,
       });
     }
+    trackEvent("vocab_path_step_complete", { path: title ?? backLabel, day_number: dayNumber, step });
     if (result.stepsCompleted !== undefined) setStepsCompleted(result.stepsCompleted);
     if (result.stars !== undefined) setStars(result.stars);
     setActiveStep(step < 3 ? ((step + 1) as 1 | 2 | 3) : null);
