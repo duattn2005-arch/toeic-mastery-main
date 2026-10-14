@@ -6,13 +6,10 @@ import { Providers } from "@/components/providers";
 import { AuthEventTracker } from "@/components/shared/auth-event-tracker";
 import { CookieNotice } from "@/components/shared/cookie-notice";
 
-// The site reports to every property below, so whichever one is open in the
-// GA4 dashboard shows the numbers. The first ID loads gtag.js; the second
-// (the property used until 2026-10-13, which also forwards to its linked
-// G-CCTBJ73HK1) keeps receiving hits — after the switch to the new ID its
-// reports silently dropped to zero.
-const GA_MEASUREMENT_IDS = ["G-XNZY09JDNQ", "G-GDBZE58K1G"];
-const GA_MEASUREMENT_ID = GA_MEASUREMENT_IDS[0];
+// GA4 measurement ID. This tag is also linked (in the Google tag settings, not
+// here) to G-CCTBJ73HK1, so every hit lands in both properties. Don't add a
+// second gtag('config') for that ID or its numbers would be doubled.
+const GA_MEASUREMENT_ID = "G-GDBZE58K1G";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",
@@ -67,7 +64,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             gtag('consent', 'default', granted);
             gtag('consent', 'update', granted);
             gtag('js', new Date());
-            ${GA_MEASUREMENT_IDS.map((id) => `gtag('config', '${id}');`).join("\n            ")}
+            gtag('config', '${GA_MEASUREMENT_ID}');
           `}
         </Script>
       </body>
