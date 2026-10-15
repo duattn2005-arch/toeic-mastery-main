@@ -30,7 +30,7 @@ export default async function AdminDashboardPage() {
 
       {openReports > 0 && (
         <Link
-          href="/admin/analytics"
+          href="/admin/analytics#reports"
           className="flex items-center justify-between rounded-2xl border border-warning/30 bg-warning/10 p-4 text-sm font-medium hover:bg-warning/15"
         >
           Có {openReports} báo cáo lỗi câu hỏi cần xem xét
