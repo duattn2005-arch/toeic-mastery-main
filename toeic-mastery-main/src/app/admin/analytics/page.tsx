@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { db } from "@/lib/db";
 import { StatCard } from "@/components/shared/stat-card";
-import { ResolveReportButton } from "@/components/admin/resolve-report-button";
+import { QuestionReportList } from "@/components/admin/question-report-list";
+import { getOpenReportContexts } from "@/lib/data/question-reports";
 import { AlertTriangle, ClipboardList, TrendingUp, Users } from "lucide-react";
 
 export const metadata: Metadata = { title: "Thống kê quản trị" };
@@ -22,12 +23,7 @@ export default async function AdminAnalyticsPage() {
       take: 5,
       select: { id: true, title: true, _count: { select: { attempts: true } } },
     }),
-    db.questionReport.findMany({
-      where: { status: "OPEN" },
-      orderBy: { createdAt: "desc" },
-      take: 20,
-      include: { question: { select: { prompt: true, part: true } }, user: { select: { email: true } } },
-    }),
+    getOpenReportContexts(),
   ]);
 
   return (
@@ -56,25 +52,9 @@ export default async function AdminAnalyticsPage() {
         </div>
       </section>
 
-      <section className="rounded-2xl border border-border bg-card p-6 shadow-soft">
+      <section id="reports" className="scroll-mt-24 rounded-2xl border border-border bg-card p-6 shadow-soft">
         <h2 className="mb-3 text-sm font-semibold text-muted-foreground">BÁO CÁO LỖI CÂU HỎI</h2>
-        {openReports.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Không có báo cáo nào đang chờ xử lý.</p>
-        ) : (
-          <div className="flex flex-col divide-y divide-border">
-            {openReports.map((r) => (
-              <div key={r.id} className="flex items-center justify-between gap-3 py-3 text-sm">
-                <div className="min-w-0">
-                  <p className="truncate font-medium">{r.question.prompt || `Câu hỏi ${r.question.part}`}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {r.reason} · báo bởi {r.user.email} · {r.message}
-                  </p>
-                </div>
-                <ResolveReportButton reportId={r.id} />
-              </div>
-            ))}
-          </div>
-        )}
+        <QuestionReportList reports={openReports} />
       </section>
     </div>
   );
