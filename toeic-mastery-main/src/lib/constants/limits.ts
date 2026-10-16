@@ -8,13 +8,13 @@
 
 /** Free-tier daily cap on dictionary lookups via text-selection ("Tra từ
  * khi bôi đen") — Pro is unlimited. */
-export const FREE_DICTIONARY_LOOKUPS_PER_DAY = 15;
+export const FREE_DICTIONARY_LOOKUPS_PER_DAY = 30;
 
 /** Free-tier daily cap on "Chữa tức thì" (instant reveal-answer-and-
  * explanation) in Practice mode — Pro is unlimited. Per TOEIC part (Part
  * 1-7), not a flat total, so working through one part doesn't eat into the
  * others' allowance. */
-export const FREE_ANSWER_REVEALS_PER_PART_PER_DAY = 20;
+export const FREE_ANSWER_REVEALS_PER_PART_PER_DAY = 50;
 
 /** Free-tier cap on how many saved questions can be selected in one "Học
  * lại" (practice again) session from Đã lưu — Pro is unlimited. Enforced
