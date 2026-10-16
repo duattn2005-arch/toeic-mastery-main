@@ -4,13 +4,14 @@ import { requireUser, isPro } from "@/lib/auth";
 import { getNewMemberOfferState } from "@/lib/services/new-member-offer";
 import { Badge } from "@/components/ui/badge";
 import { ProCard } from "@/components/billing/pro-card";
+import { FREE_ANSWER_REVEALS_PER_PART_PER_DAY, FREE_DICTIONARY_LOOKUPS_PER_DAY } from "@/lib/constants/limits";
 
 export const metadata: Metadata = { title: "Bảng giá" };
 
 const FREE_BENEFITS = [
   "Học bài cơ bản & Mini/Mock Test giới hạn",
-  "Tra từ bôi đen: 20 từ/ngày",
-  "Chữa câu tức thì: 20 câu/part/ngày",
+  `Tra từ bôi đen: ${FREE_DICTIONARY_LOOKUPS_PER_DAY} từ/ngày`,
+  `Chữa câu tức thì: ${FREE_ANSWER_REVEALS_PER_PART_PER_DAY} câu/part/ngày`,
   "Quick Study cố định 7 phút",
   "Quản lý từ vựng 3 trạng thái & Lịch ôn ngày 1–7",
   "Xem Ngân hàng lỗi sai cơ bản",
