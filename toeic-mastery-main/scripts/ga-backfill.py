@@ -17,7 +17,7 @@ Env: GA4_LINKED_API_SECRET (Measurement Protocol API secret of the target stream
 Pass only the window the property was really missing, otherwise visits it did
 record get counted twice.
 """
-import argparse, gzip, hashlib, json, os, re, sys, time, urllib.parse, urllib.request
+import argparse, gzip, hashlib, json, os, re, sys, time, urllib.error, urllib.parse, urllib.request
 from datetime import datetime, timedelta, timezone
 
 MEASUREMENT_ID = "G-CCTBJ73HK1"
@@ -84,9 +84,16 @@ def build_events(hits):
 
 
 def post(url, payload):
+    # Never raises: a failed batch is reported and skipped, so the run always
+    # finishes (callers retry only on a non-zero exit, which would resend).
     req = urllib.request.Request(url, data=json.dumps(payload).encode(), headers={"Content-Type": "application/json"})
-    with urllib.request.urlopen(req, timeout=15) as r:
-        return r.status, r.read().decode() or ""
+    try:
+        with urllib.request.urlopen(req, timeout=15) as r:
+            return r.status, r.read().decode() or ""
+    except urllib.error.HTTPError as e:
+        return e.code, e.read().decode(errors="replace")
+    except Exception as e:
+        return 599, str(e)
 
 
 def main():
