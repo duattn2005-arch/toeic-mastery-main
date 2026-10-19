@@ -31,7 +31,10 @@ LINE = re.compile(
     r'(?P<status>\d{3}) \S+ "(?P<ref>[^"]*)" "(?P<ua>[^"]*)"'
 )
 SKIP_PATH = re.compile(r"^/(_next|api|static|uploads|favicon|robots\.txt|sitemap|manifest|apple-touch|icon)|\.[a-z0-9]{2,5}(\?|$)", re.I)
-BOT_UA = re.compile(r"bot|crawl|spider|slurp|curl|wget|python|go-http|java/|headless|lighthouse|monitor|uptime|preview|facebookexternalhit|zalo", re.I)
+# "zalo" alone is NOT a bot marker: Zalo's in-app browser (a big share of Vietnamese
+# visitors who open a shared link) carries that word too. Only its link-preview
+# fetcher is skipped.
+BOT_UA = re.compile(r"bot|crawl|spider|slurp|curl|wget|python|go-http|java/|headless|lighthouse|monitor|uptime|preview|facebookexternalhit|zalo.*(link|preview)", re.I)
 
 
 def read_lines(paths):
@@ -118,6 +121,12 @@ def main():
     visitors = {c for c, *_ in events}
     sessions = {(c, e["params"]["session_id"]) for c, _, _, e in events}
     print(f"{len(events)} page views, {len(sessions)} sessions, {len(visitors)} visitors in {start:%Y-%m-%d %H:%M} - {end:%Y-%m-%d %H:%M}")
+    # A quick sanity look at what is about to be replayed.
+    from collections import Counter
+    top_ua = Counter(ua[:70] for _, _, ua, _ in events).most_common(4)
+    top_pages = Counter(e["params"]["page_location"].replace(SITE, "") or "/" for _, _, _, e in events).most_common(5)
+    print("  top browsers:", "; ".join(f"{n}× {u}" for u, n in top_ua))
+    print("  top pages:   ", "; ".join(f"{n}× {p}" for p, n in top_pages))
     if not (a.validate or a.send):
         print("Dry run. Add --validate to check with GA, then --send.")
         return
