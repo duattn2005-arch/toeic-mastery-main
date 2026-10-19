@@ -3,7 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
 import { Providers } from "@/components/providers";
-import { GA_MEASUREMENT_ID } from "@/lib/ga-config";
+import { GA_LINKED_MEASUREMENT_ID, GA_MEASUREMENT_ID } from "@/lib/ga-config";
 import { AuthEventTracker } from "@/components/shared/auth-event-tracker";
 import { AnalyticsTracker, WebVitalsReporter } from "@/components/shared/analytics-tracker";
 import { CookieNotice } from "@/components/shared/cookie-notice";
@@ -65,6 +65,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             gtag('consent', 'update', granted);
             gtag('js', new Date());
             gtag('config', '${GA_MEASUREMENT_ID}');
+            gtag('config', '${GA_LINKED_MEASUREMENT_ID}');
           `}
         </Script>
       </body>
