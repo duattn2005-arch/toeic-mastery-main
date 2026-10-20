@@ -1,30 +1,406 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 800">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1600 800" preserveAspectRatio="xMidYMid slice">
   <defs>
+  <style>
+    .twinkle { transform-box: fill-box; transform-origin: center; animation: twinkle ease-in-out infinite alternate; }
+    @keyframes twinkle { from { opacity: 0.15; transform: scale(0.6); } to { opacity: 1; transform: scale(1); } }
+    .drift { animation: drift linear infinite; }
+    @keyframes drift { from { transform: translateX(-600px); } to { transform: translateX(2200px); } }
+    .steam { transform-box: fill-box; transform-origin: bottom center; animation: steam 4.5s ease-out infinite; }
+    @keyframes steam { 0% { opacity: 0; transform: translateY(6px) scaleX(0.8); } 30% { opacity: 0.55; } 100% { opacity: 0; transform: translateY(-46px) scaleX(1.25); } }
+    .breathe { transform-box: fill-box; transform-origin: bottom center; animation: breathe 3.6s ease-in-out infinite; }
+    @keyframes breathe { 0%, 100% { transform: scale(1, 1); } 50% { transform: scale(1.012, 1.04); } }
+    .flicker { animation: flicker 5s ease-in-out infinite; }
+    @keyframes flicker { 0%, 100% { opacity: 0.9; } 45% { opacity: 1; } 50% { opacity: 0.82; } 55% { opacity: 1; } }
+    .shimmer { transform-box: fill-box; transform-origin: center; animation: shimmer 3.2s ease-in-out infinite alternate; }
+    @keyframes shimmer { from { transform: scaleX(0.55); opacity: 0.12; } to { transform: scaleX(1.1); opacity: 0.6; } }
+    .glide { animation: glide 3.2s ease-in-out infinite alternate; }
+    @keyframes glide { from { transform: translateY(-6px); } to { transform: translateY(6px); } }
+    .flap { animation: flap 0.5s ease-in-out infinite alternate; }
+    @keyframes flap { from { transform: scaleY(1); } to { transform: scaleY(-0.4); } }
+    .flock { animation: flock linear infinite; }
+    @keyframes flock { from { transform: translate(-300px, 20px); } to { transform: translate(1950px, -40px); } }
+    .shoot { animation: shoot 11s ease-in infinite; }
+    @keyframes shoot { 0%, 86% { opacity: 0; transform: translate(0, 0); } 88% { opacity: 1; } 96% { opacity: 0; transform: translate(-260px, 130px); } 100% { opacity: 0; transform: translate(-260px, 130px); } }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+
+    .petal { animation: petal linear infinite; }
+    @keyframes petal { from { transform: translate(0, -80px) rotate(0deg); } to { transform: translate(-520px, 880px) rotate(540deg); } }
+    .sway { transform-box: fill-box; transform-origin: center; animation: sway 2.4s ease-in-out infinite alternate; }
+    @keyframes sway { from { transform: translateX(-14px) rotate(-20deg); } to { transform: translateX(14px) rotate(25deg); } }
+    .wag { transform-origin: 1003px 612px; animation: wag 0.9s ease-in-out infinite alternate; }
+    @keyframes wag { from { transform: rotate(-14deg); } to { transform: rotate(18deg); } }
+    .hair { transform-origin: 900px 566px; animation: hair 4s ease-in-out infinite alternate; }
+    @keyframes hair { from { transform: rotate(-2deg); } to { transform: rotate(4deg); } }
+    .sunpulse { transform-box: fill-box; transform-origin: center; animation: sunpulse 6s ease-in-out infinite alternate; }
+    @keyframes sunpulse { from { opacity: 0.75; transform: scale(0.96); } to { opacity: 1; transform: scale(1.04); } }
+
+  </style>
+
     <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#4a3b6b"/>
-      <stop offset="0.5" stop-color="#a8618f"/>
-      <stop offset="0.78" stop-color="#e8a95c"/>
-      <stop offset="1" stop-color="#f6cf8a"/>
+      <stop offset="0" stop-color="#241238"/>
+      <stop offset="0.25" stop-color="#4a1f55"/>
+      <stop offset="0.45" stop-color="#8e2f62"/>
+      <stop offset="0.62" stop-color="#d9536a"/>
+      <stop offset="0.76" stop-color="#f28a5e"/>
+      <stop offset="0.86" stop-color="#ffc583"/>
     </linearGradient>
-    <filter id="glow"><feGaussianBlur stdDeviation="40"/></filter>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#c2456b"/>
+      <stop offset="0.2" stop-color="#7a2e5c"/>
+      <stop offset="0.6" stop-color="#3d1a45"/>
+      <stop offset="1" stop-color="#1a0c22"/>
+    </linearGradient>
+    <radialGradient id="sunGlow" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#fff1c4" stop-opacity="0.95"/>
+      <stop offset="0.25" stop-color="#ffc583" stop-opacity="0.6"/>
+      <stop offset="0.6" stop-color="#f28a5e" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#f28a5e" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="sun" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#fff4d1"/>
+      <stop offset="1" stop-color="#ffb46b"/>
+    </linearGradient>
+    <linearGradient id="vermilion" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#b8323a"/>
+      <stop offset="1" stop-color="#5c1626"/>
+    </linearGradient>
+    <g id="cloudStreak">
+      <ellipse cx="0" cy="0" rx="170" ry="9"/>
+      <ellipse cx="-60" cy="-7" rx="80" ry="10"/>
+      <ellipse cx="50" cy="-5" rx="70" ry="9"/>
+    </g>
+    <path id="petalShape" d="M0 0 C4 -6 10 -6 12 0 C10 6 4 6 0 0 Z"/>
+
   </defs>
   <rect width="1600" height="800" fill="url(#sky)"/>
-  <circle cx="1000" cy="560" r="160" fill="#fbe3a8" opacity="0.65" filter="url(#glow)"/>
-  <circle cx="1000" cy="560" r="95" fill="#fdeec0"/>
-  <g fill="#241830" opacity="0.9">
-    <rect y="700" width="1600" height="100"/>
+  <g fill="#ffe4ef">
+    <circle cx="1480" cy="190" r="0.7" opacity="0.40"/>
+    <circle class="twinkle" style="animation-duration:2.4s;animation-delay:-1.8s" cx="678" cy="106" r="0.5" opacity="0.47"/>
+    <circle cx="40" cy="17" r="1.2" opacity="0.60"/>
+    <circle cx="1175" cy="72" r="0.5" opacity="0.82"/>
+    <circle cx="1053" cy="124" r="1.0" opacity="0.57"/>
+    <circle class="twinkle" style="animation-duration:3.1s;animation-delay:-2.9s" cx="590" cy="114" r="0.9" opacity="0.54"/>
+    <circle class="twinkle" style="animation-duration:2.7s;animation-delay:-3.3s" cx="945" cy="89" r="0.9" opacity="0.46"/>
+    <circle class="twinkle" style="animation-duration:3.3s;animation-delay:-3.3s" cx="313" cy="23" r="0.6" opacity="0.37"/>
+    <circle cx="529" cy="74" r="0.7" opacity="0.53"/>
+    <circle cx="878" cy="52" r="0.6" opacity="0.82"/>
+    <circle cx="1326" cy="48" r="1.0" opacity="0.90"/>
+    <circle class="twinkle" style="animation-duration:1.9s;animation-delay:-3.2s" cx="1513" cy="33" r="1.4" opacity="0.38"/>
+    <circle cx="1100" cy="195" r="0.7" opacity="0.92"/>
+    <circle class="twinkle" style="animation-duration:2.3s;animation-delay:-0.3s" cx="1581" cy="150" r="0.6" opacity="0.93"/>
+    <circle class="twinkle" style="animation-duration:2.1s;animation-delay:-2.1s" cx="746" cy="39" r="1.3" opacity="0.92"/>
+    <circle class="twinkle" style="animation-duration:4.2s;animation-delay:-1.8s" cx="271" cy="109" r="1.0" opacity="0.50"/>
+    <circle cx="548" cy="178" r="0.7" opacity="0.89"/>
+    <circle class="twinkle" style="animation-duration:2.6s;animation-delay:-1.6s" cx="660" cy="139" r="0.9" opacity="0.73"/>
+    <circle class="twinkle" style="animation-duration:3.5s;animation-delay:-1.3s" cx="1235" cy="111" r="0.8" opacity="0.85"/>
+    <circle class="twinkle" style="animation-duration:3.3s;animation-delay:-2.2s" cx="895" cy="167" r="0.5" opacity="0.92"/>
+    <circle cx="376" cy="112" r="0.7" opacity="0.62"/>
+    <circle cx="6" cy="75" r="1.1" opacity="0.44"/>
+    <circle class="twinkle" style="animation-duration:2.0s;animation-delay:-2.8s" cx="326" cy="136" r="0.5" opacity="0.62"/>
+    <circle cx="768" cy="138" r="0.7" opacity="0.68"/>
+    <circle cx="476" cy="180" r="0.4" opacity="0.88"/>
+    <circle class="twinkle" style="animation-duration:2.7s;animation-delay:-1.4s" cx="796" cy="155" r="0.7" opacity="0.71"/>
+    <circle class="twinkle" style="animation-duration:4.0s;animation-delay:-1.9s" cx="483" cy="192" r="0.5" opacity="0.58"/>
+    <circle class="twinkle" style="animation-duration:2.5s;animation-delay:-3.4s" cx="886" cy="51" r="0.7" opacity="0.40"/>
+    <circle cx="804" cy="22" r="1.0" opacity="0.42"/>
+    <circle class="twinkle" style="animation-duration:4.5s;animation-delay:-2.5s" cx="707" cy="172" r="0.5" opacity="0.86"/>
+    <circle class="twinkle" style="animation-duration:4.1s;animation-delay:-0.4s" cx="68" cy="161" r="0.5" opacity="0.57"/>
+    <circle class="twinkle" style="animation-duration:4.3s;animation-delay:-2.6s" cx="1181" cy="79" r="1.0" opacity="0.53"/>
+    <circle class="twinkle" style="animation-duration:3.4s;animation-delay:-0.6s" cx="271" cy="195" r="0.7" opacity="0.46"/>
+    <circle cx="1171" cy="94" r="0.9" opacity="0.69"/>
+    <circle class="twinkle" style="animation-duration:2.0s;animation-delay:-3.4s" cx="1315" cy="121" r="0.8" opacity="0.55"/>
+    <circle cx="330" cy="85" r="0.7" opacity="0.72"/>
+    <circle cx="1374" cy="87" r="0.7" opacity="0.74"/>
+    <circle cx="1481" cy="62" r="1.2" opacity="0.94"/>
+    <circle class="twinkle" style="animation-duration:2.9s;animation-delay:-2.9s" cx="207" cy="76" r="1.1" opacity="0.85"/>
+    <circle class="twinkle" style="animation-duration:2.7s;animation-delay:-1.7s" cx="1213" cy="107" r="0.6" opacity="0.59"/>
+    <circle class="twinkle" style="animation-duration:3.6s;animation-delay:-1.8s" cx="1317" cy="118" r="0.7" opacity="0.50"/>
+    <circle cx="277" cy="164" r="0.7" opacity="0.93"/>
+    <circle cx="997" cy="86" r="0.9" opacity="0.90"/>
+    <circle class="twinkle" style="animation-duration:2.8s;animation-delay:-0.2s" cx="1058" cy="86" r="0.5" opacity="0.85"/>
+    <circle cx="55" cy="78" r="1.2" opacity="0.79"/>
+    <circle class="twinkle" style="animation-duration:3.4s;animation-delay:-2.1s" cx="1070" cy="55" r="0.6" opacity="0.71"/>
+    <circle class="twinkle" style="animation-duration:3.5s;animation-delay:-1.2s" cx="868" cy="24" r="0.6" opacity="0.63"/>
+    <circle class="twinkle" style="animation-duration:2.7s;animation-delay:-3.9s" cx="993" cy="150" r="0.7" opacity="0.67"/>
+    <circle cx="430" cy="57" r="0.9" opacity="0.68"/>
+    <circle cx="472" cy="193" r="0.3" opacity="0.82"/>
+    <circle cx="1442" cy="31" r="1.1" opacity="0.92"/>
+    <circle cx="180" cy="184" r="0.8" opacity="0.42"/>
+    <circle cx="127" cy="16" r="1.3" opacity="0.78"/>
+    <circle cx="1011" cy="102" r="0.6" opacity="0.69"/>
+    <circle cx="1035" cy="175" r="0.4" opacity="0.79"/>
+    <circle class="twinkle" style="animation-duration:3.6s;animation-delay:-0.6s" cx="113" cy="164" r="0.4" opacity="0.48"/>
+    <circle cx="1561" cy="0" r="1.3" opacity="0.81"/>
+    <circle cx="915" cy="160" r="0.7" opacity="0.43"/>
+    <circle class="twinkle" style="animation-duration:4.1s;animation-delay:-0.3s" cx="566" cy="117" r="0.8" opacity="0.89"/>
+    <circle class="twinkle" style="animation-duration:4.0s;animation-delay:-3.2s" cx="522" cy="134" r="0.8" opacity="0.85"/>
   </g>
-  <g fill="#231627">
-    <rect x="920" y="380" width="34" height="330" rx="4"/>
-    <rect x="1150" y="380" width="34" height="330" rx="4"/>
-    <rect x="880" y="380" width="330" height="34" rx="4"/>
-    <rect x="900" y="440" width="290" height="26" rx="4"/>
-    <rect x="1010" y="380" width="10" height="330"/>
+  <circle class="sunpulse" cx="1000" cy="476" r="330" fill="url(#sunGlow)"/>
+  <circle cx="1000" cy="482" r="96" fill="url(#sun)"/>
+  <g fill="#ffb3c1" opacity="0.35">
+    <g class="drift" style="animation-duration:220s;animation-delay:-31s"><use xlink:href="#cloudStreak" transform="translate(0 120) scale(0.90 0.72)"/></g>
+    <g class="drift" style="animation-duration:220s;animation-delay:-128s"><use xlink:href="#cloudStreak" transform="translate(0 140) scale(0.63 0.54)"/></g>
+    <g class="drift" style="animation-duration:240s;animation-delay:-135s"><use xlink:href="#cloudStreak" transform="translate(0 175) scale(1.48 1.19)"/></g>
+    <g class="drift" style="animation-duration:245s;animation-delay:-94s"><use xlink:href="#cloudStreak" transform="translate(0 195) scale(1.04 0.89)"/></g>
+    <g class="drift" style="animation-duration:260s;animation-delay:-178s"><use xlink:href="#cloudStreak" transform="translate(0 230) scale(1.15 0.92)"/></g>
+    <g class="drift" style="animation-duration:270s;animation-delay:-115s"><use xlink:href="#cloudStreak" transform="translate(0 250) scale(0.81 0.69)"/></g>
   </g>
-  <g fill="#1c1420" opacity="0.85">
-    <path d="M300 700 C300 660 330 640 355 640 C380 640 405 660 405 700 Z"/>
-    <circle cx="330" cy="628" r="16"/>
-    <path d="M330 612 L330 596" stroke="#1c1420" stroke-width="6"/>
-    <path d="M310 600 L318 590" stroke="#1c1420" stroke-width="6"/>
+  <g fill="#ff9a8a" opacity="0.55">
+    <g class="drift" style="animation-duration:160s;animation-delay:-95s"><use xlink:href="#cloudStreak" transform="translate(0 260) scale(1.18 0.94)"/></g>
+    <g class="drift" style="animation-duration:160s;animation-delay:-149s"><use xlink:href="#cloudStreak" transform="translate(0 280) scale(0.82 0.71)"/></g>
+    <g class="drift" style="animation-duration:180s;animation-delay:-134s"><use xlink:href="#cloudStreak" transform="translate(0 300) scale(1.36 1.09)"/></g>
+    <g class="drift" style="animation-duration:185s;animation-delay:-43s"><use xlink:href="#cloudStreak" transform="translate(0 320) scale(0.95 0.82)"/></g>
+    <g class="drift" style="animation-duration:200s;animation-delay:-132s"><use xlink:href="#cloudStreak" transform="translate(0 340) scale(1.22 0.98)"/></g>
+    <g class="drift" style="animation-duration:210s;animation-delay:-115s"><use xlink:href="#cloudStreak" transform="translate(0 360) scale(0.85 0.73)"/></g>
+  </g>
+  <g fill="#ffc79a" opacity="0.7">
+    <g class="drift" style="animation-duration:120s;animation-delay:-110s"><use xlink:href="#cloudStreak" transform="translate(0 380) scale(1.47 1.17)"/></g>
+    <g class="drift" style="animation-duration:120s;animation-delay:-15s"><use xlink:href="#cloudStreak" transform="translate(0 400) scale(1.03 0.88)"/></g>
+    <g class="drift" style="animation-duration:140s;animation-delay:-43s"><use xlink:href="#cloudStreak" transform="translate(0 410) scale(1.16 0.92)"/></g>
+    <g class="drift" style="animation-duration:145s;animation-delay:-25s"><use xlink:href="#cloudStreak" transform="translate(0 430) scale(0.81 0.69)"/></g>
+    <g class="drift" style="animation-duration:160s;animation-delay:-118s"><use xlink:href="#cloudStreak" transform="translate(0 440) scale(1.15 0.92)"/></g>
+    <g class="drift" style="animation-duration:170s;animation-delay:-92s"><use xlink:href="#cloudStreak" transform="translate(0 460) scale(0.81 0.69)"/></g>
+  </g>
+  <g class="flock" style="animation-duration:46s;animation-delay:-12s" opacity="1.0"><g transform="translate(0 204) scale(0.70)"><g class="glide" style="animation-delay:-0.7s"><g class="flap" style="animation-duration:0.49s;animation-delay:-0.53s"><path d="M0 0 Q-9 -8 -19 -3 M0 0 Q9 -8 19 -3" stroke="#3a1430" stroke-width="2.4" fill="none" stroke-linecap="round"/></g></g></g><g transform="translate(-23 216) scale(0.80)"><g class="glide" style="animation-delay:-0.5s"><g class="flap" style="animation-duration:0.52s;animation-delay:-0.15s"><path d="M0 0 Q-9 -8 -19 -3 M0 0 Q9 -8 19 -3" stroke="#3a1430" stroke-width="2.4" fill="none" stroke-linecap="round"/></g></g></g><g transform="translate(-47 204) scale(0.69)"><g class="glide" style="animation-delay:-1.8s"><g class="flap" style="animation-duration:0.60s;animation-delay:-0.47s"><path d="M0 0 Q-9 -8 -19 -3 M0 0 Q9 -8 19 -3" stroke="#3a1430" stroke-width="2.4" fill="none" stroke-linecap="round"/></g></g></g><g transform="translate(-70 216) scale(0.87)"><g class="glide" style="animation-delay:-0.5s"><g class="flap" style="animation-duration:0.52s;animation-delay:-0.38s"><path d="M0 0 Q-9 -8 -19 -3 M0 0 Q9 -8 19 -3" stroke="#3a1430" stroke-width="2.4" fill="none" stroke-linecap="round"/></g></g></g><g transform="translate(-94 204) scale(0.88)"><g class="glide" style="animation-delay:-1.3s"><g class="flap" style="animation-duration:0.43s;animation-delay:-0.56s"><path d="M0 0 Q-9 -8 -19 -3 M0 0 Q9 -8 19 -3" stroke="#3a1430" stroke-width="2.4" fill="none" stroke-linecap="round"/></g></g></g></g>
+  <g class="flock" style="animation-duration:64s;animation-delay:-40s" opacity="0.7"><g transform="translate(0 146) scale(0.50)"><g class="glide" style="animation-delay:-2.2s"><g class="flap" style="animation-duration:0.50s;animation-delay:-0.47s"><path d="M0 0 Q-9 -8 -19 -3 M0 0 Q9 -8 19 -3" stroke="#3a1430" stroke-width="2.4" fill="none" stroke-linecap="round"/></g></g></g><g transform="translate(-16 154) scale(0.51)"><g class="glide" style="animation-delay:-0.3s"><g class="flap" style="animation-duration:0.50s;animation-delay:-0.29s"><path d="M0 0 Q-9 -8 -19 -3 M0 0 Q9 -8 19 -3" stroke="#3a1430" stroke-width="2.4" fill="none" stroke-linecap="round"/></g></g></g><g transform="translate(-31 146) scale(0.59)"><g class="glide" style="animation-delay:-1.2s"><g class="flap" style="animation-duration:0.54s;animation-delay:-0.23s"><path d="M0 0 Q-9 -8 -19 -3 M0 0 Q9 -8 19 -3" stroke="#3a1430" stroke-width="2.4" fill="none" stroke-linecap="round"/></g></g></g></g>
+  <path d="M0 486 L0 452 C70 440 130 446 190 462 C240 474 300 470 360 486 Z" fill="#5b2350" opacity="0.85"/>
+  <path d="M1240 486 C1300 450 1380 430 1460 440 C1520 448 1570 460 1600 468 L1600 486 Z" fill="#5b2350" opacity="0.85"/>
+  <path d="M1330 486 C1380 462 1440 456 1500 470 L1520 486 Z" fill="#43183f"/>
+  <rect y="486" width="1600" height="314" fill="url(#sea)"/>
+  <g fill="#ffd7a0">
+    <rect class="shimmer" style="animation-delay:-0.00s" x="920" y="494" width="159" height="3.0" rx="2" opacity="0.75"/>
+    <rect class="shimmer" style="animation-delay:-0.35s" x="934" y="509" width="133" height="3.2" rx="2" opacity="0.71"/>
+    <rect class="shimmer" style="animation-delay:-0.70s" x="921" y="524" width="157" height="3.5" rx="2" opacity="0.67"/>
+    <rect class="shimmer" style="animation-delay:-1.05s" x="922" y="539" width="156" height="3.8" rx="2" opacity="0.63"/>
+    <rect class="shimmer" style="animation-delay:-1.40s" x="943" y="554" width="115" height="4.0" rx="2" opacity="0.59"/>
+    <rect class="shimmer" style="animation-delay:-1.75s" x="928" y="569" width="144" height="4.2" rx="2" opacity="0.55"/>
+    <rect class="shimmer" style="animation-delay:-2.10s" x="931" y="584" width="137" height="4.5" rx="2" opacity="0.51"/>
+    <rect class="shimmer" style="animation-delay:-2.45s" x="935" y="599" width="130" height="4.8" rx="2" opacity="0.47"/>
+    <rect class="shimmer" style="animation-delay:-2.80s" x="949" y="614" width="102" height="5.0" rx="2" opacity="0.43"/>
+    <rect class="shimmer" style="animation-delay:-3.15s" x="938" y="629" width="123" height="5.2" rx="2" opacity="0.39"/>
+    <rect class="shimmer" style="animation-delay:-3.50s" x="940" y="644" width="121" height="5.5" rx="2" opacity="0.35"/>
+    <rect class="shimmer" style="animation-delay:-3.85s" x="944" y="659" width="111" height="5.8" rx="2" opacity="0.31"/>
+    <rect class="shimmer" style="animation-delay:-4.20s" x="940" y="674" width="121" height="6.0" rx="2" opacity="0.27"/>
+    <rect class="shimmer" style="animation-delay:-4.55s" x="942" y="689" width="116" height="6.2" rx="2" opacity="0.23"/>
+    <rect class="shimmer" style="animation-delay:-4.90s" x="950" y="704" width="99" height="6.5" rx="2" opacity="0.19"/>
+    <rect class="shimmer" style="animation-delay:-5.25s" x="946" y="719" width="107" height="6.8" rx="2" opacity="0.15"/>
+  </g>
+  <g stroke="#ffb3a1" fill="none" stroke-linecap="round" opacity="0.3">
+    <path class="shimmer" style="animation-duration:4.6s;animation-delay:-2.6s" d="M463 538 h13" stroke-width="1.3"/>
+    <path class="shimmer" style="animation-duration:4.9s;animation-delay:-3.1s" d="M1010 776 h37" stroke-width="2.5"/>
+    <path class="shimmer" style="animation-duration:5.2s;animation-delay:-3.0s" d="M629 774 h37" stroke-width="2.4"/>
+    <path class="shimmer" style="animation-duration:3.5s;animation-delay:-0.1s" d="M529 614 h21" stroke-width="1.6"/>
+    <path class="shimmer" style="animation-duration:3.2s;animation-delay:-2.4s" d="M466 595 h19" stroke-width="1.5"/>
+    <path class="shimmer" style="animation-duration:5.3s;animation-delay:-3.3s" d="M1480 599 h19" stroke-width="1.6"/>
+    <path class="shimmer" style="animation-duration:3.3s;animation-delay:-3.0s" d="M425 745 h34" stroke-width="2.3"/>
+    <path class="shimmer" style="animation-duration:4.3s;animation-delay:-4.4s" d="M1576 563 h16" stroke-width="1.4"/>
+    <path class="shimmer" style="animation-duration:4.9s;animation-delay:-3.5s" d="M132 568 h16" stroke-width="1.4"/>
+    <path class="shimmer" style="animation-duration:5.9s;animation-delay:-3.4s" d="M1481 571 h17" stroke-width="1.4"/>
+    <path class="shimmer" style="animation-duration:3.4s;animation-delay:-3.7s" d="M1573 785 h38" stroke-width="2.5"/>
+    <path class="shimmer" style="animation-duration:4.0s;animation-delay:-2.7s" d="M1166 715 h31" stroke-width="2.1"/>
+    <path class="shimmer" style="animation-duration:3.2s;animation-delay:-1.9s" d="M1357 669 h26" stroke-width="1.9"/>
+    <path class="shimmer" style="animation-duration:3.3s;animation-delay:-0.3s" d="M1262 589 h18" stroke-width="1.5"/>
+    <path class="shimmer" style="animation-duration:4.3s;animation-delay:-4.3s" d="M168 530 h12" stroke-width="1.2"/>
+    <path class="shimmer" style="animation-duration:5.0s;animation-delay:-1.7s" d="M144 600 h19" stroke-width="1.6"/>
+    <path class="shimmer" style="animation-duration:4.4s;animation-delay:-3.7s" d="M1191 664 h26" stroke-width="1.9"/>
+    <path class="shimmer" style="animation-duration:5.3s;animation-delay:-4.5s" d="M1360 678 h27" stroke-width="2.0"/>
+    <path class="shimmer" style="animation-duration:4.5s;animation-delay:-3.9s" d="M437 715 h31" stroke-width="2.1"/>
+    <path class="shimmer" style="animation-duration:5.5s;animation-delay:-4.1s" d="M1163 727 h32" stroke-width="2.2"/>
+    <path class="shimmer" style="animation-duration:3.1s;animation-delay:-2.4s" d="M1018 655 h25" stroke-width="1.8"/>
+    <path class="shimmer" style="animation-duration:5.5s;animation-delay:-2.2s" d="M1460 710 h30" stroke-width="2.1"/>
+    <path class="shimmer" style="animation-duration:5.0s;animation-delay:-1.0s" d="M1415 564 h16" stroke-width="1.4"/>
+    <path class="shimmer" style="animation-duration:4.7s;animation-delay:-0.5s" d="M1402 507 h10" stroke-width="1.1"/>
+    <path class="shimmer" style="animation-duration:5.3s;animation-delay:-4.0s" d="M931 787 h38" stroke-width="2.5"/>
+    <path class="shimmer" style="animation-duration:3.5s;animation-delay:-3.1s" d="M826 571 h17" stroke-width="1.4"/>
+    <path class="shimmer" style="animation-duration:3.3s;animation-delay:-1.0s" d="M1260 624 h22" stroke-width="1.7"/>
+    <path class="shimmer" style="animation-duration:4.2s;animation-delay:-4.8s" d="M-17 610 h20" stroke-width="1.6"/>
+    <path class="shimmer" style="animation-duration:5.5s;animation-delay:-1.1s" d="M272 751 h34" stroke-width="2.3"/>
+    <path class="shimmer" style="animation-duration:3.9s;animation-delay:-1.0s" d="M1013 566 h16" stroke-width="1.4"/>
+    <path class="shimmer" style="animation-duration:3.6s;animation-delay:-4.6s" d="M266 521 h12" stroke-width="1.2"/>
+    <path class="shimmer" style="animation-duration:3.6s;animation-delay:-3.6s" d="M855 508 h10" stroke-width="1.1"/>
+    <path class="shimmer" style="animation-duration:5.2s;animation-delay:-0.1s" d="M582 497 h9" stroke-width="1.1"/>
+    <path class="shimmer" style="animation-duration:4.5s;animation-delay:-3.1s" d="M508 617 h21" stroke-width="1.7"/>
+    <path class="shimmer" style="animation-duration:3.8s;animation-delay:-3.9s" d="M1383 519 h11" stroke-width="1.2"/>
+    <path class="shimmer" style="animation-duration:3.6s;animation-delay:-0.4s" d="M132 535 h13" stroke-width="1.2"/>
+    <path class="shimmer" style="animation-duration:3.3s;animation-delay:-4.3s" d="M206 569 h16" stroke-width="1.4"/>
+    <path class="shimmer" style="animation-duration:4.5s;animation-delay:-4.1s" d="M784 651 h25" stroke-width="1.8"/>
+    <path class="shimmer" style="animation-duration:5.0s;animation-delay:-0.0s" d="M53 509 h10" stroke-width="1.1"/>
+    <path class="shimmer" style="animation-duration:5.5s;animation-delay:-0.0s" d="M992 645 h24" stroke-width="1.8"/>
+    <path class="shimmer" style="animation-duration:4.7s;animation-delay:-0.2s" d="M487 614 h21" stroke-width="1.6"/>
+    <path class="shimmer" style="animation-duration:4.6s;animation-delay:-3.3s" d="M1530 718 h31" stroke-width="2.2"/>
+    <path class="shimmer" style="animation-duration:5.5s;animation-delay:-2.4s" d="M1347 742 h34" stroke-width="2.3"/>
+    <path class="shimmer" style="animation-duration:5.5s;animation-delay:-3.5s" d="M1267 522 h12" stroke-width="1.2"/>
+    <path class="shimmer" style="animation-duration:4.9s;animation-delay:-1.6s" d="M1559 589 h18" stroke-width="1.5"/>
+    <path class="shimmer" style="animation-duration:3.7s;animation-delay:-4.5s" d="M343 727 h32" stroke-width="2.2"/>
+    <path class="shimmer" style="animation-duration:4.2s;animation-delay:-2.9s" d="M1389 512 h11" stroke-width="1.1"/>
+    <path class="shimmer" style="animation-duration:3.7s;animation-delay:-0.5s" d="M1442 699 h29" stroke-width="2.1"/>
+    <path class="shimmer" style="animation-duration:4.3s;animation-delay:-0.6s" d="M343 647 h24" stroke-width="1.8"/>
+    <path class="shimmer" style="animation-duration:3.2s;animation-delay:-1.3s" d="M899 522 h12" stroke-width="1.2"/>
+    <path class="shimmer" style="animation-duration:5.4s;animation-delay:-4.5s" d="M134 610 h20" stroke-width="1.6"/>
+    <path class="shimmer" style="animation-duration:3.5s;animation-delay:-3.6s" d="M1287 505 h10" stroke-width="1.1"/>
+    <path class="shimmer" style="animation-duration:5.8s;animation-delay:-1.3s" d="M1188 514 h11" stroke-width="1.1"/>
+    <path class="shimmer" style="animation-duration:5.6s;animation-delay:-3.9s" d="M532 545 h14" stroke-width="1.3"/>
+    <path class="shimmer" style="animation-duration:5.2s;animation-delay:-4.8s" d="M1441 542 h14" stroke-width="1.3"/>
+    <path class="shimmer" style="animation-duration:5.2s;animation-delay:-0.1s" d="M237 782 h38" stroke-width="2.5"/>
+    <path class="shimmer" style="animation-duration:3.7s;animation-delay:-1.1s" d="M849 552 h15" stroke-width="1.3"/>
+    <path class="shimmer" style="animation-duration:5.8s;animation-delay:-2.9s" d="M724 601 h20" stroke-width="1.6"/>
+    <path class="shimmer" style="animation-duration:3.6s;animation-delay:-4.0s" d="M1145 659 h25" stroke-width="1.9"/>
+    <path class="shimmer" style="animation-duration:4.4s;animation-delay:-2.7s" d="M1299 720 h31" stroke-width="2.2"/>
+  </g>
+  <g transform="translate(1000 0)">
+    <path d="M-150 296 C-80 306 80 306 150 296 L158 280 C80 292 -80 292 -158 280 Z" fill="url(#vermilion)"/>
+    <path d="M-166 276 C-80 290 80 290 166 276 L172 266 C80 280 -80 280 -172 266 Z" fill="#2a0c1c"/>
+    <rect x="-128" y="330" width="256" height="18" fill="url(#vermilion)"/>
+    <rect x="-8" y="300" width="16" height="32" fill="#7a1f2e"/>
+    <path d="M-112 300 L-100 300 L-92 500 L-120 500 Z" fill="url(#vermilion)"/>
+    <path d="M100 300 L112 300 L120 500 L92 500 Z" fill="url(#vermilion)"/>
+    <rect x="-124" y="488" width="36" height="14" fill="#2a0c1c"/>
+    <rect x="88" y="488" width="36" height="14" fill="#2a0c1c"/>
+    <path d="M-106 300 L-100 300 L-94 488 L-100 488 Z" fill="#e8577a" opacity="0.35"/>
+    <path d="M106 300 L112 300 L117 488 L111 488 Z" fill="#e8577a" opacity="0.25"/>
+  </g>
+  <g transform="translate(1000 1004) scale(1 -1)" opacity="0.22"><path d="M-112 300 L-100 300 L-92 500 L-120 500 Z M100 300 L112 300 L120 500 L92 500 Z" fill="#2a0c1c"/><rect x="-128" y="330" width="256" height="18" fill="#2a0c1c"/></g>
+  <g>
+    <path d="M0 632 L980 596 L980 612 L0 676 Z" fill="#3a1830"/>
+    <path d="M0 632 L980 596 L980 600 L0 640 Z" fill="#8e3f5a" opacity="0.7"/>
+    <g fill="#24101f">
+      <rect x="120" y="636" width="12" height="130"/>
+      <rect x="360" y="626" width="12" height="120"/>
+      <rect x="600" y="616" width="12" height="110"/>
+      <rect x="840" y="606" width="12" height="96"/>
+      <rect x="946" y="602" width="12" height="84"/>
+    </g>
+    <g stroke="#8e3f5a" stroke-width="2" opacity="0.5">
+      <path d="M100 637 L102 658 M220 632 L222 652 M340 627 L342 648 M460 622 L462 642 M580 617 L582 637 M700 612 L702 632 M820 607 L822 626"/>
+    </g>
+  </g>
+  <g fill="#1c0b19">
+    <path d="M880 604 C878 584 882 566 900 560 C918 566 922 584 920 604 Z"/>
+    <path d="M874 604 C880 598 920 598 926 604 L926 610 L874 610 Z"/>
+    <circle cx="900" cy="546" r="16"/>
+    <g class="hair"><path d="M886 540 C884 560 880 576 872 590 C886 584 892 570 896 556 Z"/></g>
+    <path d="M884 548 C886 532 914 532 916 548 C912 540 888 540 884 548 Z" fill="#ff9a8a" opacity="0.5"/>
+    <path d="M918 566 C922 580 922 594 920 604" stroke="#ff9a8a" stroke-width="2" fill="none" opacity="0.6"/>
+  </g>
+  <g fill="#1c0b19">
+    <ellipse cx="972" cy="596" rx="26" ry="14"/>
+    <path d="M950 596 L948 606 L956 606 L958 598 Z M988 598 L990 606 L996 606 L994 596 Z"/>
+    <path d="M944 590 C940 580 944 570 954 568 C962 568 966 574 964 582 Z"/>
+    <path d="M940 574 C934 574 930 578 932 582 L944 582 Z"/>
+    <path d="M956 568 C962 566 966 572 964 584 C960 580 957 574 956 568 Z" fill="#2c1226"/>
+    <g class="wag"><path d="M996 592 C1006 584 1010 574 1006 566" stroke="#1c0b19" stroke-width="5" fill="none" stroke-linecap="round"/></g>
+    <path d="M946 570 C950 566 958 566 962 570" stroke="#ff9a8a" stroke-width="1.5" fill="none" opacity="0.6"/>
+  </g>
+  <g>
+    <path d="M-20 60 C80 70 160 50 260 90 C330 118 380 110 440 96" stroke="#2a0c1c" stroke-width="10" fill="none" stroke-linecap="round"/>
+    <path d="M180 66 C210 100 230 130 226 170 M330 112 C350 140 352 160 344 190" stroke="#2a0c1c" stroke-width="5" fill="none" stroke-linecap="round"/>
+  </g>
+  <g>
+    <circle cx="25" cy="80" r="8.9" fill="#ffdbe4" opacity="0.83"/>
+    <circle cx="345" cy="147" r="10.8" fill="#f78fae" opacity="0.83"/>
+    <circle cx="401" cy="67" r="8.4" fill="#ffdbe4" opacity="0.82"/>
+    <circle cx="399" cy="90" r="5.5" fill="#ffb3c7" opacity="0.99"/>
+    <circle cx="14" cy="129" r="5.5" fill="#ffb3c7" opacity="0.89"/>
+    <circle cx="82" cy="93" r="7.1" fill="#f78fae" opacity="0.90"/>
+    <circle cx="45" cy="73" r="5.8" fill="#ffc9d6" opacity="0.99"/>
+    <circle cx="61" cy="69" r="6.6" fill="#f78fae" opacity="0.93"/>
+    <circle cx="417" cy="91" r="8.6" fill="#ffdbe4" opacity="0.88"/>
+    <circle cx="116" cy="63" r="10.2" fill="#ffdbe4" opacity="0.91"/>
+    <circle cx="175" cy="148" r="10.2" fill="#ffdbe4" opacity="0.75"/>
+    <circle cx="48" cy="106" r="5.6" fill="#ffb3c7" opacity="0.75"/>
+    <circle cx="394" cy="84" r="10.2" fill="#ffc9d6" opacity="1.00"/>
+    <circle cx="332" cy="100" r="10.5" fill="#f78fae" opacity="0.94"/>
+    <circle cx="110" cy="78" r="6.3" fill="#ffdbe4" opacity="0.79"/>
+    <circle cx="188" cy="100" r="5.7" fill="#ffdbe4" opacity="0.79"/>
+    <circle cx="156" cy="49" r="9.2" fill="#ffb3c7" opacity="0.99"/>
+    <circle cx="323" cy="141" r="10.5" fill="#ffc9d6" opacity="0.93"/>
+    <circle cx="0" cy="57" r="6.4" fill="#ffb3c7" opacity="0.79"/>
+    <circle cx="269" cy="86" r="5.7" fill="#ffc9d6" opacity="0.87"/>
+    <circle cx="392" cy="115" r="9.9" fill="#ffdbe4" opacity="0.87"/>
+    <circle cx="336" cy="148" r="9.0" fill="#f78fae" opacity="0.87"/>
+    <circle cx="26" cy="57" r="9.1" fill="#ffc9d6" opacity="0.92"/>
+    <circle cx="156" cy="130" r="9.5" fill="#ffb3c7" opacity="0.82"/>
+    <circle cx="310" cy="125" r="10.0" fill="#ffb3c7" opacity="0.98"/>
+    <circle cx="328" cy="82" r="8.5" fill="#ffc9d6" opacity="0.87"/>
+    <circle cx="240" cy="222" r="5.8" fill="#ffc9d6" opacity="0.96"/>
+    <circle cx="166" cy="125" r="7.3" fill="#ffdbe4" opacity="0.99"/>
+    <circle cx="367" cy="86" r="5.1" fill="#ffb3c7" opacity="0.88"/>
+    <circle cx="237" cy="167" r="8.9" fill="#ffc9d6" opacity="0.88"/>
+    <circle cx="179" cy="146" r="7.6" fill="#ffb3c7" opacity="0.83"/>
+    <circle cx="265" cy="121" r="8.2" fill="#ffb3c7" opacity="0.84"/>
+    <circle cx="205" cy="90" r="7.7" fill="#f78fae" opacity="0.88"/>
+    <circle cx="115" cy="142" r="9.8" fill="#ffb3c7" opacity="0.75"/>
+    <circle cx="201" cy="191" r="7.2" fill="#ffc9d6" opacity="0.96"/>
+    <circle cx="386" cy="69" r="6.2" fill="#ffdbe4" opacity="0.86"/>
+    <circle cx="316" cy="61" r="11.0" fill="#ffdbe4" opacity="0.85"/>
+    <circle cx="380" cy="118" r="7.8" fill="#ffc9d6" opacity="0.89"/>
+    <circle cx="289" cy="129" r="7.8" fill="#ffb3c7" opacity="0.75"/>
+    <circle cx="130" cy="49" r="7.8" fill="#f78fae" opacity="1.00"/>
+    <circle cx="335" cy="61" r="8.5" fill="#f78fae" opacity="0.77"/>
+    <circle cx="334" cy="67" r="6.4" fill="#ffc9d6" opacity="0.92"/>
+    <circle cx="391" cy="105" r="9.2" fill="#ffdbe4" opacity="0.76"/>
+    <circle cx="98" cy="140" r="9.6" fill="#f78fae" opacity="0.90"/>
+    <circle cx="133" cy="69" r="5.5" fill="#f78fae" opacity="0.97"/>
+    <circle cx="202" cy="149" r="7.4" fill="#f78fae" opacity="0.93"/>
+    <circle cx="260" cy="80" r="9.6" fill="#f78fae" opacity="0.79"/>
+    <circle cx="21" cy="46" r="5.4" fill="#f78fae" opacity="0.81"/>
+    <circle cx="228" cy="130" r="5.2" fill="#f78fae" opacity="0.88"/>
+    <circle cx="150" cy="75" r="6.3" fill="#ffb3c7" opacity="0.97"/>
+    <circle cx="399" cy="115" r="6.0" fill="#ffdbe4" opacity="0.78"/>
+    <circle cx="315" cy="76" r="6.1" fill="#f78fae" opacity="0.95"/>
+    <circle cx="405" cy="153" r="7.2" fill="#ffdbe4" opacity="0.85"/>
+    <circle cx="347" cy="111" r="7.0" fill="#f78fae" opacity="0.89"/>
+    <circle cx="22" cy="39" r="10.3" fill="#f78fae" opacity="0.82"/>
+    <circle cx="289" cy="59" r="6.9" fill="#ffdbe4" opacity="0.86"/>
+    <circle cx="334" cy="93" r="8.1" fill="#f78fae" opacity="0.90"/>
+    <circle cx="249" cy="124" r="9.5" fill="#ffc9d6" opacity="0.79"/>
+    <circle cx="124" cy="131" r="6.0" fill="#f78fae" opacity="0.96"/>
+    <circle cx="415" cy="117" r="8.8" fill="#ffdbe4" opacity="0.93"/>
+    <circle cx="92" cy="123" r="10.1" fill="#ffc9d6" opacity="0.76"/>
+    <circle cx="373" cy="73" r="6.7" fill="#ffdbe4" opacity="0.98"/>
+    <circle cx="65" cy="85" r="5.0" fill="#ffdbe4" opacity="0.91"/>
+    <circle cx="312" cy="64" r="6.4" fill="#ffb3c7" opacity="0.97"/>
+    <circle cx="41" cy="37" r="9.5" fill="#ffc9d6" opacity="0.90"/>
+    <circle cx="356" cy="89" r="10.0" fill="#f78fae" opacity="0.76"/>
+    <circle cx="125" cy="88" r="9.0" fill="#ffb3c7" opacity="0.97"/>
+    <circle cx="44" cy="64" r="9.6" fill="#ffc9d6" opacity="0.88"/>
+    <circle cx="246" cy="89" r="10.5" fill="#f78fae" opacity="0.77"/>
+    <circle cx="-6" cy="103+1j" r="8.7" fill="#f78fae" opacity="0.91"/>
+  </g>
+  <g fill="#ffc9d6">
+    <g class="petal" style="animation-duration:16.9s;animation-delay:-21.0s"><g transform="translate(233 0)"><use class="sway" style="animation-duration:3.0s" xlink:href="#petalShape" transform="scale(1.04)" opacity="0.89"/></g></g>
+    <g class="petal" style="animation-duration:21.8s;animation-delay:-16.1s"><g transform="translate(1496 0)"><use class="sway" style="animation-duration:2.9s" xlink:href="#petalShape" transform="scale(1.02)" opacity="0.73"/></g></g>
+    <g class="petal" style="animation-duration:16.8s;animation-delay:-13.3s"><g transform="translate(610 0)"><use class="sway" style="animation-duration:2.6s" xlink:href="#petalShape" transform="scale(0.93)" opacity="0.63"/></g></g>
+    <g class="petal" style="animation-duration:16.6s;animation-delay:-4.1s"><g transform="translate(239 0)"><use class="sway" style="animation-duration:2.7s" xlink:href="#petalShape" transform="scale(1.37)" opacity="0.81"/></g></g>
+    <g class="petal" style="animation-duration:19.1s;animation-delay:-1.9s"><g transform="translate(1230 0)"><use class="sway" style="animation-duration:2.8s" xlink:href="#petalShape" transform="scale(1.34)" opacity="0.66"/></g></g>
+    <g class="petal" style="animation-duration:22.2s;animation-delay:-18.3s"><g transform="translate(697 0)"><use class="sway" style="animation-duration:2.0s" xlink:href="#petalShape" transform="scale(1.07)" opacity="0.75"/></g></g>
+    <g class="petal" style="animation-duration:23.8s;animation-delay:-3.8s"><g transform="translate(1073 0)"><use class="sway" style="animation-duration:2.3s" xlink:href="#petalShape" transform="scale(1.45)" opacity="0.67"/></g></g>
+    <g class="petal" style="animation-duration:23.4s;animation-delay:-16.2s"><g transform="translate(483 0)"><use class="sway" style="animation-duration:2.5s" xlink:href="#petalShape" transform="scale(1.12)" opacity="0.62"/></g></g>
+    <g class="petal" style="animation-duration:17.2s;animation-delay:-11.5s"><g transform="translate(1226 0)"><use class="sway" style="animation-duration:3.1s" xlink:href="#petalShape" transform="scale(1.15)" opacity="0.76"/></g></g>
+    <g class="petal" style="animation-duration:17.4s;animation-delay:-16.1s"><g transform="translate(764 0)"><use class="sway" style="animation-duration:2.8s" xlink:href="#petalShape" transform="scale(0.88)" opacity="0.60"/></g></g>
+    <g class="petal" style="animation-duration:16.0s;animation-delay:-15.6s"><g transform="translate(832 0)"><use class="sway" style="animation-duration:2.0s" xlink:href="#petalShape" transform="scale(1.15)" opacity="0.79"/></g></g>
+    <g class="petal" style="animation-duration:17.8s;animation-delay:-6.8s"><g transform="translate(1757 0)"><use class="sway" style="animation-duration:2.3s" xlink:href="#petalShape" transform="scale(1.26)" opacity="0.70"/></g></g>
+    <g class="petal" style="animation-duration:22.5s;animation-delay:-13.8s"><g transform="translate(587 0)"><use class="sway" style="animation-duration:1.9s" xlink:href="#petalShape" transform="scale(1.39)" opacity="0.65"/></g></g>
+    <g class="petal" style="animation-duration:20.6s;animation-delay:-11.9s"><g transform="translate(674 0)"><use class="sway" style="animation-duration:2.9s" xlink:href="#petalShape" transform="scale(0.90)" opacity="0.86"/></g></g>
+    <g class="petal" style="animation-duration:15.4s;animation-delay:-18.2s"><g transform="translate(487 0)"><use class="sway" style="animation-duration:2.9s" xlink:href="#petalShape" transform="scale(0.88)" opacity="0.61"/></g></g>
+    <g class="petal" style="animation-duration:20.9s;animation-delay:-0.8s"><g transform="translate(521 0)"><use class="sway" style="animation-duration:3.1s" xlink:href="#petalShape" transform="scale(0.81)" opacity="0.90"/></g></g>
+    <g class="petal" style="animation-duration:18.6s;animation-delay:-21.2s"><g transform="translate(1488 0)"><use class="sway" style="animation-duration:2.0s" xlink:href="#petalShape" transform="scale(1.34)" opacity="0.83"/></g></g>
+    <g class="petal" style="animation-duration:23.5s;animation-delay:-20.5s"><g transform="translate(1562 0)"><use class="sway" style="animation-duration:3.0s" xlink:href="#petalShape" transform="scale(0.98)" opacity="0.61"/></g></g>
+    <g class="petal" style="animation-duration:23.0s;animation-delay:-13.5s"><g transform="translate(474 0)"><use class="sway" style="animation-duration:2.5s" xlink:href="#petalShape" transform="scale(1.13)" opacity="0.61"/></g></g>
+    <g class="petal" style="animation-duration:20.8s;animation-delay:-15.2s"><g transform="translate(1682 0)"><use class="sway" style="animation-duration:2.5s" xlink:href="#petalShape" transform="scale(1.42)" opacity="0.79"/></g></g>
+    <g class="petal" style="animation-duration:23.6s;animation-delay:-3.9s"><g transform="translate(1062 0)"><use class="sway" style="animation-duration:3.0s" xlink:href="#petalShape" transform="scale(1.24)" opacity="0.73"/></g></g>
+    <g class="petal" style="animation-duration:20.2s;animation-delay:-7.6s"><g transform="translate(438 0)"><use class="sway" style="animation-duration:1.8s" xlink:href="#petalShape" transform="scale(1.38)" opacity="0.90"/></g></g>
+    <g class="petal" style="animation-duration:23.2s;animation-delay:-10.6s"><g transform="translate(1639 0)"><use class="sway" style="animation-duration:3.1s" xlink:href="#petalShape" transform="scale(0.97)" opacity="0.70"/></g></g>
+    <g class="petal" style="animation-duration:22.1s;animation-delay:-2.6s"><g transform="translate(950 0)"><use class="sway" style="animation-duration:1.9s" xlink:href="#petalShape" transform="scale(1.45)" opacity="0.61"/></g></g>
+    <g class="petal" style="animation-duration:19.6s;animation-delay:-25.0s"><g transform="translate(1388 0)"><use class="sway" style="animation-duration:3.0s" xlink:href="#petalShape" transform="scale(1.12)" opacity="0.82"/></g></g>
+    <g class="petal" style="animation-duration:17.1s;animation-delay:-0.5s"><g transform="translate(1315 0)"><use class="sway" style="animation-duration:3.2s" xlink:href="#petalShape" transform="scale(1.18)" opacity="0.92"/></g></g>
+    <g class="petal" style="animation-duration:14.9s;animation-delay:-2.7s"><g transform="translate(1061 0)"><use class="sway" style="animation-duration:2.1s" xlink:href="#petalShape" transform="scale(1.48)" opacity="0.93"/></g></g>
+    <g class="petal" style="animation-duration:19.4s;animation-delay:-25.2s"><g transform="translate(668 0)"><use class="sway" style="animation-duration:2.5s" xlink:href="#petalShape" transform="scale(1.02)" opacity="0.81"/></g></g>
+    <g class="petal" style="animation-duration:20.8s;animation-delay:-1.9s"><g transform="translate(470 0)"><use class="sway" style="animation-duration:2.5s" xlink:href="#petalShape" transform="scale(0.88)" opacity="0.62"/></g></g>
+    <g class="petal" style="animation-duration:20.1s;animation-delay:-4.2s"><g transform="translate(1408 0)"><use class="sway" style="animation-duration:2.4s" xlink:href="#petalShape" transform="scale(1.42)" opacity="0.74"/></g></g>
+    <g class="petal" style="animation-duration:19.8s;animation-delay:-23.3s"><g transform="translate(637 0)"><use class="sway" style="animation-duration:2.7s" xlink:href="#petalShape" transform="scale(1.13)" opacity="0.85"/></g></g>
+    <g class="petal" style="animation-duration:25.2s;animation-delay:-7.1s"><g transform="translate(764 0)"><use class="sway" style="animation-duration:2.1s" xlink:href="#petalShape" transform="scale(1.14)" opacity="0.92"/></g></g>
+    <g class="petal" style="animation-duration:21.9s;animation-delay:-0.1s"><g transform="translate(1436 0)"><use class="sway" style="animation-duration:2.9s" xlink:href="#petalShape" transform="scale(1.44)" opacity="0.65"/></g></g>
+    <g class="petal" style="animation-duration:16.6s;animation-delay:-3.4s"><g transform="translate(514 0)"><use class="sway" style="animation-duration:2.0s" xlink:href="#petalShape" transform="scale(1.15)" opacity="0.88"/></g></g>
   </g>
 </svg>

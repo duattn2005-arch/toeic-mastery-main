@@ -5,9 +5,9 @@ import { ThemeScene } from "@/components/layout/theme-scene";
 /** Dark on the left where the copy sits, clear on the right so the scene's
  * subject (the cat, by default) shows. */
 const SCRIM =
-  "linear-gradient(90deg, rgba(5,12,10,0.92) 0%, rgba(5,12,10,0.78) 42%, rgba(5,12,10,0.15) 72%, rgba(5,12,10,0.3) 100%)";
+  "linear-gradient(90deg, color-mix(in srgb, var(--scrim) 92%, transparent) 0%, color-mix(in srgb, var(--scrim) 78%, transparent) 42%, color-mix(in srgb, var(--scrim) 15%, transparent) 72%, color-mix(in srgb, var(--scrim) 30%, transparent) 100%)";
 const SCRIM_LIGHT =
-  "linear-gradient(90deg, rgba(244,250,247,0.97) 0%, rgba(244,250,247,0.86) 42%, rgba(244,250,247,0.1) 72%, rgba(244,250,247,0.25) 100%)";
+  "linear-gradient(90deg, color-mix(in srgb, var(--scrim) 97%, transparent) 0%, color-mix(in srgb, var(--scrim) 86%, transparent) 42%, color-mix(in srgb, var(--scrim) 10%, transparent) 72%, color-mix(in srgb, var(--scrim) 25%, transparent) 100%)";
 
 /**
  * Entry point to the Mastery grammar course, shown on the Grammar page. Uses
@@ -50,10 +50,10 @@ export function MasteryBanner({
             </p>
             <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1 shadow-sm ring-1 ring-black/5 dark:bg-black/40 dark:shadow-none dark:ring-white/15">
-                <BookOpenCheck className="size-3.5 text-primary dark:text-[#5eead4]" /> <span className="tabular-nums">{lessonCount}</span> bài học
+                <BookOpenCheck className="size-3.5 text-brand-soft" /> <span className="tabular-nums">{lessonCount}</span> bài học
               </span>
               <span className="inline-flex items-center gap-1.5 rounded-full bg-white/85 px-3 py-1 shadow-sm ring-1 ring-black/5 dark:bg-black/40 dark:shadow-none dark:ring-white/15">
-                <ListChecks className="size-3.5 text-primary dark:text-[#5eead4]" /> <span className="tabular-nums">{questionCount}</span> câu luyện tập
+                <ListChecks className="size-3.5 text-brand-soft" /> <span className="tabular-nums">{questionCount}</span> câu luyện tập
               </span>
             </div>
           </div>

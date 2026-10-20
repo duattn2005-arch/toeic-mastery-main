@@ -34,9 +34,9 @@ function isActive(pathname: string, href: string) {
  * down, where the scene's subject (the cat on its lily pad, by default)
  * sits between the menu and the streak card. */
 const SIDEBAR_SCRIM_DARK =
-  "linear-gradient(180deg, rgba(5,11,9,0.82) 0%, rgba(5,11,9,0.72) 50%, rgba(5,11,9,0.12) 66%, rgba(5,11,9,0.5) 100%)";
+  "linear-gradient(180deg, color-mix(in srgb, var(--sidebar) 82%, transparent) 0%, color-mix(in srgb, var(--sidebar) 72%, transparent) 50%, color-mix(in srgb, var(--sidebar) 12%, transparent) 66%, color-mix(in srgb, var(--sidebar) 50%, transparent) 100%)";
 const SIDEBAR_SCRIM_LIGHT =
-  "linear-gradient(180deg, rgba(238,247,243,0.92) 0%, rgba(238,247,243,0.86) 50%, rgba(238,247,243,0.08) 66%, rgba(238,247,243,0.4) 100%), linear-gradient(180deg, #e9f6f1 36%, transparent 52%)";
+  "linear-gradient(180deg, color-mix(in srgb, var(--sidebar) 92%, transparent) 0%, color-mix(in srgb, var(--sidebar) 86%, transparent) 50%, color-mix(in srgb, var(--sidebar) 8%, transparent) 66%, color-mix(in srgb, var(--sidebar) 40%, transparent) 100%), linear-gradient(180deg, var(--scene-from) 36%, transparent 52%)";
 
 export function AppSidebar({ profile, siteThemeId }: { profile: SidebarProfile; siteThemeId: string }) {
   const pathname = usePathname();
@@ -66,7 +66,7 @@ export function AppSidebar({ profile, siteThemeId }: { profile: SidebarProfile; 
         <EquippableLogoMark size={36} equippedShopItemId={profile.equippedShopItemId} />
         <span className="flex items-baseline gap-1 text-lg leading-[1.1] whitespace-nowrap">
           <span className="font-black tracking-[-0.04em] text-sidebar-active">TOEIC</span>
-          <span className="bg-gradient-to-r from-primary via-[#0d9488] to-[#14b8a6] bg-clip-text dark:from-[#2dd4bf] dark:via-[#5eead4] dark:to-[#a7f3d0] pr-1 pb-0.5 font-extrabold tracking-[-0.03em] text-transparent italic">
+          <span className="bg-gradient-to-r from-brand-from via-brand-via to-brand-to bg-clip-text pr-1 pb-0.5 font-extrabold tracking-[-0.03em] text-transparent italic">
             Mastery
           </span>
         </span>
@@ -122,7 +122,7 @@ export function AppSidebar({ profile, siteThemeId }: { profile: SidebarProfile; 
       </nav>
 
       <div className="flex flex-col gap-3 px-3 pb-4">
-        <div className="rounded-2xl border border-sidebar-border bg-white/80 shadow-sm dark:border-white/[0.08] dark:bg-[#050b09]/70 dark:shadow-none p-3.5">
+        <div className="rounded-2xl border border-sidebar-border bg-white/80 shadow-sm dark:border-white/[0.08] dark:bg-sidebar/70 dark:shadow-none p-3.5">
           <div className="flex items-center justify-between text-xs">
             <span className="flex items-center gap-1.5 font-medium text-sidebar-foreground">
               <Flame className="size-4 text-warning" /> Streak
@@ -139,7 +139,7 @@ export function AppSidebar({ profile, siteThemeId }: { profile: SidebarProfile; 
           </div>
         </div>
 
-        <div className="flex items-center gap-2 rounded-2xl border border-sidebar-border bg-white/80 shadow-sm dark:border-white/[0.08] dark:bg-[#050b09]/70 dark:shadow-none p-2">
+        <div className="flex items-center gap-2 rounded-2xl border border-sidebar-border bg-white/80 shadow-sm dark:border-white/[0.08] dark:bg-sidebar/70 dark:shadow-none p-2">
           <Link
             href="/account/profile"
             className="flex flex-1 items-center gap-2.5 rounded-xl px-1.5 py-1 hover:bg-sidebar-active-bg/60"

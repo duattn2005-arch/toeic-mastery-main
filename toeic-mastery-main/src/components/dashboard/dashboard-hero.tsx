@@ -17,9 +17,9 @@ export interface HeroAction {
  * pairs the morning scene with dark ink text; dark mode the night scene
  * with white text. */
 const SCRIM =
-  "linear-gradient(90deg, rgba(6,14,11,0.88) 0%, rgba(6,14,11,0.62) 38%, rgba(6,14,11,0.12) 68%, rgba(6,14,11,0.35) 100%)";
+  "linear-gradient(90deg, color-mix(in srgb, var(--scrim) 88%, transparent) 0%, color-mix(in srgb, var(--scrim) 62%, transparent) 38%, color-mix(in srgb, var(--scrim) 12%, transparent) 68%, color-mix(in srgb, var(--scrim) 35%, transparent) 100%)";
 const SCRIM_LIGHT =
-  "linear-gradient(90deg, rgba(244,250,247,0.96) 0%, rgba(244,250,247,0.82) 38%, rgba(244,250,247,0.1) 68%, rgba(244,250,247,0.25) 100%)";
+  "linear-gradient(90deg, color-mix(in srgb, var(--scrim) 96%, transparent) 0%, color-mix(in srgb, var(--scrim) 82%, transparent) 38%, color-mix(in srgb, var(--scrim) 10%, transparent) 68%, color-mix(in srgb, var(--scrim) 25%, transparent) 100%)";
 
 export function DashboardHero({
   greeting,
@@ -81,7 +81,7 @@ export function DashboardHero({
               {today}
             </span>
             <h1 className="mt-4 text-3xl leading-[1.1] font-extrabold tracking-tight sm:text-4xl">
-              {greeting}, <span className="text-primary dark:text-[#5eead4]">{firstName}</span>
+              {greeting}, <span className="text-brand-soft">{firstName}</span>
             </h1>
             <div className="mt-3 max-w-sm">
               <MotivationalQuote />
@@ -119,7 +119,7 @@ export function DashboardHero({
             size={132}
             stroke={11}
             trackClassName="stroke-black/10 dark:stroke-white/15"
-            indicatorClassName="stroke-primary dark:stroke-[#5eead4]"
+            indicatorClassName="stroke-brand-soft"
           >
             <span className="text-3xl leading-none font-extrabold tabular-nums">{todayMinutes}</span>
             <span className="mt-1 text-[11px] font-medium text-muted-foreground tabular-nums dark:text-white/70">/ {dailyGoalMinutes} phút</span>

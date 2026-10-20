@@ -58,6 +58,23 @@
 
   --shadow-color: 168 30% 14%;
 
+  /* Accents and scene tints that follow the Live theme. These defaults are
+     the lily-pond-cat teal; the [data-site-theme] blocks at the end of this
+     file swap them (and the core tokens above) for every other theme. */
+  --brand-soft: #0f766e;
+  --brand-from: #0f766e;
+  --brand-via: #0d9488;
+  --brand-to: #14b8a6;
+  --brand-glow: #5eead4;
+  --brand-deep: #14b8a6;
+  --scrim: #f4faf7;
+  --scene-from: #e9f6f1;
+  --scene-to: #d2ebe2;
+  --ambient-1: #0f766e;
+  --ambient-2: #0b5f58;
+  --ambient-3: #167d8c;
+  --ambient-4: #1f8f78;
+
   --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
 }
@@ -107,6 +124,12 @@
   --chart-3: #21c58c;
   --chart-4: #f2b24c;
   --chart-5: #f2555a;
+
+  --brand-soft: #5eead4;
+  --brand-from: #2dd4bf;
+  --brand-via: #5eead4;
+  --brand-to: #a7f3d0;
+  --scrim: #060e0b;
 }
 
 @theme inline {
@@ -154,6 +177,13 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-from: var(--brand-from);
+  --color-brand-via: var(--brand-via);
+  --color-brand-to: var(--brand-to);
+  --color-brand-glow: var(--brand-glow);
+  --color-brand-deep: var(--brand-deep);
 
   --radius-sm: calc(var(--radius) - 8px);
   --radius-md: calc(var(--radius) - 4px);
@@ -340,7 +370,7 @@
 }
 
 .hero-ambient {
-  background-image: linear-gradient(120deg, #0f766e, #0b5f58, #167d8c, #1f8f78, #0f766e);
+  background-image: linear-gradient(120deg, var(--ambient-1), var(--ambient-2), var(--ambient-3), var(--ambient-4), var(--ambient-1));
   background-size: 400% 400%;
   animation: hero-gradient-shift 9s ease-in-out infinite;
 }
@@ -993,4 +1023,385 @@
 }
 .toeic-tour-popover .driver-popover-arrow-side-bottom {
   border-top-color: var(--popover);
+}
+
+
+/* ------------------------------------------------------------------
+   Live theme palettes. AppShell puts data-site-theme on its root (and on
+   <html>, for portalled dialogs/popovers). Every theme except the default
+   lily-pond-cat, whose teal is the base palette above, swaps the whole UI
+   to colors picked from its scene. Each theme sets only --t-* seeds per
+   mode; the shared blocks below derive the real tokens from them.
+   ------------------------------------------------------------------ */
+
+[data-site-theme="aurora"] {
+  --ambient-1: #3730a3;
+  --ambient-2: #6d28d9;
+  --ambient-3: #1d4ed8;
+  --ambient-4: #7c3aed;
+}
+:root:not(.dark) [data-site-theme="aurora"],
+:root:not(.dark)[data-site-theme="aurora"] {
+  --t-bg: #eceefb;
+  --t-card: #ffffff;
+  --t-sidebar: #f1f2fd;
+  --t-primary: #4f46e5;
+  --t-primary-fg: #ffffff;
+  --t-hover: #4338ca;
+  --t-soft: #4338ca;
+  --t-from: #4f46e5;
+  --t-via: #7c3aed;
+  --t-to: #2563eb;
+  --t-glow: #a5b4fc;
+  --t-deep: #6366f1;
+  --t-scrim: #f6f7fe;
+  --scene-from: #eef0fd;
+  --scene-to: #dfe3fa;
+}
+.dark [data-site-theme="aurora"],
+.dark[data-site-theme="aurora"] {
+  --t-bg: #0a0b1c;
+  --t-card: #14162e;
+  --t-sidebar: #07081a;
+  --t-primary: #8b9cff;
+  --t-primary-fg: #0b0d2b;
+  --t-hover: #aab6ff;
+  --t-soft: #b4bfff;
+  --t-from: #8b9cff;
+  --t-via: #a78bfa;
+  --t-to: #7dd3fc;
+  --t-glow: #a5b4fc;
+  --t-deep: #6366f1;
+  --t-scrim: #090a1c;
+}
+
+[data-site-theme="torii-sunset"] {
+  --ambient-1: #7a2e5c;
+  --ambient-2: #c2456b;
+  --ambient-3: #e07a4a;
+  --ambient-4: #5b2a6e;
+}
+:root:not(.dark) [data-site-theme="torii-sunset"],
+:root:not(.dark)[data-site-theme="torii-sunset"] {
+  --t-bg: #f8ecef;
+  --t-card: #ffffff;
+  --t-sidebar: #fbf1f3;
+  --t-primary: #c23a5e;
+  --t-primary-fg: #ffffff;
+  --t-hover: #a32e4e;
+  --t-soft: #a32e4e;
+  --t-from: #c23a5e;
+  --t-via: #e0703f;
+  --t-to: #e89a3c;
+  --t-glow: #ffb4c2;
+  --t-deep: #e8577a;
+  --t-scrim: #fdf5f7;
+  --scene-from: #fbeef0;
+  --scene-to: #f6dcd8;
+}
+.dark [data-site-theme="torii-sunset"],
+.dark[data-site-theme="torii-sunset"] {
+  --t-bg: #140c16;
+  --t-card: #221424;
+  --t-sidebar: #0e080f;
+  --t-primary: #ff8fa3;
+  --t-primary-fg: #2a0a12;
+  --t-hover: #ffb1c0;
+  --t-soft: #ffb4c2;
+  --t-from: #ff8fa3;
+  --t-via: #ffb37a;
+  --t-to: #ffd9a8;
+  --t-glow: #ffb4c2;
+  --t-deep: #e8577a;
+  --t-scrim: #120a13;
+}
+
+[data-site-theme="rainy-living-room"] {
+  --ambient-1: #2c4466;
+  --ambient-2: #3b5a80;
+  --ambient-3: #22344f;
+  --ambient-4: #4a6a8f;
+}
+:root:not(.dark) [data-site-theme="rainy-living-room"],
+:root:not(.dark)[data-site-theme="rainy-living-room"] {
+  --t-bg: #e9eef4;
+  --t-card: #ffffff;
+  --t-sidebar: #eff3f8;
+  --t-primary: #33618f;
+  --t-primary-fg: #ffffff;
+  --t-hover: #284e74;
+  --t-soft: #284e74;
+  --t-from: #33618f;
+  --t-via: #4f7fb5;
+  --t-to: #c08a3e;
+  --t-glow: #b3cfee;
+  --t-deep: #4f7fb5;
+  --t-scrim: #f4f7fa;
+  --scene-from: #edf2f7;
+  --scene-to: #dbe4ee;
+}
+.dark [data-site-theme="rainy-living-room"],
+.dark[data-site-theme="rainy-living-room"] {
+  --t-bg: #0b1018;
+  --t-card: #141c28;
+  --t-sidebar: #080c13;
+  --t-primary: #8ab4e0;
+  --t-primary-fg: #0a1626;
+  --t-hover: #a9c8ea;
+  --t-soft: #b3cfee;
+  --t-from: #8ab4e0;
+  --t-via: #a9c8ea;
+  --t-to: #f2c98a;
+  --t-glow: #b3cfee;
+  --t-deep: #4f7fb5;
+  --t-scrim: #0a0f17;
+}
+
+[data-site-theme="tokyo-rain-desk"] {
+  --ambient-1: #1b2a6b;
+  --ambient-2: #7a1f6b;
+  --ambient-3: #0e5a7a;
+  --ambient-4: #3a1f7a;
+}
+:root:not(.dark) [data-site-theme="tokyo-rain-desk"],
+:root:not(.dark)[data-site-theme="tokyo-rain-desk"] {
+  --t-bg: #e8edf8;
+  --t-card: #ffffff;
+  --t-sidebar: #eef1fa;
+  --t-primary: #0b7fa8;
+  --t-primary-fg: #ffffff;
+  --t-hover: #086a8c;
+  --t-soft: #086a8c;
+  --t-from: #0b7fa8;
+  --t-via: #6d4bd1;
+  --t-to: #d4317a;
+  --t-glow: #8fe6ff;
+  --t-deep: #ff5c9d;
+  --t-scrim: #f4f6fc;
+  --scene-from: #edf1fb;
+  --scene-to: #dde3f5;
+}
+.dark [data-site-theme="tokyo-rain-desk"],
+.dark[data-site-theme="tokyo-rain-desk"] {
+  --t-bg: #070a17;
+  --t-card: #0f1428;
+  --t-sidebar: #05070f;
+  --t-primary: #4fd8ff;
+  --t-primary-fg: #031824;
+  --t-hover: #8be6ff;
+  --t-soft: #8fe6ff;
+  --t-from: #4fd8ff;
+  --t-via: #a78bfa;
+  --t-to: #ff6fb1;
+  --t-glow: #8fe6ff;
+  --t-deep: #ff5c9d;
+  --t-scrim: #060914;
+}
+
+[data-site-theme="attic-tokyo-view"] {
+  --ambient-1: #3b2f63;
+  --ambient-2: #6b4a2a;
+  --ambient-3: #2a2650;
+  --ambient-4: #7a5a2e;
+}
+:root:not(.dark) [data-site-theme="attic-tokyo-view"],
+:root:not(.dark)[data-site-theme="attic-tokyo-view"] {
+  --t-bg: #f3efe6;
+  --t-card: #ffffff;
+  --t-sidebar: #f7f3ea;
+  --t-primary: #9a6512;
+  --t-primary-fg: #ffffff;
+  --t-hover: #7f530e;
+  --t-soft: #7f530e;
+  --t-from: #9a6512;
+  --t-via: #b9692a;
+  --t-to: #6a55b8;
+  --t-glow: #f6d593;
+  --t-deep: #d99a3e;
+  --t-scrim: #faf7f0;
+  --scene-from: #f6f1e6;
+  --scene-to: #ece2cf;
+}
+.dark [data-site-theme="attic-tokyo-view"],
+.dark[data-site-theme="attic-tokyo-view"] {
+  --t-bg: #0e0c19;
+  --t-card: #1a172b;
+  --t-sidebar: #0a0913;
+  --t-primary: #f0c26b;
+  --t-primary-fg: #241703;
+  --t-hover: #f6d593;
+  --t-soft: #f6d593;
+  --t-from: #f0c26b;
+  --t-via: #f3a76a;
+  --t-to: #c9b8ff;
+  --t-glow: #f6d593;
+  --t-deep: #d99a3e;
+  --t-scrim: #0d0b17;
+}
+
+[data-site-theme="balcony-night"] {
+  --ambient-1: #3b2a7a;
+  --ambient-2: #5b2a8a;
+  --ambient-3: #2a2a6e;
+  --ambient-4: #7a3a8a;
+}
+:root:not(.dark) [data-site-theme="balcony-night"],
+:root:not(.dark)[data-site-theme="balcony-night"] {
+  --t-bg: #f0ecfa;
+  --t-card: #ffffff;
+  --t-sidebar: #f4f1fc;
+  --t-primary: #6d3fd1;
+  --t-primary-fg: #ffffff;
+  --t-hover: #5a32b0;
+  --t-soft: #5a32b0;
+  --t-from: #6d3fd1;
+  --t-via: #a23fc2;
+  --t-to: #c98a12;
+  --t-glow: #d7c3ff;
+  --t-deep: #8b5cf6;
+  --t-scrim: #f8f6fe;
+  --scene-from: #f3f0fc;
+  --scene-to: #e5def7;
+}
+.dark [data-site-theme="balcony-night"],
+.dark[data-site-theme="balcony-night"] {
+  --t-bg: #0d0a1e;
+  --t-card: #191433;
+  --t-sidebar: #090717;
+  --t-primary: #c3a6ff;
+  --t-primary-fg: #1c0f3d;
+  --t-hover: #d7c3ff;
+  --t-soft: #d7c3ff;
+  --t-from: #c3a6ff;
+  --t-via: #e9b6ff;
+  --t-to: #ffd479;
+  --t-glow: #d7c3ff;
+  --t-deep: #8b5cf6;
+  --t-scrim: #0c091c;
+}
+
+[data-site-theme="jungle-view"] {
+  --ambient-1: #2f5a26;
+  --ambient-2: #4a6e1f;
+  --ambient-3: #1f4a2f;
+  --ambient-4: #6e7a22;
+}
+:root:not(.dark) [data-site-theme="jungle-view"],
+:root:not(.dark)[data-site-theme="jungle-view"] {
+  --t-bg: #ecf2e6;
+  --t-card: #ffffff;
+  --t-sidebar: #f1f6ec;
+  --t-primary: #4d7c1f;
+  --t-primary-fg: #ffffff;
+  --t-hover: #3f6719;
+  --t-soft: #3f6719;
+  --t-from: #4d7c1f;
+  --t-via: #7a8a1a;
+  --t-to: #b8761f;
+  --t-glow: #c3e79c;
+  --t-deep: #5e9e3a;
+  --t-scrim: #f6f9f2;
+  --scene-from: #eef4e8;
+  --scene-to: #dde9d0;
+}
+.dark [data-site-theme="jungle-view"],
+.dark[data-site-theme="jungle-view"] {
+  --t-bg: #0a110b;
+  --t-card: #142016;
+  --t-sidebar: #070c08;
+  --t-primary: #a6d86e;
+  --t-primary-fg: #142406;
+  --t-hover: #c0e695;
+  --t-soft: #c3e79c;
+  --t-from: #a6d86e;
+  --t-via: #d9d36a;
+  --t-to: #f2b45a;
+  --t-glow: #c3e79c;
+  --t-deep: #5e9e3a;
+  --t-scrim: #09100a;
+}
+
+[data-site-theme="pixel-cottage"] {
+  --ambient-1: #6e3a1f;
+  --ambient-2: #8a4a26;
+  --ambient-3: #5a3a1a;
+  --ambient-4: #a0582c;
+}
+:root:not(.dark) [data-site-theme="pixel-cottage"],
+:root:not(.dark)[data-site-theme="pixel-cottage"] {
+  --t-bg: #f6eee6;
+  --t-card: #ffffff;
+  --t-sidebar: #f9f3ec;
+  --t-primary: #b5501f;
+  --t-primary-fg: #ffffff;
+  --t-hover: #96421a;
+  --t-soft: #96421a;
+  --t-from: #b5501f;
+  --t-via: #c98a12;
+  --t-to: #5e8f2f;
+  --t-glow: #f7b48a;
+  --t-deep: #d0673a;
+  --t-scrim: #fbf7f2;
+  --scene-from: #f8f0e6;
+  --scene-to: #efdfcc;
+}
+.dark [data-site-theme="pixel-cottage"],
+.dark[data-site-theme="pixel-cottage"] {
+  --t-bg: #140e0a;
+  --t-card: #221812;
+  --t-sidebar: #0e0907;
+  --t-primary: #f2955f;
+  --t-primary-fg: #2a1206;
+  --t-hover: #f7b285;
+  --t-soft: #f7b48a;
+  --t-from: #f2955f;
+  --t-via: #f4bf5a;
+  --t-to: #9fd17a;
+  --t-glow: #f7b48a;
+  --t-deep: #d0673a;
+  --t-scrim: #120c09;
+}
+
+:root:not(.dark) [data-site-theme]:not([data-site-theme="lily-pond-cat"]),
+:root:not(.dark)[data-site-theme]:not([data-site-theme="lily-pond-cat"]) {
+  --t-fg: color-mix(in oklab, var(--t-primary) 12%, #0e0e14);
+  --muted-foreground: color-mix(in oklab, var(--t-fg) 72%, var(--t-card));
+}
+.dark [data-site-theme]:not([data-site-theme="lily-pond-cat"]),
+.dark[data-site-theme]:not([data-site-theme="lily-pond-cat"]) {
+  --t-fg: color-mix(in oklab, var(--t-primary) 6%, #f3f3f7);
+  --muted-foreground: color-mix(in oklab, var(--t-fg) 66%, var(--t-card));
+}
+[data-site-theme]:not([data-site-theme="lily-pond-cat"]) {
+  --background: var(--t-bg);
+  --foreground: var(--t-fg);
+  --card: var(--t-card);
+  --card-foreground: var(--t-fg);
+  --popover: var(--t-card);
+  --popover-foreground: var(--t-fg);
+  --primary: var(--t-primary);
+  --primary-foreground: var(--t-primary-fg);
+  --primary-hover: var(--t-hover);
+  --secondary: color-mix(in oklab, var(--t-primary) 14%, var(--t-card));
+  --secondary-foreground: var(--t-soft);
+  --accent: color-mix(in oklab, var(--t-primary) 18%, var(--t-card));
+  --accent-foreground: var(--t-soft);
+  --muted: color-mix(in oklab, var(--t-primary) 7%, var(--t-card));
+  --border: color-mix(in oklab, var(--t-primary) 20%, var(--t-card));
+  --input: color-mix(in oklab, var(--t-primary) 24%, var(--t-card));
+  --ring: var(--t-primary);
+  --sidebar: var(--t-sidebar);
+  --sidebar-foreground: color-mix(in oklab, var(--t-fg) 80%, var(--t-sidebar));
+  --sidebar-muted-foreground: color-mix(in oklab, var(--t-fg) 55%, var(--t-sidebar));
+  --sidebar-active-bg: color-mix(in oklab, var(--t-primary) 16%, var(--t-sidebar));
+  --sidebar-border: color-mix(in oklab, var(--t-primary) 12%, var(--t-sidebar));
+  --sidebar-ring: var(--t-primary);
+  --chart-1: var(--t-primary);
+  --brand-soft: var(--t-soft);
+  --brand-from: var(--t-from);
+  --brand-via: var(--t-via);
+  --brand-to: var(--t-to);
+  --brand-glow: var(--t-glow);
+  --brand-deep: var(--t-deep);
+  --scrim: var(--t-scrim);
 }

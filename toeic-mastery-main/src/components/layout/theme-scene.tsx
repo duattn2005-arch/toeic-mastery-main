@@ -49,7 +49,7 @@ export function ThemeScene({
 
   return (
     <div aria-hidden className={cn("pointer-events-none absolute inset-0 -z-10 overflow-hidden", className)}>
-      <div className="absolute inset-0 dark:hidden" style={{ backgroundImage: "linear-gradient(160deg, #e9f6f1, #d2ebe2)" }} />
+      <div className="absolute inset-0 dark:hidden" style={{ backgroundImage: "linear-gradient(160deg, var(--scene-from), var(--scene-to))" }} />
       <div
         className="absolute inset-0 hidden dark:block"
         style={{ backgroundImage: `linear-gradient(135deg, ${theme.swatchFrom}, ${theme.swatchTo})` }}

@@ -3,11 +3,12 @@
  * benefit list). A plain string id is stored on UserSettings.siteTheme
  * instead of a Prisma enum so new themes can ship without a migration.
  *
- * Each non-default theme currently points at a hand-drawn placeholder SVG
- * under public/themes/<id>/background.svg (see public/themes/README.md) —
- * swap any of those files for a real photo/video export whenever one's
- * ready, no code change needed as long as the path here is updated to
- * match. Every background is layered as CSS `background-image` (image
+ * Every theme is an animated illustrated SVG under
+ * public/themes/<id>/background.svg (1600x800, CSS motion inside the file,
+ * subject kept around 55–70% across so the sidebar crop and the hero's clear
+ * right side both show it). Each one also recolors the whole UI: see the
+ * [data-site-theme] palettes at the end of globals.css. A photo or video
+ * export can still replace any file later (see public/themes/README.md). Every background is layered as CSS `background-image` (image
  * themes) or an absolutely-positioned <video> with that same file as
  * `poster` (video themes) over the theme's swatch gradient, so a missing
  * file just falls back to the gradient instead of a broken-image glyph.
@@ -50,11 +51,13 @@ export const SITE_THEMES: SiteTheme[] = [
   {
     id: "aurora",
     name: "Aurora",
-    description: "Gradient chuyển động tím – xanh dương.",
+    description: "Cực quang tím – xanh uốn lượn trên núi tuyết và căn nhà gỗ ven hồ.",
     tier: "FREE",
-    media: "gradient",
-    swatchFrom: "#6a4bf0",
-    swatchTo: "#2f8fe0",
+    media: "image",
+    previewSrc: "/themes/aurora/background.svg",
+    imageSrc: "/themes/aurora/background.svg",
+    swatchFrom: "#3730a3",
+    swatchTo: "#0b1040",
   },
   {
     id: "lily-pond-cat",
@@ -73,18 +76,18 @@ export const SITE_THEMES: SiteTheme[] = [
   {
     id: "torii-sunset",
     name: "Cổng Torii hoàng hôn",
-    description: "Ngồi ngắm hoàng hôn cùng chú chó nhỏ bên cổng torii.",
+    description: "Ngồi ngắm hoàng hôn cùng chú chó nhỏ bên cổng torii giữa biển, hoa anh đào bay.",
     tier: "FREE",
     media: "image",
     previewSrc: "/themes/torii-sunset/background.svg",
     imageSrc: "/themes/torii-sunset/background.svg",
-    swatchFrom: "#4a3b6b",
-    swatchTo: "#c98a4b",
+    swatchFrom: "#8e2f62",
+    swatchTo: "#241238",
   },
   {
     id: "rainy-living-room",
     name: "Phòng khách chiều mưa",
-    description: "Ghi chú bên cửa sổ chiều mưa cùng mèo cưng.",
+    description: "Mưa rơi bên cửa sổ, mèo cưng ngủ trên bậu và ánh đèn vàng ấm áp.",
     tier: "FREE",
     media: "image",
     previewSrc: "/themes/rainy-living-room/background.svg",
@@ -95,57 +98,57 @@ export const SITE_THEMES: SiteTheme[] = [
   {
     id: "tokyo-rain-desk",
     name: "Bàn học đêm mưa Tokyo",
-    description: "Góc học tập nhìn ra Tokyo Tower dưới mưa đêm — nền video chuyển động.",
+    description: "Góc học tập nhìn ra Tokyo Tower rực sáng dưới mưa đêm, phố đèn neon.",
     tier: "PRO",
-    media: "video",
+    media: "image",
     previewSrc: "/themes/tokyo-rain-desk/background.svg",
-    videoSrc: "/themes/tokyo-rain-desk/loop.mp4",
-    swatchFrom: "#1e2a4a",
-    swatchTo: "#0d1224",
+    imageSrc: "/themes/tokyo-rain-desk/background.svg",
+    swatchFrom: "#16214a",
+    swatchTo: "#070b1f",
   },
   {
     id: "attic-tokyo-view",
     name: "Gác mái nhìn phố đêm",
-    description: "Góc gác mái ấm cúng, poster phim hoạt hình quanh tường.",
+    description: "Gác mái ấm cúng, cửa sổ tròn nhìn ra phố đêm và máy hát đĩa đang quay.",
     tier: "PRO",
     media: "image",
     previewSrc: "/themes/attic-tokyo-view/background.svg",
     imageSrc: "/themes/attic-tokyo-view/background.svg",
     swatchFrom: "#2b2545",
-    swatchTo: "#141225",
+    swatchTo: "#1c1832",
   },
   {
     id: "balcony-night",
     name: "Ban công đêm sao",
-    description: "Học bài trên ban công đầy đèn dây cùng chú mèo bên cạnh.",
+    description: "Ban công đầy đèn dây dưới dải Ngân Hà, chú mèo ngồi ngắm trăng.",
     tier: "PRO",
     media: "image",
     previewSrc: "/themes/balcony-night/background.svg",
     imageSrc: "/themes/balcony-night/background.svg",
-    swatchFrom: "#2a2350",
-    swatchTo: "#160f33",
+    swatchFrom: "#3b2a6b",
+    swatchTo: "#090620",
   },
   {
     id: "jungle-view",
     name: "Ban công rừng nhiệt đới",
-    description: "Nhìn ra thung lũng rừng mù sương lúc hoàng hôn — nền video chuyển động.",
+    description: "Thung lũng rừng nhiệt đới mù sương lúc hoàng hôn, lá monstera đung đưa.",
     tier: "PRO",
-    media: "video",
+    media: "image",
     previewSrc: "/themes/jungle-view/background.svg",
-    videoSrc: "/themes/jungle-view/loop.mp4",
-    swatchFrom: "#274a3b",
-    swatchTo: "#0f2419",
+    imageSrc: "/themes/jungle-view/background.svg",
+    swatchFrom: "#5e7e44",
+    swatchTo: "#1f3b3a",
   },
   {
     id: "pixel-cottage",
     name: "Bếp nhỏ pixel art",
-    description: "Góc bếp ấm áp phong cách pixel art, nhìn ra đồng quê.",
+    description: "Góc bếp pixel art ấm áp, cối xay gió ngoài đồng quê và chú mèo cam.",
     tier: "PRO",
     media: "image",
     previewSrc: "/themes/pixel-cottage/background.svg",
     imageSrc: "/themes/pixel-cottage/background.svg",
-    swatchFrom: "#4a3423",
-    swatchTo: "#231509",
+    swatchFrom: "#c9744a",
+    swatchTo: "#6a3a1f",
   },
 ];
 

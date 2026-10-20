@@ -11,7 +11,7 @@ import { ThemeScene } from "@/components/layout/theme-scene";
  *   The dashboard hero already shows it at full clarity; a sharp, animated
  *   copy behind every card made the page busy.
  *
- * Renders nothing for the "aurora" theme (media: "gradient"), which keeps
+ * Renders nothing for a media: "gradient" theme, which keeps
  * the plain `bg-background`. No "use client" needed.
  */
 export function SiteThemeBackground({

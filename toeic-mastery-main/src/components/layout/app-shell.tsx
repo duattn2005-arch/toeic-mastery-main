@@ -31,8 +31,18 @@ export function AppShell({
   const [searchOpen, setSearchOpen] = React.useState(false);
   const theme = getSiteTheme(siteThemeId);
 
+  // The palette follows the theme (globals.css, [data-site-theme]). The
+  // wrapper below carries it from the first server render; <html> gets it
+  // too so the body and portalled dialogs/popovers match.
+  React.useEffect(() => {
+    document.documentElement.dataset.siteTheme = theme.id;
+    return () => {
+      delete document.documentElement.dataset.siteTheme;
+    };
+  }, [theme.id]);
+
   return (
-    <div className={`min-h-svh ${theme.media === "gradient" ? "bg-background" : ""}`}>
+    <div data-site-theme={theme.id} className={`min-h-svh ${theme.media === "gradient" ? "bg-background" : ""}`}>
       <SiteThemeBackground themeId={siteThemeId} variant="ambient" />
       <AppSidebar profile={profile} siteThemeId={siteThemeId} />
       <div className="flex min-h-svh flex-col lg:pl-64">

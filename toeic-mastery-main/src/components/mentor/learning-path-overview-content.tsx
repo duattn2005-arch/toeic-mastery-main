@@ -38,7 +38,7 @@ export function LearningPathOverviewContent({ data }: { data: LearningPathOvervi
           </div>
         </div>
         <div className="mt-4 h-2.5 w-full overflow-hidden rounded-full bg-muted">
-          <div className="h-full rounded-full bg-gradient-to-r from-primary to-[#5eead4]" style={{ width: `${pathPercent}%` }} />
+          <div className="h-full rounded-full bg-gradient-to-r from-primary to-brand-glow" style={{ width: `${pathPercent}%` }} />
         </div>
         {data.rationale && <p className="mt-4 text-sm leading-relaxed text-foreground/85">{data.rationale}</p>}
       </div>
@@ -46,7 +46,7 @@ export function LearningPathOverviewContent({ data }: { data: LearningPathOvervi
       {data.currentDay && currentDayNumber && (
         <Link
           href={`/mentor/path/day/${currentDayNumber}`}
-          className="group relative isolate flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-[1.75rem] bg-gradient-to-r from-primary to-[#14b8a6] p-6 text-primary-foreground shadow-lift"
+          className="group relative isolate flex flex-wrap items-center justify-between gap-4 overflow-hidden rounded-[1.75rem] bg-gradient-to-r from-primary to-brand-deep p-6 text-primary-foreground shadow-lift"
         >
           {/* The lily-pond cat on the right half, fading into the teal
               toward the copy on the left */}
