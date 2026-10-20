@@ -3,6 +3,9 @@
 import * as React from "react";
 import {
   AudioLines,
+  AudioWaveform,
+  Loader2,
+  Search,
   Bird,
   CloudDrizzle,
   CloudLightning,
@@ -33,6 +36,16 @@ import { useListeningAudioStore } from "@/store/listening-audio-store";
 import { extractYouTubeVideoId } from "@/lib/youtube";
 import { cn } from "@/lib/utils";
 import type { AmbientSoundId } from "@/lib/services/ambient-sound-engine";
+import type { YouTubeSearchResult } from "@/app/api/youtube-search/route";
+
+/** Steady broadband noise, the classic focus aids: white masks chatter,
+ * pink is the balanced one studied for focus and memory, brown is deep and
+ * calm. */
+const FOCUS_NOISES: { id: AmbientSoundId; label: string; hint: string; dot: string }[] = [
+  { id: "whiteNoise", label: "Trắng", hint: "Che tiếng ồn xung quanh", dot: "#94a3b8" },
+  { id: "pinkNoise", label: "Hồng", hint: "Cân bằng, giúp tập trung và ghi nhớ", dot: "#f472b6" },
+  { id: "brownNoise", label: "Nâu", hint: "Trầm ấm, thư giãn sâu", dot: "#b45309" },
+];
 
 const AMBIENT_SOUNDS: { id: AmbientSoundId; label: string; icon: typeof CloudDrizzle }[] = [
   { id: "chillRain", label: "Mưa nhẹ", icon: CloudDrizzle },
@@ -67,6 +80,7 @@ export function SoundPlayerPopover() {
 
   const [urlInput, setUrlInput] = React.useState("");
   const [adding, setAdding] = React.useState(false);
+  const [results, setResults] = React.useState<YouTubeSearchResult[] | null>(null);
   const seededDefaultRef = React.useRef(false);
 
   const currentTrack = playlist[currentIndex] ?? null;
@@ -128,25 +142,36 @@ export function SoundPlayerPopover() {
     [addTrack]
   );
 
-  async function handleAddTrack(e: React.FormEvent) {
+  // One box for both: a YouTube link is added straight away, anything else
+  // is searched and the results are listed below to pick from.
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     const trimmed = urlInput.trim();
     if (!trimmed) return;
-    const videoId = extractYouTubeVideoId(trimmed);
-    if (!videoId) {
-      toast.error("Không nhận diện được link YouTube này");
-      return;
-    }
-
     setAdding(true);
     try {
-      await addTrackFromUrl(trimmed);
-      setUrlInput("");
+      if (extractYouTubeVideoId(trimmed)) {
+        await addTrackFromUrl(trimmed);
+        setUrlInput("");
+        setResults(null);
+      } else {
+        const res = await fetch(`/api/youtube-search?q=${encodeURIComponent(trimmed)}`);
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error ?? "Không tìm được video");
+        setResults(data.results);
+        if (data.results.length === 0) toast.message("Không có kết quả phù hợp");
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Không thêm được video này");
     } finally {
       setAdding(false);
     }
+  }
+
+  function pickResult(r: YouTubeSearchResult) {
+    addTrack({ id: r.id, url: `https://www.youtube.com/watch?v=${r.id}`, title: r.title, thumbnailUrl: r.thumbnailUrl });
+    // Picking the track that is already loaded means "play it now".
+    if (loadedIdRef.current === r.id) yt.play();
   }
 
   // Seed the default track the first time the panel is opened with an empty
@@ -191,9 +216,33 @@ export function SoundPlayerPopover() {
             <AudioLines className="size-4" />
           </Button>
         </PopoverTrigger>
-        <PopoverContent align="end" className="w-80 rounded-2xl border-white/10 bg-[#181530]/95 p-4 text-white shadow-xl backdrop-blur-xl">
-        <p className="text-xs font-semibold tracking-wider text-white/50">SOUND</p>
-        <div className="mt-2.5 grid grid-cols-4 gap-2">
+        <PopoverContent align="end" className="w-[22rem] rounded-2xl border-border/70 bg-popover/95 p-4 text-popover-foreground shadow-xl backdrop-blur-xl">
+        <p className="text-[11px] font-semibold tracking-wider text-muted-foreground">TIẾNG ỒN TẬP TRUNG</p>
+        <div className="mt-2 grid grid-cols-3 gap-2">
+          {FOCUS_NOISES.map((n) => {
+            const active = activeIds.includes(n.id);
+            return (
+              <button
+                key={n.id}
+                type="button"
+                title={n.hint}
+                onClick={() => toggle(n.id)}
+                className={cn(
+                  "flex items-center gap-2 rounded-xl border px-2.5 py-2 text-left text-xs font-medium transition-colors",
+                  active ? "border-primary/60 bg-primary/15 text-foreground ring-1 ring-primary/40" : "border-border/70 bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full" style={{ background: `color-mix(in oklab, ${n.dot} 25%, transparent)`, color: n.dot }}>
+                  <AudioWaveform className={cn("size-3.5", active && "animate-pulse")} />
+                </span>
+                {n.label}
+              </button>
+            );
+          })}
+        </div>
+
+        <p className="mt-3.5 text-[11px] font-semibold tracking-wider text-muted-foreground">THIÊN NHIÊN</p>
+        <div className="mt-2 grid grid-cols-4 gap-2">
           {AMBIENT_SOUNDS.map((s) => {
             const active = activeIds.includes(s.id);
             return (
@@ -203,10 +252,10 @@ export function SoundPlayerPopover() {
                 onClick={() => toggle(s.id)}
                 className={cn(
                   "flex flex-col items-center gap-1 rounded-xl border p-2 text-center text-[10px] leading-tight transition-colors",
-                  active ? "border-primary/50 bg-primary/25 text-white shadow-[0_0_0_1px_rgba(124,58,237,0.4)]" : "border-white/10 bg-white/5 text-white/70 hover:bg-white/10"
+                  active ? "border-primary/60 bg-primary/15 text-foreground ring-1 ring-primary/40" : "border-border/70 bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
-                <s.icon className="size-4" />
+                <s.icon className={cn("size-4", active && "text-primary")} />
                 {s.label}
               </button>
             );
@@ -214,26 +263,67 @@ export function SoundPlayerPopover() {
         </div>
 
         <div className="mt-3 flex items-center gap-2">
-          <Volume2 className="size-3.5 shrink-0 text-white/50" />
+          <Volume2 className="size-3.5 shrink-0 text-muted-foreground" />
           <Slider value={[Math.round(masterVolume * 100)]} onValueChange={handleVolumeChange} max={100} className="flex-1" />
         </div>
 
-        <div className="mt-4 border-t border-white/10 pt-3.5">
-          <p className="text-xs font-semibold tracking-wider text-white/50">YOUTUBE</p>
-          <form onSubmit={handleAddTrack} className="mt-2 flex gap-1.5">
-            <Input
-              value={urlInput}
-              onChange={(e) => setUrlInput(e.target.value)}
-              placeholder="Dán link YouTube..."
-              className="h-8 border-white/10 bg-white/5 text-xs text-white placeholder:text-white/40"
-            />
-            <Button type="submit" size="icon" className="size-8 shrink-0" disabled={adding}>
-              <Plus className="size-3.5" />
+        <div className="mt-4 border-t border-border/70 pt-3.5">
+          <p className="text-[11px] font-semibold tracking-wider text-muted-foreground">YOUTUBE</p>
+          <form onSubmit={handleSubmit} className="mt-2 flex gap-1.5">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={urlInput}
+                onChange={(e) => setUrlInput(e.target.value)}
+                placeholder="Tìm tên bài hát hoặc dán link..."
+                className="h-8 border-border/70 bg-muted/40 pl-8 text-xs placeholder:text-muted-foreground"
+              />
+            </div>
+            <Button type="submit" size="icon" className="size-8 shrink-0" disabled={adding} aria-label="Tìm hoặc thêm">
+              {adding ? <Loader2 className="size-3.5 animate-spin" /> : extractYouTubeVideoId(urlInput.trim()) ? <Plus className="size-3.5" /> : <Search className="size-3.5" />}
             </Button>
           </form>
 
-          <div className="mt-3 flex items-center gap-2.5 rounded-xl bg-white/5 p-2">
-            <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-black/40">
+          {results && results.length > 0 && (
+            <div className="mt-2 rounded-xl border border-border/70 bg-muted/30">
+              <div className="flex items-center justify-between px-2.5 pt-2 pb-1">
+                <span className="text-[10px] font-semibold tracking-wider text-muted-foreground">KẾT QUẢ</span>
+                <button type="button" onClick={() => setResults(null)} className="text-muted-foreground hover:text-foreground" aria-label="Đóng kết quả">
+                  <X className="size-3.5" />
+                </button>
+              </div>
+              <ul className="max-h-56 overflow-y-auto p-1">
+                {results.map((r) => {
+                  const playing = currentTrack?.id === r.id;
+                  return (
+                    <li key={r.id}>
+                      <button
+                        type="button"
+                        onClick={() => pickResult(r)}
+                        className={cn("flex w-full items-center gap-2.5 rounded-lg p-1.5 text-left transition-colors hover:bg-muted", playing && "bg-primary/10")}
+                      >
+                        <span className="relative h-9 w-16 shrink-0 overflow-hidden rounded-md bg-black/30">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src={r.thumbnailUrl} alt="" className="size-full object-cover" />
+                          {r.duration && (
+                            <span className="absolute right-0.5 bottom-0.5 rounded bg-black/75 px-1 text-[9px] font-semibold text-white tabular-nums">{r.duration}</span>
+                          )}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className={cn("line-clamp-2 text-[11px] leading-snug font-medium", playing && "text-primary")}>{r.title}</span>
+                          <span className="block truncate text-[10px] text-muted-foreground">{r.channel}</span>
+                        </span>
+                        {playing ? <AudioLines className="size-3.5 shrink-0 text-primary" /> : <Play className="size-3.5 shrink-0 text-muted-foreground" />}
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+
+          <div className="mt-3 flex items-center gap-2.5 rounded-xl bg-muted/40 p-2">
+            <div className="flex size-11 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-black/30">
               {currentTrack && (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={currentTrack.thumbnailUrl} alt="" className="size-full object-cover" />
@@ -243,18 +333,18 @@ export function SoundPlayerPopover() {
               {currentTrack ? (
                 <>
                   <p className="truncate text-xs font-medium">{currentTrack.title}</p>
-                  <p className="text-[10px] text-white/50">YouTube · {playlist.length} bài</p>
+                  <p className="text-[10px] text-muted-foreground">YouTube · {playlist.length} bài</p>
                 </>
               ) : (
-                <p className="text-[11px] text-white/50">Dán link YouTube ở trên để phát nhạc nền</p>
+                <p className="text-[11px] text-muted-foreground">Tìm hoặc dán link YouTube ở trên để phát nhạc nền</p>
               )}
             </div>
             {currentTrack && (
               <>
-                <a href={currentTrack.url} target="_blank" rel="noopener noreferrer" className="text-white/40 hover:text-white" title="Mở trên YouTube">
+                <a href={currentTrack.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground" title="Mở trên YouTube">
                   <ExternalLink className="size-3.5" />
                 </a>
-                <button type="button" onClick={() => removeTrack(currentTrack.id)} className="text-white/40 hover:text-white" title="Xóa khỏi danh sách">
+                <button type="button" onClick={() => removeTrack(currentTrack.id)} className="text-muted-foreground hover:text-foreground" title="Xóa khỏi danh sách">
                   <X className="size-3.5" />
                 </button>
               </>
@@ -262,18 +352,18 @@ export function SoundPlayerPopover() {
           </div>
 
           <div className="mt-2.5 flex items-center justify-center gap-4">
-            <button type="button" onClick={playPrev} disabled={playlist.length < 2} className="text-white/70 hover:text-white disabled:opacity-30">
+            <button type="button" onClick={playPrev} disabled={playlist.length < 2} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
               <SkipBack className="size-4" />
             </button>
             <button
               type="button"
               onClick={togglePlay}
               disabled={!currentTrack}
-              className="flex size-9 items-center justify-center rounded-full bg-primary text-white transition-transform hover:scale-105 disabled:opacity-30"
+              className="flex size-9 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-[0_6px_16px_-6px_var(--primary)] transition-transform hover:scale-105 disabled:opacity-30"
             >
               {yt.isPlaying ? <Pause className="size-4" /> : <Play className="size-4 translate-x-0.5" />}
             </button>
-            <button type="button" onClick={playNext} disabled={playlist.length < 2} className="text-white/70 hover:text-white disabled:opacity-30">
+            <button type="button" onClick={playNext} disabled={playlist.length < 2} className="text-muted-foreground hover:text-foreground disabled:opacity-30">
               <SkipForward className="size-4" />
             </button>
           </div>
