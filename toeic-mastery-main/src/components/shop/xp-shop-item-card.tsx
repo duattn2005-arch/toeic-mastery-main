@@ -11,6 +11,15 @@ import { redeemShopItemAction, equipShopItemAction } from "@/lib/actions/xp-shop
 import { XpShopItemVisual } from "@/components/shop/xp-shop-item-visual";
 import { RARITY_META } from "@/components/shop/shop-rarity";
 
+/** Motes rising off the pedestal on Epic+ cards (fixed, so SSR matches). */
+const MOTES = [
+  { left: "34%", size: 3, delay: "0s", duration: "4.2s" },
+  { left: "46%", size: 2, delay: "1.4s", duration: "5s" },
+  { left: "58%", size: 3, delay: "0.7s", duration: "4.6s" },
+  { left: "66%", size: 2, delay: "2.3s", duration: "5.4s" },
+  { left: "40%", size: 2, delay: "3.1s", duration: "4.8s" },
+];
+
 export function XpShopItemCard({
   item,
   userXp,
@@ -27,6 +36,7 @@ export function XpShopItemCard({
   const { canAfford, missingXp } = getShopItemStatus(userXp, item.priceXp);
   const rarity = RARITY_META[item.rarity];
   const topTier = item.rarity === "LEGENDARY" || item.rarity === "MYTHIC";
+  const fancy = topTier || item.rarity === "EPIC";
   const affordPercent = Math.min(100, Math.round((userXp / item.priceXp) * 100));
 
   function handleRedeem() {
@@ -56,19 +66,58 @@ export function XpShopItemCard({
   const card = (
     <article
       className={cn(
-        "group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] bg-card transition-[transform,box-shadow] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 hover:shadow-lift",
+        "card-sheen group relative flex h-full flex-col overflow-hidden rounded-[1.75rem] bg-card transition-[transform,box-shadow] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-1 hover:shadow-lift",
         !rarity.border && "border border-border/60 shadow-soft",
-        equipped && !rarity.border && "border-primary/60 shadow-[0_0_0_3px_rgba(45,212,191,0.18)]"
+        equipped && !rarity.border && "border-primary/60 shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_22%,transparent)]"
       )}
     >
-      {/* Stage: rarity spotlight, the frame, and a soft pedestal shadow */}
-      <div
-        className="relative flex h-48 items-center justify-center"
-        style={{ backgroundImage: `radial-gradient(60% 65% at 50% 45%, ${rarity.glow}, transparent 70%)` }}
-      >
-        <span aria-hidden className="absolute bottom-6 h-3 w-24 rounded-[50%] bg-black/25 blur-md dark:bg-black/50" />
-        <div className="relative transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-1.5 group-hover:scale-105">
-          <XpShopItemVisual id={item.id} rarity={item.rarity} size={104} />
+      {/* Stage: rarity spotlight (rays and rising motes from Epic up), the
+          frame floating over a glowing pedestal */}
+      <div className="relative isolate flex h-52 items-center justify-center overflow-hidden">
+        <div
+          aria-hidden
+          className="absolute inset-0 -z-10 transition-opacity duration-500 group-hover:opacity-100"
+          style={{
+            opacity: 0.85,
+            backgroundImage: `radial-gradient(55% 60% at 50% 44%, ${rarity.glow}, transparent 72%), radial-gradient(circle at 50% 44%, color-mix(in oklab, ${rarity.accent} 10%, transparent) 0 1px, transparent 1.5px)`,
+            backgroundSize: "100% 100%, 14px 14px",
+          }}
+        />
+        {fancy && (
+          <div
+            aria-hidden
+            className="stage-rays absolute -z-10 size-[150%]"
+            style={{
+              background: `repeating-conic-gradient(from 0deg at 50% 50%, color-mix(in oklab, ${rarity.accent} 22%, transparent) 0deg 6deg, transparent 6deg 22deg)`,
+              WebkitMask: "radial-gradient(circle at 50% 50%, #000 0, transparent 46%)",
+              mask: "radial-gradient(circle at 50% 50%, #000 0, transparent 46%)",
+            }}
+          />
+        )}
+        {fancy &&
+          MOTES.map((m, i) => (
+            <span
+              key={i}
+              aria-hidden
+              className="stage-mote absolute bottom-10 -z-10 rounded-full"
+              style={{ left: m.left, width: m.size, height: m.size, background: rarity.accent, boxShadow: `0 0 6px ${rarity.accent}`, animationDelay: m.delay, animationDuration: m.duration }}
+            />
+          ))}
+        {/* Pedestal: a lit disc with a rim */}
+        <span
+          aria-hidden
+          className="absolute bottom-6 h-5 w-32 rounded-[50%] transition-transform duration-700 group-hover:scale-110"
+          style={{ background: `radial-gradient(closest-side, color-mix(in oklab, ${rarity.accent} 55%, transparent), transparent)`, filter: "blur(2px)" }}
+        />
+        <span
+          aria-hidden
+          className="absolute bottom-7 h-3 w-24 rounded-[50%] border"
+          style={{ borderColor: `color-mix(in oklab, ${rarity.accent} 60%, transparent)`, boxShadow: `0 0 12px color-mix(in oklab, ${rarity.accent} 50%, transparent)` }}
+        />
+        <div className="float-y relative" style={{ animationDuration: "5s" }}>
+          <div className="transition-transform duration-700 ease-[cubic-bezier(0.32,0.72,0,1)] group-hover:-translate-y-2 group-hover:scale-[1.08]">
+            <XpShopItemVisual id={item.id} rarity={item.rarity} size={108} />
+          </div>
         </div>
 
         <span className={cn("absolute top-3.5 left-3.5 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold ring-1", rarity.badge)}>
@@ -146,13 +195,19 @@ export function XpShopItemCard({
     </article>
   );
 
-  // Top tiers get a glowing gradient border: a padded wrapper painted with
-  // the gradient, the card inside it.
+  // Top tiers get a glowing gradient border that keeps rotating: a padded
+  // wrapper painted with a conic gradient, the card inside it.
   if (rarity.border) {
     return (
       <div
-        className={cn("h-full rounded-[1.85rem] p-[2px] shadow-soft", equipped && "shadow-[0_0_0_3px_rgba(45,212,191,0.18)]")}
-        style={{ backgroundImage: rarity.border }}
+        className={cn(
+          "rarity-border-spin h-full rounded-[1.85rem] p-[2px]",
+          equipped ? "shadow-[0_0_0_3px_color-mix(in_oklab,var(--primary)_22%,transparent)]" : "shadow-soft"
+        )}
+        style={{
+          backgroundImage: rarity.conic ? `conic-gradient(from var(--frame-angle), ${rarity.conic})` : rarity.border,
+          boxShadow: equipped ? undefined : `0 10px 30px -14px ${rarity.accent}`,
+        }}
       >
         {card}
       </div>
