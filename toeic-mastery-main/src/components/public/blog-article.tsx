@@ -21,13 +21,13 @@ function formatDate(date: Date) {
 /** A blog post as readers see it — shared by /blog/[slug], the in-app
  * TOEIC Tips reader and the admin preview. `cta={false}` drops the sign-up
  * style boxes, which make no sense for someone already logged in. */
-export function BlogArticle({ post, cta = true }: { post: BlogArticleData; cta?: boolean }) {
+export function BlogArticle({ post, cta = true, kicker = "Blog luyện thi TOEIC" }: { post: BlogArticleData; cta?: boolean; kicker?: string }) {
   const date = post.publishedAt ?? post.updatedAt;
   return (
     <>
       <article>
         <header>
-          <p className="text-xs font-semibold text-primary uppercase">Blog luyện thi TOEIC</p>
+          <p className="text-xs font-semibold text-primary uppercase">{kicker}</p>
           <h1 className="mt-1 text-3xl font-extrabold tracking-tight text-balance md:text-4xl">{post.title}</h1>
           <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
             <span className="flex items-center gap-1">

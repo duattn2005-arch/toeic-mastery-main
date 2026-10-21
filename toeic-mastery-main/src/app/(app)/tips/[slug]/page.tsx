@@ -3,24 +3,23 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { requireUser } from "@/lib/auth";
-import { getPublishedPost, relatedPosts } from "@/lib/data/blog";
+import { getTip } from "@/lib/data/tips";
 import { BlogArticle } from "@/components/public/blog-article";
 
 type Params = Promise<{ slug: string }>;
 
 export async function generateMetadata({ params }: { params: Params }): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPublishedPost(slug);
-  // The indexed copy is /blog/<slug>; this one is only for logged-in reading.
-  return post ? { title: post.title, robots: { index: false }, alternates: { canonical: `/blog/${post.slug}` } } : {};
+  const tip = await getTip(slug);
+  // The indexed copy is the public page; this one is only for logged-in reading.
+  return tip ? { title: tip.article.title, robots: { index: false }, alternates: { canonical: tip.canonical } } : {};
 }
 
 export default async function TipPage({ params }: { params: Params }) {
   await requireUser();
   const { slug } = await params;
-  const post = await getPublishedPost(slug);
-  if (!post) notFound();
-  const related = await relatedPosts(post.slug, [post.primaryKeyword, ...post.keywords]);
+  const tip = await getTip(slug);
+  if (!tip) notFound();
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
@@ -29,14 +28,14 @@ export default async function TipPage({ params }: { params: Params }) {
       </Link>
 
       <div className="rounded-2xl border border-border bg-card p-5 shadow-soft md:p-8">
-        <BlogArticle post={post} cta={false} />
+        <BlogArticle post={tip.article} cta={false} kicker={tip.kicker} />
       </div>
 
-      {related.length > 0 && (
+      {tip.related.length > 0 && (
         <nav aria-label="Bài viết liên quan">
           <p className="text-sm font-semibold">Đọc tiếp</p>
           <ul className="mt-3 grid gap-3 sm:grid-cols-3">
-            {related.map((r) => (
+            {tip.related.map((r) => (
               <li key={r.slug}>
                 <Link href={`/tips/${r.slug}`} className="block h-full rounded-xl border border-border bg-card p-4 text-sm font-medium leading-snug transition-colors hover:border-primary/40">
                   {r.title}
