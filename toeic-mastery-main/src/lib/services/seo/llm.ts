@@ -17,7 +17,43 @@ export function extractJson<T>(raw: string): T {
         // fall through to the error below
       }
     }
+    const repaired = repairTruncatedJson(text);
+    if (repaired !== null) return repaired as T;
     throw new Error(`AI trả về JSON không hợp lệ. Nội dung nhận được: ${text.slice(0, 200)}`);
+  }
+}
+
+/** Salvages a reply cut off mid-way (output token limit): keeps everything up
+ * to the last complete object/array and closes the brackets still open. */
+export function repairTruncatedJson(text: string): unknown {
+  const start = text.search(/[[{]/);
+  if (start === -1) return null;
+  const stack: string[] = [];
+  let inString = false;
+  let escaped = false;
+  let best: { end: number; closers: string } | null = null;
+  for (let i = start; i < text.length; i++) {
+    const c = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (c === "\\") escaped = true;
+      else if (c === '"') inString = false;
+      continue;
+    }
+    if (c === '"') inString = true;
+    else if (c === "{") stack.push("}");
+    else if (c === "[") stack.push("]");
+    else if (c === "}" || c === "]") {
+      stack.pop();
+      if (stack.length === 0) break;
+      best = { end: i + 1, closers: [...stack].reverse().join("") };
+    }
+  }
+  if (!best) return null;
+  try {
+    return JSON.parse(text.slice(start, best.end) + best.closers);
+  } catch {
+    return null;
   }
 }
 

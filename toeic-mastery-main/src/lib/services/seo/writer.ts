@@ -35,9 +35,47 @@ Chỉ trả về đúng một object JSON, không thêm chữ nào khác:
 
 const str = (v: unknown, max = 4000) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 
-/** Turns one model block into a GuideBlock, or null when it is unusable. */
-function toBlock(raw: unknown, allowed: ReadonlySet<string>): GuideBlock | null {
-  const b = (raw ?? {}) as Record<string, unknown>;
+type Obj = Record<string, unknown>;
+const isObj = (v: unknown): v is Obj => typeof v === "object" && v !== null && !Array.isArray(v);
+/** First present value among several key spellings the model might use. */
+const pick = (o: Obj, keys: string[]) => keys.map((k) => o[k]).find((v) => v !== undefined && v !== null);
+
+const BLOCK_TYPES: Record<string, GuideBlock["type"]> = {
+  p: "p", paragraph: "p", text: "p", para: "p", h3: "p", heading: "p", subheading: "p", quote: "p",
+  ul: "ul", list: "ul", bullets: "ul", bullet_list: "ul", unordered_list: "ul", unordered: "ul",
+  ol: "ol", numbered: "ol", numbered_list: "ol", ordered_list: "ol", ordered: "ol", steps: "ol",
+  table: "table", tip: "tip", note: "tip", callout: "tip", warning: "tip",
+  example: "example", quiz: "example", question: "example", exercise: "example",
+};
+
+/** Turns one model block into a GuideBlock, or null when it is unusable.
+ * Accepts the shapes models commonly drift to (plain strings, "paragraph",
+ * "content" instead of "text", rows as objects…), not just the asked one. */
+function toBlock(input: unknown, allowed: ReadonlySet<string>): GuideBlock | null {
+  if (typeof input === "string") input = { type: "p", text: input };
+  if (Array.isArray(input)) input = { type: "ul", items: input };
+  if (!isObj(input)) return null;
+  const raw = input;
+  const kind = String(raw.type ?? raw.kind ?? "").toLowerCase().replace(/[\s-]+/g, "_");
+  let type = BLOCK_TYPES[kind];
+  if (!type) type = Array.isArray(raw.rows) ? "table" : Array.isArray(raw.items) ? "ul" : raw.question ? "example" : "p";
+  if (type === "ul" && (raw.ordered === true || raw.style === "ordered")) type = "ol";
+  const text = pick(raw, ["text", "content", "value", "body", "paragraph"]);
+  const items = pick(raw, ["items", "list", "points", "bullets", "steps"]);
+  const head = pick(raw, ["head", "headers", "header", "columns"]);
+  const b: Obj = {
+    type,
+    text: typeof text === "string" ? (kind.startsWith("h") && kind !== "h" ? `**${text}**` : text) : Array.isArray(text) ? text.join(" ") : undefined,
+    title: raw.title,
+    items: Array.isArray(items) ? items.map((i) => (isObj(i) ? String(pick(i, ["text", "content", "value"]) ?? "") : i)) : undefined,
+    head,
+    rows: Array.isArray(raw.rows) ? raw.rows.map((r) => (isObj(r) ? Object.values(r) : r)) : undefined,
+    question: raw.question,
+    options: raw.options ?? raw.choices,
+    answer: raw.answer,
+    explain: raw.explain ?? raw.explanation,
+  };
+  if (type === "table" && !Array.isArray(head) && Array.isArray(raw.rows) && isObj(raw.rows[0])) b.head = Object.keys(raw.rows[0]);
   const fix = (s: string) => keepKnownLinks(s, allowed);
   switch (b.type) {
     case "p": {
@@ -79,13 +117,37 @@ function toBlock(raw: unknown, allowed: ReadonlySet<string>): GuideBlock | null 
 }
 
 /** Validates and cleans the model's article; throws when it isn't publishable material. */
-export function toBlogContent(raw: Record<string, unknown>, allowed: ReadonlySet<string>): BlogContent {
+/** The article object itself, even when the model wrapped it ({"article": {...}}). */
+export function articleRoot(raw: unknown): Obj {
+  if (Array.isArray(raw)) return { sections: raw };
+  if (!isObj(raw)) return {};
+  if (Array.isArray(pick(raw, SECTION_KEYS))) return raw;
+  for (const v of Object.values(raw)) if (isObj(v) && Array.isArray(pick(v, SECTION_KEYS))) return { ...raw, ...v };
+  return raw;
+}
+
+const SECTION_KEYS = ["sections", "body", "content", "outline", "parts", "muc"];
+
+/** A section's blocks under whatever key the model used; a plain string
+ * becomes paragraphs. */
+function sectionBlocks(sec: Obj): unknown[] {
+  const v = pick(sec, ["blocks", "content", "body", "paragraphs", "items", "text"]);
+  if (typeof v === "string") return v.split(/\n{2,}/).map((t) => t.trim()).filter(Boolean);
+  if (Array.isArray(v)) return v;
+  return [];
+}
+
+export function toBlogContent(input: Record<string, unknown>, allowed: ReadonlySet<string>): BlogContent {
+  const raw = articleRoot(input);
+  const list = pick(raw, SECTION_KEYS);
   const ids = new Set<string>();
-  const sections: GuideSection[] = (Array.isArray(raw.sections) ? raw.sections : [])
+  const sections: GuideSection[] = (Array.isArray(list) ? list : [])
     .map((s) => {
-      const sec = (s ?? {}) as Record<string, unknown>;
-      const heading = str(sec.heading, 160);
-      const blocks = (Array.isArray(sec.blocks) ? sec.blocks : []).map((b) => toBlock(b, allowed)).filter((b): b is GuideBlock => b !== null);
+      const sec = isObj(s) ? s : {};
+      const heading = str(pick(sec, ["heading", "title", "h2", "name", "header"]), 160);
+      const blocks = sectionBlocks(sec)
+        .map((b) => toBlock(b, allowed))
+        .filter((b): b is GuideBlock => b !== null);
       if (!heading || blocks.length === 0) return null;
       let id = slugify(heading) || "muc";
       while (ids.has(id)) id = `${id}-2`;
@@ -94,14 +156,18 @@ export function toBlogContent(raw: Record<string, unknown>, allowed: ReadonlySet
     })
     .filter((s): s is GuideSection => s !== null)
     .slice(0, 12);
-  const faqs = (Array.isArray(raw.faqs) ? raw.faqs : [])
+  const faqList = pick(raw, ["faqs", "faq", "questions"]);
+  const faqs = (Array.isArray(faqList) ? faqList : [])
     .map((f) => {
-      const x = (f ?? {}) as Record<string, unknown>;
-      return { q: str(x.q, 200), a: keepKnownLinks(str(x.a, 800), allowed) };
+      const x = isObj(f) ? f : {};
+      return { q: str(pick(x, ["q", "question", "hoi"]), 200), a: keepKnownLinks(str(pick(x, ["a", "answer", "tra_loi"]), 800), allowed) };
     })
     .filter((f) => f.q && f.a)
     .slice(0, 6);
-  if (sections.length < 3) throw new Error("Bài viết có quá ít mục hợp lệ");
+  if (sections.length < 3) {
+    const shape = Array.isArray(list) ? `${list.length} mục, ${sections.length} dùng được` : `khoá nhận được: ${Object.keys(raw).slice(0, 10).join(", ") || "không có"}`;
+    throw new Error(`Bài viết có quá ít mục hợp lệ (${shape})`);
+  }
   return { sections, faqs };
 }
 
@@ -170,14 +236,22 @@ export async function writeArticleForTopic(topicId: string): Promise<string | nu
     let raw: Record<string, unknown> | null = null;
     let content: BlogContent | null = null;
     let words = 0;
-    // One retry: a short or malformed answer is usually fine the second time.
-    for (let attempt = 0; attempt < 2; attempt++) {
-      raw = await askJson<Record<string, unknown>>({ system: SYSTEM, prompt, maxTokens: 12_000, timeoutMs: 240_000 });
-      content = toBlogContent(raw, allowed);
-      words = countWords(content);
-      if (words >= MIN_WORDS) break;
+    let lastError: Error | null = null;
+    // Retries: a short or malformed answer is usually fine the next time.
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const answer = await askJson<Record<string, unknown>>({ system: SYSTEM, prompt, maxTokens: 16_000, timeoutMs: 240_000 });
+        const parsed = toBlogContent(answer, allowed);
+        const n = countWords(parsed);
+        if (n > words) [raw, content, words] = [articleRoot(answer), parsed, n];
+        if (words >= MIN_WORDS) break;
+        lastError = new Error(`Bài quá ngắn (${n} từ)`);
+      } catch (err) {
+        lastError = err as Error;
+        console.error(`[seo] write attempt ${attempt + 1} failed for topic ${topicId}:`, lastError.message);
+      }
     }
-    if (!raw || !content || words < MIN_WORDS) throw new Error(`Bài quá ngắn (${words} từ)`);
+    if (!raw || !content || words < MIN_WORDS) throw lastError ?? new Error(`Bài quá ngắn (${words} từ)`);
 
     const title = clip(str(raw.title, 200) || topic.title, 150);
     const data = {
