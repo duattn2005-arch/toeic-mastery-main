@@ -17,7 +17,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { MAIN_NAV } from "@/lib/constants/nav";
+import { MAIN_NAV, isNavActive } from "@/lib/constants/nav";
 import { signOutAction } from "@/app/(auth)/actions";
 import { ThemeToggle } from "@/components/layout/theme-toggle";
 import { SoundPlayerPopover } from "@/components/layout/sound-player-popover";
@@ -111,10 +111,10 @@ export function TopHeader({
               <Link
                 key={item.href}
                 href={item.href}
-                aria-current={isActive(item.href) ? "page" : undefined}
+                aria-current={isNavActive(pathname, item) ? "page" : undefined}
                 className={cn(
                   "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors duration-300",
-                  isActive(item.href)
+                  isNavActive(pathname, item)
                     ? "bg-sidebar-active-bg text-sidebar-active"
                     : "text-sidebar-foreground hover:bg-sidebar-active-bg/60 hover:text-sidebar-active"
                 )}

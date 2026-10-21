@@ -18,8 +18,10 @@ function formatDate(date: Date) {
   return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric", timeZone: "Asia/Ho_Chi_Minh" });
 }
 
-/** A blog post as readers see it — shared by /blog/[slug] and the admin preview. */
-export function BlogArticle({ post }: { post: BlogArticleData }) {
+/** A blog post as readers see it — shared by /blog/[slug], the in-app
+ * TOEIC Tips reader and the admin preview. `cta={false}` drops the sign-up
+ * style boxes, which make no sense for someone already logged in. */
+export function BlogArticle({ post, cta = true }: { post: BlogArticleData; cta?: boolean }) {
   const date = post.publishedAt ?? post.updatedAt;
   return (
     <>
@@ -39,10 +41,10 @@ export function BlogArticle({ post }: { post: BlogArticleData }) {
           <p className="mt-5 max-w-[65ch] text-lg leading-relaxed text-muted-foreground">{post.description}</p>
         </header>
         <div className="mt-8">
-          <GuideBody guide={post.content} afterFirstSection={<BlogCta target={post.ctaTarget} />} />
+          <GuideBody guide={post.content} afterFirstSection={cta ? <BlogCta target={post.ctaTarget} /> : undefined} />
         </div>
       </article>
-      <BlogCta target={post.ctaTarget} />
+      {cta && <BlogCta target={post.ctaTarget} />}
       <Faq items={post.content.faqs} />
     </>
   );

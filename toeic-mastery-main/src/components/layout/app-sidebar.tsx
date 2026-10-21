@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { Crown, Flame, Headset, Settings, ShieldCheck, Target, User } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { MAIN_NAV } from "@/lib/constants/nav";
+import { MAIN_NAV, isNavActive } from "@/lib/constants/nav";
 import { FACEBOOK_URL } from "@/lib/constants/contact";
 import { EquippableLogoMark } from "@/components/shared/logo-mark";
 import { AccountAvatar } from "@/components/shared/account-avatar";
@@ -74,7 +74,7 @@ export function AppSidebar({ profile, siteThemeId }: { profile: SidebarProfile; 
 
       <nav data-tour="dashboard-sidebar-nav" className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 dark:[text-shadow:0_1px_2px_rgba(0,0,0,0.55)]">
         {MAIN_NAV.map((item) => {
-          const active = isActive(pathname, item.href);
+          const active = isNavActive(pathname, item);
           return (
             <Link
               key={item.href}

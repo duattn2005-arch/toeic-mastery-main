@@ -6,7 +6,7 @@ import {
   BookOpen,
   SpellCheck2,
   Layers,
-  BookA,
+  Lightbulb,
   Bookmark,
   History,
   BarChart3,
@@ -17,6 +17,13 @@ export interface NavItem {
   label: string;
   href: string;
   icon: LucideIcon;
+  /** Other paths that light this item up (e.g. the dictionary, reached from "Đã lưu"). */
+  also?: string[];
+}
+
+export function isNavActive(pathname: string, item: Pick<NavItem, "href" | "also">) {
+  if (item.href === "/dashboard") return pathname === item.href;
+  return [item.href, ...(item.also ?? [])].some((href) => pathname === href || pathname.startsWith(`${href}/`));
 }
 
 export const MAIN_NAV: NavItem[] = [
@@ -27,8 +34,8 @@ export const MAIN_NAV: NavItem[] = [
   { label: "Reading", href: "/reading", icon: BookOpen },
   { label: "Grammar", href: "/grammar", icon: SpellCheck2 },
   { label: "Từ vựng", href: "/vocabulary", icon: Layers },
-  { label: "Từ điển", href: "/dictionary", icon: BookA },
-  { label: "Đã lưu", href: "/bookmarks", icon: Bookmark },
+  { label: "TOEIC Tips", href: "/tips", icon: Lightbulb },
+  { label: "Đã lưu", href: "/bookmarks", icon: Bookmark, also: ["/dictionary"] },
   { label: "Lịch sử", href: "/history", icon: History },
   { label: "Thống kê", href: "/analytics", icon: BarChart3 },
 ];
