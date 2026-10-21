@@ -3,12 +3,16 @@
 import * as React from "react";
 import Link from "next/link";
 import { ArrowLeft, Check, ChevronLeft, ChevronRight, CircleCheckBig, CloudOff, Headphones, History, Loader2, RotateCcw, Undo2, XCircle } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { BLANK_PATTERN, type TranscriptGroup, type TranscriptTest } from "@/lib/content/transcripts/types";
 import { isCorrectWord, type TranscriptAnswerKey } from "@/lib/content/transcripts/answer-key";
 import type { ExerciseProgress } from "@/lib/data/exercise-progress";
 import { saveTranscriptProgressAction } from "@/lib/actions/exercise-progress";
+import type { SegmentMap } from "@/lib/content/transcripts/segments";
+import type { TranscriptGroupKey } from "@/lib/data/transcripts";
+import { GroupKeyPanel, GroupToolbar, LinePlayButton, usePartSegments, useSegmentPlayer } from "@/components/listening/transcript-group-tools";
 
 const SPEEDS = [0.75, 0.9, 1, 1.25];
 const PART_NAMES: Record<number, string> = {
@@ -67,6 +71,8 @@ export function TranscriptPractice({
   audio,
   answerKey,
   savedParts,
+  segments,
+  groupKeys,
 }: {
   setKey: string;
   setTitle: string;
@@ -77,6 +83,10 @@ export function TranscriptPractice({
   answerKey: TranscriptAnswerKey;
   /** part -> what was saved for it last time. */
   savedParts: Record<number, ExerciseProgress>;
+  /** part -> admin-reviewed per-question timings of that Part's audio. */
+  segments: Record<number, SegmentMap>;
+  /** group id -> answers, questions and bilingual transcript. */
+  groupKeys: Record<string, TranscriptGroupKey>;
 }) {
   const [activePart, setActivePart] = React.useState(test.parts[0]?.part ?? 1);
   const [answers, setAnswers] = React.useState<Answers>(() =>
@@ -159,6 +169,33 @@ export function TranscriptPractice({
   React.useEffect(() => {
     if (audioRef.current) audioRef.current.playbackRate = speed;
   }, [speed, audioUrl]);
+
+  // Replaying one question/line at a time — needs the Part's own file.
+  const partAudioUrl = audio[part.part] ?? null;
+  const segmentGroups = React.useMemo(() => part.groups.map((g) => ({ id: g.id, lines: g.lines.length })), [part]);
+  const partSegments = usePartSegments(segments[part.part], partAudioUrl, part.part, segmentGroups);
+  const player = useSegmentPlayer(audioRef);
+  const [openKeys, setOpenKeys] = React.useState<Set<string>>(() => new Set());
+
+  async function playGroup(groupId: string, lineIndex?: number) {
+    const segs = await partSegments.ensure();
+    const seg = segs?.[groupId];
+    if (!seg) {
+      toast.message("Chưa tách được đoạn ghi âm cho câu này — hãy dùng trình nghe ở bên trái.");
+      return;
+    }
+    if (lineIndex === undefined || !seg.lines) player.play({ id: groupId, start: seg.start, end: seg.end });
+    else player.play({ id: `${groupId}:${lineIndex}`, start: seg.lines[lineIndex], end: seg.lines[lineIndex + 1] ?? seg.end });
+  }
+
+  function toggleKey(groupId: string) {
+    setOpenKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(groupId)) next.delete(groupId);
+      else next.add(groupId);
+      return next;
+    });
+  }
 
   const keys = React.useMemo(() => blankKeys(part.part, part.groups), [part]);
   const totalBlanks = keys.length;
@@ -327,6 +364,14 @@ export function TranscriptPractice({
                     ))}
                   </div>
                 </div>
+                {partAudioUrl ? (
+                  <p className="text-xs text-muted-foreground">
+                    Bấm <span className="font-semibold text-primary">Nghe câu</span> ở mỗi câu để nghe riêng câu đó, bật lặp lại để nghe đi nghe lại.
+                    {partSegments.isAuto && " Mốc câu được chia tự động nên có thể lệch vài giây."}
+                  </p>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Đang dùng file cả đề — nghe từng câu sẽ có khi có file riêng của Part {part.part}.</p>
+                )}
               </>
             ) : (
               <p className="rounded-xl border border-dashed border-border p-4 text-center text-sm text-muted-foreground">
@@ -409,10 +454,25 @@ export function TranscriptPractice({
         <div className="flex flex-col gap-4">
           {part.groups.map((group) => (
             <section key={group.id} className="rounded-2xl border border-border bg-card p-4 shadow-soft sm:p-5">
-              <h3 className="mb-3 text-sm font-semibold text-primary">{group.title}</h3>
+              <GroupToolbar
+                groupId={group.id}
+                title={group.title}
+                canPlay={Boolean(partAudioUrl) && partSegments.available && (!partSegments.segments || Boolean(partSegments.segments[group.id]))}
+                detecting={partSegments.detecting}
+                playing={player.playing}
+                loop={player.loop}
+                onPlay={() => void playGroup(group.id)}
+                onToggleLoop={() => player.setLoop((v) => !v)}
+                hasKey={Boolean(groupKeys[group.id])}
+                showKey={openKeys.has(group.id)}
+                onToggleKey={() => toggleKey(group.id)}
+              />
               <div className="flex flex-col gap-2.5">
                 {group.lines.map((line, lineIndex) => (
                   <div key={lineIndex} className="flex gap-2 text-sm leading-9">
+                    {partSegments.segments?.[group.id]?.lines?.[lineIndex] !== undefined && (
+                      <LinePlayButton active={player.playing?.id === `${group.id}:${lineIndex}`} onClick={() => void playGroup(group.id, lineIndex)} />
+                    )}
                     {(line.speaker || line.label) && (
                       <span
                         className={cn(
@@ -437,6 +497,7 @@ export function TranscriptPractice({
                   </div>
                 ))}
               </div>
+              {openKeys.has(group.id) && groupKeys[group.id] && <GroupKeyPanel data={groupKeys[group.id]} part={part.part} />}
             </section>
           ))}
 

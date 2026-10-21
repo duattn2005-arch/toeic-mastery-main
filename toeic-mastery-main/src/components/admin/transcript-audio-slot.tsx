@@ -2,11 +2,13 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import { Loader2, Trash2, Upload } from "lucide-react";
+import { Loader2, Scissors, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { setTranscriptAudioAction } from "@/lib/actions/admin-transcripts";
 import { uploadFileInChunks } from "@/lib/chunked-upload";
 import { QUESTION_MEDIA_KINDS } from "@/lib/upload-kinds";
+import { TranscriptSegmentEditor } from "@/components/admin/transcript-segment-editor";
+import type { SegmentMap } from "@/lib/content/transcripts/segments";
 
 const { maxSizeBytes, acceptedTypes: ACCEPTED_TYPES } = QUESTION_MEDIA_KINDS.transcriptAudio;
 const MAX_SIZE_MB = Math.round(maxSizeBytes / (1024 * 1024));
@@ -19,12 +21,17 @@ export function TranscriptAudioSlot({
   part,
   label,
   initialUrl,
+  groups,
+  segments,
 }: {
   setKey: string;
   testNumber: number;
   part: number;
   label: string;
   initialUrl: string | null;
+  /** The Part's transcript groups (Part 1–4 only) — enables "Chia câu". */
+  groups?: { id: string; title: string; lines: number }[];
+  segments?: SegmentMap | null;
 }) {
   const router = useRouter();
   const [url, setUrl] = React.useState(initialUrl ?? "");
@@ -32,6 +39,7 @@ export function TranscriptAudioSlot({
   /** Upload progress 0–100 while sending, null otherwise. */
   const [progress, setProgress] = React.useState<number | null>(null);
   const inputRef = React.useRef<HTMLInputElement>(null);
+  const [splitting, setSplitting] = React.useState(false);
 
   async function save(nextUrl: string, successMessage: string) {
     const result = await setTranscriptAudioAction(setKey, testNumber, part, nextUrl);
@@ -83,6 +91,17 @@ export function TranscriptAudioSlot({
       <div className="flex items-center justify-between gap-2">
         <span className="text-sm font-medium">{label}</span>
         <div className="flex items-center gap-1.5">
+          {url && groups && (
+            <button
+              type="button"
+              onClick={() => setSplitting((v) => !v)}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-input bg-card px-2.5 py-1.5 text-xs font-medium hover:bg-muted"
+            >
+              <Scissors className="size-3.5" />
+              Chia câu
+              {segments ? <span className="rounded bg-success/15 px-1 text-[10px] text-success">đã lưu</span> : null}
+            </button>
+          )}
           <input ref={inputRef} type="file" accept={ACCEPTED_TYPES.join(",")} className="hidden" onChange={handleFileChange} />
           <button
             type="button"
@@ -111,7 +130,9 @@ export function TranscriptAudioSlot({
           <div className="h-full rounded-full bg-primary transition-[width] duration-300" style={{ width: `${progress}%` }} />
         </div>
       )}
-      {url ? (
+      {url && splitting && groups ? (
+        <TranscriptSegmentEditor setKey={setKey} testNumber={testNumber} part={part} audioUrl={url} groups={groups} initialSegments={segments ?? null} />
+      ) : url ? (
         <audio controls preload="none" src={url} className="h-9 w-full" />
       ) : (
         <p className="text-xs text-muted-foreground">Chưa có file nghe</p>

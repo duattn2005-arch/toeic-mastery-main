@@ -1594,6 +1594,13 @@ model TranscriptAudio {
    */
   part       Int
   audioUrl   String   @map("audio_url")
+  /**
+   * Where each question (Part 1/2) or conversation/talk (Part 3/4) sits in
+   * this file, by TranscriptGroup.id: { start, end, lines? } in seconds —
+   * see src/lib/content/transcripts/segments.ts. Null until an admin saves
+   * it; reset whenever the file changes.
+   */
+  segments   Json?
   updatedAt  DateTime @updatedAt @map("updated_at")
 
   @@unique([setKey, testNumber, part])
