@@ -11,9 +11,9 @@ const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password
 // require a session.
 const PUBLIC_ROUTES = ["/", "/practice", "/practice/start", ...AUTH_ROUTES];
 // Public content for search engines and first-time visitors (word lists,
-// guides, the free quiz — see src/app/(public)). Whole subtrees, unlike the
+// guides, the free quiz, the blog — see src/app/(public)). Whole subtrees, unlike the
 // exact matches above, since the pages are keyed by slug.
-const PUBLIC_PREFIXES = ["/tu-vung", "/huong-dan", "/thi-thu-mien-phi"];
+const PUBLIC_PREFIXES = ["/tu-vung", "/huong-dan", "/thi-thu-mien-phi", "/blog"];
 
 /** First-touch attribution cookie: whichever referral link a visitor
  * clicks first is kept for 60 days, even if they later click a different

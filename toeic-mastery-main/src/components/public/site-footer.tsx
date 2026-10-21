@@ -18,6 +18,7 @@ const COLUMNS = [
       { href: "/huong-dan/cach-tinh-diem-toeic", label: "Cách tính điểm" },
       { href: "/huong-dan/lo-trinh-hoc-toeic", label: "Lộ trình học" },
       { href: "/huong-dan/cach-hoc-tu-vung-toeic", label: "Cách học từ vựng" },
+      { href: "/blog", label: "Blog luyện thi TOEIC" },
     ],
   },
   {

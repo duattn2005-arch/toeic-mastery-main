@@ -1641,3 +1641,108 @@ model StudyPreference {
 
   @@map("study_preferences")
 }
+
+// ---------------------------------------------------------------------------
+// SEO content engine (docs/seo-content-engine.md)
+// ---------------------------------------------------------------------------
+
+enum SeoCompetitorStatus {
+  PENDING
+  ANALYSING
+  ANALYSED
+  FAILED
+}
+
+/// A competitor's blog post, analysed for its topic and keywords
+/// (the in-app version of the n8n "Competitor_Analysis_Flow").
+model SeoCompetitorPage {
+  id         String              @id @default(uuid()) @db.Uuid
+  url        String              @unique
+  status     SeoCompetitorStatus @default(PENDING)
+  title      String?
+  topic      String?
+  keywords   String[]            @default([])
+  summary    String[]            @default([])
+  error      String?
+  analysedAt DateTime?           @map("analysed_at")
+  createdAt  DateTime            @default(now()) @map("created_at")
+  updatedAt  DateTime            @updatedAt @map("updated_at")
+
+  @@index([status])
+  @@map("seo_competitor_pages")
+}
+
+enum SeoTopicStatus {
+  IDEA
+  WRITING
+  DRAFTED
+  PUBLISHED
+  REJECTED
+  FAILED
+}
+
+/// An article to write: proposed from competitor gaps or added by an admin.
+model SeoTopic {
+  id             String         @id @default(uuid()) @db.Uuid
+  title          String
+  primaryKeyword String         @map("primary_keyword")
+  keywords       String[]       @default([])
+  intent         String?
+  angle          String?
+  source         String         @default("manual")
+  status         SeoTopicStatus @default(IDEA)
+  error          String?
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  post           BlogPost?
+
+  @@index([status])
+  @@map("seo_topics")
+}
+
+enum BlogPostStatus {
+  DRAFT
+  PUBLISHED
+}
+
+/// A blog article at /blog/<slug>. `content` is { sections, faqs } — the same
+/// shape as the hand-written guides (src/lib/content/guides/types.ts).
+model BlogPost {
+  id             String         @id @default(uuid()) @db.Uuid
+  slug           String         @unique
+  title          String
+  seoTitle       String         @map("seo_title")
+  description    String
+  primaryKeyword String         @map("primary_keyword")
+  keywords       String[]       @default([])
+  summary        String[]       @default([])
+  content        Json
+  /// Google Ads copy for promoting the post (SEM): { headlines, descriptions, keywords }.
+  ads            Json?
+  ctaTarget      String         @default("free_quiz") @map("cta_target")
+  wordCount      Int            @default(0) @map("word_count")
+  status         BlogPostStatus @default(DRAFT)
+  topicId        String?        @unique @map("topic_id") @db.Uuid
+  topic          SeoTopic?      @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  publishedAt    DateTime?      @map("published_at")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  @@index([status, publishedAt])
+  @@map("blog_posts")
+}
+
+/// Single row (id "default") of autopilot settings.
+model SeoSettings {
+  id              String    @id @default("default")
+  autoEnabled     Boolean   @default(false) @map("auto_enabled")
+  autoPublish     Boolean   @default(false) @map("auto_publish")
+  draftsPerRun    Int       @default(1) @map("drafts_per_run")
+  competitorBatch Int       @default(5) @map("competitor_batch")
+  runHour         Int       @default(7) @map("run_hour")
+  lastRunAt       DateTime? @map("last_run_at")
+  lastRunLog      String?   @map("last_run_log")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  @@map("seo_settings")
+}

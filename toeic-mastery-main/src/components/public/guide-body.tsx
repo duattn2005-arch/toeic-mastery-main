@@ -1,12 +1,27 @@
 import * as React from "react";
+import Link from "next/link";
 import { Lightbulb } from "lucide-react";
-import type { Guide, GuideBlock } from "@/lib/content/guides";
+import type { GuideBlock, GuideSection } from "@/lib/content/guides";
 
-/** **bold** inline markup → <strong>. */
+/** Inline markup: **bold** → <strong>, [anchor](/path) → an internal link.
+ * Only same-site paths ("/…", not "//…") become links; anything else stays
+ * plain text, so content can never point readers off-site. */
 function inline(text: string): React.ReactNode[] {
-  return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) =>
-    part.startsWith("**") && part.endsWith("**") ? <strong key={i}>{part.slice(2, -2)}</strong> : <React.Fragment key={i}>{part}</React.Fragment>
-  );
+  return text.split(/(\*\*[^*]+\*\*|\[[^\]\n]+\]\([^)\s]+\))/g).map((part, i) => {
+    if (part.startsWith("**") && part.endsWith("**")) return <strong key={i}>{part.slice(2, -2)}</strong>;
+    const link = part.match(/^\[([^\]\n]+)\]\(([^)\s]+)\)$/);
+    if (link) {
+      const [, anchor, href] = link;
+      return href.startsWith("/") && !href.startsWith("//") ? (
+        <Link key={i} href={href} className="font-medium text-primary underline underline-offset-4 hover:no-underline">
+          {anchor}
+        </Link>
+      ) : (
+        <React.Fragment key={i}>{anchor}</React.Fragment>
+      );
+    }
+    return <React.Fragment key={i}>{part}</React.Fragment>;
+  });
 }
 
 function Block({ block }: { block: GuideBlock }) {
@@ -86,8 +101,9 @@ function Block({ block }: { block: GuideBlock }) {
   }
 }
 
-/** Table of contents + the guide's sections. */
-export function GuideBody({ guide }: { guide: Guide }) {
+/** Table of contents + the sections. `afterFirstSection` slots something
+ * (the blog's call to action) between the first and second section. */
+export function GuideBody({ guide, afterFirstSection }: { guide: { sections: GuideSection[] }; afterFirstSection?: React.ReactNode }) {
   return (
     <>
       <nav aria-label="Mục lục" className="rounded-2xl border border-border bg-card p-5">
@@ -103,17 +119,20 @@ export function GuideBody({ guide }: { guide: Guide }) {
         </ol>
       </nav>
 
-      {guide.sections.map((section) => (
-        <section key={section.id} id={section.id} aria-labelledby={`${section.id}-h`} className="mt-10 scroll-mt-28">
-          <h2 id={`${section.id}-h`} className="text-xl font-bold tracking-tight md:text-2xl">
-            {section.heading}
-          </h2>
-          <div className="mt-4 flex flex-col gap-4">
-            {section.blocks.map((block, i) => (
-              <Block key={i} block={block} />
-            ))}
-          </div>
-        </section>
+      {guide.sections.map((section, index) => (
+        <React.Fragment key={section.id}>
+          {index === 1 && afterFirstSection}
+          <section id={section.id} aria-labelledby={`${section.id}-h`} className="mt-10 scroll-mt-28">
+            <h2 id={`${section.id}-h`} className="text-xl font-bold tracking-tight md:text-2xl">
+              {section.heading}
+            </h2>
+            <div className="mt-4 flex flex-col gap-4">
+              {section.blocks.map((block, i) => (
+                <Block key={i} block={block} />
+              ))}
+            </div>
+          </section>
+        </React.Fragment>
       ))}
     </>
   );

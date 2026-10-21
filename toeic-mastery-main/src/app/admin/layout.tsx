@@ -6,6 +6,7 @@ import {
   CreditCard,
   LayoutDashboard,
   FileText,
+  Newspaper,
   Headphones,
   Layers,
   Share2,
@@ -26,6 +27,7 @@ const ADMIN_NAV = [
   { label: "Thanh toán", href: "/admin/payments", icon: CreditCard },
   { label: "Rút tiền", href: "/admin/withdrawals", icon: Wallet },
   { label: "Thống kê", href: "/admin/analytics", icon: BarChart3 },
+  { label: "Viết bài SEO", href: "/admin/seo", icon: Newspaper },
 ];
 
 // Chỉ chủ tài khoản (isSuperAdmin) thấy mục này — trang /admin/referrals tự
