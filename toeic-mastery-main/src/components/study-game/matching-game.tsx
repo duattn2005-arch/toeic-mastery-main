@@ -5,6 +5,7 @@ import { Trophy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfettiBurst } from "@/components/shared/confetti-burst";
 import { cn } from "@/lib/utils";
+import { useAutoFinish } from "@/components/study-game/use-auto-finish";
 import { useGameFeedback } from "@/hooks/use-game-feedback";
 import { buildMatchRounds, type StudyItem } from "@/lib/services/study-game";
 import type { ReviewRating } from "@/lib/services/spaced-repetition";
@@ -19,10 +20,13 @@ export function MatchingGame({
   items,
   onFinish,
   onItemResult,
+  autoAdvance = false,
 }: {
   items: StudyItem[];
   onFinish: () => void;
   onItemResult?: (itemId: string, rating: ReviewRating) => void;
+  /** Go straight on when done (the study flow), instead of a summary. */
+  autoAdvance?: boolean;
 }) {
   const [rounds] = React.useState(() => buildMatchRounds(items));
   const [round, setRound] = React.useState(0);
@@ -41,6 +45,7 @@ export function MatchingGame({
   const pairsBefore = rounds.slice(0, round).reduce((n, b) => n + b.length / 2, 0);
   const roundDone = solvedPairs === roundPairs;
   const done = roundDone && round >= rounds.length - 1;
+  useAutoFinish(done && autoAdvance, onFinish);
 
   // Next board as soon as this one is cleared (short beat to see it lock in).
   React.useEffect(() => {
@@ -83,6 +88,7 @@ export function MatchingGame({
   }
 
   if (done) {
+    if (autoAdvance) return null;
     return (
       <div className="flex flex-col items-center gap-4 text-center">
         <ConfettiBurst />

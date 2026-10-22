@@ -14,8 +14,11 @@ import { QuizMode } from "@/components/study-game/quiz-mode";
 import { MatchingGame } from "@/components/study-game/matching-game";
 import { BlastGame } from "@/components/study-game/blast-game";
 import { BalloonGame } from "@/components/study-game/balloon-game";
-import { splitArcadeWords } from "@/lib/services/study-game";
-import { StudyFlow } from "@/components/study-game/study-flow";
+import { MoleGame } from "@/components/study-game/mole-game";
+import { MinerGame } from "@/components/study-game/miner-game";
+import { ARCADE_GAMES, splitArcadeWords, type ArcadeGame } from "@/lib/services/study-game";
+import { Handover, StudyFlow } from "@/components/study-game/study-flow";
+import { useStudyPreferences } from "@/hooks/use-study-preferences";
 import { VocabularyReviewOverview } from "@/components/vocabulary/vocabulary-review-overview";
 import { logStudySessionAction, practiceVocabularyWordAction } from "@/lib/actions/vocabulary";
 import { completePathStepAction } from "@/lib/actions/vocabulary-path";
@@ -65,10 +68,37 @@ export function PathDayRunner({
   const [stars, setStars] = React.useState(initialStars);
   const [pending, setPending] = React.useState(false);
   const [reviewItems, setReviewItems] = React.useState<StudyItem[] | null>(null);
-  // Step 2 "Luyện tập" plays the games in turn: Nối từ, Blast, Bong bóng
-  // (Blast and Bong bóng share the words half each — see splitArcadeWords).
-  const [practiceGame, setPracticeGame] = React.useState<"match" | "blast" | "balloon">("match");
-  const [arcade] = React.useState(() => splitArcadeWords(items));
+  // Step 2 "Luyện tập" plays the games in turn: Nối từ, then the arcade
+  // games the learner keeps on (Blast, Bong bóng, Đập chuột, Đào vàng),
+  // which share the words out evenly (splitArcadeWords). Each moves on by
+  // itself after a short "next" card.
+  const [studyPrefs] = useStudyPreferences();
+  const arcadeKey = (() => {
+    const on = ARCADE_GAMES.filter((g) => studyPrefs.stages.includes(g));
+    return (on.length > 0 ? on : ARCADE_GAMES).join(",");
+  })();
+  const arcade = React.useMemo(() => splitArcadeWords(items, arcadeKey.split(",") as ArcadeGame[]), [items, arcadeKey]);
+  const practiceOrder = React.useMemo<("match" | ArcadeGame)[]>(
+    () => [...(items.length >= 2 ? (["match"] as const) : []), ...ARCADE_GAMES.filter((g) => arcade[g].length > 0)],
+    [items.length, arcade]
+  );
+  const [practiceGame, setPracticeGame] = React.useState<"match" | ArcadeGame>("match");
+  const [practiceHandover, setPracticeHandover] = React.useState<{ from: "match" | ArcadeGame; to: "match" | ArcadeGame } | null>(null);
+  const currentPractice = practiceOrder.includes(practiceGame) ? practiceGame : practiceOrder[0];
+
+  function finishPracticeGame() {
+    const at = practiceOrder.indexOf(currentPractice);
+    const next = practiceOrder[at + 1];
+    if (!next) {
+      void finishStep(2);
+      return;
+    }
+    setPracticeHandover({ from: currentPractice, to: next });
+    setTimeout(() => {
+      setPracticeHandover(null);
+      setPracticeGame(next);
+    }, 1300);
+  }
   const [showOverview, setShowOverview] = React.useState(false);
   // Mirrors the star/unstar side effect FlashcardBrowse/QuizMode trigger
   // server-side, so the overview's counts update immediately instead of
@@ -248,14 +278,24 @@ export function PathDayRunner({
                 <FlashcardBrowse items={items} onFinish={() => void finishStep(1)} onItemResult={handleItemResult} showSettings={false} />
               )}
               {activeStep === 2 &&
-                (practiceGame === "match" && items.length >= 2 ? (
-                  <MatchingGame items={items} onFinish={() => setPracticeGame("blast")} onItemResult={handleItemResult} />
+                (practiceHandover ? (
+                  <Handover from={practiceHandover.from} to={practiceHandover.to} />
                 ) : (
-                  practiceGame === "blast" ? (
-                    <BlastGame items={arcade.blast} distractorPool={items} onFinish={() => (arcade.balloon.length > 0 ? setPracticeGame("balloon") : void finishStep(2))} onItemResult={handleItemResult} />
-                  ) : (
-                    <BalloonGame items={arcade.balloon} distractorPool={items} onFinish={() => void finishStep(2)} onItemResult={handleItemResult} />
-                  )
+                  <React.Fragment key={currentPractice}>
+                    {currentPractice === "match" && <MatchingGame items={items} onFinish={finishPracticeGame} onItemResult={handleItemResult} autoAdvance />}
+                    {currentPractice === "blast" && (
+                      <BlastGame items={arcade.blast} distractorPool={items} onFinish={finishPracticeGame} onItemResult={handleItemResult} autoAdvance />
+                    )}
+                    {currentPractice === "balloon" && (
+                      <BalloonGame items={arcade.balloon} distractorPool={items} onFinish={finishPracticeGame} onItemResult={handleItemResult} autoAdvance />
+                    )}
+                    {currentPractice === "mole" && (
+                      <MoleGame items={arcade.mole} distractorPool={items} onFinish={finishPracticeGame} onItemResult={handleItemResult} autoAdvance />
+                    )}
+                    {currentPractice === "miner" && (
+                      <MinerGame items={arcade.miner} distractorPool={items} onFinish={finishPracticeGame} onItemResult={handleItemResult} autoAdvance />
+                    )}
+                  </React.Fragment>
                 ))}
               {activeStep === 3 && (
                 <QuizMode items={items} onFinish={(result) => void finishStep(3, result)} onItemResult={handleItemResult} />

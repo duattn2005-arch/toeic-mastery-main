@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { ArrowLeft, BookOpenCheck, CircleDot, Grid3x3, ListChecks, Rocket, Sparkles } from "lucide-react";
+import { ArrowLeft, BookOpenCheck, CircleDot, Grid3x3, Hammer, ListChecks, Pickaxe, Rocket, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { canPlayQuiz, type StudyItem } from "@/lib/services/study-game";
 import { logStudySessionAction, practiceVocabularyWordAction } from "@/lib/actions/vocabulary";
@@ -14,12 +14,14 @@ import { QuizMode } from "@/components/study-game/quiz-mode";
 import { MatchingGame } from "@/components/study-game/matching-game";
 import { BlastGame } from "@/components/study-game/blast-game";
 import { BalloonGame } from "@/components/study-game/balloon-game";
+import { MoleGame } from "@/components/study-game/mole-game";
+import { MinerGame } from "@/components/study-game/miner-game";
 import { StudyFlow } from "@/components/study-game/study-flow";
 import { VocabularyReviewOverview } from "@/components/vocabulary/vocabulary-review-overview";
 import { cn } from "@/lib/utils";
 import { useLiveVocabStatus } from "@/hooks/use-live-vocab-status";
 
-type Mode = "flow" | "flashcard" | "quiz" | "match" | "blast" | "balloon";
+type Mode = "flow" | "flashcard" | "quiz" | "match" | "blast" | "balloon" | "mole" | "miner";
 
 const MIN_ITEMS_FOR_MATCH = 3;
 
@@ -164,6 +166,8 @@ export function StudyGameLauncher({
         {mode === "match" && <MatchingGame items={items} onFinish={finishSession} onItemResult={handleItemResult} />}
         {mode === "blast" && <BlastGame items={items} onFinish={finishSession} onItemResult={handleItemResult} />}
         {mode === "balloon" && <BalloonGame items={items} onFinish={finishSession} onItemResult={handleItemResult} />}
+        {mode === "mole" && <MoleGame items={items} onFinish={finishSession} onItemResult={handleItemResult} />}
+        {mode === "miner" && <MinerGame items={items} onFinish={finishSession} onItemResult={handleItemResult} />}
       </div>
     );
   }
@@ -232,6 +236,20 @@ export function StudyGameLauncher({
           label="Bong bóng"
           description={matchReady ? "Chạm bong bóng mang từ đúng trước khi nó bay mất" : "Cần ít nhất 3 từ"}
           onClick={() => start("balloon")}
+          disabled={!matchReady}
+        />
+        <ModeCard
+          icon={Hammer}
+          label="Đập chuột"
+          description={matchReady ? "Đập chú chuột cầm đúng nghĩa của từ" : "Cần ít nhất 3 từ"}
+          onClick={() => start("mole")}
+          disabled={!matchReady}
+        />
+        <ModeCard
+          icon={Pickaxe}
+          label="Đào vàng"
+          description={matchReady ? "Thả móc kéo cục vàng mang đúng nghĩa" : "Cần ít nhất 3 từ"}
+          onClick={() => start("miner")}
           disabled={!matchReady}
         />
       </div>

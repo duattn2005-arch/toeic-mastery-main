@@ -107,12 +107,26 @@ export function buildBlast(items: StudyItem[], distractorPool: StudyItem[] = ite
   });
 }
 
-/** Splits the words between Blast and Bong bóng — each word is played in
- * exactly one of the two, half each (10 -> 5 + 5, 11 -> 6 + 5), so the two
- * games share the list instead of both replaying all of it. A single word
- * goes to Blast and Bong bóng is skipped. */
-export function splitArcadeWords(items: StudyItem[]): { blast: StudyItem[]; balloon: StudyItem[] } {
+/** The arcade games of the study flow, in play order. */
+export const ARCADE_GAMES = ["blast", "balloon", "mole", "miner"] as const;
+export type ArcadeGame = (typeof ARCADE_GAMES)[number];
+
+/** Splits the words evenly between the arcade games being played — each
+ * word is played in exactly one of them (12 words over 4 games -> 3 each,
+ * 10 -> 3 + 3 + 2 + 2), so the games share the list instead of each
+ * replaying all of it. With fewer words than games the last games get none
+ * and are skipped. */
+export function splitArcadeWords(items: StudyItem[], games: readonly ArcadeGame[] = ARCADE_GAMES): Record<ArcadeGame, StudyItem[]> {
+  const out = Object.fromEntries(ARCADE_GAMES.map((g) => [g, [] as StudyItem[]])) as Record<ArcadeGame, StudyItem[]>;
+  const playing = games.length > 0 ? games : ARCADE_GAMES;
   const mixed = shuffle(items);
-  const half = Math.ceil(mixed.length / 2);
-  return { blast: mixed.slice(0, half), balloon: mixed.slice(half) };
+  const per = Math.floor(mixed.length / playing.length);
+  const extra = mixed.length % playing.length;
+  let at = 0;
+  playing.forEach((game, i) => {
+    const n = per + (i < extra ? 1 : 0);
+    out[game] = mixed.slice(at, at + n);
+    at += n;
+  });
+  return out;
 }

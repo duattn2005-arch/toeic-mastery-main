@@ -13,6 +13,8 @@ const STAGE_LABELS: Record<StudyStage, string> = {
   match: "Nối từ",
   blast: "Blast",
   balloon: "Bong bóng",
+  mole: "Đập chuột",
+  miner: "Đào vàng",
   quiz: "Kiểm tra",
 };
 

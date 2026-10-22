@@ -6,7 +6,7 @@ import { z } from "zod";
 export type RatingMode = "four" | "two";
 
 /** Stages of the study flow (see StudyFlow's FLOW_STEPS). */
-export const STUDY_STAGES = ["flashcard", "match", "blast", "balloon", "quiz"] as const;
+export const STUDY_STAGES = ["flashcard", "match", "blast", "balloon", "mole", "miner", "quiz"] as const;
 export type StudyStage = (typeof STUDY_STAGES)[number];
 
 export interface StudyPreferences {
@@ -19,7 +19,14 @@ export interface StudyPreferences {
   gameSpeak: boolean;
   /** Games and quiz: short buzz on a wrong answer. */
   gameSfx: boolean;
+  /** Bumped when new stages ship, so saved stage lists pick them up on. */
+  stagesVersion: number;
 }
+
+/** Stages added after a version, switched on for learners whose saved
+ * stage list predates them (they never got to choose them). */
+const STAGES_ADDED: Record<number, StudyStage[]> = { 2: ["mole", "miner"] };
+const CURRENT_STAGES_VERSION = 2;
 
 export const DEFAULT_STUDY_PREFERENCES: StudyPreferences = {
   ratingMode: "four",
@@ -27,6 +34,7 @@ export const DEFAULT_STUDY_PREFERENCES: StudyPreferences = {
   stages: [...STUDY_STAGES],
   gameSpeak: true,
   gameSfx: true,
+  stagesVersion: CURRENT_STAGES_VERSION,
 };
 
 const schema = z.object({
@@ -41,11 +49,21 @@ const schema = z.object({
     }),
   gameSpeak: z.boolean().catch(DEFAULT_STUDY_PREFERENCES.gameSpeak),
   gameSfx: z.boolean().catch(DEFAULT_STUDY_PREFERENCES.gameSfx),
+  stagesVersion: z.number().int().catch(1),
 });
 
 /** Coerces anything (stored JSON, localStorage, client input) into valid
  * preferences, falling back to defaults field by field. */
 export function normalizeStudyPreferences(value: unknown): StudyPreferences {
+  const hasSaved = value !== null && typeof value === "object" && "stages" in value;
   const parsed = schema.safeParse(value ?? {});
-  return parsed.success ? parsed.data : { ...DEFAULT_STUDY_PREFERENCES, stages: [...DEFAULT_STUDY_PREFERENCES.stages] };
+  if (!parsed.success) return { ...DEFAULT_STUDY_PREFERENCES, stages: [...DEFAULT_STUDY_PREFERENCES.stages] };
+  const prefs = parsed.data;
+  if (!hasSaved) return { ...prefs, stagesVersion: CURRENT_STAGES_VERSION };
+  // Switch on stages that shipped after this saved list was made.
+  const added = Object.entries(STAGES_ADDED)
+    .filter(([version]) => Number(version) > prefs.stagesVersion)
+    .flatMap(([, stages]) => stages);
+  const stages = STUDY_STAGES.filter((s) => prefs.stages.includes(s) || added.includes(s));
+  return { ...prefs, stages, stagesVersion: CURRENT_STAGES_VERSION };
 }

@@ -6,6 +6,7 @@ import { Flame, Heart, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ConfettiBurst } from "@/components/shared/confetti-burst";
 import { cn } from "@/lib/utils";
+import { useAutoFinish } from "@/components/study-game/use-auto-finish";
 import { useGameFeedback } from "@/hooks/use-game-feedback";
 import { GameStarfield } from "@/components/study-game/game-starfield";
 import { buildBlast, type BlastQuestion, type StudyItem } from "@/lib/services/study-game";
@@ -45,6 +46,7 @@ export function BalloonGame({
   items,
   onFinish,
   onItemResult,
+  autoAdvance = false,
   distractorPool,
 }: {
   items: StudyItem[];
@@ -52,6 +54,8 @@ export function BalloonGame({
   distractorPool?: StudyItem[];
   onFinish: () => void;
   onItemResult?: (itemId: string, rating: ReviewRating) => void | Promise<void>;
+  /** Go straight on when done (the study flow), instead of a summary. */
+  autoAdvance?: boolean;
 }) {
   const [questions] = React.useState<BlastQuestion[]>(() => buildBlast(items, distractorPool, OPTIONS));
   const [index, setIndex] = React.useState(0);
@@ -72,6 +76,7 @@ export function BalloonGame({
 
   const total = questions.length;
   const done = index >= total;
+  useAutoFinish(done && autoAdvance, onFinish);
   const current = questions[index];
   const multiplier = 1 + Math.floor(combo / COMBO_SEGMENTS);
 
@@ -144,6 +149,7 @@ export function BalloonGame({
   }
 
   if (done) {
+    if (autoAdvance) return null;
     return (
       <div className="flex flex-col items-center gap-4 text-center">
         <ConfettiBurst />
