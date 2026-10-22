@@ -15,32 +15,53 @@ export interface PlayingRange {
 
 /**
  * Plays slices (one question, or one line of it) of the Part's audio
- * element: seeks to the start, stops at the end — or jumps back to the
- * start when looping. The page's speed buttons still apply, since it's the
+ * element: seeks to the start and stops at the end. Each slice is replayed
+ * `repeats` more times with `gapSec` of silence in between (the loop button
+ * makes that endless). The page's speed buttons still apply, since it's the
  * same element.
  */
-export function useSegmentPlayer(audioRef: React.RefObject<HTMLAudioElement | null>) {
+export function useSegmentPlayer(audioRef: React.RefObject<HTMLAudioElement | null>, { repeats = 0, gapSec = 0.5 }: { repeats?: number; gapSec?: number } = {}) {
   const [playing, setPlaying] = React.useState<PlayingRange | null>(null);
   const [loop, setLoop] = React.useState(false);
   const rangeRef = React.useRef<PlayingRange | null>(null);
-  const loopRef = React.useRef(false);
+  /** The last slice played, for "nghe lại" after it has ended. */
+  const lastRef = React.useRef<PlayingRange | null>(null);
+  const remainingRef = React.useRef(0);
+  const waitingRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Set while togglePause pauses, so that pause keeps the slice. */
+  const holdRef = React.useRef(false);
+  const settingsRef = React.useRef({ loop, repeats, gapSec });
   React.useEffect(() => {
-    loopRef.current = loop;
-  }, [loop]);
+    settingsRef.current = { loop, repeats, gapSec };
+  }, [loop, repeats, gapSec]);
+
+  const clearWait = () => {
+    if (waitingRef.current) clearTimeout(waitingRef.current);
+    waitingRef.current = null;
+  };
 
   React.useEffect(() => {
     let raf = 0;
     const tick = () => {
       const el = audioRef.current;
       const range = rangeRef.current;
-      if (el && range) {
+      if (el && range && !waitingRef.current) {
         // Someone dragged the player elsewhere: that's no longer our slice.
         if (el.currentTime < range.start - 1 || el.currentTime > range.end + 1) {
           rangeRef.current = null;
           setPlaying(null);
         } else if (el.currentTime >= range.end) {
-          if (loopRef.current) el.currentTime = range.start;
-          else {
+          const { loop: endless, gapSec: gap } = settingsRef.current;
+          if (endless || remainingRef.current > 0) {
+            if (!endless) remainingRef.current--;
+            el.pause();
+            waitingRef.current = setTimeout(() => {
+              waitingRef.current = null;
+              if (rangeRef.current !== range) return;
+              el.currentTime = range.start;
+              void el.play();
+            }, gap * 1000);
+          } else {
             el.pause();
             rangeRef.current = null;
             setPlaying(null);
@@ -50,24 +71,33 @@ export function useSegmentPlayer(audioRef: React.RefObject<HTMLAudioElement | nu
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      clearWait();
+    };
   }, [audioRef]);
 
   const stop = React.useCallback(() => {
+    clearWait();
     audioRef.current?.pause();
     rangeRef.current = null;
     setPlaying(null);
   }, [audioRef]);
 
+  /** Plays a slice from its start (a second press on the same slice while
+   * it plays stops it, unless `restart`). */
   const play = React.useCallback(
-    (range: PlayingRange) => {
+    (range: PlayingRange, restart = false) => {
       const el = audioRef.current;
       if (!el) return;
-      if (rangeRef.current?.id === range.id && !el.paused) {
+      if (!restart && rangeRef.current?.id === range.id && (!el.paused || waitingRef.current)) {
         stop();
         return;
       }
+      clearWait();
       rangeRef.current = range;
+      lastRef.current = range;
+      remainingRef.current = settingsRef.current.repeats;
       setPlaying(range);
       el.currentTime = range.start;
       void el.play();
@@ -75,12 +105,33 @@ export function useSegmentPlayer(audioRef: React.RefObject<HTMLAudioElement | nu
     [audioRef, stop]
   );
 
-  // A pause from the player's own controls ends the slice too.
+  /** Pauses / resumes wherever the player is, slice or not. */
+  const togglePause = React.useCallback(() => {
+    const el = audioRef.current;
+    if (!el) return false;
+    if (waitingRef.current) {
+      stop();
+      return true;
+    }
+    if (el.paused) void el.play();
+    else {
+      holdRef.current = true;
+      el.pause();
+    }
+    return true;
+  }, [audioRef, stop]);
+
+  // A pause from the player's own controls ends the slice too (but not the
+  // pause between repeats, which happens at the slice's end).
   React.useEffect(() => {
     const el = audioRef.current;
     if (!el) return;
     const onPause = () => {
-      if (rangeRef.current && el.currentTime < rangeRef.current.end - 0.05) {
+      if (holdRef.current) {
+        holdRef.current = false;
+        return;
+      }
+      if (rangeRef.current && !waitingRef.current && el.currentTime < rangeRef.current.end - 0.05) {
         rangeRef.current = null;
         setPlaying(null);
       }
@@ -89,7 +140,7 @@ export function useSegmentPlayer(audioRef: React.RefObject<HTMLAudioElement | nu
     return () => el.removeEventListener("pause", onPause);
   });
 
-  return { playing, play, stop, loop, setLoop };
+  return { playing, play, stop, togglePause, lastRange: () => lastRef.current, loop, setLoop };
 }
 
 const AUTO_CACHE_PREFIX = "transcript-seg:v1:";
@@ -165,6 +216,7 @@ export function GroupToolbar({
   loop,
   onPlay,
   onToggleLoop,
+  keyTip,
   canHint,
   onHint,
   canCheck,
@@ -183,6 +235,8 @@ export function GroupToolbar({
   loop: boolean;
   onPlay: () => void;
   onToggleLoop: () => void;
+  /** Replay key shown on the listen button, when key tips are on. */
+  keyTip?: string;
   canHint: boolean;
   onHint: () => void;
   canCheck: boolean;
@@ -213,11 +267,14 @@ export function GroupToolbar({
             type="button"
             onClick={onPlay}
             disabled={detecting}
-            title="Nghe câu (Ctrl + Space)"
+            title="Nghe câu (Alt + P)"
             className={cn(pill, isPlaying ? "bg-primary text-primary-foreground" : "bg-primary/12 text-primary hover:bg-primary/20")}
           >
             {detecting ? <Loader2 className="size-3.5 animate-spin" /> : isPlaying ? <Pause className="size-3.5" /> : <Play className="size-3.5" />}
             {detecting ? "Đang chia câu…" : isPlaying ? "Dừng" : "Nghe câu"}
+            {keyTip && !detecting && (
+              <kbd className={cn("rounded border px-1 font-mono text-[9px] leading-4", isPlaying ? "border-primary-foreground/40" : "border-primary/40")}>{keyTip}</kbd>
+            )}
           </button>
           <button
             type="button"
@@ -274,7 +331,8 @@ export function GroupToolbar({
 }
 
 export const SHORTCUTS: [string, string][] = [
-  ["Ctrl + Space", "Nghe / dừng câu đang làm"],
+  ["Alt + P / Ctrl + Space", "Nghe / dừng câu đang làm"],
+  ["Esc", "Dừng nghe"],
   ["Alt + 1…4", "Nghe dòng 1–4 của câu (A, B, C, D…)"],
   ["Alt + R", "Bật / tắt lặp lại câu"],
   ["Alt + H", "Gợi ý thêm một chữ cái cho ô đang gõ"],
@@ -286,7 +344,7 @@ export const SHORTCUTS: [string, string][] = [
 ];
 
 /** The "Phím tắt" button and its cheat sheet. */
-export function ShortcutHelp({ open, onToggle }: { open: boolean; onToggle: () => void }) {
+export function ShortcutHelp({ open, onToggle, extra = [] }: { open: boolean; onToggle: () => void; extra?: [string, string][] }) {
   return (
     <div className="flex flex-col gap-2">
       <button
@@ -300,7 +358,7 @@ export function ShortcutHelp({ open, onToggle }: { open: boolean; onToggle: () =
       </button>
       {open && (
         <ul className="flex flex-col gap-1.5 rounded-xl border border-border bg-muted/40 p-3 text-xs">
-          {SHORTCUTS.map(([keys, what]) => (
+          {[...extra.map(([keys, what]) => [keys, what] as [string, string]), ...SHORTCUTS].map(([keys, what]) => (
             <li key={keys} className="flex items-start justify-between gap-3">
               <span className="text-muted-foreground">{what}</span>
               <kbd className="shrink-0 rounded-md border border-border bg-card px-1.5 py-0.5 font-mono text-[10px] font-semibold">{keys}</kbd>

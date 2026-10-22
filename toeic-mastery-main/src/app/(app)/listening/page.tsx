@@ -1,17 +1,35 @@
 import type { Metadata } from "next";
-import Link from "next/link";
-import { ChevronRight, FolderOpen } from "lucide-react";
-import { TRANSCRIPT_SETS } from "@/lib/content/transcripts";
+import { ETS_2026_TRANSCRIPTS } from "@/lib/content/transcripts";
+import { BLANK_PATTERN } from "@/lib/content/transcripts/types";
 import { requireUser } from "@/lib/auth";
 import { getSkillHubData } from "@/lib/data/skill-hub";
+import { getSiteThemeId } from "@/lib/data/site-theme";
 import { SkillHubView } from "@/components/skills/skill-hub-view";
 import { ListeningHubTour } from "@/components/listening/listening-hub-tour";
+import { TranscriptMasteryBanner } from "@/components/listening/transcript-banner";
 
 export const metadata: Metadata = { title: "Listening" };
 
+/** Questions and fill-in blanks across the whole set, for the banner. */
+function transcriptStats() {
+  let questions = 0;
+  let blanks = 0;
+  for (const test of ETS_2026_TRANSCRIPTS.tests) {
+    for (const part of test.parts) {
+      for (const group of part.groups) {
+        // Part 3/4 groups are a conversation/talk with three questions.
+        questions += part.part >= 3 ? 3 : 1;
+        for (const line of group.lines) blanks += line.text.match(BLANK_PATTERN)?.length ?? 0;
+      }
+    }
+  }
+  return { questions, blanks };
+}
+
 export default async function ListeningPage() {
   const profile = await requireUser();
-  const items = await getSkillHubData(profile.id, "LISTENING");
+  const [items, siteThemeId] = await Promise.all([getSkillHubData(profile.id, "LISTENING"), getSiteThemeId(profile.id)]);
+  const stats = transcriptStats();
 
   return (
     <>
@@ -20,28 +38,17 @@ export default async function ListeningPage() {
         subtitle="Luyện nghe theo từng Part — Photographs, Question-Response, Conversations, Talks."
         items={items}
         basePath="listening"
+        banner={
+          <TranscriptMasteryBanner
+            href={`/listening/transcripts/${ETS_2026_TRANSCRIPTS.key}`}
+            title={ETS_2026_TRANSCRIPTS.title}
+            testCount={ETS_2026_TRANSCRIPTS.tests.length}
+            questionCount={stats.questions}
+            blankCount={stats.blanks}
+            themeId={siteThemeId}
+          />
+        }
       />
-      <section className="mt-8 flex flex-col gap-3">
-        <h2 className="text-sm font-semibold text-muted-foreground">NGHE ĐIỀN TỪ</h2>
-        {TRANSCRIPT_SETS.map((set) => (
-          <Link
-            key={set.key}
-            href={`/listening/transcripts/${set.key}`}
-            className="group flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 p-4 transition-colors hover:border-primary/60"
-          >
-            <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-              <FolderOpen className="size-5" />
-            </span>
-            <div className="flex-1">
-              <p className="text-sm font-semibold">{set.title}</p>
-              <p className="text-xs text-muted-foreground">
-                {set.tests.length} đề · {set.description}
-              </p>
-            </div>
-            <ChevronRight className="size-5 text-muted-foreground" />
-          </Link>
-        ))}
-      </section>
       <ListeningHubTour />
     </>
   );

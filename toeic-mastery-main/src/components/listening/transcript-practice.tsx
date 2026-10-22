@@ -13,6 +13,7 @@ import { saveTranscriptProgressAction } from "@/lib/actions/exercise-progress";
 import type { SegmentMap } from "@/lib/content/transcripts/segments";
 import type { TranscriptGroupKey } from "@/lib/data/transcripts";
 import { GroupKeyPanel, GroupToolbar, LinePlayButton, ShortcutHelp, usePartSegments, useSegmentPlayer, type GroupResult } from "@/components/listening/transcript-group-tools";
+import { KEY_CHOICES, KEY_SHORT, TranscriptSettingsDialog, matchesCombo, useLoneKey, useTranscriptSettings } from "@/components/listening/transcript-settings";
 
 const SPEEDS = [0.75, 0.9, 1, 1.25];
 const PART_NAMES: Record<number, string> = {
@@ -174,18 +175,35 @@ export function TranscriptPractice({
   const partAudioUrl = audio[part.part] ?? null;
   const segmentGroups = React.useMemo(() => part.groups.map((g) => ({ id: g.id, lines: g.lines.length })), [part]);
   const partSegments = usePartSegments(segments[part.part], partAudioUrl, part.part, segmentGroups);
-  const player = useSegmentPlayer(audioRef);
+  const { settings, update: updateSettings } = useTranscriptSettings();
+  const player = useSegmentPlayer(audioRef, {
+    repeats: settings.autoReplay < 0 ? Infinity : settings.autoReplay,
+    gapSec: settings.replayGap,
+  });
   const [openKeys, setOpenKeys] = React.useState<Set<string>>(() => new Set());
 
-  async function playGroup(groupId: string, lineIndex?: number) {
+  /** Play/pause the Part's main player — what the listen shortcut does
+   * when there are no per-question timings for this file. */
+  function togglePlayer() {
+    const el = audioRef.current;
+    if (!el) {
+      toast.message("Part này chưa có file nghe.");
+      return;
+    }
+    if (el.paused) void el.play();
+    else el.pause();
+  }
+
+  async function playGroup(groupId: string, lineIndex?: number, fallbackToPlayer = false, restart = false) {
     const segs = await partSegments.ensure();
     const seg = segs?.[groupId];
     if (!seg) {
-      toast.message("Chưa tách được đoạn ghi âm cho câu này — hãy dùng trình nghe ở bên trái.");
+      if (fallbackToPlayer) togglePlayer();
+      else toast.message("Chưa tách được đoạn ghi âm cho câu này — hãy dùng trình nghe ở bên trái.");
       return;
     }
-    if (lineIndex === undefined || !seg.lines || seg.lines[lineIndex] === undefined) player.play({ id: groupId, start: seg.start, end: seg.end });
-    else player.play({ id: `${groupId}:${lineIndex}`, start: seg.lines[lineIndex], end: seg.lines[lineIndex + 1] ?? seg.end });
+    if (lineIndex === undefined || !seg.lines || seg.lines[lineIndex] === undefined) player.play({ id: groupId, start: seg.start, end: seg.end }, restart);
+    else player.play({ id: `${groupId}:${lineIndex}`, start: seg.lines[lineIndex], end: seg.lines[lineIndex + 1] ?? seg.end }, restart);
   }
 
   function toggleKey(groupId: string) {
@@ -377,13 +395,48 @@ export function TranscriptPractice({
 
   // Keyboard shortcuts — Ctrl/Alt combos (matched on e.code, so Option on a
   // Mac works too) that don't clash with typing or the browser's own keys.
+  /** "Nghe lại": the slice last played in the current question (a line or
+   * the whole question) from its start, else the whole question. */
+  function replayCurrent() {
+    const groupId = currentGroupId;
+    if (!groupId) return;
+    const last = player.lastRange();
+    if (last && last.id.split(":")[0] === groupId) player.play(last, true);
+    else void playGroup(groupId, undefined, true, true);
+  }
+
+  function playPause() {
+    if (!player.togglePause()) toast.message("Part này chưa có file nghe.");
+  }
+
+  useLoneKey([settings.replayKey, settings.playPauseKey], (choice) => {
+    if (choice === settings.replayKey) replayCurrent();
+    else if (choice === settings.playPauseKey) playPause();
+  });
+
   function handleShortcut(e: KeyboardEvent) {
+    if (matchesCombo(settings.replayKey, e)) {
+      e.preventDefault();
+      replayCurrent();
+      return;
+    }
+    if (matchesCombo(settings.playPauseKey, e)) {
+      e.preventDefault();
+      playPause();
+      return;
+    }
     const groupId = currentGroupId;
     if (!groupId) return;
     const focusedKey = (document.activeElement as HTMLElement | null)?.dataset?.blankKey;
-    if (e.ctrlKey && !e.altKey && e.code === "Space") {
+    // Alt+P is the main one: macOS (and some Windows keyboards) take
+    // Ctrl+Space to switch input language before the page ever sees it.
+    if ((e.ctrlKey && !e.altKey && e.code === "Space") || (e.altKey && !e.ctrlKey && !e.metaKey && e.code === "KeyP")) {
       e.preventDefault();
-      void playGroup(groupId);
+      void playGroup(groupId, undefined, true);
+      return;
+    }
+    if (e.code === "Escape" && audioRef.current && !audioRef.current.paused) {
+      player.stop();
       return;
     }
     if (!e.altKey || e.ctrlKey || e.metaKey) return;
@@ -552,7 +605,17 @@ export function TranscriptPractice({
 
             {checkButton}
 
-            <ShortcutHelp open={showShortcuts} onToggle={() => setShowShortcuts((v) => !v)} />
+            <div className="flex flex-wrap items-start gap-2">
+              <TranscriptSettingsDialog settings={settings} onChange={updateSettings} />
+              <ShortcutHelp
+                open={showShortcuts}
+                onToggle={() => setShowShortcuts((v) => !v)}
+                extra={[
+                  [KEY_CHOICES[settings.replayKey], "Nghe lại câu từ đầu"],
+                  [KEY_CHOICES[settings.playPauseKey], "Phát / tạm dừng"],
+                ]}
+              />
+            </div>
 
             <div className="flex flex-wrap gap-2">
               {isChecked && wrongKeys.length > 0 && (
@@ -610,6 +673,7 @@ export function TranscriptPractice({
                   void playGroup(group.id);
                 }}
                 onToggleLoop={() => player.setLoop((v) => !v)}
+                keyTip={settings.showKeyTips ? KEY_SHORT[settings.replayKey] : undefined}
                 canHint={groupBlankKeys(group.id).some((k) => answerKey[k] && !isCorrectWord(answers[k] ?? "", answerKey[k]))}
                 onHint={() => {
                   setActiveGroup(group.id);
@@ -646,6 +710,7 @@ export function TranscriptPractice({
                         answers={answers}
                         answerKey={answerKey}
                         hints={hints}
+                        minHint={settings.firstLetters ? 1 : 0}
                         checked={isGroupChecked(group.id)}
                         onChange={setAnswer}
                         onKeyDown={handleKeyDown}
@@ -686,6 +751,7 @@ function LineWithBlanks({
   answers,
   answerKey,
   hints,
+  minHint,
   checked,
   onChange,
   onKeyDown,
@@ -696,6 +762,8 @@ function LineWithBlanks({
   answerKey: TranscriptAnswerKey;
   /** blank key -> letters of the answer revealed as a hint. */
   hints: Record<string, number>;
+  /** Letters every blank shows anyway ("Hiện sẵn chữ cái đầu"). */
+  minHint: number;
   checked: boolean;
   onChange: (key: string, value: string) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -711,7 +779,8 @@ function LineWithBlanks({
         const graded = checked && Boolean(answer);
         const right = graded && isCorrectWord(value, answer);
         const wrong = graded && !right;
-        const hinted = answer && hints[key] ? answer.slice(0, hints[key]) + "·".repeat(Math.max(0, answer.length - hints[key])) : "";
+        const shown = Math.max(hints[key] ?? 0, minHint);
+        const hinted = answer && shown ? answer.slice(0, shown) + "·".repeat(Math.max(0, answer.length - shown)) : "";
         return (
           <React.Fragment key={i}>
             {piece}

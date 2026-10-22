@@ -3,9 +3,9 @@ import type { TranscriptSet } from "./types";
 
 export const ETS_2026_TRANSCRIPTS: TranscriptSet = {
   key: "ets-2026",
-  title: "Transcript ETS 2026",
+  title: "Transcript Mastery ETS 2026",
   author: "Mr. Mạnh Huy",
-  description: "Nghe điền từ 10 đề ETS 2026 — Part 1 đến Part 4. Nghe file audio và điền từ còn thiếu vào mỗi chỗ trống.",
+  description: "Nghe chép độc quyền 10 đề ETS 2026 — Part 1 đến Part 4. Nghe lại từng câu, điền từ còn thiếu, chấm ngay từng câu, kèm dịch và đáp án.",
   tests: ETS_2026_TRANSCRIPT_TESTS,
 };
 

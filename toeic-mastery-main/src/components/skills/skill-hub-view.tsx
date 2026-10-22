@@ -25,11 +25,14 @@ export function SkillHubView({
   subtitle,
   items,
   basePath,
+  banner,
 }: {
   title: string;
   subtitle: string;
   items: SkillHubItem[];
   basePath: "listening" | "reading";
+  /** Featured block shown right under the title, above the Parts. */
+  banner?: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-6">
@@ -37,6 +40,8 @@ export function SkillHubView({
         <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{subtitle}</p>
       </div>
+
+      {banner}
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         {items.map((item) => (
