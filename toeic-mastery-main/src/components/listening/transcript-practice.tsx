@@ -12,7 +12,7 @@ import type { ExerciseProgress } from "@/lib/data/exercise-progress";
 import { saveTranscriptProgressAction } from "@/lib/actions/exercise-progress";
 import type { SegmentMap } from "@/lib/content/transcripts/segments";
 import type { TranscriptGroupKey } from "@/lib/data/transcripts";
-import { GroupKeyPanel, GroupToolbar, LinePlayButton, usePartSegments, useSegmentPlayer } from "@/components/listening/transcript-group-tools";
+import { GroupKeyPanel, GroupToolbar, LinePlayButton, ShortcutHelp, usePartSegments, useSegmentPlayer, type GroupResult } from "@/components/listening/transcript-group-tools";
 
 const SPEEDS = [0.75, 0.9, 1, 1.25];
 const PART_NAMES: Record<number, string> = {
@@ -184,7 +184,7 @@ export function TranscriptPractice({
       toast.message("Chưa tách được đoạn ghi âm cho câu này — hãy dùng trình nghe ở bên trái.");
       return;
     }
-    if (lineIndex === undefined || !seg.lines) player.play({ id: groupId, start: seg.start, end: seg.end });
+    if (lineIndex === undefined || !seg.lines || seg.lines[lineIndex] === undefined) player.play({ id: groupId, start: seg.start, end: seg.end });
     else player.play({ id: `${groupId}:${lineIndex}`, start: seg.lines[lineIndex], end: seg.lines[lineIndex + 1] ?? seg.end });
   }
 
@@ -195,6 +195,77 @@ export function TranscriptPractice({
       else next.add(groupId);
       return next;
     });
+  }
+
+  // Checking one question at a time, hints, and which question the keyboard
+  // shortcuts act on (the one holding the focused blank, else the last used).
+  const [checkedGroups, setCheckedGroups] = React.useState<Set<string>>(() => new Set());
+  const [hints, setHints] = React.useState<Record<string, number>>({});
+  const [activeGroup, setActiveGroup] = React.useState<string | null>(null);
+  const [showShortcuts, setShowShortcuts] = React.useState(false);
+  const currentGroupId = part.groups.some((g) => g.id === activeGroup) ? activeGroup! : part.groups[0]?.id;
+
+  const groupBlankKeys = (groupId: string) => {
+    const group = part.groups.find((g) => g.id === groupId);
+    return group ? blankKeys(part.part, [group]) : [];
+  };
+  const isGroupChecked = (groupId: string) => checked.has(part.part) || checkedGroups.has(`${part.part}:${groupId}`);
+  function groupResult(groupId: string, source: Answers = answers): GroupResult | null {
+    const gradable = groupBlankKeys(groupId).filter((k) => answerKey[k]);
+    if (gradable.length === 0) return null;
+    return { correct: gradable.filter((k) => isCorrectWord(source[k] ?? "", answerKey[k])).length, total: gradable.length };
+  }
+
+  function focusBlank(key: string | undefined) {
+    if (!key) return;
+    requestAnimationFrame(() => {
+      const el = document.querySelector<HTMLInputElement>(`[data-blank-key="${CSS.escape(key)}"]`);
+      el?.focus();
+      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }
+
+  /** Grades one question; returns its first wrong blank, if any. */
+  function checkGroup(groupId: string) {
+    setActiveGroup(groupId);
+    setCheckedGroups((prev) => new Set(prev).add(`${part.part}:${groupId}`));
+    return groupBlankKeys(groupId).find((k) => answerKey[k] && !isCorrectWord(answers[k] ?? "", answerKey[k]));
+  }
+
+  function redoGroup(groupId: string) {
+    const wrong = groupBlankKeys(groupId).filter((k) => answerKey[k] && !isCorrectWord(answers[k] ?? "", answerKey[k]));
+    const next = Object.fromEntries(Object.entries(answers).filter(([key]) => !wrong.includes(key)));
+    setAnswers(next);
+    setCheckedGroups((prev) => {
+      const out = new Set(prev);
+      out.delete(`${part.part}:${groupId}`);
+      return out;
+    });
+    if (checked.has(part.part)) uncheck();
+    persist(part.part, next, false);
+    focusBlank(wrong[0]);
+  }
+
+  /** One more letter of the word in each listed blank that isn't right yet. */
+  function addHints(blankList: string[]) {
+    setHints((prev) => {
+      const next = { ...prev };
+      for (const k of blankList) {
+        const word = answerKey[k];
+        if (!word || isCorrectWord(answers[k] ?? "", word)) continue;
+        next[k] = Math.min(word.length, (next[k] ?? 0) + 1);
+      }
+      return next;
+    });
+  }
+
+  function focusGroup(groupId: string | undefined) {
+    if (!groupId) return;
+    setActiveGroup(groupId);
+    const blanks = groupBlankKeys(groupId);
+    const firstOpen = blanks.find((k) => !(answerKey[k] && isCorrectWord(answers[k] ?? "", answerKey[k]))) ?? blanks[0];
+    if (firstOpen) focusBlank(firstOpen);
+    else document.getElementById(`transcript-group-${groupId}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
   }
 
   const keys = React.useMemo(() => blankKeys(part.part, part.groups), [part]);
@@ -251,6 +322,8 @@ export function TranscriptPractice({
     const next = Object.fromEntries(Object.entries(answers).filter(([key]) => !key.startsWith(`${part.part}:`)));
     setAnswers(next);
     uncheck();
+    setCheckedGroups((prev) => new Set([...prev].filter((g) => !g.startsWith(`${part.part}:`))));
+    setHints((prev) => Object.fromEntries(Object.entries(prev).filter(([key]) => !key.startsWith(`${part.part}:`))));
     persist(part.part, next, false, undefined, true);
   }
 
@@ -260,6 +333,7 @@ export function TranscriptPractice({
     const next = Object.fromEntries(Object.entries(answers).filter(([key]) => !wrong.has(key)));
     setAnswers(next);
     uncheck();
+    setCheckedGroups((prev) => new Set([...prev].filter((g) => !g.startsWith(`${part.part}:`))));
     persist(part.part, next, false, undefined, true);
     requestAnimationFrame(() => {
       const first = document.querySelector<HTMLInputElement>(`[data-blank-key="${CSS.escape(wrongKeys[0] ?? "")}"]`);
@@ -273,14 +347,74 @@ export function TranscriptPractice({
     if (el) el.currentTime = Math.max(0, el.currentTime + seconds);
   }
 
-  /** Enter jumps to the next blank, so you can type along while listening. */
+  /** Enter jumps to the next blank (Shift+Enter back), so you can type
+   * along while listening. Enter on a question's last blank checks that
+   * question first: all right moves on, otherwise back to its first miss. */
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (e.key !== "Enter") return;
     e.preventDefault();
     const inputs = Array.from(document.querySelectorAll<HTMLInputElement>("[data-transcript-blank]:not([readonly])"));
     const index = inputs.indexOf(e.currentTarget);
+    if (e.shiftKey) {
+      inputs[index - 1]?.focus();
+      return;
+    }
+    const key = e.currentTarget.dataset.blankKey ?? "";
+    const groupId = key.split(":")[1];
+    const blanks = groupBlankKeys(groupId);
+    if (key === blanks[blanks.length - 1] && blanks.some((k) => answerKey[k])) {
+      const firstWrong = checkGroup(groupId);
+      if (firstWrong) {
+        focusBlank(firstWrong);
+        return;
+      }
+      const nextGroup = part.groups[part.groups.findIndex((g) => g.id === groupId) + 1];
+      if (nextGroup) focusGroup(nextGroup.id);
+      return;
+    }
     inputs[index + 1]?.focus();
   }
+
+  // Keyboard shortcuts — Ctrl/Alt combos (matched on e.code, so Option on a
+  // Mac works too) that don't clash with typing or the browser's own keys.
+  function handleShortcut(e: KeyboardEvent) {
+    const groupId = currentGroupId;
+    if (!groupId) return;
+    const focusedKey = (document.activeElement as HTMLElement | null)?.dataset?.blankKey;
+    if (e.ctrlKey && !e.altKey && e.code === "Space") {
+      e.preventDefault();
+      void playGroup(groupId);
+      return;
+    }
+    if (!e.altKey || e.ctrlKey || e.metaKey) return;
+    const digit = e.code.match(/^Digit([1-9])$/)?.[1];
+    const actions: Record<string, () => void> = {
+      KeyR: () => player.setLoop((v) => !v),
+      KeyH: () => addHints(focusedKey ? [focusedKey] : groupBlankKeys(groupId)),
+      KeyC: () => {
+        const firstWrong = checkGroup(groupId);
+        if (firstWrong) focusBlank(firstWrong);
+      },
+      KeyA: () => toggleKey(groupId),
+      KeyB: () => skip(-3),
+      Slash: () => setShowShortcuts((v) => !v),
+      ArrowDown: () => focusGroup(part.groups[part.groups.findIndex((g) => g.id === groupId) + 1]?.id),
+      ArrowUp: () => focusGroup(part.groups[part.groups.findIndex((g) => g.id === groupId) - 1]?.id),
+    };
+    const action = digit ? () => void playGroup(groupId, Number(digit) - 1) : actions[e.code];
+    if (!action) return;
+    e.preventDefault();
+    action();
+  }
+  const shortcutRef = React.useRef(handleShortcut);
+  React.useEffect(() => {
+    shortcutRef.current = handleShortcut;
+  });
+  React.useEffect(() => {
+    const onKey = (e: KeyboardEvent) => shortcutRef.current(e);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   const checkButton =
     gradableKeys.length > 0 ? (
@@ -302,7 +436,7 @@ export function TranscriptPractice({
           Test {test.number} <span className="text-muted-foreground">/ {totalTests}</span>
         </h1>
         <p className="text-sm text-muted-foreground">
-          Nghe và điền một từ vào mỗi chỗ trống. Nhấn Enter để chuyển sang ô tiếp theo, làm xong bấm “Kiểm tra đáp án”.
+          Nghe và điền một từ vào mỗi chỗ trống. Enter sang ô tiếp theo — Enter ở ô cuối của câu sẽ kiểm tra luôn câu đó. Bí thì bấm “Gợi ý” để hiện chữ cái đầu.
         </p>
       </div>
 
@@ -418,6 +552,8 @@ export function TranscriptPractice({
 
             {checkButton}
 
+            <ShortcutHelp open={showShortcuts} onToggle={() => setShowShortcuts((v) => !v)} />
+
             <div className="flex flex-wrap gap-2">
               {isChecked && wrongKeys.length > 0 && (
                 <Button type="button" variant="outline" size="sm" onClick={redoWrong} className="border-destructive/40 text-destructive hover:bg-destructive/10">
@@ -453,7 +589,15 @@ export function TranscriptPractice({
 
         <div className="flex flex-col gap-4">
           {part.groups.map((group) => (
-            <section key={group.id} className="rounded-2xl border border-border bg-card p-4 shadow-soft sm:p-5">
+            <section
+              key={group.id}
+              id={`transcript-group-${group.id}`}
+              onFocusCapture={() => setActiveGroup(group.id)}
+              className={cn(
+                "rounded-2xl border bg-card p-4 shadow-soft transition-[border-color,box-shadow] sm:p-5",
+                group.id === currentGroupId ? "border-primary/50 ring-2 ring-primary/15" : "border-border"
+              )}
+            >
               <GroupToolbar
                 groupId={group.id}
                 title={group.title}
@@ -461,8 +605,20 @@ export function TranscriptPractice({
                 detecting={partSegments.detecting}
                 playing={player.playing}
                 loop={player.loop}
-                onPlay={() => void playGroup(group.id)}
+                onPlay={() => {
+                  setActiveGroup(group.id);
+                  void playGroup(group.id);
+                }}
                 onToggleLoop={() => player.setLoop((v) => !v)}
+                canHint={groupBlankKeys(group.id).some((k) => answerKey[k] && !isCorrectWord(answers[k] ?? "", answerKey[k]))}
+                onHint={() => {
+                  setActiveGroup(group.id);
+                  addHints(groupBlankKeys(group.id));
+                }}
+                canCheck={groupBlankKeys(group.id).some((k) => answerKey[k])}
+                result={isGroupChecked(group.id) ? groupResult(group.id) : null}
+                onCheck={() => focusBlank(checkGroup(group.id))}
+                onRedo={() => redoGroup(group.id)}
                 hasKey={Boolean(groupKeys[group.id])}
                 showKey={openKeys.has(group.id)}
                 onToggleKey={() => toggleKey(group.id)}
@@ -489,7 +645,8 @@ export function TranscriptPractice({
                         keyFor={(blankIndex) => blankKey(part.part, group.id, lineIndex, blankIndex)}
                         answers={answers}
                         answerKey={answerKey}
-                        checked={isChecked}
+                        hints={hints}
+                        checked={isGroupChecked(group.id)}
                         onChange={setAnswer}
                         onKeyDown={handleKeyDown}
                       />
@@ -528,6 +685,7 @@ function LineWithBlanks({
   keyFor,
   answers,
   answerKey,
+  hints,
   checked,
   onChange,
   onKeyDown,
@@ -536,6 +694,8 @@ function LineWithBlanks({
   keyFor: (blankIndex: number) => string;
   answers: Answers;
   answerKey: TranscriptAnswerKey;
+  /** blank key -> letters of the answer revealed as a hint. */
+  hints: Record<string, number>;
   checked: boolean;
   onChange: (key: string, value: string) => void;
   onKeyDown: (e: React.KeyboardEvent<HTMLInputElement>) => void;
@@ -551,6 +711,7 @@ function LineWithBlanks({
         const graded = checked && Boolean(answer);
         const right = graded && isCorrectWord(value, answer);
         const wrong = graded && !right;
+        const hinted = answer && hints[key] ? answer.slice(0, hints[key]) + "·".repeat(Math.max(0, answer.length - hints[key])) : "";
         return (
           <React.Fragment key={i}>
             {piece}
@@ -561,17 +722,19 @@ function LineWithBlanks({
               onChange={(e) => onChange(key, e.target.value)}
               onKeyDown={onKeyDown}
               readOnly={right}
-              size={Math.max(6, value.length + 1)}
+              placeholder={hinted || undefined}
+              size={Math.max(6, value.length + 1, hinted.length + 1)}
               autoComplete="off"
               autoCapitalize="off"
               spellCheck={false}
               aria-label={wrong ? `Chỗ trống — đáp án: ${answer}` : "Chỗ trống"}
-              title={checked && !answer ? "Chưa có đáp án đối chiếu cho ô này" : undefined}
+              title={checked && !answer ? "Chưa có đáp án đối chiếu cho ô này" : hinted ? "Đã dùng gợi ý" : undefined}
               className={cn(
                 "mx-0.5 inline-block h-7 rounded-md border-b-2 bg-accent/40 px-1.5 text-center align-baseline text-base font-medium outline-none transition-colors focus:border-primary focus:bg-accent sm:text-sm",
                 right && "border-success bg-success/15 text-success",
                 wrong && "border-destructive bg-destructive/10 text-destructive line-through decoration-destructive/60",
-                !graded && (value.trim() ? "border-primary/60 text-primary" : "border-muted-foreground/40")
+                !graded && (value.trim() ? "border-primary/60 text-primary" : hinted ? "border-warning/70" : "border-muted-foreground/40"),
+                hinted && "placeholder:font-mono placeholder:tracking-wider placeholder:text-warning/80"
               )}
             />
             {wrong && (
