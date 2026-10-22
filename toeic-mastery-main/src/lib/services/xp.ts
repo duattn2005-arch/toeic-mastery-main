@@ -26,10 +26,20 @@ export const XP_WEIGHTS = {
   perStudyMinute: 1,
 } as const;
 
+/** Share of a test's questions that must be answered for its completion
+ * bonus — submitting a test left (nearly) blank earns nothing for it. */
+export const MIN_ANSWERED_SHARE_FOR_BONUS = 0.3;
+
+/** Whether a submitted attempt earns the completion bonus. */
+export function earnsCompletionBonus(answered: number, total: number): boolean {
+  return answered > 0 && answered >= total * MIN_ANSWERED_SHARE_FOR_BONUS;
+}
+
 /** XP earned from one specific submitted attempt — correct answers plus the
- * flat completion bonus, using the same weights as the lifetime total. */
-export function computeAttemptXp(correctCount: number): number {
-  return correctCount * XP_WEIGHTS.perCorrectAnswer + XP_WEIGHTS.perCompletedAttempt;
+ * completion bonus when it was a real attempt, using the same weights as the
+ * lifetime total. */
+export function computeAttemptXp(correctCount: number, answered: number, total: number): number {
+  return correctCount * XP_WEIGHTS.perCorrectAnswer + (earnsCompletionBonus(answered, total) ? XP_WEIGHTS.perCompletedAttempt : 0);
 }
 
 export interface XpProgress {
@@ -45,7 +55,9 @@ export interface XpProgress {
  * Derived XP — not a stored field. Computed from stats the app already
  * tracks (correct answers, completed tests, vocabulary learned, streak,
  * study time), so leveling up reflects real study activity with no new
- * database writes or admin surface to maintain.
+ * database writes or admin surface to maintain. Only real study counts:
+ * tests submitted with a real share answered, study time and streak days
+ * from sessions where something was actually done (real-study.ts).
  */
 export function computeXp(stats: OverallStats, streakCount: number): number {
   return (

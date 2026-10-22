@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getAuthedProfileOrNull } from "@/lib/auth";
 import { ScoreCalculator } from "@/lib/services/score-calculator";
+import { syncStudyStreak } from "@/lib/services/study-streak";
 import { LISTENING_PARTS } from "@/lib/constants/toeic";
 import { MAX_STUDY_SYNC_GAP_SEC } from "@/lib/constants/study";
-import { toDateOnlyUTC } from "@/lib/utils";
 import { recordAttemptOutcomes } from "@/lib/services/mentor/skill-mastery";
 import { flagWeakVocabFromAttempt } from "@/lib/services/mentor/vocab-ledger";
 import { generateLearningPath } from "@/lib/services/mentor/learning-path-generator";
@@ -102,16 +102,6 @@ export async function POST(_request: Request, { params }: { params: Promise<{ at
     totalScore = result.total;
   }
 
-  const today = toDateOnlyUTC(new Date());
-  const lastStudy = profile.lastStudyDate ? toDateOnlyUTC(new Date(profile.lastStudyDate)) : null;
-
-  let nextStreak = profile.streakCount;
-  if (!lastStudy || lastStudy.getTime() !== today.getTime()) {
-    const oneDayMs = 86_400_000;
-    const isConsecutive = lastStudy && today.getTime() - lastStudy.getTime() === oneDayMs;
-    nextStreak = isConsecutive ? profile.streakCount + 1 : 1;
-  }
-
   // Real wall-clock delta since the last sync checkpoint, same accounting as
   // the periodic sync route — see MAX_STUDY_SYNC_GAP_SEC for why this isn't
   // derived from allowedDurationSec - remainingSec (that's capped and drops
@@ -156,14 +146,13 @@ export async function POST(_request: Request, { params }: { params: Promise<{ at
     db.profile.update({
       where: { id: profile.id },
       data: {
-        lastStudyDate: today,
-        streakCount: nextStreak,
-        longestStreak: Math.max(profile.longestStreak, nextStreak),
         ...(totalScore !== null ? { currentScore: totalScore } : {}),
         ...(completesOnboarding ? { onboardingStatus: "READY" as const, onboardingCompletedAt: new Date() } : {}),
       },
     }),
   ]);
+  // The streak is worked out from the study history (Vietnam days).
+  await syncStudyStreak(profile).catch(() => undefined);
 
   // Fire-and-forget: AI Mentor's skill rollup, weak-vocab enrollment, and
   // path upkeep. Must never block or fail the submit response itself.

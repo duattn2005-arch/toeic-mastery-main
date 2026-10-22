@@ -1,5 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { REAL_STUDY } from "@/lib/data/real-study";
+import { addDays, vnDayKey, vnDayStart } from "@/lib/services/study-streak";
 import { getOverallStats, getPartAccuracies } from "@/lib/data/skill-stats";
 import { PART_META } from "@/lib/constants/toeic";
 
@@ -9,18 +11,16 @@ export async function getAnalyticsData(userId: string) {
     getPartAccuracies(userId),
     getOverallStats(userId),
     db.studySession.findMany({
-      where: { userId, startedAt: { gte: new Date(Date.now() - 14 * 86_400_000) } },
+      where: { userId, startedAt: { gte: vnDayStart(addDays(vnDayKey(new Date()), -13)) }, ...REAL_STUDY },
       select: { startedAt: true, durationSec: true },
     }),
   ]);
 
   const studyByDay = new Map<string, number>();
-  for (let i = 13; i >= 0; i--) {
-    const d = new Date(Date.now() - i * 86_400_000);
-    studyByDay.set(d.toISOString().slice(0, 10), 0);
-  }
+  const today = vnDayKey(new Date());
+  for (let i = 13; i >= 0; i--) studyByDay.set(addDays(today, -i), 0);
   for (const s of sessions) {
-    const key = s.startedAt.toISOString().slice(0, 10);
+    const key = vnDayKey(s.startedAt);
     if (studyByDay.has(key)) studyByDay.set(key, (studyByDay.get(key) ?? 0) + s.durationSec);
   }
 

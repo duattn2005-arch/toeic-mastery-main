@@ -1,4 +1,6 @@
 import "server-only";
+import { addDays, vnDayKey, vnDayStart } from "@/lib/services/study-streak";
+import { REAL_STUDY } from "@/lib/data/real-study";
 import { db } from "@/lib/db";
 import { getOverallStats, getPartAccuracies } from "@/lib/data/skill-stats";
 import { getVocabularyReminder } from "@/lib/data/vocabulary";
@@ -63,7 +65,7 @@ export async function getDashboardData(userId: string) {
   const recommendations = generateRecommendations({ partAccuracies, vocabularyMistakeRate });
 
   const weeklyStudySeconds = await db.studySession.aggregate({
-    where: { userId, startedAt: { gte: new Date(Date.now() - 7 * 86_400_000) } },
+    where: { userId, startedAt: { gte: new Date(Date.now() - 7 * 86_400_000) }, ...REAL_STUDY },
     _sum: { durationSec: true },
   });
 
@@ -106,30 +108,27 @@ export async function getDashboardData(userId: string) {
 const HEATMAP_DAYS = 14;
 
 /** Last 14 days of study time, oldest first, for the streak heatmap widget. */
+/** Minutes studied per Vietnam day over the last HEATMAP_DAYS days — the
+ * same days the streak counts (study-streak.ts). */
 async function getActivityHeatmap(userId: string) {
-  const since = new Date();
-  since.setHours(0, 0, 0, 0);
-  since.setDate(since.getDate() - (HEATMAP_DAYS - 1));
+  const today = vnDayKey(new Date());
+  const firstDay = addDays(today, -(HEATMAP_DAYS - 1));
 
   const sessions = await db.studySession.findMany({
-    where: { userId, startedAt: { gte: since } },
+    where: { userId, startedAt: { gte: vnDayStart(firstDay) }, ...REAL_STUDY },
     select: { startedAt: true, durationSec: true },
   });
 
   const minutesByDay = new Map<string, number>();
   for (const s of sessions) {
-    const key = s.startedAt.toISOString().slice(0, 10);
+    const key = vnDayKey(s.startedAt);
     minutesByDay.set(key, (minutesByDay.get(key) ?? 0) + s.durationSec / 60);
   }
 
-  const days: { date: string; minutes: number }[] = [];
-  for (let i = 0; i < HEATMAP_DAYS; i++) {
-    const d = new Date(since);
-    d.setDate(since.getDate() + i);
-    const key = d.toISOString().slice(0, 10);
-    days.push({ date: key, minutes: Math.round(minutesByDay.get(key) ?? 0) });
-  }
-  return days;
+  return Array.from({ length: HEATMAP_DAYS }, (_, i) => {
+    const key = addDays(firstDay, i);
+    return { date: key, minutes: Math.round(minutesByDay.get(key) ?? 0) };
+  });
 }
 
 export type DashboardData = Awaited<ReturnType<typeof getDashboardData>>;

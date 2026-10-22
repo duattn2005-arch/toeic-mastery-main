@@ -1,3 +1,4 @@
+import { syncStudyStreak } from "@/lib/services/study-streak";
 import "server-only";
 import { redirect } from "next/navigation";
 import { cache } from "react";
@@ -180,6 +181,11 @@ export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
   profile = await ensureReferralCode(profile);
   profile = await resolveReferralAttribution(profile);
   await syncCurrentDevice(profile);
+  try {
+    profile = await syncStudyStreak(profile);
+  } catch {
+    // Never let streak bookkeeping block signing in; it retries next request.
+  }
   return profile;
 });
 

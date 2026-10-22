@@ -88,7 +88,8 @@ export async function getAttemptResult(attemptId: string, userId: string) {
   // XP earned from this specific attempt (correct answers + completion
   // bonus) — same per-unit weights as the lifetime total on the dashboard,
   // so "just now" and "all-time" always add up consistently.
-  const xpEarned = computeAttemptXp(attempt.correctCount ?? 0);
+  const answered = (attempt.correctCount ?? 0) + (attempt.wrongCount ?? 0);
+  const xpEarned = computeAttemptXp(attempt.correctCount ?? 0, answered, answered + (attempt.skippedCount ?? 0));
 
   return {
     attempt,

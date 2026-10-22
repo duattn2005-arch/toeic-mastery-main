@@ -1,5 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { REAL_STUDY } from "@/lib/data/real-study";
+import { earnsCompletionBonus } from "@/lib/services/xp";
 import { TEST_PARTS } from "@/lib/constants/toeic";
 import type { TestPart } from "@/generated/prisma/enums";
 import type { PartAccuracy } from "@/lib/services/recommendation";
@@ -44,11 +46,15 @@ export interface OverallStats {
 }
 
 export async function getOverallStats(userId: string): Promise<OverallStats> {
-  const [attemptAgg, vocabLearned, sessionAgg] = await Promise.all([
+  const [attemptAgg, submitted, vocabLearned, sessionAgg] = await Promise.all([
     db.attempt.aggregate({
       where: { userId, status: "SUBMITTED" },
       _count: { _all: true },
       _sum: { correctCount: true, wrongCount: true, skippedCount: true },
+    }),
+    db.attempt.findMany({
+      where: { userId, status: "SUBMITTED" },
+      select: { correctCount: true, wrongCount: true, skippedCount: true },
     }),
     // Counts words with at least one graded review (repetitions >= 1), not
     // strict SM-2 mastery (isLearned, repetitions >= 3) — that bar is high
@@ -56,7 +62,7 @@ export async function getOverallStats(userId: string): Promise<OverallStats> {
     // never visibly moves this stat, which read as "broken" even though the
     // underlying review was recorded correctly.
     db.userVocabulary.count({ where: { userId, repetitions: { gte: 1 } } }),
-    db.studySession.aggregate({ where: { userId }, _sum: { durationSec: true } }),
+    db.studySession.aggregate({ where: { userId, ...REAL_STUDY }, _sum: { durationSec: true } }),
   ]);
 
   const correct = attemptAgg._sum.correctCount ?? 0;
@@ -66,7 +72,11 @@ export async function getOverallStats(userId: string): Promise<OverallStats> {
   const total = answered + skipped;
 
   return {
-    attemptsCompleted: attemptAgg._count._all,
+    // Tests submitted with a real share answered (see earnsCompletionBonus).
+    attemptsCompleted: submitted.filter((a) => {
+      const answered = (a.correctCount ?? 0) + (a.wrongCount ?? 0);
+      return earnsCompletionBonus(answered, answered + (a.skippedCount ?? 0));
+    }).length,
     questionsAnswered: total,
     correctCount: correct,
     accuracy: answered > 0 ? correct / answered : 0,
