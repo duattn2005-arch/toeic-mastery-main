@@ -10,10 +10,14 @@
  * AND one or more of these, since Question.strategicLabelSlugs is a
  * separate array field).
  *
- * This taxonomy alone doesn't make the I→A gate usable — no Question has
- * been tagged with any of these slugs yet (that's real content-review
- * work, left for an admin to do via Admin → Câu hỏi, same as every other
- * "ngân hàng câu hỏi chưa đủ" gap noted in section 10.5/content-sources.md).
+ * Every question in the bank is tagged with these automatically by the
+ * rule-based labeller (src/lib/services/tagging) — on every deploy, daily,
+ * and whenever an admin saves a question — so every Part carries at least
+ * one question-type label. The "question type" labels at the end of the
+ * list (photo-action, wh-question, detail-reading…) give Part 1/2 and plain
+ * detail questions a label too, so the competency map covers the whole
+ * test, not just the inference-style questions. Labels an admin sets by
+ * hand are never overwritten.
  */
 export interface StrategicLabelSeed {
   slug: string;
@@ -75,7 +79,7 @@ export const STRATEGIC_LABELS: StrategicLabelSeed[] = [
     slug: "sentence-insertion-logic",
     title: "Chọn câu điền vào chỗ trống dựa trên mạch logic đoạn văn",
     category: "Reading — mạch logic đoạn văn",
-    appliesToParts: ["PART6"],
+    appliesToParts: ["PART6", "PART7"],
   },
   {
     slug: "connector-logic",
@@ -119,4 +123,17 @@ export const STRATEGIC_LABELS: StrategicLabelSeed[] = [
     category: "Reading — suy luận",
     appliesToParts: ["PART7"],
   },
+  // --- Question types (every remaining question gets one of these) ---------
+  { slug: "photo-action", title: "Tranh có người — mô tả hành động đang làm", category: "Listening — dạng câu hỏi", appliesToParts: ["PART1"] },
+  { slug: "photo-state-location", title: "Tranh đồ vật — trạng thái/vị trí (bị động, there is…)", category: "Listening — dạng câu hỏi", appliesToParts: ["PART1"] },
+  { slug: "wh-question", title: "Câu hỏi Wh- (Who/What/When/Where/Why/How)", category: "Listening — dạng câu hỏi", appliesToParts: ["PART2"] },
+  { slug: "yes-no-question", title: "Câu hỏi Yes/No, câu hỏi đuôi, câu hỏi phủ định", category: "Listening — dạng câu hỏi", appliesToParts: ["PART2"] },
+  { slug: "choice-question", title: "Câu hỏi lựa chọn (… or …)", category: "Listening — dạng câu hỏi", appliesToParts: ["PART2"] },
+  { slug: "request-suggestion", title: "Lời yêu cầu, đề nghị, gợi ý (Could you…, Why don't…)", category: "Listening — dạng câu hỏi", appliesToParts: ["PART2"] },
+  { slug: "statement-response", title: "Câu trần thuật — chọn phản hồi phù hợp", category: "Listening — dạng câu hỏi", appliesToParts: ["PART2"] },
+  { slug: "main-topic-listening", title: "Chủ đề / vấn đề chính của hội thoại", category: "Listening — dạng câu hỏi", appliesToParts: ["PART3"] },
+  { slug: "speaker-setting", title: "Người nói là ai, làm ở đâu, bối cảnh", category: "Listening — dạng câu hỏi", appliesToParts: ["PART3", "PART4"] },
+  { slug: "next-action-request", title: "Hành động tiếp theo, yêu cầu, đề nghị của người nói", category: "Listening — dạng câu hỏi", appliesToParts: ["PART3", "PART4"] },
+  { slug: "detail-listening", title: "Thông tin chi tiết trong bài nghe (thời gian, số liệu, lý do…)", category: "Listening — dạng câu hỏi", appliesToParts: ["PART3", "PART4"] },
+  { slug: "detail-reading", title: "Thông tin chi tiết — dò tìm dữ kiện trong văn bản", category: "Reading — dạng câu hỏi", appliesToParts: ["PART7"] },
 ];

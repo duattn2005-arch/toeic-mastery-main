@@ -2,7 +2,8 @@
  * edge proxy) starts background work. */
 export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
-    const { startSeoScheduler } = await import("./instrumentation-node");
+    const { startSeoScheduler, startTaggingScheduler } = await import("./instrumentation-node");
     startSeoScheduler();
+    startTaggingScheduler();
   }
 }

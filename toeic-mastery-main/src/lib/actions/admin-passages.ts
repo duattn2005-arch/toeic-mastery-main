@@ -7,6 +7,14 @@ import { questionGroupFormSchema, type QuestionGroupFormInput } from "@/lib/vali
 import { getOrCreatePracticePool, syncIfPracticePool } from "@/lib/services/practice-pool";
 import { endOfPartIndex, reserveQuestionOrderIndex, startOfPartIndex } from "@/lib/services/question-order";
 import type { TestPart } from "@/generated/prisma/enums";
+import { Prisma } from "@/generated/prisma/client";
+import { tagQuestionsSoon } from "@/lib/services/tagging/run";
+
+/** Labels every question of a just-saved group in the background. */
+async function tagGroupSoon(passageId: string) {
+  const rows = await db.question.findMany({ where: { passageId }, select: { id: true } });
+  tagQuestionsSoon(rows.map((r) => r.id));
+}
 
 export interface GroupActionResult {
   error?: string;
@@ -109,6 +117,7 @@ export async function createQuestionGroupAction(input: QuestionGroupFormInput): 
   );
 
   await syncIfPracticePool(testId, data.part);
+  await tagGroupSoon(passageId);
 
   // Deliberately no redirect: an admin authoring Part 3/4/6/7 content adds
   // one group after another for the same test/part in one sitting (see
@@ -183,6 +192,7 @@ export async function updateQuestionGroupAction(passageId: string, input: Questi
               evidenceText: q.evidenceText || null,
               difficulty: data.difficulty,
               status: data.status,
+              labelMeta: Prisma.DbNull,
               options: {
                 deleteMany: {},
                 create: q.options.map((o) => ({
@@ -240,6 +250,7 @@ export async function updateQuestionGroupAction(passageId: string, input: Questi
   );
 
   await syncIfPracticePool(passage.testId, passage.part);
+  await tagGroupSoon(passageId);
   revalidatePath("/admin/questions");
   return { passageId };
 }

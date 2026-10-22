@@ -566,6 +566,15 @@ model Question {
   strategicLabelSlugs String[]      @default([]) @map("strategic_label_slugs")
   evidenceText        String?       @map("evidence_text")
   difficulty          Difficulty    @default(MEDIUM)
+  /**
+   * Bookkeeping of the automatic labeller (src/lib/services/tagging):
+   * { v, auto: ["grammar","strategy","vocab","difficulty"], difficultySource:
+   * "data"|"rule", answers, at, reasons }. A label listed in `auto` was set
+   * by the labeller and may be refreshed; anything else non-empty is an
+   * admin's and is kept. Cleared (null) whenever an admin saves the
+   * question, so their edits become the manual labels.
+   */
+  labelMeta           Json?         @map("label_meta")
   status              ContentStatus @default(PUBLISHED)
   createdAt           DateTime      @default(now()) @map("created_at")
   updatedAt           DateTime      @updatedAt @map("updated_at")

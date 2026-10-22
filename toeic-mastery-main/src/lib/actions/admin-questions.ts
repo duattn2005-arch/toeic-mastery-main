@@ -14,6 +14,8 @@ import type { TestPart } from "@/generated/prisma/enums";
 import { getOrCreatePracticePool, syncIfPracticePool } from "@/lib/services/practice-pool";
 import { deleteEmbeddings } from "@/lib/services/mentor/mentor-rag";
 import { reserveQuestionOrderIndex } from "@/lib/services/question-order";
+import { tagQuestionsSoon } from "@/lib/services/tagging/run";
+import { Prisma } from "@/generated/prisma/client";
 
 export interface ActionResult {
   error?: string;
@@ -86,6 +88,8 @@ export async function createQuestionAction(input: QuestionFormInput): Promise<Ac
   // Syncs regardless of whether testId came from auto-routing above or was
   // explicitly picked from the dropdown — see syncIfPracticePool's doc.
   await syncIfPracticePool(testId, data.part);
+  // Fill in whatever labels the admin left empty (see services/tagging).
+  tagQuestionsSoon([question.id]);
 
   revalidatePath("/admin/questions");
   redirect(`/admin/questions/${question.id}`);
@@ -142,6 +146,9 @@ export async function updateQuestionAction(questionId: string, input: QuestionFo
         evidenceText: data.evidenceText || null,
         difficulty: data.difficulty,
         status: data.status,
+        // What the admin saved is now the manual labelling — the auto
+        // labeller only fills fields left empty from here on.
+        labelMeta: Prisma.DbNull,
       },
     });
     await tx.questionOption.deleteMany({ where: { questionId } });
@@ -168,6 +175,7 @@ export async function updateQuestionAction(questionId: string, input: QuestionFo
     await syncIfPracticePool(existing.testId, existing.part);
   }
 
+  tagQuestionsSoon([questionId]);
   revalidatePath("/admin/questions");
   revalidatePath(`/admin/questions/${questionId}`);
   return { questionId };
@@ -279,7 +287,7 @@ export async function importQuestionsAction(rawJson: string): Promise<ActionResu
   // timeout (P2028) once there are more than a handful — exactly the
   // "paste 15-20 questions at once" workflow this importer exists for. Same
   // fix already applied to attempt submission earlier for the same reason.
-  await Promise.all(
+  const created = await Promise.all(
     mapped.map((q) =>
       db.question.create({
         data: {
@@ -298,9 +306,11 @@ export async function importQuestionsAction(rawJson: string): Promise<ActionResu
           status: q.status,
           options: { create: q.options },
         },
+        select: { id: true },
       })
     )
   );
+  tagQuestionsSoon(created.map((c) => c.id));
 
   // Resync every pool this batch actually touched — including rows that had
   // an explicit testId pointing at a pool (an admin can pick it from the
