@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpen, CheckCircle2, Clock3, Layers, Lightbulb, ListChecks, Radar as RadarIcon, Timer } from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle2, Clock3, Layers, Lightbulb, ListChecks, Radar as RadarIcon, Timer } from "lucide-react";
 
 import { requireUser } from "@/lib/auth";
 import { getDashboardData } from "@/lib/data/dashboard";
@@ -182,9 +182,23 @@ export default async function DashboardPage() {
 
       <div className={`grid grid-cols-1 gap-5 lg:grid-cols-12 ${REVEAL[3]}`}>
         <section className={`${PANEL} lg:col-span-7`}>
-          <SectionHeader icon={RadarIcon} title="Phân tích kỹ năng" />
+          <SectionHeader
+            icon={RadarIcon}
+            title="Phân tích kỹ năng"
+            action={
+              <Link href="/analytics" className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
+                Xem phân tích chi tiết <ArrowRight className="size-4" />
+              </Link>
+            }
+          />
           {hasSkillData ? (
-            <SkillRadar data={data.partAccuracies} />
+            <Link
+              href="/analytics"
+              aria-label="Mở phân tích năng lực chi tiết"
+              className="block rounded-3xl transition hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <SkillRadar data={data.partAccuracies} />
+            </Link>
           ) : (
             <div className="relative">
               <div className="pointer-events-none opacity-30 blur-[1px]" aria-hidden>

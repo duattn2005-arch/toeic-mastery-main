@@ -23,7 +23,9 @@ export async function getAttemptResult(attemptId: string, userId: string) {
       attempt.questionIds.length > 0
         ? { id: { in: attempt.questionIds } }
         : { testId: attempt.testId, ...(attempt.parts.length > 0 ? { part: { in: attempt.parts } } : {}) },
-    orderBy: { orderIndex: "asc" },
+    // A hand-picked set can span several tests (weakness practice): keep
+    // Parts in order, then each test's own order.
+    orderBy: attempt.questionIds.length > 0 ? [{ part: "asc" }, { testId: "asc" }, { orderIndex: "asc" }] : { orderIndex: "asc" },
     include: {
       options: { orderBy: { label: "asc" } },
       passage: true,

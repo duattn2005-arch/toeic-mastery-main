@@ -12,7 +12,9 @@ export async function getPartAccuracies(userId: string): Promise<PartAccuracy[]>
   const answers = await db.attemptAnswer.findMany({
     where: {
       attempt: { userId, status: "SUBMITTED" },
-      isCorrect: { not: null },
+      // Answered only — a skipped question isn't a wrong answer, and
+      // counting them pushed every Part down to a few percent.
+      selectedLabel: { not: null },
     },
     select: { isCorrect: true, question: { select: { part: true } } },
   });

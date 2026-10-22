@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireUser, isPro } from "@/lib/auth";
+import { FREE_PRACTICE_STARTS_PER_DAY } from "@/lib/constants/limits";
 import { TEST_PART_VALUES } from "@/lib/validations/admin";
 import type { TestPart } from "@/generated/prisma/enums";
 
@@ -15,7 +16,6 @@ const FREE_MINI_TESTS_PER_DAY = 3;
  * itself, independent of the Exam-mode full/mini caps above — a Free
  * account can still spend its exam attempts even after using up today's
  * practice-mode starts, and vice versa. */
-const FREE_PRACTICE_STARTS_PER_DAY = 2;
 
 /** Sorted (TEST_PART_VALUES order) + deduped, so two selections of the same
  * parts in a different click order still compare equal via Prisma's array

@@ -61,7 +61,9 @@ export async function getExamData(attemptId: string, userId: string): Promise<Ex
         attempt.questionIds.length > 0
           ? { id: { in: attempt.questionIds } }
           : { testId: attempt.testId, ...(attempt.parts.length > 0 ? { part: { in: attempt.parts } } : {}) },
-      orderBy: { orderIndex: "asc" },
+      // A hand-picked set can span several tests (weakness practice): keep
+      // Parts in order, then each test's own order.
+      orderBy: attempt.questionIds.length > 0 ? [{ part: "asc" }, { testId: "asc" }, { orderIndex: "asc" }] : { orderIndex: "asc" },
       include: { options: { orderBy: { label: "asc" }, select: { label: true, content: true } }, passage: true },
     }),
     db.attemptAnswer.findMany({
