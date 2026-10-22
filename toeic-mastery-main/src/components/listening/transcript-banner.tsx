@@ -32,6 +32,7 @@ export function TranscriptMasteryBanner({
   return (
     <Link
       href={href}
+      data-tour="transcript-banner"
       className="group relative isolate block overflow-hidden rounded-[2rem] border border-primary/30 shadow-lift transition-[transform,border-color] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] hover:-translate-y-0.5 hover:border-primary/60"
     >
       <ThemeScene themeId={themeId} position="66% 62%" scrim={{ light: SCRIM_LIGHT, dark: SCRIM }} />

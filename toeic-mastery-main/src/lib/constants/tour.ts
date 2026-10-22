@@ -14,6 +14,8 @@ export const TOUR_IDS = {
   HISTORY_LIST: "history-list",
   HISTORY_RESULT: "history-result",
   TRANSCRIPT: "transcript",
+  /** "Có gì mới" on /listening for the Transcript Mastery launch. */
+  LISTENING_NEWS_TRANSCRIPT: "listening-news-transcript",
 } as const;
 
 export type TourId = (typeof TOUR_IDS)[keyof typeof TOUR_IDS];
@@ -34,6 +36,7 @@ export const TOUR_STEP_COUNT: Record<TourId, number> = {
   [TOUR_IDS.HISTORY_RESULT]: 2,
   // Welcome counts as slot 1, so its five spotlight steps read 2/6…6/6.
   [TOUR_IDS.TRANSCRIPT]: 6,
+  [TOUR_IDS.LISTENING_NEWS_TRANSCRIPT]: 1,
 };
 
 /** Global (not per-tour) interactive nudge for the "select any word to look

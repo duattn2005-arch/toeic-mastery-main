@@ -75,6 +75,7 @@ export function TranscriptPractice({
   savedParts,
   segments,
   groupKeys,
+  userId,
 }: {
   setKey: string;
   setTitle: string;
@@ -89,6 +90,8 @@ export function TranscriptPractice({
   segments: Record<number, SegmentMap>;
   /** group id -> answers, questions and bilingual transcript. */
   groupKeys: Record<string, TranscriptGroupKey>;
+  /** For the first-visit guide, which is shown once per account. */
+  userId?: string;
 }) {
   const [activePart, setActivePart] = React.useState(test.parts[0]?.part ?? 1);
   const [answers, setAnswers] = React.useState<Answers>(() =>
@@ -494,7 +497,7 @@ export function TranscriptPractice({
         </p>
       </div>
 
-      <TranscriptTour />
+      <TranscriptTour userId={userId} />
 
       <div data-tour="transcript-parts" className="flex gap-1 overflow-x-auto rounded-full bg-card p-1 shadow-soft">
         {test.parts.map((p) => (

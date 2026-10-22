@@ -3,7 +3,7 @@
 import * as React from "react";
 import { createRoot } from "react-dom/client";
 import { driver, type Driver, type DriveStep, type Side, type Alignment } from "driver.js";
-import { useTourStep } from "@/hooks/use-tour-step";
+import { useTourStep, type TourStepOptions } from "@/hooks/use-tour-step";
 import { TOUR_STEP_COUNT, type TourId } from "@/lib/constants/tour";
 
 const SKIP_BTN_TEXT = "Bỏ qua";
@@ -111,6 +111,14 @@ export function useTourDriver() {
     });
     driverRef.current = instance;
     instance.drive(startIndex);
+    // Late layout shifts (images/fonts loading, a dialog releasing the
+    // scroll lock) move the target after the popover was placed — re-place
+    // it a couple of times so it doesn't end up covering what it points at.
+    for (const ms of [300, 900, 2000]) {
+      setTimeout(() => {
+        if (driverRef.current === instance && instance.isActive()) instance.refresh();
+      }, ms);
+    }
     return instance;
   }, []);
 
@@ -154,13 +162,13 @@ export interface SequentialStepConfig {
 export function useSequentialTour(
   tourId: TourId | string,
   configs: SequentialStepConfig[],
-  options?: { startAt?: number; isFinalStep?: boolean; totalSteps?: number; welcomeCountsAsStep?: boolean }
+  options?: { startAt?: number; isFinalStep?: boolean; totalSteps?: number; welcomeCountsAsStep?: boolean } & TourStepOptions
 ) {
   const startAt = options?.startAt ?? 0;
   const isFinalStep = options?.isFinalStep ?? true;
   const totalSteps = options?.totalSteps ?? TOUR_STEP_COUNT[tourId as TourId] ?? configs.length;
   const welcomeCountsAsStep = options?.welcomeCountsAsStep ?? true;
-  const { isActive, advance, skip } = useTourStep(tourId);
+  const { isActive, advance, skip } = useTourStep(tourId, { userId: options?.userId, announcement: options?.announcement, after: options?.after });
   const { runTour, driverRef } = useTourDriver();
 
   React.useEffect(() => {

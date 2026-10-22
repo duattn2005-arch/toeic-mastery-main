@@ -35,11 +35,13 @@ function Kbd({ children }: { children: React.ReactNode }) {
 
 /** First-visit guide for a Transcript Mastery test page: a welcome, then
  * the Part tabs, the audio card, one question's tools, the first blank and
- * the settings/shortcuts. Shown once per browser (see use-tour-step.ts);
- * "Bỏ qua" turns it off for good. The `data-tour` anchors live in
+ * the settings/shortcuts. Shown once per account (see use-tour-step.ts),
+ * also to existing learners; "Bỏ qua" turns it off for good. The `data-tour` anchors live in
  * transcript-practice.tsx. */
-export function TranscriptTour() {
-  useSequentialTour(TOUR_IDS.TRANSCRIPT, [
+export function TranscriptTour({ userId }: { userId?: string }) {
+  useSequentialTour(
+    TOUR_IDS.TRANSCRIPT,
+    [
     {
       title: "🎧 Chào mừng đến Transcript Mastery ETS 2026!",
       description: "Luyện nghe chép chính tả 10 đề ETS 2026: nghe từng câu, điền từ còn thiếu, kiểm tra và xem dịch & đáp án.",
@@ -113,7 +115,11 @@ export function TranscriptTour() {
       side: "right",
       align: "end",
     },
-  ]);
+    ],
+    // A launch guide: every account sees it once from now on, including
+    // learners past the first-visits cap of the regular onboarding tours.
+    { userId, announcement: true }
+  );
 
   return null;
 }

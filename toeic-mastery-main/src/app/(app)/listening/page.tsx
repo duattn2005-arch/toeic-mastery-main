@@ -7,6 +7,7 @@ import { getSiteThemeId } from "@/lib/data/site-theme";
 import { SkillHubView } from "@/components/skills/skill-hub-view";
 import { ListeningHubTour } from "@/components/listening/listening-hub-tour";
 import { TranscriptMasteryBanner } from "@/components/listening/transcript-banner";
+import { ListeningNewsTour } from "@/components/listening/listening-news-tour";
 
 export const metadata: Metadata = { title: "Listening" };
 
@@ -50,6 +51,7 @@ export default async function ListeningPage() {
         }
       />
       <ListeningHubTour />
+      <ListeningNewsTour userId={profile.id} />
     </>
   );
 }

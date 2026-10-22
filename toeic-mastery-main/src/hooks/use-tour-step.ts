@@ -47,20 +47,37 @@ function countVisitAndCheckAllowed(): boolean {
   }
 }
 
+export interface TourStepOptions {
+  /** Keep this tour's progress per account (two learners sharing a browser
+   * each see it once). */
+  userId?: string;
+  /** "What's new" tours: shown once to everyone from launch day on, so the
+   * first-visits-only cap (FREE_TOUR_VISITS) doesn't apply. */
+  announcement?: boolean;
+  /** Wait while this other tour can still run, so the two never overlap
+   * (e.g. a brand-new learner gets the basic Listening tour first). */
+  after?: TourId | string;
+}
+
 /** Ephemeral, write-once onboarding-tour progress. Same localStorage +
  * try/catch fail-open pattern as welcome-offer-modal.tsx's view counter —
  * this doesn't need zustand's cross-component sync since exactly one tour
  * component reads/writes a given tourId at a time. */
-export function useTourStep(tourId: TourId | string): UseTourStepResult {
-  const stepKey = `tour_${tourId}_step`;
-  const doneKey = `tour_${tourId}_done`;
+export function useTourStep(tourId: TourId | string, options?: TourStepOptions): UseTourStepResult {
+  const scope = options?.userId ? `${tourId}_${options.userId}` : tourId;
+  const stepKey = `tour_${scope}_step`;
+  const doneKey = `tour_${scope}_done`;
+  const announcement = options?.announcement ?? false;
+  const after = options?.after;
   const [state, setState] = React.useState<TourStepState | null>(null);
 
   React.useEffect(() => {
     let next: TourStepState = { step: 0, done: false };
     try {
       const visitsAllowed = countVisitAndCheckAllowed();
-      const done = localStorage.getItem(doneKey) === "true" || !visitsAllowed;
+      // The other tour can still show if it isn't done and is within its cap.
+      const waiting = after ? localStorage.getItem(`tour_${after}_done`) !== "true" && visitsAllowed : false;
+      const done = localStorage.getItem(doneKey) === "true" || (!announcement && !visitsAllowed) || waiting;
       const rawStep = Number(localStorage.getItem(stepKey));
       const step = Number.isFinite(rawStep) && rawStep >= 0 ? rawStep : 0;
       next = { step, done };
@@ -70,7 +87,7 @@ export function useTourStep(tourId: TourId | string): UseTourStepResult {
     // One-time sync with the browser's localStorage, not app state.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setState(next);
-  }, [doneKey, stepKey]);
+  }, [doneKey, stepKey, announcement, after]);
 
   const isActive = React.useCallback((step: number) => state !== null && !state.done && state.step === step, [state]);
 

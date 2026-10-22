@@ -39,6 +39,7 @@ export default async function TranscriptTestPage({ params }: { params: Params })
       savedParts={savedParts}
       segments={segments}
       groupKeys={getTranscriptGroupKeys(set.key, test)}
+      userId={profile.id}
     />
   );
 }
