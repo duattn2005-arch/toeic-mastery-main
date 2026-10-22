@@ -13,6 +13,7 @@ import { saveTranscriptProgressAction } from "@/lib/actions/exercise-progress";
 import type { SegmentMap } from "@/lib/content/transcripts/segments";
 import type { TranscriptGroupKey } from "@/lib/data/transcripts";
 import { GroupKeyPanel, GroupToolbar, LinePlayButton, ShortcutHelp, usePartSegments, useSegmentPlayer, type GroupResult } from "@/components/listening/transcript-group-tools";
+import { TranscriptTour } from "@/components/listening/transcript-tour";
 import { KEY_CHOICES, KEY_SHORT, TranscriptSettingsDialog, matchesCombo, useLoneKey, useTranscriptSettings } from "@/components/listening/transcript-settings";
 
 const SPEEDS = [0.75, 0.9, 1, 1.25];
@@ -493,7 +494,9 @@ export function TranscriptPractice({
         </p>
       </div>
 
-      <div className="flex gap-1 overflow-x-auto rounded-full bg-card p-1 shadow-soft">
+      <TranscriptTour />
+
+      <div data-tour="transcript-parts" className="flex gap-1 overflow-x-auto rounded-full bg-card p-1 shadow-soft">
         {test.parts.map((p) => (
           <button
             key={p.part}
@@ -517,7 +520,7 @@ export function TranscriptPractice({
 
       <div className="grid gap-6 lg:grid-cols-[minmax(280px,340px)_1fr]">
         <aside className="lg:sticky lg:top-20 lg:self-start">
-          <div className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-soft">
+          <div data-tour="transcript-audio" className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-soft">
             <div className="flex items-center gap-2">
               <span className="flex size-9 items-center justify-center rounded-xl bg-primary/15 text-primary">
                 <Headphones className="size-5" />
@@ -605,7 +608,7 @@ export function TranscriptPractice({
 
             {checkButton}
 
-            <div className="flex flex-wrap items-start gap-2">
+            <div data-tour="transcript-settings" className="flex flex-wrap items-start gap-2">
               <TranscriptSettingsDialog settings={settings} onChange={updateSettings} />
               <ShortcutHelp
                 open={showShortcuts}
@@ -655,6 +658,7 @@ export function TranscriptPractice({
             <section
               key={group.id}
               id={`transcript-group-${group.id}`}
+              data-tour={group.id === part.groups[0]?.id ? "transcript-first-group" : undefined}
               onFocusCapture={() => setActiveGroup(group.id)}
               className={cn(
                 "rounded-2xl border bg-card p-4 shadow-soft transition-[border-color,box-shadow] sm:p-5",
