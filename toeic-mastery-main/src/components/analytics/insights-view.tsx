@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -72,16 +73,46 @@ function ReadinessRing({ value }: { value: number }) {
   const r = 46;
   const c = 2 * Math.PI * r;
   return (
-    <div className="relative size-32 shrink-0">
+    <div className="relative size-28 shrink-0">
       <svg viewBox="0 0 110 110" className="size-full -rotate-90">
-        <circle cx="55" cy="55" r={r} fill="none" stroke="var(--muted)" strokeWidth="10" />
-        <circle cx="55" cy="55" r={r} fill="none" stroke="var(--primary)" strokeWidth="10" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - value)} />
+        <circle cx="55" cy="55" r={r} fill="none" stroke="var(--muted)" strokeWidth="9" />
+        <circle cx="55" cy="55" r={r} fill="none" stroke="var(--primary)" strokeWidth="9" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - value)} />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-3xl font-extrabold tabular-nums">{Math.round(value * 100)}%</span>
-        <span className="text-[11px] font-medium text-muted-foreground">sẵn sàng</span>
+        <span className="text-[1.65rem] leading-none font-extrabold tabular-nums">{Math.round(value * 100)}%</span>
+        <span className="mt-1 text-[11px] font-medium text-muted-foreground">sẵn sàng</span>
       </div>
     </div>
+  );
+}
+
+function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
+  return <p className={cn("text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase", className)}>{children}</p>;
+}
+
+const partsOf = (s: SkillStat) => (s.kind === "part" ? null : s.parts.map((p) => PART_META[p].shortLabel).join(", "));
+const shownStatus = (w: SkillStat): LabelStatus => (w.status === "unknown" ? (w.score < 0.5 ? "gap" : "near") : w.status);
+
+/** One priority weakness: rank, name, where it comes from, how far off it is. */
+function PriorityRow({ w, rank }: { w: Weakness; rank: number }) {
+  const status = shownStatus(w);
+  const where = partsOf(w);
+  return (
+    <li className="grid grid-cols-[auto_1fr_auto] items-start gap-x-3 gap-y-2 py-3 first:pt-0 last:pb-0">
+      <span className={cn("mt-0.5 flex size-6 items-center justify-center rounded-full border text-[11px] font-bold tabular-nums", STATUS_STYLE[status].tile, STATUS_STYLE[status].text)}>{rank}</span>
+      <div className="min-w-0">
+        <p className="text-sm leading-snug font-semibold text-pretty">{nameOf(w)}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {where && <>{where} · </>}
+          {w.attempted} câu{!w.confident && " · dữ liệu sơ bộ"}
+        </p>
+      </div>
+      <div className="text-right">
+        <p className={cn("text-sm font-bold tabular-nums", STATUS_STYLE[status].text)}>{pct(w.score)}</p>
+        {w.pointsGain > 0 && <p className="text-[11px] font-medium text-success tabular-nums">+{w.pointsGain} điểm</p>}
+      </div>
+      <Meter value={w.score} status={status} className="col-start-2 col-end-4" />
+    </li>
   );
 }
 
@@ -89,70 +120,150 @@ export function RoutingHero({ insights }: { insights: LearningInsights }) {
   const r = insights.routing;
   const style = BRANCH_STYLE[r.branch];
   const BranchIcon = style.icon;
+  const priorities = insights.weaknesses.slice(0, 3);
+  const strengths = insights.strengths.slice(0, 3);
+  const gain = priorities.reduce((s, w) => s + w.pointsGain, 0);
+  const met = r.checklist.filter((c) => c.ok).length;
+  const filtered = insights.noise.guessed + insights.noise.stuck;
+  const stats = [
+    { value: insights.answered.toLocaleString("vi-VN"), label: "Câu đã làm", hint: "đề thi và bài luyện" },
+    { value: pct(insights.accuracy), label: "Độ chính xác", hint: "sau khi lọc nhiễu" },
+    { value: filtered.toLocaleString("vi-VN"), label: "Câu bị lọc", hint: `${insights.noise.guessed} đoán mò · ${insights.noise.stuck} ngâm lâu` },
+    { value: insights.skipped.toLocaleString("vi-VN"), label: "Bỏ trống", hint: "không tính vào điểm yếu" },
+  ];
+
   return (
-    <section className={cn(PANEL, "relative overflow-hidden")}>
-      <div className="pointer-events-none absolute -right-24 -top-24 size-72 rounded-full bg-primary/10 blur-3xl" aria-hidden />
-      <div className="relative grid gap-6 lg:grid-cols-[1fr_auto]">
-        <div className="flex flex-col gap-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className="flex size-11 items-center justify-center rounded-2xl bg-primary text-xl font-black text-primary-foreground shadow-soft">{LEVEL_LETTER[r.level] ?? "B"}</span>
-            <div className="flex flex-col">
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">AI Mentor định vị</span>
-              <span className="text-sm font-bold">{r.levelLabel}</span>
+    <section className={cn(PANEL, "relative overflow-hidden p-0 sm:p-0")}>
+      <div className="pointer-events-none absolute -top-28 -left-20 size-72 rounded-full bg-primary/8 blur-3xl" aria-hidden />
+      <div className="relative grid lg:grid-cols-[minmax(0,1fr)_19rem]">
+        {/* Left: where the learner stands and what to fix first */}
+        <div className="flex min-w-0 flex-col gap-6 p-5 sm:p-7">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+            <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-lg font-black text-primary-foreground shadow-soft">{LEVEL_LETTER[r.level] ?? "B"}</span>
+            <div className="mr-auto flex flex-col">
+              <Eyebrow>AI Mentor định vị</Eyebrow>
+              <span className="text-[15px] font-bold">{r.levelLabel}</span>
             </div>
-            <span className={cn("ml-1 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold", style.chip)}>
+            <span className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold", style.chip)}>
               <BranchIcon className="size-3.5" /> {r.title}
             </span>
           </div>
-          <p className="max-w-[68ch] text-[15px] leading-relaxed text-foreground/90">{r.description}</p>
-          <p className="max-w-[68ch] text-sm leading-relaxed text-muted-foreground">{insights.summary}</p>
-          <div className="flex flex-wrap items-center gap-2">
-            {insights.weaknesses.length > 0 && (
-              <PracticeButton target={{ kind: "mix", foundation: r.branch === "rebuild" }} label="Đề tổng hợp điểm yếu" size="default" />
-            )}
-            {insights.openMistakes.length > 0 && <PracticeButton target={{ kind: "mistakes" }} label={`Làm lại ${Math.min(20, insights.openMistakes.length)} câu đang sai`} variant="outline" size="default" />}
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {[
-              { label: "Câu đã làm", value: insights.answered.toLocaleString("vi-VN") },
-              { label: "Đúng (đã lọc nhiễu)", value: pct(insights.accuracy) },
-              { label: "Câu bị lọc", value: (insights.noise.guessed + insights.noise.stuck).toLocaleString("vi-VN") },
-              { label: "Bỏ trống", value: insights.skipped.toLocaleString("vi-VN") },
-            ].map((s) => (
-              <div key={s.label} className="rounded-2xl border border-border/60 bg-background/60 px-3 py-2.5">
-                <div className="text-lg font-extrabold tabular-nums">{s.value}</div>
-                <div className="text-[11px] text-muted-foreground">{s.label}</div>
-              </div>
-            ))}
-          </div>
+
+          <p className="max-w-[60ch] text-base leading-relaxed text-pretty text-foreground/90">{r.description}</p>
+
+          {priorities.length > 0 || strengths.length > 0 ? (
+            <div className={cn("grid gap-4", priorities.length > 0 && strengths.length > 0 && "md:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]")}>
+              {priorities.length > 0 && (
+                <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
+                  <div className="mb-3 flex items-baseline justify-between gap-3">
+                    <Eyebrow className="flex items-center gap-1.5">
+                      <TrendingDown className="size-3.5 text-destructive" /> Ưu tiên vá
+                    </Eyebrow>
+                    {gain > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        vá xong ≈ <b className="font-semibold text-success tabular-nums">+{gain} điểm</b>
+                      </span>
+                    )}
+                  </div>
+                  <ol className="divide-y divide-border/60">
+                    {priorities.map((w, i) => (
+                      <PriorityRow key={w.id} w={w} rank={i + 1} />
+                    ))}
+                  </ol>
+                  <a href="#diem-yeu" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
+                    {insights.weaknesses.length > priorities.length ? `Xem đủ ${insights.weaknesses.length} điểm yếu và cách khắc phục` : "Xem chẩn đoán và cách khắc phục"}
+                    <ArrowRight className="size-3.5" />
+                  </a>
+                </div>
+              )}
+              {strengths.length > 0 && (
+                <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
+                  <Eyebrow className="mb-3 flex items-center gap-1.5">
+                    <TrendingUp className="size-3.5 text-success" /> Đang làm tốt
+                  </Eyebrow>
+                  <ul className="flex flex-col gap-3">
+                    {strengths.map((s) => (
+                      <li key={`${s.kind}:${s.key}`} className="flex items-start gap-2.5">
+                        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm leading-snug font-medium text-pretty">{nameOf(s)}</p>
+                          {partsOf(s) && <p className="mt-0.5 text-xs text-muted-foreground">{partsOf(s)}</p>}
+                        </div>
+                        <span className="text-sm font-bold text-success tabular-nums">{pct(s.score)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          ) : (
+            <p className="max-w-[60ch] text-sm leading-relaxed text-muted-foreground">{insights.summary}</p>
+          )}
+
+          {insights.behaviors.rightToWrong >= 3 && (
+            <p className="flex items-start gap-2 text-sm text-muted-foreground">
+              <Repeat2 className="mt-0.5 size-4 shrink-0 text-warning" />
+              <span>
+                <b className="font-semibold text-foreground">{insights.behaviors.rightToWrong} câu</b> bạn đã chọn đúng rồi đổi sang sai — hãy tin lựa chọn đầu khi chưa có căn cứ rõ ràng.
+              </span>
+            </p>
+          )}
+
+          {(insights.weaknesses.length > 0 || insights.openMistakes.length > 0) && (
+            <div className="flex flex-wrap items-center gap-2">
+              {insights.weaknesses.length > 0 && <PracticeButton target={{ kind: "mix", foundation: r.branch === "rebuild" }} label="Đề tổng hợp điểm yếu" size="default" />}
+              {insights.openMistakes.length > 0 && (
+                <PracticeButton target={{ kind: "mistakes" }} label={`Làm lại ${Math.min(20, insights.openMistakes.length)} câu đang sai`} variant="outline" size="default" />
+              )}
+            </div>
+          )}
         </div>
 
-        <div className="flex flex-col items-center gap-4 rounded-3xl border border-border/60 bg-background/50 p-4 lg:w-80">
-          <ReadinessRing value={r.readiness} />
-          <div className="w-full">
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{r.level === "ADVANCED" ? "Điều kiện thi thật" : "Điều kiện lên cấp"}</p>
-            <ul className="flex flex-col gap-1.5">
-              {r.checklist.map((c) => (
-                <li key={c.label} className="flex items-start gap-2 text-sm">
-                  {c.ok ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" /> : <Circle className="mt-0.5 size-4 shrink-0 text-muted-foreground/60" />}
-                  <span className="flex-1 leading-snug">
-                    {c.label}
-                    <span className="block text-xs text-muted-foreground">{c.detail}</span>
-                  </span>
-                </li>
-              ))}
-            </ul>
+        {/* Right: how close the next level is */}
+        <aside className="flex flex-col gap-5 border-t border-border/60 bg-muted/35 p-5 sm:p-7 lg:border-t-0 lg:border-l">
+          <div className="flex items-center gap-4">
+            <ReadinessRing value={r.readiness} />
+            <div>
+              <Eyebrow>{r.level === "ADVANCED" ? "Điều kiện thi thật" : "Điều kiện lên cấp"}</Eyebrow>
+              <p className="mt-1 text-2xl font-extrabold tabular-nums">
+                {met}
+                <span className="text-base font-semibold text-muted-foreground">/{r.checklist.length}</span>
+              </p>
+              <p className="text-xs text-muted-foreground">điều kiện đã đạt</p>
+            </div>
           </div>
-        </div>
+          <ul className="flex flex-col gap-3">
+            {r.checklist.map((c) => (
+              <li key={c.label} className="flex items-start gap-2.5">
+                {c.ok ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" /> : <Circle className="mt-0.5 size-4 shrink-0 text-muted-foreground/50" />}
+                <div className="min-w-0">
+                  <p className={cn("text-sm leading-snug", c.ok ? "text-muted-foreground" : "font-medium text-foreground")}>{c.label}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{c.detail}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </aside>
       </div>
+
+      {/* Bottom: the raw numbers behind the reading */}
+      <dl className="relative grid grid-cols-2 border-t border-border/60 sm:grid-cols-4">
+        {stats.map((s, i) => (
+          <div key={s.label} className={cn("px-5 py-4 sm:px-7", i % 2 === 1 && "border-l border-border/60", i >= 2 && "border-t border-border/60 sm:border-t-0", i === 2 && "sm:border-l")}>
+            <dt className="text-xs font-medium text-muted-foreground">{s.label}</dt>
+            <dd className="mt-1 text-xl font-extrabold tabular-nums">{s.value}</dd>
+            <dd className="text-[11px] text-muted-foreground">{s.hint}</dd>
+          </div>
+        ))}
+      </dl>
     </section>
   );
 }
 
-const ALERT_STYLE: Record<Alert["tone"], { box: string; icon: typeof Info }> = {
-  warn: { box: "border-warning/35 bg-warning/10", icon: AlertTriangle },
-  info: { box: "border-info/30 bg-info/10", icon: Info },
-  good: { box: "border-success/30 bg-success/10", icon: TrendingUp },
+const ALERT_STYLE: Record<Alert["tone"], { badge: string; icon: typeof Info }> = {
+  warn: { badge: "bg-warning/15 text-warning", icon: AlertTriangle },
+  info: { badge: "bg-info/15 text-info", icon: Info },
+  good: { badge: "bg-success/15 text-success", icon: TrendingUp },
 };
 
 export function AlertsStrip({ alerts }: { alerts: Alert[] }) {
@@ -160,13 +271,15 @@ export function AlertsStrip({ alerts }: { alerts: Alert[] }) {
   return (
     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
       {alerts.map((a) => {
-        const { box, icon: Icon } = ALERT_STYLE[a.tone];
+        const { badge, icon: Icon } = ALERT_STYLE[a.tone];
         return (
-          <div key={a.title} className={cn("flex gap-3 rounded-2xl border p-4", box)}>
-            <Icon className="mt-0.5 size-5 shrink-0" />
-            <div>
-              <p className="text-sm font-bold">{a.title}</p>
-              <p className="mt-0.5 text-sm leading-relaxed text-foreground/80">{a.detail}</p>
+          <div key={a.title} className="flex gap-3 rounded-2xl border border-border/60 bg-card p-4 shadow-soft">
+            <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-xl", badge)}>
+              <Icon className="size-4" />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm leading-snug font-semibold">{a.title}</p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{a.detail}</p>
             </div>
           </div>
         );
@@ -275,7 +388,7 @@ function WeaknessCard({ w, rank }: { w: Weakness; rank: number }) {
 
 export function WeaknessSection({ insights }: { insights: LearningInsights }) {
   return (
-    <section className={PANEL}>
+    <section id="diem-yeu" className={cn(PANEL, "scroll-mt-6")}>
       <SectionHeader icon={TrendingDown} title="Điểm yếu cần vá" />
       {insights.weaknesses.length === 0 ? (
         <p className="text-sm text-muted-foreground">

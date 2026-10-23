@@ -735,7 +735,7 @@ async function buildRouting(input: {
     branch: "refine",
     title: "Học bù có mục tiêu",
     description: focus.length
-      ? `Nền tảng đã có, còn ${focus.length} chỗ hổng chính: ${focus.map(labelName).join(", ")}. Vá đúng các nhãn này rồi thi lại riêng chúng — không phải làm lại toàn bộ.`
+      ? `Nền tảng đã có, còn ${focus.length} chỗ hổng chính cần vá. Vá đúng các nhãn này rồi thi lại riêng chúng — không phải làm lại toàn bộ.`
       : "Nền tảng đã có. Tiếp tục luyện để đưa độ chính xác lên 80%.",
     checklist,
     readiness,

@@ -4,6 +4,7 @@ import { Prisma } from "@/generated/prisma/client";
 import type { Difficulty, TestPart } from "@/generated/prisma/enums";
 import { STRATEGIC_LABELS } from "../../../../prisma/seed-data/strategic-labels";
 import { CALIBRATION_MIN_ANSWERS, calibrateDifficulty, tagQuestion, type TagInput } from "./rules";
+import { runAiLabelling } from "./ai-labeller";
 
 /**
  * Runs the rule-based labeller (rules.ts) over the question bank and writes
@@ -19,16 +20,19 @@ import { CALIBRATION_MIN_ANSWERS, calibrateDifficulty, tagQuestion, type TagInpu
  *    rule-based estimate stands in.
  *  - Rows are only written when something actually changed.
  *
+ * Part 5/6 questions the rules can't read then go to the AI pass
+ * (ai-labeller.ts).
+ *
  * Triggered by the in-process scheduler (instrumentation-node.ts) after
  * every deploy and daily, right after an admin saves questions, and from
  * Admin → Câu hỏi → Nhãn & chưng cất.
  */
 
 /** Bump when rules.ts changes meaningfully — every auto label is refreshed. */
-export const TAGGER_VERSION = 1;
+export const TAGGER_VERSION = 2;
 const BATCH = 300;
 
-type Field = "grammar" | "strategy" | "vocab" | "difficulty";
+export type Field = "grammar" | "strategy" | "vocab" | "difficulty";
 export interface LabelMeta {
   v: number;
   auto: Field[];
@@ -36,6 +40,8 @@ export interface LabelMeta {
   answers?: number;
   at: string;
   reasons?: string[];
+  /** Set once the AI pass has read the question; `fields` are the ones it filled. */
+  ai?: { at: string; fields: Field[] };
 }
 
 export interface TaggingSummary {
@@ -46,6 +52,7 @@ export interface TaggingSummary {
   vocab: number;
   difficultyFromData: number;
   difficultyFromRules: number;
+  ai: number;
   startedAt: string;
   finishedAt: string;
   trigger: string;
@@ -90,7 +97,7 @@ export async function runQuestionTagging(opts: { ids?: string[]; onlyStale?: boo
   if (taggingState.running && !opts.ids) return null;
   const trigger = opts.trigger ?? (opts.ids ? "admin-save" : "manual");
   const startedAt = new Date().toISOString();
-  const summary: TaggingSummary = { scanned: 0, updated: 0, grammar: 0, strategy: 0, vocab: 0, difficultyFromData: 0, difficultyFromRules: 0, startedAt, finishedAt: startedAt, trigger };
+  const summary: TaggingSummary = { scanned: 0, updated: 0, grammar: 0, strategy: 0, vocab: 0, difficultyFromData: 0, difficultyFromRules: 0, ai: 0, startedAt, finishedAt: startedAt, trigger };
   const track = !opts.ids;
   if (track) Object.assign(taggingState, { running: true, trigger, scanned: 0, total: 0 });
 
@@ -170,10 +177,12 @@ export async function runQuestionTagging(opts: { ids?: string[]; onlyStale?: boo
         const r = tagQuestion(input, knownWords);
         const auto = new Set<Field>(old?.auto ?? []);
         const may = (f: Field, empty: boolean) => empty || auto.has(f);
+        // What the AI filled stays while the rules still find nothing there.
+        const aiFields = new Set(old?.ai?.fields ?? []);
         const data: Prisma.QuestionUpdateInput = {};
 
         if ((q.part === "PART5" || q.part === "PART6") && may("grammar", !q.grammarTopicSlug)) {
-          const slug = r.grammarTopicSlug && topicId.has(r.grammarTopicSlug) ? r.grammarTopicSlug : null;
+          const slug = r.grammarTopicSlug && topicId.has(r.grammarTopicSlug) ? r.grammarTopicSlug : aiFields.has("grammar") ? q.grammarTopicSlug : null;
           if (slug !== q.grammarTopicSlug && (slug || auto.has("grammar"))) {
             data.grammarTopicSlug = slug;
             data.grammarTopic = slug ? { connect: { id: topicId.get(slug)! } } : { disconnect: true };
@@ -181,8 +190,10 @@ export async function runQuestionTagging(opts: { ids?: string[]; onlyStale?: boo
           }
           if (slug) auto.add("grammar");
           else auto.delete("grammar");
+          if (slug !== q.grammarTopicSlug || r.grammarTopicSlug) aiFields.delete("grammar");
         }
-        if (may("strategy", q.strategicLabelSlugs.length === 0)) {
+        if (r.strategicLabelSlugs.length) aiFields.delete("strategy");
+        if (may("strategy", q.strategicLabelSlugs.length === 0) && !aiFields.has("strategy")) {
           if (!sameList(r.strategicLabelSlugs, q.strategicLabelSlugs) && (r.strategicLabelSlugs.length || auto.has("strategy"))) {
             data.strategicLabelSlugs = r.strategicLabelSlugs;
             summary.strategy++;
@@ -211,7 +222,8 @@ export async function runQuestionTagging(opts: { ids?: string[]; onlyStale?: boo
           auto.add("difficulty");
         }
 
-        const meta: LabelMeta = { v: TAGGER_VERSION, auto: [...auto], difficultySource, answers: n, at: new Date().toISOString(), reasons: r.reasons.slice(0, 6) };
+        const ai = old?.ai && { at: old.ai.at, fields: old.ai.fields.filter((f) => aiFields.has(f)) };
+        const meta: LabelMeta = { v: TAGGER_VERSION, auto: [...auto], difficultySource, answers: n, at: new Date().toISOString(), reasons: r.reasons.slice(0, 6), ...(ai ? { ai } : {}) };
         const metaChanged = !old || old.v !== meta.v || !sameList([...old.auto].sort(), [...meta.auto].sort()) || old.difficultySource !== meta.difficultySource || (answersMoved && old.answers !== meta.answers);
         if (Object.keys(data).length === 0 && !metaChanged && !stale) continue;
         data.labelMeta = meta as unknown as Prisma.InputJsonValue;
@@ -222,6 +234,10 @@ export async function runQuestionTagging(opts: { ids?: string[]; onlyStale?: boo
       if (track) taggingState.scanned = summary.scanned;
       if (batch.length < BATCH) break;
     }
+    summary.ai = await runAiLabelling({ ids: opts.ids }).catch((err) => {
+      console.error("[tagging] AI pass failed", err);
+      return 0;
+    });
   } finally {
     summary.finishedAt = new Date().toISOString();
     if (track) Object.assign(taggingState, { running: false, last: summary });

@@ -462,6 +462,12 @@ export function tagQuestion(q: TagInput, knownWords: Set<string> = new Set()): T
         grammarTopicSlug ??= "conjunctions";
         reasons.push("đáp án là từ nối giữa các câu");
       }
+      // A plain grammar question (tense, preposition, pronoun…) has no trap
+      // label of its own — give it the question-type one.
+      if (labels.length === 0 && grammarTopicSlug) {
+        labels.push("grammar-structure");
+        reasons.push("câu ngữ pháp — chọn dạng/cấu trúc đúng");
+      }
     }
   } else if (q.part === "PART1") labels = part1Labels(q, reasons);
   else if (q.part === "PART2") labels = part2Labels(q, reasons);

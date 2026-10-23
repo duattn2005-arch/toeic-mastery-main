@@ -136,4 +136,5 @@ export const STRATEGIC_LABELS: StrategicLabelSeed[] = [
   { slug: "next-action-request", title: "Hành động tiếp theo, yêu cầu, đề nghị của người nói", category: "Listening — dạng câu hỏi", appliesToParts: ["PART3", "PART4"] },
   { slug: "detail-listening", title: "Thông tin chi tiết trong bài nghe (thời gian, số liệu, lý do…)", category: "Listening — dạng câu hỏi", appliesToParts: ["PART3", "PART4"] },
   { slug: "detail-reading", title: "Thông tin chi tiết — dò tìm dữ kiện trong văn bản", category: "Reading — dạng câu hỏi", appliesToParts: ["PART7"] },
+  { slug: "grammar-structure", title: "Ngữ pháp — chọn dạng/cấu trúc đúng (thì, giới từ, liên từ, đại từ…)", category: "Reading — dạng câu hỏi", appliesToParts: ["PART5", "PART6"] },
 ];
