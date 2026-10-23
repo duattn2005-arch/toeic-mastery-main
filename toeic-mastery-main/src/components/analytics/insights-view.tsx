@@ -116,6 +116,42 @@ function PriorityRow({ w, rank }: { w: Weakness; rank: number }) {
   );
 }
 
+function B({ children }: { children: ReactNode }) {
+  return <b className="font-bold tabular-nums">{children}</b>;
+}
+
+/** The hero's one-sentence verdict: how much was read, how accurate, where
+ * the learner stands and what fixing it is worth. */
+function Overview({ insights, gain }: { insights: LearningInsights; gain: number }) {
+  const r = insights.routing;
+  if (r.branch === "collecting") return <>{r.description}</>;
+  const base = (
+    <>
+      Trên <B>{insights.answered.toLocaleString("vi-VN")}</B> câu đã làm, bạn đúng <B>{pct(insights.accuracy)}</B>
+    </>
+  );
+  if (r.branch === "ready") {
+    return (
+      <>
+        {base} và không còn nhãn Hổng — {r.level === "ADVANCED" ? "đã sẵn sàng thi thật, giờ là lúc giữ phong độ." : "đạt chuẩn để làm Gate Test lên cấp tiếp theo."}
+      </>
+    );
+  }
+  const gaps = insights.weaknesses.filter((w) => w.status === "gap").length;
+  const n = r.branch === "rebuild" ? gaps || insights.weaknesses.length : Math.min(3, insights.weaknesses.length);
+  return (
+    <>
+      {base} — {r.branch === "rebuild" ? <>còn <B>{n}</B> nhãn ở mức Hổng, cần xây lại móng ở đúng các nhãn này trước khi làm đề khó</> : <>nền tảng đã có, còn <B>{n}</B> chỗ hổng chính</>}
+      {gain > 0 && (
+        <>
+          , vá xong có thể thêm khoảng <b className="font-bold text-success tabular-nums">{gain} điểm</b>
+        </>
+      )}
+      .
+    </>
+  );
+}
+
 export function RoutingHero({ insights }: { insights: LearningInsights }) {
   const r = insights.routing;
   const style = BRANCH_STYLE[r.branch];
@@ -149,7 +185,9 @@ export function RoutingHero({ insights }: { insights: LearningInsights }) {
             </span>
           </div>
 
-          <p className="max-w-[60ch] text-base leading-relaxed text-pretty text-foreground/90">{r.description}</p>
+          <p className="max-w-[62ch] text-[17px] leading-relaxed font-medium text-pretty text-foreground">
+            <Overview insights={insights} gain={gain} />
+          </p>
 
           {priorities.length > 0 || strengths.length > 0 ? (
             <div className={cn("grid gap-4", priorities.length > 0 && strengths.length > 0 && "md:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]")}>
@@ -159,11 +197,7 @@ export function RoutingHero({ insights }: { insights: LearningInsights }) {
                     <Eyebrow className="flex items-center gap-1.5">
                       <TrendingDown className="size-3.5 text-destructive" /> Ưu tiên vá
                     </Eyebrow>
-                    {gain > 0 && (
-                      <span className="text-xs text-muted-foreground">
-                        vá xong ≈ <b className="font-semibold text-success tabular-nums">+{gain} điểm</b>
-                      </span>
-                    )}
+                    <span className="text-xs text-muted-foreground">xếp theo mức mất điểm</span>
                   </div>
                   <ol className="divide-y divide-border/60">
                     {priorities.map((w, i) => (
