@@ -36,8 +36,9 @@ const RADIUS: Record<Kind, number> = { big: 0.085, small: 0.06, diamond: 0.045, 
 const WEIGHT: Record<Kind, number> = { big: 2.4, small: 1.6, diamond: 1.15, rock: 2.9, clock: 1 };
 const VALUE: Record<Kind, number> = { big: 15, small: 10, diamond: 25, rock: 0, clock: 0 };
 
-type Claw = { mode: "swing" | "out" | "back"; angle: number; len: number; t: number; carry: number | null };
-const INITIAL_CLAW: Claw = { mode: "swing", angle: 0, len: 0, t: 0, carry: null };
+/** `target`: the piece the learner tapped — the claw aims straight at it and only it can be caught. */
+type Claw = { mode: "swing" | "out" | "back"; angle: number; len: number; t: number; carry: number | null; target: number | null };
+const INITIAL_CLAW: Claw = { mode: "swing", angle: 0, len: 0, t: 0, carry: null, target: null };
 
 /** Lays the loot out with no overlaps (labels need room below each piece). */
 function layout(question: BlastQuestion, aspect: number): Loot[] {
@@ -129,7 +130,9 @@ function Miner() {
 /** Đào vàng: the English word is up top, nuggets and diamonds underground
  * carry Vietnamese meanings (plus rocks and the odd +time clock). The claw
  * swings — tap the screen (or Space / ↓) to drop it, and haul up the piece
- * with the right meaning. Heavier pieces reel in slower; a wrong meaning
+ * with the right meaning. Tapping a piece (or its meaning) aims the claw
+ * straight at it, for learners who know the word but can't time the swing —
+ * scored exactly the same. Heavier pieces reel in slower; a wrong meaning
  * costs 3 seconds. First-try catch is GOOD, otherwise AGAIN. */
 export function MinerGame({
   items,
@@ -194,7 +197,7 @@ export function MinerGame({
     // The layout needs the measured arena, so it can only be made here.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoot(next);
-    clawRef.current = { mode: "swing", angle: 0, len: 0, t: clawRef.current.t, carry: null };
+    clawRef.current = { mode: "swing", angle: 0, len: 0, t: clawRef.current.t, carry: null, target: null };
     feedback.correct(current.item);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [index, ready]);
@@ -266,7 +269,7 @@ export function MinerGame({
       } else if (c.mode === "out") {
         c.len += h * 1.05 * dt;
         const tip = { x: pivot.x + Math.sin(c.angle) * c.len, y: pivot.y + Math.cos(c.angle) * c.len };
-        const hit = lootRef.current.find((l) => Math.hypot(tip.x - l.x * w, tip.y - l.y * h) < l.r * minSide + 8);
+        const hit = lootRef.current.find((l) => (c.target === null || l.id === c.target) && Math.hypot(tip.x - l.x * w, tip.y - l.y * h) < l.r * minSide + 8);
         if (hit) {
           c.carry = hit.id;
           c.mode = "back";
@@ -278,6 +281,7 @@ export function MinerGame({
           c.len = rest;
           c.mode = "swing";
           c.carry = null;
+          c.target = null;
           if (piece) resolveRef.current(piece);
         }
       }
@@ -292,6 +296,18 @@ export function MinerGame({
     if (phaseRef.current !== "play" || clawRef.current.mode !== "swing") return;
     clawRef.current.mode = "out";
   }, []);
+  /** Tap-to-pick: point the claw at the tapped piece and send it. */
+  const aim = React.useCallback(
+    (id: number) => {
+      const c = clawRef.current;
+      const piece = lootRef.current.find((l) => l.id === id);
+      if (phaseRef.current !== "play" || c.mode !== "swing" || !piece || size.w === 0) return;
+      c.angle = Math.atan2(piece.x * size.w - PIVOT.x * size.w, piece.y * size.h - PIVOT.y * size.h);
+      c.target = id;
+      c.mode = "out";
+    },
+    [size]
+  );
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.code === "Space" || e.code === "ArrowDown") {
@@ -422,7 +438,19 @@ export function MinerGame({
             const isAnswer = l.option !== null && current.options[l.option].id === current.item.id;
             const reveal = phase === "reveal" && isAnswer;
             return (
-              <div key={`${index}-${l.id}`} className="pointer-events-none absolute z-20 flex flex-col items-center" style={{ left: px, top: py, transform: "translate(-50%, -50%)" }}>
+              <div
+                key={`${index}-${l.id}`}
+                onPointerDown={
+                  l.option === null || carried
+                    ? undefined
+                    : (e) => {
+                        e.stopPropagation();
+                        aim(l.id);
+                      }
+                }
+                className={cn("absolute z-20 flex flex-col items-center", l.option === null || carried ? "pointer-events-none" : "cursor-pointer")}
+                style={{ left: px, top: py, transform: "translate(-50%, -50%)" }}
+              >
                 <div style={{ width: d, height: d * (l.kind === "diamond" ? 0.8 : 0.9) }} className={cn(reveal && "animate-pulse")}>
                   <Nugget kind={l.kind} glow={reveal} />
                 </div>
@@ -461,7 +489,7 @@ export function MinerGame({
         </AnimatePresence>
       </div>
       <p className="text-center text-xs text-muted-foreground">
-        Chạm màn hình (hoặc phím Space / ↓) để thả móc, kéo lên cục vàng mang đúng nghĩa của từ. Vật nặng kéo chậm hơn, kéo nhầm nghĩa bị trừ {WRONG_PENALTY_S} giây.
+        Chạm màn hình (hoặc phím Space / ↓) để thả móc, kéo lên cục vàng mang đúng nghĩa của từ — hoặc bấm thẳng vào nghĩa đó, móc sẽ tự gắp. Vật nặng kéo chậm hơn, kéo nhầm nghĩa bị trừ {WRONG_PENALTY_S} giây.
       </p>
     </div>
   );
