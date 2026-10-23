@@ -30,13 +30,13 @@ function isActive(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-/** Darkens the top (logo + menu) for legible labels and fades out lower
- * down, where the scene's subject (the cat on its lily pad, by default)
- * sits between the menu and the streak card. */
+/** Keeps the whole menu on a near-solid backdrop and only lets the scene
+ * show through below it (behind the streak/account cards), so the labels
+ * never sit on busy artwork. */
 const SIDEBAR_SCRIM_DARK =
-  "linear-gradient(180deg, color-mix(in srgb, var(--sidebar) 82%, transparent) 0%, color-mix(in srgb, var(--sidebar) 72%, transparent) 50%, color-mix(in srgb, var(--sidebar) 12%, transparent) 66%, color-mix(in srgb, var(--sidebar) 50%, transparent) 100%)";
+  "linear-gradient(180deg, color-mix(in srgb, var(--sidebar) 88%, transparent) 0%, color-mix(in srgb, var(--sidebar) 84%, transparent) 62%, color-mix(in srgb, var(--sidebar) 30%, transparent) 78%, color-mix(in srgb, var(--sidebar) 45%, transparent) 100%)";
 const SIDEBAR_SCRIM_LIGHT =
-  "linear-gradient(180deg, color-mix(in srgb, var(--sidebar) 92%, transparent) 0%, color-mix(in srgb, var(--sidebar) 86%, transparent) 50%, color-mix(in srgb, var(--sidebar) 8%, transparent) 66%, color-mix(in srgb, var(--sidebar) 40%, transparent) 100%), linear-gradient(180deg, var(--scene-from) 36%, transparent 52%)";
+  "linear-gradient(180deg, color-mix(in srgb, var(--sidebar) 94%, transparent) 0%, color-mix(in srgb, var(--sidebar) 90%, transparent) 62%, color-mix(in srgb, var(--sidebar) 20%, transparent) 78%, color-mix(in srgb, var(--sidebar) 35%, transparent) 100%), linear-gradient(180deg, var(--scene-from) 50%, transparent 66%)";
 
 export function AppSidebar({ profile, siteThemeId }: { profile: SidebarProfile; siteThemeId: string }) {
   const pathname = usePathname();
@@ -50,16 +50,17 @@ export function AppSidebar({ profile, siteThemeId }: { profile: SidebarProfile; 
   // (animated for lily-pond-cat), under a scrim that keeps menu text crisp.
   return (
     <aside className="fixed inset-y-0 left-0 z-40 isolate hidden w-64 flex-col border-r border-sidebar-border bg-sidebar text-sidebar-foreground lg:flex dark:border-white/[0.06]">
-      {/* Scene at half height (the whole pond fits), lifted above the streak
-          card so the cat is not hidden; the scrim's fade hides where the
-          scene starts. Day art in light mode, night art in dark mode. */}
+      {/* Scene shrunk and pushed down to the bottom (behind the cards), lightly
+          blurred, under a scrim that stays near-solid across the menu. Day
+          art in light mode, night art in dark mode. */}
       <ThemeScene
         themeId={siteThemeId}
-        size="auto 50%"
-        position="59% calc(100% - 140px)"
+        size="auto 42%"
+        position="59% calc(100% - 40px)"
+        imageClassName="blur-[1.5px]"
         scrim={{
           light: SIDEBAR_SCRIM_LIGHT,
-          dark: `${SIDEBAR_SCRIM_DARK}, linear-gradient(180deg, ${theme.swatchTo} 36%, transparent 52%)`,
+          dark: `${SIDEBAR_SCRIM_DARK}, linear-gradient(180deg, ${theme.swatchTo} 50%, transparent 66%)`,
         }}
       />
       <Link href="/dashboard" className="flex items-center gap-2.5 px-6 py-6">
@@ -72,7 +73,7 @@ export function AppSidebar({ profile, siteThemeId }: { profile: SidebarProfile; 
         </span>
       </Link>
 
-      <nav data-tour="dashboard-sidebar-nav" className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 dark:[text-shadow:0_1px_2px_rgba(0,0,0,0.55)]">
+      <nav data-tour="dashboard-sidebar-nav" className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 dark:[text-shadow:0_1px_3px_rgba(0,0,0,0.8)]">
         {MAIN_NAV.map((item) => {
           const active = isNavActive(pathname, item);
           return (
