@@ -5,6 +5,7 @@ import { ETS_2026_LISTENING_KEYS, type KeyQuestion } from "@/lib/content/ets-202
 import { ETS_2026_READING_KEYS } from "@/lib/content/ets-2026-reading-keys";
 import { ETS_2024_LISTENING_KEYS } from "@/lib/content/ets-2024-listening-keys";
 import { matchSection, questionText } from "@/lib/listening-key-match";
+import { tagQuestionsSoon } from "@/lib/services/tagging/run";
 import type { TestPart } from "@/generated/prisma/enums";
 
 export type KeySection = "listening" | "reading" | "listening-2024";
@@ -296,6 +297,9 @@ export async function applyListeningKeyImport(plan: ImportPlan, { updateAnswers,
   }
 
   await db.$transaction(writes);
+  // New explanations/transcripts (often on the passage, which the scheduled
+  // stale pass can't see) change what the labeller reads — relabel now.
+  tagQuestionsSoon([...rows.map((r) => r.questionId), ...created.map((c) => c.id)]);
   return { updatedQuestions: rows.length, updatedPassages: passagesDone.size, updatedAnswers, movedParts, reordered, createdQuestions: created.length };
 }
 

@@ -112,7 +112,7 @@ export function DashboardHero({
         {/* Right: today's goal ring, streak and the last 14 days */}
         <div
           data-tour="dashboard-goals"
-          className="flex w-full flex-col items-center justify-between gap-4 self-start rounded-[1.75rem] bg-white/85 p-5 shadow-soft ring-1 ring-black/5 md:w-auto md:self-stretch dark:bg-[#06100d]/85 dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.06)] dark:ring-white/10"
+          className="flex w-full flex-col items-center justify-between gap-4 self-start rounded-[1.75rem] bg-[color-mix(in_srgb,var(--scrim)_80%,transparent)] p-5 shadow-soft ring-1 ring-black/5 backdrop-blur-xl md:w-auto md:self-stretch dark:bg-[color-mix(in_srgb,var(--scrim)_50%,transparent)] dark:shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] dark:ring-white/10"
         >
           <ProgressRing
             value={todayPercent}
