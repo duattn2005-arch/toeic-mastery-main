@@ -15,8 +15,6 @@
 
 # next.js
 /.next/
-/.next-a/
-/.next-b/
 /out/
 
 # local-dev-only file uploads (UPLOADS_DIR pointed at public/ so `next dev` serves them)
