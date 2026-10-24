@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import type { AmbientSoundId } from "@/lib/services/ambient-sound-engine";
 
 export interface YouTubeTrack {
   id: string; // YouTube video id
@@ -12,6 +13,12 @@ interface AmbientState {
   masterVolume: number;
   playlist: YouTubeTrack[];
   currentIndex: number;
+  /** Bring the last sounds + YouTube track back whenever the site is opened. */
+  autoPlay: boolean;
+  /** Ambient sounds that were on most recently — what auto-play restores. */
+  lastAmbientIds: AmbientSoundId[];
+  setAutoPlay: (on: boolean) => void;
+  setLastAmbientIds: (ids: AmbientSoundId[]) => void;
   setMasterVolume: (v: number) => void;
   addTrack: (track: YouTubeTrack) => void;
   removeTrack: (id: string) => void;
@@ -26,6 +33,8 @@ interface AmbientState {
  * audio from starting without a fresh user gesture, so restoring "these were
  * on" after a reload would just show active-looking buttons that aren't
  * actually making sound until clicked again — worse than starting silent.
+ * `lastAmbientIds` is only read when the learner opts into `autoPlay`, and
+ * then started on their first tap/keypress, which browsers do allow.
  */
 export const useAmbientStore = create<AmbientState>()(
   persist(
@@ -33,6 +42,10 @@ export const useAmbientStore = create<AmbientState>()(
       masterVolume: 0.5,
       playlist: [],
       currentIndex: 0,
+      autoPlay: false,
+      lastAmbientIds: [],
+      setAutoPlay: (on) => set({ autoPlay: on }),
+      setLastAmbientIds: (ids) => set({ lastAmbientIds: ids }),
       setMasterVolume: (v) => set({ masterVolume: v }),
       addTrack: (track) =>
         set((state) => {

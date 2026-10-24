@@ -10,6 +10,7 @@ interface YTPlayer {
   playVideo: () => void;
   pauseVideo: () => void;
   loadVideoById: (videoId: string) => void;
+  cueVideoById: (videoId: string) => void;
   setVolume: (volume: number) => void;
   destroy: () => void;
 }
@@ -91,9 +92,13 @@ export function useYouTubePlayer(containerRef: React.RefObject<HTMLDivElement | 
   const loadVideo = React.useCallback((videoId: string) => {
     playerRef.current?.loadVideoById(videoId);
   }, []);
+  /** Loads without starting — for restoring the playlist on page load. */
+  const cueVideo = React.useCallback((videoId: string) => {
+    playerRef.current?.cueVideoById(videoId);
+  }, []);
   const play = React.useCallback(() => playerRef.current?.playVideo(), []);
   const pause = React.useCallback(() => playerRef.current?.pauseVideo(), []);
   const setVolume = React.useCallback((volumePercent: number) => playerRef.current?.setVolume(volumePercent), []);
 
-  return { ready, isPlaying, loadVideo, play, pause, setVolume };
+  return { ready, isPlaying, loadVideo, cueVideo, play, pause, setVolume };
 }

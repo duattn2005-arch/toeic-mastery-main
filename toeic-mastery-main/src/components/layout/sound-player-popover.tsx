@@ -12,9 +12,11 @@ import {
   CloudRainWind,
   ExternalLink,
   Flame,
+  HelpCircle,
   Pause,
   Play,
   Plus,
+  Settings2,
   SkipBack,
   SkipForward,
   Turtle,
@@ -28,6 +30,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAmbientSounds } from "@/hooks/use-ambient-sounds";
 import { useYouTubePlayer } from "@/hooks/use-youtube-player";
@@ -63,7 +66,56 @@ const AMBIENT_SOUNDS: { id: AmbientSoundId; label: string; icon: typeof CloudDri
  * it, per the user's request. */
 const DEFAULT_YOUTUBE_URL = "https://www.youtube.com/watch?v=9kzE8isXlQY";
 
-export function SoundPlayerPopover() {
+/** "What's new" walkthrough of the panel: shown once per account to everyone
+ * (existing learners too) the first time they open it after this update. */
+const GUIDE_DONE_KEY = "tour_sound-player_done";
+const guideKey = (account?: string) => (account ? `${GUIDE_DONE_KEY}:${account.toLowerCase()}` : GUIDE_DONE_KEY);
+type GuideSection = "focus" | "nature" | "youtube" | "settings";
+const GUIDE: { section: GuideSection; title: string; text: string }[] = [
+  { section: "focus", title: "Tiếng ồn tập trung", text: "Bật tiếng ồn Trắng, Hồng hoặc Nâu để che tạp âm xung quanh — rê chuột lên từng nút để xem công dụng." },
+  { section: "nature", title: "Âm thanh thiên nhiên", text: "Bật cùng lúc nhiều âm (mưa + lửa trại…) để tạo không gian riêng, kéo thanh bên dưới để chỉnh âm lượng chung." },
+  { section: "youtube", title: "Nhạc YouTube", text: "Gõ tên bài hoặc dán link. Nhạc vẫn chạy khi bạn chuyển trang và tự tạm dừng khi bài nghe TOEIC phát." },
+  { section: "settings", title: "Tự phát khi vào web", text: "Bật công tắc này để lần sau mở web, âm thanh và bài nhạc bạn dùng gần nhất tự phát lại — khỏi phải chọn lại." },
+];
+
+function readGuideDone(account?: string) {
+  try {
+    return localStorage.getItem(guideKey(account)) === "true";
+  } catch {
+    return true;
+  }
+}
+
+/** The walkthrough card under the highlighted section. */
+function GuideCallout({ step, onNext, onSkip }: { step: number; onNext: () => void; onSkip: () => void }) {
+  const g = GUIDE[step];
+  const last = step === GUIDE.length - 1;
+  return (
+    <div className="relative mt-2.5 rounded-xl bg-primary p-3 text-primary-foreground shadow-lg">
+      <span className="absolute -top-1.5 left-6 size-3 rotate-45 bg-primary" aria-hidden />
+      <p className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wider uppercase">
+        {step === 0 && <span className="rounded-full bg-primary-foreground px-1.5 py-px text-primary">Mới cập nhật</span>}
+        <span className="opacity-80">
+          Hướng dẫn · {step + 1}/{GUIDE.length}
+        </span>
+      </p>
+      <p className="mt-0.5 text-sm font-bold">{g.title}</p>
+      <p className="mt-1 text-xs leading-relaxed opacity-95">{g.text}</p>
+      <div className="mt-2.5 flex items-center justify-end gap-2">
+        {!last && (
+          <button type="button" onClick={onSkip} className="rounded-full px-2.5 py-1 text-xs font-medium opacity-80 hover:opacity-100">
+            Bỏ qua
+          </button>
+        )}
+        <button type="button" onClick={onNext} className="rounded-full bg-primary-foreground px-3 py-1 text-xs font-bold text-primary shadow-sm">
+          {last ? "Đã hiểu" : "Tiếp"}
+        </button>
+      </div>
+    </div>
+  );
+}
+
+export function SoundPlayerPopover({ accountKey }: { accountKey?: string }) {
   const masterVolume = useAmbientStore((s) => s.masterVolume);
   const setMasterVolume = useAmbientStore((s) => s.setMasterVolume);
   const playlist = useAmbientStore((s) => s.playlist);
@@ -71,6 +123,20 @@ export function SoundPlayerPopover() {
   const setCurrentIndex = useAmbientStore((s) => s.setCurrentIndex);
   const addTrack = useAmbientStore((s) => s.addTrack);
   const removeTrack = useAmbientStore((s) => s.removeTrack);
+  const autoPlay = useAmbientStore((s) => s.autoPlay);
+  const setAutoPlay = useAmbientStore((s) => s.setAutoPlay);
+  const lastAmbientIds = useAmbientStore((s) => s.lastAmbientIds);
+  const setLastAmbientIds = useAmbientStore((s) => s.setLastAmbientIds);
+  const [showSettings, setShowSettings] = React.useState(false);
+  const [guideStep, setGuideStep] = React.useState<number | null>(null);
+  const guideSection = guideStep === null ? null : GUIDE[guideStep].section;
+  /** Drives the "new" dot on the header icon until the guide has been seen. */
+  const [guideSeen, setGuideSeen] = React.useState(true);
+  React.useEffect(() => {
+    // localStorage is only readable after mount.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setGuideSeen(readGuideDone(accountKey));
+  }, [accountKey]);
 
   const { activeIds, toggle, setVolume } = useAmbientSounds(masterVolume);
 
@@ -84,6 +150,8 @@ export function SoundPlayerPopover() {
   const seededDefaultRef = React.useRef(false);
 
   const currentTrack = playlist[currentIndex] ?? null;
+  /** The track persisted from the last visit, as found on mount. */
+  const bootTrackIdRef = React.useRef(currentTrack?.id ?? null);
 
   // Load whichever track is "current" into the player whenever it changes
   // (new track added, prev/next pressed) — but only once the player is
@@ -92,8 +160,12 @@ export function SoundPlayerPopover() {
   React.useEffect(() => {
     if (!yt.ready || !currentTrack) return;
     if (loadedIdRef.current === currentTrack.id) return;
+    const restoring = loadedIdRef.current === null && bootTrackIdRef.current === currentTrack.id;
     loadedIdRef.current = currentTrack.id;
-    yt.loadVideo(currentTrack.id);
+    // The track remembered from last visit only starts by itself when the
+    // learner turned auto-play on; otherwise it just sits ready.
+    if (restoring && !useAmbientStore.getState().autoPlay) yt.cueVideo(currentTrack.id);
+    else yt.loadVideo(currentTrack.id);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- yt is stable across renders
   }, [yt.ready, currentTrack?.id]);
 
@@ -123,6 +195,47 @@ export function SoundPlayerPopover() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- only react to the listening-audio flag; activeIds/toggle/yt are read fresh at the moment it flips
   }, [listeningAudioPlaying]);
+
+  // Remember which sounds are on, for auto-play — but not the ducking
+  // above switching them off for a moment.
+  const seenActiveRef = React.useRef(false);
+  React.useEffect(() => {
+    // Skip the empty list on mount, or it would wipe what auto-play restores.
+    if (!seenActiveRef.current) {
+      seenActiveRef.current = true;
+      return;
+    }
+    if (duckedRef.current) return;
+    setLastAmbientIds(activeIds);
+  }, [activeIds, setLastAmbientIds]);
+
+  const ytRef = React.useRef(yt);
+  React.useEffect(() => {
+    ytRef.current = yt;
+  });
+
+  // Auto-play: browsers only allow sound after the visitor interacts, so the
+  // remembered sounds and track start on the first tap or keypress.
+  const startedRef = React.useRef(false);
+  React.useEffect(() => {
+    if (!useAmbientStore.getState().autoPlay) return;
+    const start = () => {
+      if (startedRef.current) return;
+      startedRef.current = true;
+      remove();
+      if (useListeningAudioStore.getState().playingCount > 0) return;
+      useAmbientStore.getState().lastAmbientIds.forEach((id) => toggle(id));
+      ytRef.current.play();
+    };
+    const remove = () => {
+      window.removeEventListener("pointerdown", start, true);
+      window.removeEventListener("keydown", start, true);
+    };
+    window.addEventListener("pointerdown", start, true);
+    window.addEventListener("keydown", start, true);
+    return remove;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- once per page load
+  }, []);
 
   function handleVolumeChange(value: number[]) {
     const v = value[0] / 100;
@@ -179,12 +292,37 @@ export function SoundPlayerPopover() {
   // afterward. Triggered by the click that opens the panel (a real user
   // gesture), not on page load, so nothing plays without the user's action.
   function handleOpenChange(open: boolean) {
+    if (open && !readGuideDone(accountKey)) setGuideStep(0);
+    if (!open && guideStep !== null) finishGuide();
     if (!open || seededDefaultRef.current || playlist.length > 0) return;
     seededDefaultRef.current = true;
     addTrackFromUrl(DEFAULT_YOUTUBE_URL).catch(() => {
       seededDefaultRef.current = false;
     });
   }
+
+  function finishGuide() {
+    setGuideStep(null);
+    setGuideSeen(true);
+    try {
+      localStorage.setItem(guideKey(accountKey), "true");
+    } catch {
+      // storage unavailable — the guide just shows again next time
+    }
+  }
+  function nextGuide() {
+    if (guideStep === null) return;
+    const next = guideStep + 1;
+    if (next >= GUIDE.length) return finishGuide();
+    setGuideStep(next);
+    if (GUIDE[next].section === "settings") setShowSettings(true);
+  }
+  const highlight = (section: GuideSection) => guideSection === section && "rounded-xl ring-2 ring-primary ring-offset-4 ring-offset-popover";
+  const callout = (section: GuideSection) => guideSection === section && guideStep !== null && <GuideCallout step={guideStep} onNext={nextGuide} onSkip={finishGuide} />;
+  const autoPlaySummary = [
+    ...lastAmbientIds.map((id) => [...FOCUS_NOISES, ...AMBIENT_SOUNDS].find((x) => x.id === id)?.label).filter(Boolean),
+    ...(currentTrack ? [currentTrack.title] : []),
+  ].join(" · ");
 
   function playPrev() {
     if (playlist.length === 0) return;
@@ -212,11 +350,68 @@ export function SoundPlayerPopover() {
 
       <Popover onOpenChange={handleOpenChange}>
         <PopoverTrigger asChild>
-          <Button type="button" variant="ghost" size="icon" className="rounded-full" aria-label="Âm thanh nền">
+          <Button type="button" variant="ghost" size="icon" className="relative rounded-full" aria-label="Âm thanh nền">
             <AudioLines className="size-4" />
+            {!guideSeen && <span className="absolute top-1.5 right-1.5 size-2 rounded-full bg-primary ring-2 ring-background" aria-hidden />}
           </Button>
         </PopoverTrigger>
-        <PopoverContent align="end" className="w-[22rem] rounded-2xl border-border/70 bg-popover/95 p-4 text-popover-foreground shadow-xl backdrop-blur-xl">
+        <PopoverContent align="end" className="max-h-[calc(100dvh-5rem)] w-[22rem] overflow-y-auto rounded-2xl border-border/70 bg-popover/95 p-4 text-popover-foreground shadow-xl backdrop-blur-xl">
+        <div className="-mt-1 mb-2.5 flex items-center justify-between gap-2">
+          <p className="text-sm font-bold">Âm thanh học tập</p>
+          <div className="flex items-center gap-0.5">
+            <button
+              type="button"
+              onClick={() => {
+                setShowSettings(false);
+                setGuideStep(0);
+              }}
+              className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
+              title="Xem hướng dẫn"
+              aria-label="Xem hướng dẫn"
+            >
+              <HelpCircle className="size-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowSettings((v) => !v)}
+              className={cn(
+                "flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground",
+                (showSettings || guideSection === "settings") && "bg-primary/15 text-primary"
+              )}
+              title="Cài đặt"
+              aria-label="Cài đặt âm thanh"
+              aria-expanded={showSettings}
+            >
+              <Settings2 className="size-4" />
+            </button>
+          </div>
+        </div>
+
+        {showSettings && (
+          <div className={cn("mb-3.5", highlight("settings"))}>
+            <div className="rounded-xl border border-border/70 bg-muted/40 p-3">
+              <label className="flex cursor-pointer items-start justify-between gap-3">
+                <span>
+                  <span className="block text-xs font-semibold">Tự phát khi vào web</span>
+                  <span className="mt-0.5 block text-[11px] leading-snug text-muted-foreground">Âm thanh và bài nhạc bạn dùng gần nhất tự phát lại mỗi lần mở web.</span>
+                </span>
+                <Switch checked={autoPlay} onCheckedChange={setAutoPlay} className="mt-0.5" aria-label="Tự phát khi vào web" />
+              </label>
+              {autoPlay && (
+                <div className="mt-2.5 border-t border-border/70 pt-2.5 text-[11px] leading-snug text-muted-foreground">
+                  <p>
+                    <span className="font-semibold text-foreground">Sẽ phát: </span>
+                    {autoPlaySummary || "chưa có — hãy bật một âm thanh hoặc thêm bài nhạc."}
+                  </p>
+                  <p className="mt-1">Trình duyệt chỉ cho phát âm thanh sau khi bạn tương tác, nên nhạc bắt đầu ở lần chạm hoặc nhấn phím đầu tiên.</p>
+                </div>
+              )}
+            </div>
+            {callout("settings")}
+          </div>
+        )}
+
+        <div className={cn(highlight("focus"))}>
         <p className="text-[11px] font-semibold tracking-wider text-muted-foreground">TIẾNG ỒN TẬP TRUNG</p>
         <div className="mt-2 grid grid-cols-3 gap-2">
           {FOCUS_NOISES.map((n) => {
@@ -241,7 +436,11 @@ export function SoundPlayerPopover() {
           })}
         </div>
 
-        <p className="mt-3.5 text-[11px] font-semibold tracking-wider text-muted-foreground">THIÊN NHIÊN</p>
+        </div>
+        {callout("focus")}
+
+        <div className={cn("mt-3.5", highlight("nature"))}>
+        <p className="text-[11px] font-semibold tracking-wider text-muted-foreground">THIÊN NHIÊN</p>
         <div className="mt-2 grid grid-cols-4 gap-2">
           {AMBIENT_SOUNDS.map((s) => {
             const active = activeIds.includes(s.id);
@@ -266,8 +465,11 @@ export function SoundPlayerPopover() {
           <Volume2 className="size-3.5 shrink-0 text-muted-foreground" />
           <Slider value={[Math.round(masterVolume * 100)]} onValueChange={handleVolumeChange} max={100} className="flex-1" />
         </div>
+        </div>
+        {callout("nature")}
 
         <div className="mt-4 border-t border-border/70 pt-3.5">
+          <div className={cn(highlight("youtube"))}>
           <p className="text-[11px] font-semibold tracking-wider text-muted-foreground">YOUTUBE</p>
           <form onSubmit={handleSubmit} className="mt-2 flex gap-1.5">
             <div className="relative flex-1">
@@ -367,6 +569,8 @@ export function SoundPlayerPopover() {
               <SkipForward className="size-4" />
             </button>
           </div>
+          </div>
+          {callout("youtube")}
         </div>
         </PopoverContent>
       </Popover>

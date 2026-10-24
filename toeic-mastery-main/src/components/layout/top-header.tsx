@@ -179,7 +179,7 @@ export function TopHeader({
         )}
         <div data-tour="dashboard-icons" className="flex items-center gap-2">
           <ReminderBell reminder={vocabularyReminder} />
-          <SoundPlayerPopover />
+          <SoundPlayerPopover accountKey={profile.email} />
           <SiteThemeGallery currentThemeId={siteThemeId} isPro={isPro} />
           <ThemeToggle />
         </div>
