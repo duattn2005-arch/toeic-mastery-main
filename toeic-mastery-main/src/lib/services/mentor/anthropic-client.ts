@@ -22,6 +22,25 @@ export const DEFAULT_BACKGROUND_MODEL = "claude-haiku-4-5-20251001";
 export interface MentorChatMessage {
   role: "user" | "assistant";
   content: string;
+  /** Files sent along with the text, base64 — a Part 1 photo, a scanned
+   * Part 7 form, a Listening audio clip. Only background tasks use this.
+   * Anthropic models only take the images; audio needs Gemini. */
+  media?: { mimeType: string; data: string }[];
+}
+
+/** Anthropic's message shape: plain text, or image blocks + text when the message carries images. */
+function toAnthropicMessages(messages: MentorChatMessage[]) {
+  return messages.map((m) =>
+    m.media?.some((f) => f.mimeType.startsWith("image/"))
+      ? {
+          role: m.role,
+          content: [
+            ...m.media.filter((f) => f.mimeType.startsWith("image/")).map((img) => ({ type: "image", source: { type: "base64", media_type: img.mimeType, data: img.data } })),
+            { type: "text", text: m.content },
+          ],
+        }
+      : { role: m.role, content: m.content }
+  );
 }
 
 export interface MentorUsage {
@@ -152,7 +171,7 @@ export async function* streamMentorReply(params: {
 }
 
 /** Non-streamed call on the cheap/fast background-task model tier. */
-export async function completeMentorTask(params: { system?: string; messages: MentorChatMessage[]; maxTokens?: number }): Promise<string> {
+export async function completeMentorTask(params: { system?: string; messages: MentorChatMessage[]; maxTokens?: number; timeoutMs?: number }): Promise<string> {
   const apiKey = requireApiKey();
 
   const res = await fetch(ANTHROPIC_API_URL, {
@@ -166,9 +185,9 @@ export async function completeMentorTask(params: { system?: string; messages: Me
       model: process.env.MENTOR_BACKGROUND_MODEL || DEFAULT_BACKGROUND_MODEL,
       max_tokens: params.maxTokens ?? 512,
       system: params.system,
-      messages: params.messages,
+      messages: toAnthropicMessages(params.messages),
     }),
-    signal: AbortSignal.timeout(20000),
+    signal: AbortSignal.timeout(params.timeoutMs ?? 20000),
   });
 
   if (!res.ok) {

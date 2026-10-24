@@ -38,7 +38,7 @@ function ipBlocked(ip: string) {
  * (127.0.0.1:3000), the database, or anything else on the VPS's network.
  * (A host could still re-resolve between this check and the request; the
  * feature is admin-only, so that narrow window is accepted.) */
-async function assertPublicUrl(raw: string) {
+export async function assertPublicUrl(raw: string) {
   let url: URL;
   try {
     url = new URL(raw);

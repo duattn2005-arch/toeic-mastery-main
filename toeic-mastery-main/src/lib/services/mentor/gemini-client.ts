@@ -142,7 +142,10 @@ function parseRetryDelayMs(bodyText: string): number {
 }
 
 function toGeminiContents(messages: MentorChatMessage[]) {
-  return messages.map((m) => ({ role: m.role === "assistant" ? "model" : "user", parts: [{ text: m.content }] }));
+  return messages.map((m) => ({
+    role: m.role === "assistant" ? "model" : "user",
+    parts: [...(m.media ?? []).map((img) => ({ inlineData: { mimeType: img.mimeType, data: img.data } })), { text: m.content }],
+  }));
 }
 
 /** disableThinking is a separate flag rather than always-on because
