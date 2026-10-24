@@ -150,8 +150,11 @@ export function SoundPlayerPopover({ accountKey }: { accountKey?: string }) {
   const seededDefaultRef = React.useRef(false);
 
   const currentTrack = playlist[currentIndex] ?? null;
-  /** The track persisted from the last visit, as found on mount. */
-  const bootTrackIdRef = React.useRef(currentTrack?.id ?? null);
+  /** Set once the learner picks a track in this page load (search, link,
+   * prev/next). Until then, the track on screen is the one remembered from
+   * last visit — the persisted playlist only hydrates after the first
+   * render, so "what was there on mount" can't tell them apart. */
+  const pickedRef = React.useRef(false);
 
   // Load whichever track is "current" into the player whenever it changes
   // (new track added, prev/next pressed) — but only once the player is
@@ -160,7 +163,7 @@ export function SoundPlayerPopover({ accountKey }: { accountKey?: string }) {
   React.useEffect(() => {
     if (!yt.ready || !currentTrack) return;
     if (loadedIdRef.current === currentTrack.id) return;
-    const restoring = loadedIdRef.current === null && bootTrackIdRef.current === currentTrack.id;
+    const restoring = loadedIdRef.current === null && !pickedRef.current;
     loadedIdRef.current = currentTrack.id;
     // The track remembered from last visit only starts by itself when the
     // learner turned auto-play on; otherwise it just sits ready.
@@ -249,6 +252,7 @@ export function SoundPlayerPopover({ accountKey }: { accountKey?: string }) {
       const res = await fetch(`/api/youtube-oembed?url=${encodeURIComponent(url)}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Không lấy được thông tin video");
+      pickedRef.current = true;
       addTrack({ id: data.id, url, title: data.title, thumbnailUrl: data.thumbnailUrl });
       return true;
     },
@@ -282,6 +286,7 @@ export function SoundPlayerPopover({ accountKey }: { accountKey?: string }) {
   }
 
   function pickResult(r: YouTubeSearchResult) {
+    pickedRef.current = true;
     addTrack({ id: r.id, url: `https://www.youtube.com/watch?v=${r.id}`, title: r.title, thumbnailUrl: r.thumbnailUrl });
     // Picking the track that is already loaded means "play it now".
     if (loadedIdRef.current === r.id) yt.play();
@@ -326,10 +331,12 @@ export function SoundPlayerPopover({ accountKey }: { accountKey?: string }) {
 
   function playPrev() {
     if (playlist.length === 0) return;
+    pickedRef.current = true;
     setCurrentIndex((currentIndex - 1 + playlist.length) % playlist.length);
   }
   function playNext() {
     if (playlist.length === 0) return;
+    pickedRef.current = true;
     setCurrentIndex((currentIndex + 1) % playlist.length);
   }
   function togglePlay() {
