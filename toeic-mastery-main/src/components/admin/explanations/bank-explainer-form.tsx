@@ -13,7 +13,7 @@ export function BankExplainerForm({
   disabled,
 }: {
   parts: { part: string; label: string; todo: number }[];
-  start: (input: { parts: string[]; overwrite: boolean; limit: number }) => Promise<SeoActionResult>;
+  start: (input: { parts: string[]; overwrite: boolean; limit: number; etsOnly: boolean }) => Promise<SeoActionResult>;
   disabled: boolean;
 }) {
   const router = useRouter();
@@ -27,9 +27,10 @@ export function BankExplainerForm({
       className="flex flex-col gap-4"
       onSubmit={(e) => {
         e.preventDefault();
+        const etsOnly = (e.nativeEvent as SubmitEvent).submitter?.getAttribute("value") === "ets";
         if (overwrite && !window.confirm("Viết lại cả những câu ĐÃ có giải thích? Giải thích cũ sẽ bị thay.")) return;
         run(async () => {
-          const result = await start({ parts: [...chosen], overwrite, limit });
+          const result = await start({ parts: [...chosen], overwrite, limit, etsOnly });
           if (result.error) toast.error(result.error);
           else toast.success(result.message ?? "Đã bắt đầu");
           router.refresh();
@@ -71,9 +72,14 @@ export function BankExplainerForm({
           câu <span className="text-xs text-muted-foreground">(0 = tất cả; nên thử 10 câu trước)</span>
         </label>
       </div>
-      <Button type="submit" className="w-fit" disabled={disabled || pending || chosen.size === 0}>
-        {pending && <Loader2 className="size-4 animate-spin" />} Bắt đầu viết giải thích
-      </Button>
+      <div className="flex flex-wrap gap-3">
+        <Button type="submit" value="ets" className="w-fit" disabled={disabled || pending || chosen.size === 0}>
+          {pending && <Loader2 className="size-4 animate-spin" />} Chỉ quét đề ETS (không tốn AI)
+        </Button>
+        <Button type="submit" value="ai" variant="outline" className="w-fit" disabled={disabled || pending || chosen.size === 0}>
+          Quét ETS + AI viết câu còn thiếu
+        </Button>
+      </div>
     </form>
   );
 }

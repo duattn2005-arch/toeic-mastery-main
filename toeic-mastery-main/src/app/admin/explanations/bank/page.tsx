@@ -84,7 +84,7 @@ export default async function BankExplanationsPage() {
       </section>
 
       <section className="rounded-2xl border border-border bg-card p-5 shadow-soft">
-        <h2 className="mb-3 text-sm font-semibold text-muted-foreground">HOẶC ĐỂ AI TRÊN WEB TỰ VIẾT</h2>
+        <h2 className="mb-3 text-sm font-semibold text-muted-foreground">QUÉT ĐỀ ETS / AI VIẾT</h2>
         <BankExplainerForm
           parts={status.map((s) => ({ part: s.part, label: s.part.replace("PART", "Part "), todo: Math.max(s.weak, s.noTranscript) }))}
           start={startBankExplainerAction}

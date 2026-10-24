@@ -155,6 +155,113 @@ function etsMatch(q: BankQuestion) {
   return best && best.score >= 0.8 && best.key.answer === q.correctLabel && best.key.explanationVi.trim().length >= 40 ? best.key : null;
 }
 
+/** Same question in an ETS test already on the web (those carry the book's
+ * explanation/transcript from "Giải thích ETS"). Bank questions were mostly
+ * copied from them, so they share the audio/image file, the transcript,
+ * the passage or the printed text. */
+interface RefQuestion {
+  id: string;
+  part: TestPart;
+  correctLabel: string;
+  explanationVi: string;
+  transcript: string | null;
+  evidenceText: string | null;
+  audio: string | null;
+  images: string[];
+  words: Set<string>;
+  transcriptWords: Set<string>;
+  passageWords: Set<string>;
+  passageTranscript: string | null;
+  distractors: Map<string, string>;
+}
+
+async function loadReferences(parts: TestPart[]): Promise<RefQuestion[]> {
+  const rows = await db.question.findMany({
+    where: { part: { in: parts }, OR: [{ testId: null }, { test: { slug: { not: { startsWith: "practice-pool-" } } } }] },
+    select: QUESTION_SELECT,
+  });
+  return rows
+    .filter((r) => r.explanationVi.trim().length >= 60)
+    .map((r) => {
+      const passageTranscript = hasText(r.passage?.transcript) ? r.passage!.transcript! : null;
+      return {
+        id: r.id,
+        part: r.part,
+        correctLabel: r.correctLabel,
+        explanationVi: r.explanationVi,
+        transcript: hasText(r.transcript) ? r.transcript : null,
+        evidenceText: r.evidenceText,
+        audio: r.passage?.audioUrl ?? r.audioUrl,
+        images: mediaImages(r),
+        words: words(questionText({ prompt: r.prompt, options: r.options })),
+        transcriptWords: words(r.transcript ?? passageTranscript ?? ""),
+        passageWords: words(passageTexts(r).map((t) => t.content).join(" ")),
+        passageTranscript,
+        distractors: new Map(r.options.filter((o) => hasText(o.distractorExplanation)).map((o) => [o.label, o.distractorExplanation!])),
+      };
+    });
+}
+
+function mediaImages(q: BankQuestion) {
+  return [q.imageUrl, q.passage?.imageUrl, ...(q.passage?.imageUrls ?? [])].filter((u): u is string => Boolean(u));
+}
+
+/** Best reference for a bank question, or null. `sameAnswer` false means
+ * the match is clear but the stored answers differ. */
+function refMatch(q: BankQuestion, refs: RefQuestion[]) {
+  const own = words(questionText({ prompt: q.prompt, options: q.options }));
+  const ownTranscript = words(transcriptOf(q));
+  const ownPassage = words(passageTexts(q).map((t) => t.content).join(" "));
+  const audio = q.passage?.audioUrl ?? q.audioUrl;
+  const images = new Set(mediaImages(q));
+  let best: { score: number; ref: RefQuestion } | null = null;
+  for (const r of refs) {
+    if (r.part !== q.part) continue;
+    const text = similarity(own, r.words);
+    const transcript = similarity(ownTranscript, r.transcriptWords);
+    const passage = similarity(ownPassage, r.passageWords);
+    const media = Boolean(audio && audio === r.audio) || r.images.some((u) => images.has(u));
+    const textOnlyAudio = own.size < 6; // Part 1/2 stored with audio only
+    const ok =
+      (text >= 0.85 && own.size >= 6 && (ownPassage.size === 0 || passage >= 0.5)) ||
+      ((passage >= 0.7 || transcript >= 0.7 || media) && (text >= 0.6 || textOnlyAudio)) ||
+      (textOnlyAudio && transcript >= 0.8);
+    if (!ok) continue;
+    const score = text + passage + transcript + (media ? 1 : 0);
+    if (!best || score > best.score) best = { score, ref: r };
+  }
+  return best ? { ref: best.ref, sameAnswer: best.ref.correctLabel === q.correctLabel } : null;
+}
+
+/** Copies explanation, transcript, evidence and distractor notes from an
+ * ETS reference, only into fields that need them. */
+async function copyFromReference(q: BankQuestion, ref: RefQuestion, overwrite: boolean) {
+  const data: { explanationVi?: string; evidenceText?: string; transcript?: string } = {};
+  if (overwrite || weakExplanation(q)) data.explanationVi = ref.explanationVi;
+  if (hasText(ref.evidenceText) && (overwrite || !hasText(q.evidenceText))) data.evidenceText = ref.evidenceText!;
+  if (!hasText(q.transcript) && ref.transcript && !q.passage) data.transcript = ref.transcript;
+  if (Object.keys(data).length) await db.question.update({ where: { id: q.id }, data });
+  let transcripts = data.transcript ? 1 : 0;
+  if (q.passage && !hasText(q.passage.transcript) && LISTENING.has(q.part)) {
+    const t = ref.passageTranscript ?? ref.transcript;
+    if (t) {
+      await db.passage.update({ where: { id: q.passage.id }, data: { transcript: t } });
+      q.passage.transcript = t;
+      transcripts++;
+    }
+  }
+  for (const o of q.options) {
+    const why = ref.distractors.get(o.label);
+    if (o.label !== q.correctLabel && why && (overwrite || !hasText(o.distractorExplanation))) {
+      await db.questionOption.update({ where: { id: o.id }, data: { distractorExplanation: why } });
+    }
+  }
+  // Keep the in-memory row current so later steps see what was filled in.
+  if (data.explanationVi) q.explanationVi = data.explanationVi;
+  if (data.transcript) q.transcript = data.transcript;
+  return transcripts;
+}
+
 // ---------------------------------------------------------------------------
 // Step 2: the model
 // ---------------------------------------------------------------------------
@@ -354,6 +461,8 @@ export interface BankJobOptions {
   /** Stop after this many questions (0 = all). */
   limit: number;
   adminId: string;
+  /** Only copy from ETS — never call the model. */
+  etsOnly: boolean;
 }
 
 /** Runs the whole job. Returns false when one is already running. */
@@ -367,20 +476,49 @@ export async function runBankExplainer(options: BankJobOptions): Promise<boolean
     job.total = todo.length;
     say(`Bắt đầu: ${todo.length} câu cần xử lý (${options.parts.map((p) => p.replace("PART", "Part ")).join(", ")}).`);
 
-    // Step 1 — ETS book explanations where the question is a known ETS one.
+    // Step 1 — ETS: the same question in an ETS test already on the web,
+    // else the ETS book key files. No AI, no tokens.
+    say("Đang quét khớp với đề ETS…");
+    const refs = await loadReferences(options.parts);
     const rest: BankQuestion[] = [];
+    let mismatched = 0;
     for (const q of todo) {
-      const key = !missingTranscript(q) && weakExplanation(q) ? etsMatch(q) : null;
-      if (!key) {
-        rest.push(q);
+      const hit = refMatch(q, refs);
+      if (hit && !hit.sameAnswer) {
+        mismatched++;
+        const note = `Trùng câu ETS nhưng đáp án khác: ngân hàng ${q.correctLabel}, đề ETS ${hit.ref.correctLabel} (câu ETS ${hit.ref.id.slice(0, 8)})`;
+        job.flagged.push({ id: q.id, part: q.part, note });
+        const open = await db.questionReport.findFirst({ where: { questionId: q.id, userId: options.adminId, status: "OPEN", reason: "wrong_answer" }, select: { id: true } });
+        if (!open) await db.questionReport.create({ data: { questionId: q.id, userId: options.adminId, reason: "wrong_answer", message: `[Kiểm tra tự động] ${note}` } });
+        job.done++;
         continue;
       }
-      await db.question.update({ where: { id: q.id }, data: { explanationVi: key.explanationVi } });
-      job.fromEts++;
-      job.done++;
-      job.written.push({ id: q.id, part: q.part });
+      let fromEts = false;
+      if (hit) {
+        job.transcripts += await copyFromReference(q, hit.ref, options.overwrite);
+        fromEts = true;
+      } else if (weakExplanation(q) || options.overwrite) {
+        const key = etsMatch(q);
+        if (key) {
+          await db.question.update({ where: { id: q.id }, data: { explanationVi: key.explanationVi } });
+          q.explanationVi = key.explanationVi;
+          fromEts = true;
+        }
+      }
+      if (fromEts) {
+        job.fromEts++;
+        job.written.push({ id: q.id, part: q.part });
+      }
+      if (weakExplanation(q) || missingTranscript(q)) rest.push(q);
+      else job.done++;
     }
-    if (job.fromEts) say(`Lấy ${job.fromEts} giải thích từ sách ETS (câu trùng nội dung và đáp án).`);
+    say(`ETS: ${job.fromEts} câu lấy giải thích từ đề ETS, ${job.transcripts} transcript, ${mismatched} câu trùng nhưng khác đáp án, ${rest.length} câu không khớp.`);
+
+    if (options.etsOnly) {
+      for (const q of rest) job.failed.push({ id: q.id, part: q.part, note: weakExplanation(q) ? "Không khớp câu ETS nào" : "Thiếu transcript" });
+      job.done = job.total;
+      rest.length = 0;
+    }
 
     // Step 2 — the model, unit by unit.
     const units = buildUnits(rest);
