@@ -77,3 +77,38 @@ export function BankExplainerForm({
     </form>
   );
 }
+
+/** Upload of a JSON file with explanations written outside the app. */
+export function BankImportForm({ action }: { action: (json: string, overwrite: boolean) => Promise<SeoActionResult> }) {
+  const router = useRouter();
+  const [overwrite, setOverwrite] = React.useState(false);
+  const [pending, run] = React.useTransition();
+  return (
+    <div className="flex flex-wrap items-center gap-4 text-sm">
+      <label className="inline-flex cursor-pointer items-center gap-2 rounded-xl bg-primary px-4 py-2 font-medium text-primary-foreground hover:bg-primary/90">
+        {pending && <Loader2 className="size-4 animate-spin" />} Nhập giải thích (file .json)
+        <input
+          type="file"
+          accept="application/json,.json"
+          className="hidden"
+          disabled={pending}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (!file) return;
+            run(async () => {
+              const result = await action(await file.text(), overwrite);
+              if (result.error) toast.error(result.error);
+              else toast.success(result.message ?? "Đã nhập", { duration: 15000 });
+              router.refresh();
+            });
+          }}
+        />
+      </label>
+      <label className="flex items-center gap-2">
+        <input type="checkbox" checked={overwrite} onChange={(e) => setOverwrite(e.target.checked)} />
+        Thay cả giải thích đã có
+      </label>
+    </div>
+  );
+}

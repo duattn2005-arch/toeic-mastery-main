@@ -415,3 +415,118 @@ export async function runBankExplainer(options: BankJobOptions): Promise<boolean
   }
   return true;
 }
+
+// ---------------------------------------------------------------------------
+// Export / import (explanations written outside the app)
+// ---------------------------------------------------------------------------
+
+function absolute(url: string | null | undefined) {
+  if (!url) return null;
+  try {
+    return new URL(url, process.env.NEXT_PUBLIC_SITE_URL).toString();
+  } catch {
+    return url;
+  }
+}
+
+/** The banks as plain JSON; by default only questions that still need an
+ * explanation or a transcript. */
+export async function exportBank(all: boolean) {
+  const questions = await loadQuestions(BANK_PARTS);
+  const picked = all ? questions : questions.filter((q) => weakExplanation(q) || missingTranscript(q));
+  return {
+    exportedAt: new Date().toISOString(),
+    howToReturn:
+      'Trả về mảng [{"id","answer","explanationVi","distractors":{"A":"..."},"evidence","transcript","passageTranscript"}] — "answer" phải trùng đáp án đang lưu, nếu không câu đó bị bỏ qua.',
+    questions: picked.map((q) => ({
+      id: q.id,
+      part: q.part,
+      order: q.orderIndex,
+      passageId: q.passageId,
+      prompt: q.prompt,
+      options: q.options.map((o) => ({ label: o.label, content: o.content, distractorExplanation: o.distractorExplanation })),
+      answer: q.correctLabel,
+      imageUrl: absolute(q.imageUrl),
+      audioUrl: absolute(q.audioUrl),
+      transcript: q.transcript,
+      explanationVi: q.explanationVi,
+      evidenceText: q.evidenceText,
+      needs: { explanation: weakExplanation(q), transcript: missingTranscript(q) },
+      passage: q.passage
+        ? {
+            texts: q.passage.texts,
+            imageUrls: [...new Set([...(q.passage.imageUrls ?? []), ...(q.passage.imageUrl ? [q.passage.imageUrl] : [])])].map(absolute),
+            audioUrl: absolute(q.passage.audioUrl),
+            transcript: q.passage.transcript,
+          }
+        : null,
+    })),
+  };
+}
+
+export interface ImportedExplanation {
+  id?: unknown;
+  answer?: unknown;
+  explanationVi?: unknown;
+  distractors?: unknown;
+  evidence?: unknown;
+  transcript?: unknown;
+  passageTranscript?: unknown;
+}
+
+/** Writes explanations prepared outside the app. Same rules as the AI job:
+ * only bank questions, the answer must match the stored key (which is never
+ * changed), transcripts are only filled in where empty, evidence must be a
+ * quote from the passage/transcript. */
+export async function importBankExplanations(items: ImportedExplanation[], overwrite: boolean) {
+  const questions = new Map((await loadQuestions(BANK_PARTS)).map((q) => [q.id, q]));
+  const result = { written: 0, transcripts: 0, skipped: [] as string[] };
+  const str = (v: unknown) => (typeof v === "string" ? v.trim() : "");
+  const passagesDone = new Set<string>();
+
+  for (const item of items) {
+    const id = str(item.id);
+    const q = questions.get(id);
+    if (!q) {
+      result.skipped.push(`${id.slice(0, 8) || "?"}: không phải câu trong ngân hàng`);
+      continue;
+    }
+    if (str(item.answer).toUpperCase() !== q.correctLabel) {
+      result.skipped.push(`${id.slice(0, 8)}: đáp án trong file (${str(item.answer) || "trống"}) khác đáp án đang lưu (${q.correctLabel})`);
+      continue;
+    }
+
+    const passageTranscript = str(item.passageTranscript);
+    if (passageTranscript && q.passage && !hasText(q.passage.transcript) && !passagesDone.has(q.passage.id)) {
+      await db.passage.update({ where: { id: q.passage.id }, data: { transcript: passageTranscript } });
+      passagesDone.add(q.passage.id);
+      result.transcripts++;
+    }
+
+    const data: { explanationVi?: string; evidenceText?: string; transcript?: string } = {};
+    const transcript = str(item.transcript);
+    if (transcript && !hasText(q.transcript)) {
+      data.transcript = transcript;
+      result.transcripts++;
+    }
+    const explanation = str(item.explanationVi);
+    if (explanation && (overwrite || weakExplanation(q))) {
+      const body = explanation.replace(/^đáp án( đúng)?\s*:?\s*\(?[A-D]\)?\.?\s*\n*/i, "");
+      data.explanationVi = `Đáp án đúng: ${q.correctLabel}\n\n${body}`;
+    }
+    const evidence = str(item.evidence);
+    const source = [passageTexts(q).map((t) => t.content).join("\n"), q.passage?.transcript ?? "", passageTranscript, q.transcript ?? "", transcript].join("\n");
+    if (evidence && (overwrite || !hasText(q.evidenceText)) && normalizeSpace(source).includes(normalizeSpace(evidence))) data.evidenceText = evidence;
+    if (Object.keys(data).length) await db.question.update({ where: { id: q.id }, data });
+
+    const distractors = (item.distractors && typeof item.distractors === "object" ? item.distractors : {}) as Record<string, unknown>;
+    for (const o of q.options) {
+      const why = str(distractors[o.label]);
+      if (o.label !== q.correctLabel && why && (overwrite || !hasText(o.distractorExplanation))) {
+        await db.questionOption.update({ where: { id: o.id }, data: { distractorExplanation: why.slice(0, 1000) } });
+      }
+    }
+    if (data.explanationVi) result.written++;
+  }
+  return result;
+}

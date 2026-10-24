@@ -3,8 +3,8 @@ import Link from "next/link";
 import { requireAdmin } from "@/lib/auth";
 import { PART_META } from "@/lib/constants/toeic";
 import { bankStatus, currentBankJob } from "@/lib/services/explanations/bank-explainer";
-import { startBankExplainerAction, stopBankExplainerAction } from "@/lib/actions/admin-bank-explanations";
-import { BankExplainerForm } from "@/components/admin/explanations/bank-explainer-form";
+import { importBankExplanationsAction, startBankExplainerAction, stopBankExplainerAction } from "@/lib/actions/admin-bank-explanations";
+import { BankExplainerForm, BankImportForm } from "@/components/admin/explanations/bank-explainer-form";
 import { SeoActionButton, SeoAutoRefresh } from "@/components/admin/seo/seo-controls";
 
 export const metadata: Metadata = { title: "Giải thích ngân hàng câu hỏi" };
@@ -70,7 +70,21 @@ export default async function BankExplanationsPage() {
         </table>
       </div>
 
+      <section className="flex flex-col gap-3 rounded-2xl border border-border bg-card p-5 shadow-soft">
+        <h2 className="text-sm font-semibold text-muted-foreground">TẢI DỮ LIỆU / NHẬP GIẢI THÍCH SOẠN SẴN</h2>
+        <div className="flex flex-wrap items-center gap-4 text-sm">
+          <a href="/api/admin/bank-export" className="rounded-xl border border-border px-4 py-2 font-medium hover:bg-muted">
+            Tải dữ liệu câu cần làm (.json)
+          </a>
+          <a href="/api/admin/bank-export?all=1" className="text-primary hover:underline">
+            Tải toàn bộ ngân hàng
+          </a>
+        </div>
+        <BankImportForm action={importBankExplanationsAction} />
+      </section>
+
       <section className="rounded-2xl border border-border bg-card p-5 shadow-soft">
+        <h2 className="mb-3 text-sm font-semibold text-muted-foreground">HOẶC ĐỂ AI TRÊN WEB TỰ VIẾT</h2>
         <BankExplainerForm
           parts={status.map((s) => ({ part: s.part, label: s.part.replace("PART", "Part "), todo: Math.max(s.weak, s.noTranscript) }))}
           start={startBankExplainerAction}
