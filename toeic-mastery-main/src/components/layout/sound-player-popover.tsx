@@ -78,6 +78,9 @@ const GUIDE: { section: GuideSection; title: string; text: string }[] = [
   { section: "settings", title: "Tự phát khi vào web", text: "Bật công tắc này để lần sau mở web, âm thanh và bài nhạc bạn dùng gần nhất tự phát lại — khỏi phải chọn lại." },
 ];
 
+const FULL_ORDER = GUIDE.map((_, i) => i);
+const SETTINGS_FIRST = [GUIDE.findIndex((g) => g.section === "settings"), ...FULL_ORDER.filter((i) => GUIDE[i].section !== "settings")];
+
 function readGuideDone(account?: string) {
   try {
     return localStorage.getItem(guideKey(account)) === "true";
@@ -87,16 +90,16 @@ function readGuideDone(account?: string) {
 }
 
 /** The walkthrough card under the highlighted section. */
-function GuideCallout({ step, onNext, onSkip }: { step: number; onNext: () => void; onSkip: () => void }) {
-  const g = GUIDE[step];
-  const last = step === GUIDE.length - 1;
+function GuideCallout({ order, step, onNext, onSkip }: { order: number[]; step: number; onNext: () => void; onSkip: () => void }) {
+  const g = GUIDE[order[step]];
+  const last = step === order.length - 1;
   return (
     <div className="relative mt-2.5 rounded-xl bg-primary p-3 text-primary-foreground shadow-lg">
       <span className="absolute -top-1.5 left-6 size-3 rotate-45 bg-primary" aria-hidden />
       <p className="flex items-center gap-1.5 text-[10px] font-semibold tracking-wider uppercase">
         {step === 0 && <span className="rounded-full bg-primary-foreground px-1.5 py-px text-primary">Mới cập nhật</span>}
         <span className="opacity-80">
-          Hướng dẫn · {step + 1}/{GUIDE.length}
+          Hướng dẫn · {step + 1}/{order.length}
         </span>
       </p>
       <p className="mt-0.5 text-sm font-bold">{g.title}</p>
@@ -129,7 +132,10 @@ export function SoundPlayerPopover({ accountKey }: { accountKey?: string }) {
   const setLastAmbientIds = useAmbientStore((s) => s.setLastAmbientIds);
   const [showSettings, setShowSettings] = React.useState(false);
   const [guideStep, setGuideStep] = React.useState<number | null>(null);
-  const guideSection = guideStep === null ? null : GUIDE[guideStep].section;
+  /** GUIDE indexes in the order shown — existing learners get the new
+   * setting first (they know the rest). */
+  const [guideOrder, setGuideOrder] = React.useState<number[]>(FULL_ORDER);
+  const guideSection = guideStep === null ? null : GUIDE[guideOrder[guideStep]].section;
   /** Drives the "new" dot on the header icon until the guide has been seen. */
   const [guideSeen, setGuideSeen] = React.useState(true);
   React.useEffect(() => {
@@ -297,7 +303,9 @@ export function SoundPlayerPopover({ accountKey }: { accountKey?: string }) {
   // afterward. Triggered by the click that opens the panel (a real user
   // gesture), not on page load, so nothing plays without the user's action.
   function handleOpenChange(open: boolean) {
-    if (open && !readGuideDone(accountKey)) setGuideStep(0);
+    // Someone who has opened the panel before already has a playlist (the
+    // default track is added on the first open).
+    if (open && !readGuideDone(accountKey)) startGuide(useAmbientStore.getState().playlist.length > 0 ? SETTINGS_FIRST : FULL_ORDER);
     if (!open && guideStep !== null) finishGuide();
     if (!open || seededDefaultRef.current || playlist.length > 0) return;
     seededDefaultRef.current = true;
@@ -315,15 +323,20 @@ export function SoundPlayerPopover({ accountKey }: { accountKey?: string }) {
       // storage unavailable — the guide just shows again next time
     }
   }
+  function startGuide(order: number[]) {
+    setGuideOrder(order);
+    setGuideStep(0);
+    setShowSettings(GUIDE[order[0]].section === "settings");
+  }
   function nextGuide() {
     if (guideStep === null) return;
     const next = guideStep + 1;
-    if (next >= GUIDE.length) return finishGuide();
+    if (next >= guideOrder.length) return finishGuide();
     setGuideStep(next);
-    if (GUIDE[next].section === "settings") setShowSettings(true);
+    if (GUIDE[guideOrder[next]].section === "settings") setShowSettings(true);
   }
   const highlight = (section: GuideSection) => guideSection === section && "rounded-xl ring-2 ring-primary ring-offset-4 ring-offset-popover";
-  const callout = (section: GuideSection) => guideSection === section && guideStep !== null && <GuideCallout step={guideStep} onNext={nextGuide} onSkip={finishGuide} />;
+  const callout = (section: GuideSection) => guideSection === section && guideStep !== null && <GuideCallout order={guideOrder} step={guideStep} onNext={nextGuide} onSkip={finishGuide} />;
   const autoPlaySummary = [
     ...lastAmbientIds.map((id) => [...FOCUS_NOISES, ...AMBIENT_SOUNDS].find((x) => x.id === id)?.label).filter(Boolean),
     ...(currentTrack ? [currentTrack.title] : []),
@@ -368,10 +381,7 @@ export function SoundPlayerPopover({ accountKey }: { accountKey?: string }) {
           <div className="flex items-center gap-0.5">
             <button
               type="button"
-              onClick={() => {
-                setShowSettings(false);
-                setGuideStep(0);
-              }}
+              onClick={() => startGuide(FULL_ORDER)}
               className="flex size-7 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground"
               title="Xem hướng dẫn"
               aria-label="Xem hướng dẫn"
