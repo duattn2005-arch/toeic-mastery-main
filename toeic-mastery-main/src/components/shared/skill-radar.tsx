@@ -11,7 +11,7 @@ import type { PartAccuracy } from "@/lib/services/recommendation";
  * axis label carries the real percentage, so the stretched scale never hides
  * the actual number.
  */
-export function SkillRadar({ data }: { data: PartAccuracy[] }) {
+export function SkillRadar({ data, height = 340 }: { data: PartAccuracy[]; height?: number }) {
   const chartData = data.map((d) => ({
     part: PART_META[d.part].shortLabel,
     accuracy: Math.round(d.accuracy * 100),
@@ -21,7 +21,7 @@ export function SkillRadar({ data }: { data: PartAccuracy[] }) {
   const domainMax = Math.min(100, Math.max(40, Math.ceil((best + 5) / 20) * 20));
 
   return (
-    <ResponsiveContainer width="100%" height={340}>
+    <ResponsiveContainer width="100%" height={height}>
       <RadarChart data={chartData} outerRadius="78%" margin={{ top: 8, right: 24, bottom: 8, left: 24 }}>
         <defs>
           <radialGradient id="skill-radar-fill" cx="50%" cy="50%" r="60%">

@@ -56,6 +56,12 @@ export async function getDashboardData(userId: string) {
       getVocabularyReminder(userId),
     ]);
 
+  // A finished full test (not a Part/retry subset) is what makes the
+  // estimated score meaningful; before that the dashboard leads with skills.
+  const fullTestsDone = await db.attempt.count({
+    where: { userId, status: "SUBMITTED", parts: { isEmpty: true }, questionIds: { isEmpty: true }, test: { isFullTest: true } },
+  });
+
   const wrongTotalAgg = await db.attemptAnswer.count({
     where: { attempt: { userId, status: "SUBMITTED" }, isCorrect: false },
   });
@@ -82,6 +88,7 @@ export async function getDashboardData(userId: string) {
     profile,
     xpProgress,
     todayXp,
+    hasFullTest: fullTestsDone > 0,
     predictedScore: latestScore
       ? { listening: latestScore.listeningScore, reading: latestScore.readingScore, total: latestScore.totalScore }
       : null,

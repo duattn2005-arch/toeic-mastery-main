@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, BookOpen, CheckCircle2, Clock3, Layers, Lightbulb, ListChecks, Radar as RadarIcon, Timer } from "lucide-react";
+import { BookOpen, CheckCircle2, Clock3, Layers, Lightbulb, ListChecks, Radar as RadarIcon, Timer } from "lucide-react";
 
 import { requireUser } from "@/lib/auth";
 import { getDashboardData } from "@/lib/data/dashboard";
@@ -17,6 +17,7 @@ import { EstimatedScoreCard } from "@/components/dashboard/estimated-score-card"
 import { LevelAvatarCard } from "@/components/dashboard/level-avatar-card";
 import { DailyQuests, type Quest } from "@/components/dashboard/daily-quests";
 import { DashboardTour } from "@/components/dashboard/dashboard-tour";
+import { AnalysisLink } from "@/components/dashboard/analysis-link";
 import { StudyMascot } from "@/components/mascot/study-mascot";
 import type { MascotState } from "@/components/mascot/types";
 import type { DashboardData } from "@/lib/data/dashboard";
@@ -119,6 +120,56 @@ export default async function DashboardPage() {
   const due = data.vocabularyReminder.dueTodayCount;
   const heroActions = getHeroActions(data, score);
   const hasSkillData = data.partAccuracies.some((p) => p.attempted > 0);
+  // Until a full test is done the score is a rough guess, so the skill
+  // radar (built from every answer) takes the top spot and the score card
+  // moves down next to the vocabulary panel.
+  const hasFullTest = data.hasFullTest;
+  const compact = !hasFullTest;
+
+  const scoreCard = (
+    <EstimatedScoreCard
+      score={score ?? null}
+      targetScore={data.profile.targetScore}
+      listening={data.predictedScore?.listening ?? null}
+      reading={data.predictedScore?.reading ?? null}
+    />
+  );
+
+  const skillPanel = (
+    <section className={`${PANEL} flex h-full flex-col`}>
+      <SectionHeader icon={RadarIcon} title="Phân tích kỹ năng" action={compact ? undefined : <AnalysisLink />} />
+      {hasSkillData ? (
+        <Link
+          href="/analytics"
+          aria-label="Mở phân tích năng lực chi tiết"
+          className="block rounded-3xl transition hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <SkillRadar data={data.partAccuracies} height={compact ? 250 : 340} />
+        </Link>
+      ) : (
+        <div className="relative">
+          <div className="pointer-events-none opacity-30 blur-[1px]" aria-hidden>
+            <SkillRadar data={data.partAccuracies} height={compact ? 250 : 340} />
+          </div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center">
+            <p className="text-base font-bold">Biểu đồ đang chờ bài làm đầu tiên</p>
+            <p className="max-w-[34ch] text-sm text-muted-foreground">Làm một đề bất kỳ để xem bạn mạnh, yếu ở Part nào.</p>
+            <Link
+              href="/practice"
+              className="mt-1 inline-flex h-10 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors duration-300 hover:bg-[var(--primary-hover)]"
+            >
+              Chọn đề luyện
+            </Link>
+          </div>
+        </div>
+      )}
+      {compact && (
+        <div className="mt-auto pt-3">
+          <AnalysisLink block />
+        </div>
+      )}
+    </section>
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-5">
@@ -150,14 +201,7 @@ export default async function DashboardPage() {
       </div>
 
       <div className={`grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-12 ${REVEAL[1]}`}>
-        <div className="lg:col-span-4">
-          <EstimatedScoreCard
-            score={score ?? null}
-            targetScore={data.profile.targetScore}
-            listening={data.predictedScore?.listening ?? null}
-            reading={data.predictedScore?.reading ?? null}
-          />
-        </div>
+        <div className="lg:col-span-4">{hasFullTest ? scoreCard : skillPanel}</div>
         <div className="lg:col-span-4">
           <DailyQuests quests={getQuests(data, todayMinutes, dailyGoal)} />
         </div>
@@ -181,46 +225,9 @@ export default async function DashboardPage() {
       )}
 
       <div className={`grid grid-cols-1 gap-5 lg:grid-cols-12 ${REVEAL[3]}`}>
-        <section className={`${PANEL} lg:col-span-7`}>
-          <SectionHeader
-            icon={RadarIcon}
-            title="Phân tích kỹ năng"
-            action={
-              <Link href="/analytics" className="inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
-                Xem phân tích chi tiết <ArrowRight className="size-4" />
-              </Link>
-            }
-          />
-          {hasSkillData ? (
-            <Link
-              href="/analytics"
-              aria-label="Mở phân tích năng lực chi tiết"
-              className="block rounded-3xl transition hover:bg-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            >
-              <SkillRadar data={data.partAccuracies} />
-            </Link>
-          ) : (
-            <div className="relative">
-              <div className="pointer-events-none opacity-30 blur-[1px]" aria-hidden>
-                <SkillRadar data={data.partAccuracies} />
-              </div>
-              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-center">
-                <p className="text-base font-bold">Biểu đồ đang chờ bài làm đầu tiên</p>
-                <p className="max-w-[34ch] text-sm text-muted-foreground">
-                  Làm một đề bất kỳ để xem bạn mạnh, yếu ở Part nào.
-                </p>
-                <Link
-                  href="/practice"
-                  className="mt-1 inline-flex h-10 items-center rounded-full bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors duration-300 hover:bg-[var(--primary-hover)]"
-                >
-                  Chọn đề luyện
-                </Link>
-              </div>
-            </div>
-          )}
-        </section>
+        {hasFullTest ? <div className="lg:col-span-7">{skillPanel}</div> : <div className="lg:col-span-5">{scoreCard}</div>}
 
-        <section className={`${PANEL} lg:col-span-5`}>
+        <section className={`${PANEL} ${hasFullTest ? "lg:col-span-5" : "lg:col-span-7"}`}>
           <SectionHeader icon={Layers} title="Từ cần ôn hôm nay" />
           {(data.vocabularyReminder.learningCount > 0 || data.vocabularyReminder.masteredCount > 0) && (
             <div className="mb-3 flex flex-wrap gap-2 text-xs">
