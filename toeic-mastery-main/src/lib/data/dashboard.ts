@@ -56,11 +56,18 @@ export async function getDashboardData(userId: string) {
       getVocabularyReminder(userId),
     ]);
 
-  // A finished full test (not a Part/retry subset) is what makes the
-  // estimated score meaningful; before that the dashboard leads with skills.
-  const fullTestsDone = await db.attempt.count({
+  // A real full test (not a Part/retry subset, and actually answered —
+  // at least half of it) is what makes the estimated score meaningful; a
+  // full test submitted almost blank scores ~10 and means nothing. Until
+  // then the dashboard leads with the skills radar.
+  const MIN_ANSWERED = 100;
+  const fullTests = await db.attempt.findMany({
     where: { userId, status: "SUBMITTED", parts: { isEmpty: true }, questionIds: { isEmpty: true }, test: { isFullTest: true } },
+    orderBy: { createdAt: "desc" },
+    take: 20,
+    select: { _count: { select: { answers: { where: { selectedLabel: { not: null } } } } } },
   });
+  const fullTestsDone = fullTests.filter((a) => a._count.answers >= MIN_ANSWERED).length;
 
   const wrongTotalAgg = await db.attemptAnswer.count({
     where: { attempt: { userId, status: "SUBMITTED" }, isCorrect: false },
