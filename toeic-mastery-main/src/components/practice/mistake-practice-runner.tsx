@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { logPracticeAnswerAction } from "@/lib/actions/practice-answers";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,9 @@ import { PART_META } from "@/lib/constants/toeic";
 import type { MistakeQuestion } from "@/lib/data/mistakes";
 import { useDictionaryHintTutorial } from "@/hooks/use-dictionary-hint-tutorial";
 
+
+/** Wall clock for the per-question timer (Bloom evidence), kept out of render. */
+const nowMs = () => Date.now();
 const AUDIO_ONLY_PARTS = new Set(["PART1", "PART2"]);
 
 /** Untimed drill over previously-missed questions — no Attempt/AttemptAnswer
@@ -42,10 +46,20 @@ export function MistakePracticeRunner({
 
   const current = questions[index];
   const isAudioOnly = current && AUDIO_ONLY_PARTS.has(current.part);
+  // Bloom evidence: when this question appeared, and which ones were already logged.
+  const shownAt = React.useRef(0);
+  const logged = React.useRef(new Set<string>());
+  React.useEffect(() => {
+    shownAt.current = nowMs();
+  }, [index]);
 
   function handleAnswer(label: string) {
     if (!current || selected) return;
     setSelected(label);
+    if (!logged.current.has(current.id)) {
+      logged.current.add(current.id);
+      void logPracticeAnswerAction({ questionId: current.id, selectedLabel: label, source: "mistake_drill", timeSpentSec: (nowMs() - shownAt.current) / 1000 }).catch(() => {});
+    }
     if (label === current.correctLabel) setCorrectCount((c) => c + 1);
     else setWrongCount((c) => c + 1);
   }

@@ -22,6 +22,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { PART_META } from "@/lib/constants/toeic";
+import { MASTERY_THRESHOLD, MIN_ATTEMPTS_PER_CELL, NOISE_MAX_SECONDS, NOISE_MIN_SECONDS, WEAK_THRESHOLD } from "@/lib/bloom/config";
 import { STATUS_LABEL, type Alert, type LabelStatus, type LearningInsights, type PartInsight, type SkillStat, type Weakness } from "@/lib/services/insights/engine";
 import { SectionHeader } from "@/components/shared/section-header";
 import { PracticeButton } from "@/components/analytics/practice-button";
@@ -52,9 +53,9 @@ function Meter({ value, status, className }: { value: number; status: LabelStatu
   return (
     <div className={cn("relative h-1.5 w-full overflow-hidden rounded-full bg-muted", className)}>
       <div className={cn("h-full rounded-full", STATUS_STYLE[status].bar)} style={{ width: `${Math.max(3, Math.round(value * 100))}%` }} />
-      {/* 50% / 70% marks — the Hổng and Đạt bars. */}
-      <span className="absolute inset-y-0 left-1/2 w-px bg-foreground/15" />
-      <span className="absolute inset-y-0 left-[70%] w-px bg-foreground/25" />
+      {/* Hổng / Vững marks (src/lib/bloom/config.ts). */}
+      <span className="absolute inset-y-0 w-px bg-foreground/15" style={{ left: `${WEAK_THRESHOLD * 100}%` }} />
+      <span className="absolute inset-y-0 w-px bg-foreground/25" style={{ left: `${MASTERY_THRESHOLD * 100}%` }} />
     </div>
   );
 }
@@ -406,8 +407,11 @@ function WeaknessCard({ w, rank }: { w: Weakness; rank: number }) {
         </div>
       </div>
       <div className="mt-auto flex flex-wrap gap-2 pt-1">
-        <PracticeButton target={{ kind: w.kind, key: w.key }} label="Luyện 12 câu đúng điểm yếu" />
-        {w.status === "gap" && <PracticeButton target={{ kind: w.kind, key: w.key, foundation: true }} label="Bản nền tảng (dễ hơn)" variant="outline" />}
+        <PracticeButton
+          target={{ kind: w.kind, key: w.key, ...(w.bloom ? { bloom: w.bloom.level } : {}) }}
+          label={w.bloom ? `Luyện bậc ${w.bloom.level} · ${w.bloom.nameVi}` : "Luyện 12 câu đúng điểm yếu"}
+        />
+        {w.status === "gap" && <PracticeButton target={{ kind: w.kind, key: w.key, foundation: true, ...(w.bloom ? { bloom: w.bloom.level } : {}) }} label="Bản nền tảng (dễ hơn)" variant="outline" />}
         {w.kind === "grammar" && (
           <Button asChild size="sm" variant="outline" className="gap-1.5">
             <Link href={`/grammar/${w.key}`}>
@@ -426,7 +430,9 @@ export function WeaknessSection({ insights }: { insights: LearningInsights }) {
       <SectionHeader icon={TrendingDown} title="Điểm yếu cần vá" />
       {insights.weaknesses.length === 0 ? (
         <p className="text-sm text-muted-foreground">
-          {insights.answered < 10 ? "Chưa đủ dữ liệu — làm thêm vài bài để AI tìm ra điểm yếu." : "Không có kỹ năng nào dưới 70%. Tăng độ khó bằng đề Full Test để tìm giới hạn mới."}
+          {insights.answered < 10
+            ? "Chưa đủ dữ liệu — làm thêm vài bài để AI tìm ra điểm yếu."
+            : `Không có kỹ năng nào dưới ${Math.round(MASTERY_THRESHOLD * 100)}%. Tăng độ khó bằng đề Full Test để tìm giới hạn mới.`}
         </p>
       ) : (
         <>
@@ -484,7 +490,7 @@ export function CompetencyMap({ insights }: { insights: LearningInsights }) {
         }
       />
       <p className="mb-4 text-sm text-muted-foreground">
-        Điểm năng lực = độ chính xác {20} câu gần nhất (đã lọc câu đoán &lt; 8 giây và câu ngâm &gt; 2,5 phút) + thưởng tốc độ − trừ điểm đổi đáp án đúng thành sai. Đạt ≥ 70%, Cận đạt 50–69%, Hổng &lt; 50%; chỉ xếp loại khi đủ 10 câu.
+        Điểm năng lực = độ chính xác {20} câu gần nhất (đã lọc câu đoán &lt; {NOISE_MIN_SECONDS} giây, câu ngâm &gt; {NOISE_MAX_SECONDS} giây và câu xem đáp án trước khi chọn) + thưởng tốc độ − trừ điểm đổi đáp án đúng thành sai. Vững ≥ {Math.round(MASTERY_THRESHOLD * 100)}%, Cận đạt {Math.round(WEAK_THRESHOLD * 100)}–{Math.round(MASTERY_THRESHOLD * 100) - 1}%, Hổng &lt; {Math.round(WEAK_THRESHOLD * 100)}%; chỉ xếp loại khi đủ {MIN_ATTEMPTS_PER_CELL} câu.
       </p>
       <div className="flex flex-col gap-5">
         {groups.map((g) =>
@@ -600,7 +606,7 @@ export function BehaviorPanel({ insights }: { insights: LearningInsights }) {
         <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Theo độ khó</p>
         <div className="flex flex-col gap-2">
           {insights.difficulty.map((d) => {
-            const status: LabelStatus = d.attempted < 10 ? "unknown" : d.accuracy < 0.5 ? "gap" : d.accuracy < 0.7 ? "near" : "pass";
+            const status: LabelStatus = d.attempted < MIN_ATTEMPTS_PER_CELL ? "unknown" : d.accuracy < WEAK_THRESHOLD ? "gap" : d.accuracy < MASTERY_THRESHOLD ? "near" : "pass";
             return (
               <div key={d.level} className="flex items-center gap-3 text-sm">
                 <span className="w-24 shrink-0 font-medium">{d.level === "EASY" ? "Dễ" : d.level === "MEDIUM" ? "Trung bình" : "Khó"}</span>
@@ -731,7 +737,7 @@ export function StrengthsPanel({ strengths }: { strengths: SkillStat[] }) {
     <section className={PANEL}>
       <SectionHeader icon={TrendingUp} title="Điểm mạnh" />
       {strengths.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Chưa có kỹ năng nào đạt 70% với đủ số câu.</p>
+        <p className="text-sm text-muted-foreground">Chưa có kỹ năng nào đạt {Math.round(MASTERY_THRESHOLD * 100)}% với đủ số câu.</p>
       ) : (
         <ul className="flex flex-col gap-3">
           {strengths.map((s) => (

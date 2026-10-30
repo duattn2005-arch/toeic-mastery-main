@@ -1,6 +1,16 @@
 import "server-only";
 import { db } from "@/lib/db";
-import { HONG_LABEL_THRESHOLD, GATE_PASS_THRESHOLD } from "./level-gate";
+import {
+  MASTERY_THRESHOLD as GATE_PASS_THRESHOLD,
+  MIN_SAMPLE_FOR_WEAKNESS,
+  NOISE_MAX_SECONDS,
+  NOISE_MIN_SECONDS,
+  PART_STANDARD_SECONDS,
+  SPEED_BONUS_MAX,
+  TRAP_PENALTY,
+  TRAP_PENALTY_MAX,
+  WEAK_THRESHOLD as HONG_LABEL_THRESHOLD,
+} from "@/lib/bloom/config";
 import { PART_META } from "@/lib/constants/toeic";
 import type { SkillDimensionType, TestPart } from "@/generated/prisma/enums";
 
@@ -16,7 +26,9 @@ import type { SkillDimensionType, TestPart } from "@/generated/prisma/enums";
  * endpoint/UI — nothing here writes back to SkillMastery.
  */
 
-const MIN_SAMPLE_SIZE = 5;
+// All numbers from the one Bloom config (src/lib/bloom/config.ts). The
+// label x Bloom-level heatmap itself lives in src/lib/bloom/engine.ts.
+const MIN_SAMPLE_SIZE = MIN_SAMPLE_FOR_WEAKNESS;
 
 /** "Đoán mò"/"mất tập trung" cutoffs from the Cấp AI spec's mục IV bước 2
  * (<8-10s / >2.5 phút). Answers outside this range are excluded from the
@@ -26,11 +38,11 @@ const MIN_SAMPLE_SIZE = 5;
  * (MentorTestQuestion rows — mục 11.5, no route writes real timing there
  * yet) is naturally excluded by this same range check, no special case
  * needed. */
-const NOISE_MIN_SEC = 8;
-const NOISE_MAX_SEC = 150;
+const NOISE_MIN_SEC = NOISE_MIN_SECONDS;
+const NOISE_MAX_SEC = NOISE_MAX_SECONDS;
 
-const MAX_SPEED_BONUS = 0.05;
-const MAX_TRAP_PENALTY = 0.15;
+const MAX_SPEED_BONUS = SPEED_BONUS_MAX;
+const MAX_TRAP_PENALTY = TRAP_PENALTY_MAX;
 
 export type HeatmapBand = "RED" | "YELLOW" | "GREEN";
 
@@ -146,7 +158,7 @@ export async function buildCompetencyHeatmap(userId: string): Promise<HeatmapEnt
 
     let speedBonus = 0;
     if (dimensionType === "PART" && bucket.timedTotal > 0) {
-      const target = PART_META[dimensionKey as TestPart].targetSeconds;
+      const target = PART_STANDARD_SECONDS[dimensionKey as TestPart] ?? PART_META[dimensionKey as TestPart].targetSeconds;
       const avg = bucket.timedSumSec / bucket.timedTotal;
       if (avg <= target) speedBonus = Math.min(MAX_SPEED_BONUS, ((target - avg) / target) * MAX_SPEED_BONUS);
     }
@@ -154,7 +166,7 @@ export async function buildCompetencyHeatmap(userId: string): Promise<HeatmapEnt
     let trapPenalty = 0;
     if (bucket.switchTotal > 0) {
       const switchRate = bucket.switchToWrong / bucket.switchTotal;
-      trapPenalty = Math.min(MAX_TRAP_PENALTY, switchRate * 0.5);
+      trapPenalty = Math.min(MAX_TRAP_PENALTY, switchRate * TRAP_PENALTY);
     }
 
     const weightedScore = Math.max(0, Math.min(1, baseAccuracy + speedBonus - trapPenalty));

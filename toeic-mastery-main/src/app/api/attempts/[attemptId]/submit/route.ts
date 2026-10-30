@@ -10,6 +10,7 @@ import { flagWeakVocabFromAttempt } from "@/lib/services/mentor/vocab-ledger";
 import { generateLearningPath } from "@/lib/services/mentor/learning-path-generator";
 import { replanUpcomingDays } from "@/lib/services/mentor/learning-path-replanner";
 import type { TestPart } from "@/generated/prisma/enums";
+import { answerSnapshot, SNAPSHOT_QUESTION_SELECT } from "@/lib/bloom/answer-log";
 
 export async function POST(_request: Request, { params }: { params: Promise<{ attemptId: string }> }) {
   const profile = await getAuthedProfileOrNull();
@@ -38,7 +39,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ at
         attempt.questionIds.length > 0
           ? { id: { in: attempt.questionIds } }
           : { testId: attempt.testId, ...(attempt.parts.length > 0 ? { part: { in: attempt.parts } } : {}) },
-      select: { id: true, part: true, correctLabel: true },
+      select: { id: true, ...SNAPSHOT_QUESTION_SELECT },
     }),
     db.attemptAnswer.findMany({ where: { attemptId }, select: { questionId: true, selectedLabel: true, isFlagged: true } }),
   ]);
@@ -72,10 +73,13 @@ export async function POST(_request: Request, { params }: { params: Promise<{ at
     else if (isCorrect) correctCount += 1;
     else wrongCount += 1;
 
+    // Bloom snapshot: the question's level at answer time and the trap
+    // (distractor type) a wrong pick fell for.
+    const snapshot = answerSnapshot(q, selectedLabel);
     return db.attemptAnswer.upsert({
       where: { attemptId_questionId: { attemptId, questionId: q.id } },
-      create: { attemptId, questionId: q.id, selectedLabel, isFlagged: existing?.isFlagged ?? false, isCorrect, answeredAt: selectedLabel ? new Date() : null },
-      update: { isCorrect },
+      create: { attemptId, questionId: q.id, selectedLabel, isFlagged: existing?.isFlagged ?? false, isCorrect, answeredAt: selectedLabel ? new Date() : null, ...snapshot },
+      update: { isCorrect, ...snapshot },
     });
   });
 

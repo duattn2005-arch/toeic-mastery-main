@@ -25,6 +25,7 @@ import {
   WeaknessSection,
 } from "@/components/analytics/insights-view";
 import { formatStudyDuration } from "@/lib/utils";
+import { BloomPanel } from "@/components/analytics/bloom-panel";
 
 export const metadata: Metadata = { title: "Phân tích năng lực" };
 
@@ -57,6 +58,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
 
       <RoutingHero insights={insights} />
       <AlertsStrip alerts={insights.alerts} />
+      <BloomPanel bloom={insights.bloom} />
       <PlanTimeline insights={insights} />
       <WeaknessSection insights={insights} />
       <CompetencyMap insights={insights} />

@@ -1,5 +1,6 @@
 import type { TestPart } from "@/generated/prisma/enums";
 import { PART_META } from "@/lib/constants/toeic";
+import { MASTERY_THRESHOLD, MIN_SAMPLE_FOR_WEAKNESS } from "@/lib/bloom/config";
 
 export interface PartAccuracy {
   part: TestPart;
@@ -19,8 +20,9 @@ export interface Recommendation {
   priority: number;
 }
 
-const MIN_SAMPLE_SIZE = 5;
-const WEAK_THRESHOLD = 0.6;
+// From the one Bloom config: a Part not yet mastered is worth recommending.
+const MIN_SAMPLE_SIZE = MIN_SAMPLE_FOR_WEAKNESS;
+const WEAK_THRESHOLD = MASTERY_THRESHOLD;
 
 function hrefForPart(part: TestPart): string {
   const meta = PART_META[part];

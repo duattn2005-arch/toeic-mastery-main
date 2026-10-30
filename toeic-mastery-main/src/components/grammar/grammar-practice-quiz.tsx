@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { logPracticeAnswerAction } from "@/lib/actions/practice-answers";
 import { AnswerOptionList } from "@/components/exam/answer-option";
 import { AskMentorButton } from "@/components/shared/ask-mentor-button";
 
@@ -21,6 +22,14 @@ interface QuizQuestion {
 
 export function GrammarPracticeQuiz({ questions }: { questions: QuizQuestion[] }) {
   const [answers, setAnswers] = React.useState<Record<string, string>>({});
+
+  // The right answer shows as soon as one is picked, so only the first pick
+  // per question is real evidence. Many questions are on screen at once, so
+  // time per question isn't measured (null — the Bloom engine skips it).
+  function pick(questionId: string, label: string) {
+    if (!(questionId in answers)) void logPracticeAnswerAction({ questionId, selectedLabel: label, source: "grammar_quiz", timeSpentSec: null }).catch(() => {});
+    setAnswers((prev) => ({ ...prev, [questionId]: label }));
+  }
 
   const correctCount = questions.filter((q) => answers[q.id] === q.correctLabel).length;
   const answeredCount = Object.keys(answers).length;
@@ -44,7 +53,7 @@ export function GrammarPracticeQuiz({ questions }: { questions: QuizQuestion[] }
               options={q.options}
               selectedLabel={selected ?? null}
               correctLabel={selected ? q.correctLabel : null}
-              onSelect={(label) => setAnswers((prev) => ({ ...prev, [q.id]: label }))}
+              onSelect={(label) => pick(q.id, label)}
             />
             {selected && (
               <div className="mt-3 flex flex-col gap-2 rounded-lg bg-accent/50 p-3">

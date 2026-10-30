@@ -369,6 +369,7 @@ model Profile {
   answerRevealLogs    AnswerRevealLog[]
   savedWords          SavedWord[]
   exerciseProgress    UserExerciseProgress[]
+  practiceAnswers     PracticeAnswer[]
   questionReports     QuestionReport[]
   createdTests        Test[]                          @relation("TestAuthor")
   pathDayProgress     UserVocabularyPathDayProgress[]
@@ -575,6 +576,14 @@ model Question {
    * question, so their edits become the manual labels.
    */
   labelMeta           Json?         @map("label_meta")
+  /**
+   * Thang Bloom (src/lib/bloom): bậc tư duy chính câu hỏi đòi hỏi, 1–5
+   * (1 Nhớ · 2 Hiểu · 3 Vận dụng · 4 Phân tích · 5 Đánh giá). Gắn tự động
+   * bởi bộ gắn nhãn (bloomSource "auto") hoặc admin duyệt tay ("manual" —
+   * không bao giờ bị ghi đè). Null = chưa gắn; bộ chưng cất tự suy ra.
+   */
+  bloomLevel          Int?          @map("bloom_level")
+  bloomSource         String?       @map("bloom_source")
   status              ContentStatus @default(PUBLISHED)
   createdAt           DateTime      @default(now()) @map("created_at")
   updatedAt           DateTime      @updatedAt @map("updated_at")
@@ -590,9 +599,11 @@ model Question {
   revealLogs                AnswerRevealLog[]
   mentorConversationOrigins MentorConversation[]
   mentorTestAppearances     MentorTestQuestion[]
+  practiceAnswers           PracticeAnswer[]
 
   @@index([testId, part, orderIndex])
   @@index([part])
+  @@index([bloomLevel])
   @@map("questions")
 }
 
@@ -603,6 +614,8 @@ model QuestionOption {
   content               String
   isCorrect             Boolean @default(false) @map("is_correct")
   distractorExplanation String? @map("distractor_explanation")
+  /** Mã bẫy của đáp án sai (src/lib/bloom/config.ts TRAP_TYPES); null với đáp án đúng/chưa xác định. */
+  trapType              String? @map("trap_type")
 
   question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
 
@@ -701,6 +714,14 @@ model AttemptAnswer {
    * after the first pick.
    */
   answerChangeCount    Int       @default(0) @map("answer_change_count")
+  /** Thang Bloom — bậc của câu tại lúc nộp bài (ảnh chụp); null ở dữ liệu cũ → suy ra từ câu hỏi. */
+  bloomLevel           Int?      @map("bloom_level")
+  /** Mã bẫy của đáp án sai mà người học đã chọn (null khi đúng / đáp án chưa gắn mã). */
+  trapTypeHit          String?   @map("trap_type_hit")
+  /** Số lần mở gợi ý trước khi trả lời. */
+  hintUsedCount        Int       @default(0) @map("hint_used_count")
+  /** Lần đầu xem đáp án/giải thích của câu (so với firstAnsweredAt để biết xem trước hay sau khi chọn). */
+  explanationViewedAt  DateTime? @map("explanation_viewed_at")
   answeredAt           DateTime? @map("answered_at")
   updatedAt            DateTime  @updatedAt @map("updated_at")
 
@@ -1549,6 +1570,14 @@ model MentorTestQuestion {
   firstAnsweredAt      DateTime? @map("first_answered_at")
   initialSelectedLabel String?   @map("initial_selected_label") @db.VarChar(1)
   answerChangeCount    Int       @default(0) @map("answer_change_count")
+  /** Thang Bloom — bậc của câu tại lúc nộp bài (ảnh chụp); null ở dữ liệu cũ → suy ra từ câu hỏi. */
+  bloomLevel           Int?      @map("bloom_level")
+  /** Mã bẫy của đáp án sai mà người học đã chọn (null khi đúng / đáp án chưa gắn mã). */
+  trapTypeHit          String?   @map("trap_type_hit")
+  /** Số lần mở gợi ý trước khi trả lời. */
+  hintUsedCount        Int       @default(0) @map("hint_used_count")
+  /** Lần đầu xem đáp án/giải thích của câu (so với firstAnsweredAt để biết xem trước hay sau khi chọn). */
+  explanationViewedAt  DateTime? @map("explanation_viewed_at")
   answeredAt           DateTime? @map("answered_at")
 
   mentorTest MentorTest @relation(fields: [mentorTestId], references: [id], onDelete: Cascade)
@@ -1648,6 +1677,34 @@ model UserExerciseProgress {
 /// pronunciation, which study stages to play), chosen from the settings
 /// button while learning words. Kept in its own table, as validated JSON,
 /// so new options don't need a migration and Profile queries stay untouched.
+/**
+ * Câu trả lời ở các bài luyện KHÔNG đi qua Attempt — Ôn lỗi sai, Quick Study,
+ * quiz ngữ pháp — để bộ chưng cất Bloom nhìn thấy cả những lần luyện này
+ * mà không làm lệch thống kê đề thi (bảng riêng, không đụng attempt_answers).
+ * isCorrect luôn do server tính từ đáp án của câu hỏi.
+ */
+model PracticeAnswer {
+  id                  String    @id @default(uuid()) @db.Uuid
+  userId              String    @map("user_id") @db.Uuid
+  questionId          String    @map("question_id") @db.Uuid
+  /** "mistake_drill" | "quick_study" | "grammar_quiz" */
+  source              String
+  selectedLabel       String    @map("selected_label") @db.VarChar(1)
+  isCorrect           Boolean   @map("is_correct")
+  /** null = không đo được (vd. quiz hiển thị nhiều câu một lúc). */
+  timeSpentSec        Int?      @map("time_spent_sec")
+  hintUsedCount       Int       @default(0) @map("hint_used_count")
+  bloomLevel          Int?      @map("bloom_level")
+  trapTypeHit         String?   @map("trap_type_hit")
+  createdAt           DateTime  @default(now()) @map("created_at")
+
+  profile  Profile  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("practice_answers")
+}
+
 model StudyPreference {
   userId    String   @id @map("user_id") @db.Uuid
   data      Json

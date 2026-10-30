@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { BLOOM_BY_ID, BLOOM_LEVELS, type BloomLevelId } from "@/lib/bloom/config";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Loader2, Trash2 } from "lucide-react";
@@ -19,10 +20,12 @@ import { PART_META } from "@/lib/constants/toeic";
 
 const OPTION_LABELS = ["A", "B", "C", "D"] as const;
 
-export function QuestionForm({ questionId, defaultValues, testOptions }: {
+export function QuestionForm({ questionId, defaultValues, testOptions, autoBloomLevel }: {
   questionId?: string;
   defaultValues: QuestionFormInput;
   testOptions: { id: string; title: string }[];
+  /** Level the labeller currently gives this question (shown next to "Tự động"). */
+  autoBloomLevel?: number | null;
 }) {
   const {
     register,
@@ -76,6 +79,23 @@ export function QuestionForm({ questionId, defaultValues, testOptions }: {
               <SelectItem value="EASY">Dễ</SelectItem>
               <SelectItem value="MEDIUM">Trung bình</SelectItem>
               <SelectItem value="HARD">Khó</SelectItem>
+            </SelectContent>
+          </Select>
+        </Field>
+        <Field label="Bậc tư duy (Thang Bloom)">
+          <Select value={watch("bloomLevel") ?? "auto"} onValueChange={(v) => setValue("bloomLevel", v as QuestionFormInput["bloomLevel"])}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="auto">
+                Tự động{autoBloomLevel ? ` (hiện: ${autoBloomLevel} · ${BLOOM_BY_ID.get(autoBloomLevel as BloomLevelId)?.nameVi ?? ""})` : ""}
+              </SelectItem>
+              {BLOOM_LEVELS.filter((l) => l.id <= 5).map((l) => (
+                <SelectItem key={l.id} value={String(l.id)}>
+                  {l.id} · {l.nameVi} ({l.nameEn})
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </Field>

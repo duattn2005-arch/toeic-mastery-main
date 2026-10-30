@@ -5,6 +5,8 @@ import type { Difficulty, TestPart } from "@/generated/prisma/enums";
 import { STRATEGIC_LABELS } from "../../../../prisma/seed-data/strategic-labels";
 import { CALIBRATION_MIN_ANSWERS, calibrateDifficulty, tagQuestion, type TagInput } from "./rules";
 import { runAiLabelling } from "./ai-labeller";
+import { classifyBloom, classifyTraps } from "@/lib/bloom/classify";
+import { bloomInputOf } from "@/lib/bloom/from-question";
 
 /**
  * Runs the rule-based labeller (rules.ts) over the question bank and writes
@@ -23,13 +25,18 @@ import { runAiLabelling } from "./ai-labeller";
  * Part 5/6 questions the rules can't read then go to the AI pass
  * (ai-labeller.ts).
  *
+ * The same pass places every question on the Bloom scale (src/lib/bloom:
+ * bloomLevel 1–5, bloomSource "auto") and gives each wrong option a trap
+ * code — from the final labels, so Bloom always follows the labels. A
+ * Bloom level an admin set ("manual") is never touched.
+ *
  * Triggered by the in-process scheduler (instrumentation-node.ts) after
  * every deploy and daily, right after an admin saves questions, and from
  * Admin → Câu hỏi → Nhãn & chưng cất.
  */
 
 /** Bump when rules.ts changes meaningfully — every auto label is refreshed. */
-export const TAGGER_VERSION = 2;
+export const TAGGER_VERSION = 3;
 const BATCH = 300;
 
 export type Field = "grammar" | "strategy" | "vocab" | "difficulty";
@@ -53,6 +60,10 @@ export interface TaggingSummary {
   difficultyFromData: number;
   difficultyFromRules: number;
   ai: number;
+  /** Questions whose Bloom level was set or changed. */
+  bloom: number;
+  /** Options whose trap code was set or changed. */
+  traps: number;
   startedAt: string;
   finishedAt: string;
   trigger: string;
@@ -97,7 +108,7 @@ export async function runQuestionTagging(opts: { ids?: string[]; onlyStale?: boo
   if (taggingState.running && !opts.ids) return null;
   const trigger = opts.trigger ?? (opts.ids ? "admin-save" : "manual");
   const startedAt = new Date().toISOString();
-  const summary: TaggingSummary = { scanned: 0, updated: 0, grammar: 0, strategy: 0, vocab: 0, difficultyFromData: 0, difficultyFromRules: 0, ai: 0, startedAt, finishedAt: startedAt, trigger };
+  const summary: TaggingSummary = { scanned: 0, updated: 0, grammar: 0, strategy: 0, vocab: 0, difficultyFromData: 0, difficultyFromRules: 0, ai: 0, bloom: 0, traps: 0, startedAt, finishedAt: startedAt, trigger };
   const track = !opts.ids;
   if (track) Object.assign(taggingState, { running: true, trigger, scanned: 0, total: 0 });
 
@@ -143,12 +154,14 @@ export async function runQuestionTagging(opts: { ids?: string[]; onlyStale?: boo
           strategicLabelSlugs: true,
           vocabularyFocus: true,
           difficulty: true,
+          bloomLevel: true,
+          bloomSource: true,
           labelMeta: true,
           updatedAt: true,
           passageId: true,
           orderIndex: true,
-          options: { select: { label: true, content: true }, orderBy: { label: "asc" } },
-          passage: { select: { layout: true, transcript: true, questions: { select: { id: true }, orderBy: { orderIndex: "asc" } } } },
+          options: { select: { id: true, label: true, content: true, trapType: true }, orderBy: { label: "asc" } },
+          passage: { select: { layout: true, transcript: true, texts: true, questions: { select: { id: true }, orderBy: { orderIndex: "asc" } } } },
         },
       });
       if (batch.length === 0) break;
@@ -222,8 +235,30 @@ export async function runQuestionTagging(opts: { ids?: string[]; onlyStale?: boo
           auto.add("difficulty");
         }
 
+        // Bloom level + trap codes, from the labels this pass ends up with.
+        const finalLabels = {
+          grammarTopicSlug: data.grammarTopicSlug !== undefined ? (data.grammarTopicSlug as string | null) : q.grammarTopicSlug,
+          strategicLabelSlugs: (data.strategicLabelSlugs as string[] | undefined) ?? q.strategicLabelSlugs,
+          difficulty: (data.difficulty as Difficulty | undefined) ?? q.difficulty,
+        };
+        const bloomInput = bloomInputOf({ ...q, ...finalLabels });
+        const traps = classifyTraps(bloomInput);
+        const bloom = classifyBloom(bloomInput, traps);
+        if (q.bloomSource !== "manual" && (q.bloomLevel !== bloom.level || q.bloomSource !== "auto")) {
+          data.bloomLevel = bloom.level;
+          data.bloomSource = "auto";
+          summary.bloom++;
+        }
+        for (const o of q.options) {
+          const trap = traps[o.label] ?? null;
+          if (trap !== o.trapType) {
+            writes.push(db.questionOption.update({ where: { id: o.id }, data: { trapType: trap }, select: { id: true } }));
+            summary.traps++;
+          }
+        }
+
         const ai = old?.ai && { at: old.ai.at, fields: old.ai.fields.filter((f) => aiFields.has(f)) };
-        const meta: LabelMeta = { v: TAGGER_VERSION, auto: [...auto], difficultySource, answers: n, at: new Date().toISOString(), reasons: r.reasons.slice(0, 6), ...(ai ? { ai } : {}) };
+        const meta: LabelMeta = { v: TAGGER_VERSION, auto: [...auto], difficultySource, answers: n, at: new Date().toISOString(), reasons: [...r.reasons.slice(0, 5), `Bloom: ${bloom.reasons.join("; ")}`], ...(ai ? { ai } : {}) };
         const metaChanged = !old || old.v !== meta.v || !sameList([...old.auto].sort(), [...meta.auto].sort()) || old.difficultySource !== meta.difficultySource || (answersMoved && old.answers !== meta.answers);
         if (Object.keys(data).length === 0 && !metaChanged && !stale) continue;
         data.labelMeta = meta as unknown as Prisma.InputJsonValue;
@@ -256,7 +291,7 @@ export function tagQuestionsSoon(ids: string[]) {
 
 /** Coverage numbers for Admin → Nhãn & chưng cất. */
 export async function getTaggingCoverage() {
-  const [byPart, labelRows, topicRows, diffRows] = await Promise.all([
+  const [byPart, labelRows, topicRows, diffRows, bloomRows, trapRows] = await Promise.all([
     db.$queryRaw<{ part: TestPart; total: bigint; strategy: bigint; grammar: bigint; vocab: bigint; auto: bigint; data_difficulty: bigint }[]>`
       SELECT part,
         COUNT(*) AS total,
@@ -269,6 +304,10 @@ export async function getTaggingCoverage() {
     db.$queryRaw<{ slug: string; n: bigint }[]>`SELECT unnest(strategic_label_slugs) AS slug, COUNT(*) AS n FROM questions GROUP BY 1 ORDER BY 2 DESC`,
     db.$queryRaw<{ slug: string; n: bigint }[]>`SELECT grammar_topic_slug AS slug, COUNT(*) AS n FROM questions WHERE grammar_topic_slug IS NOT NULL GROUP BY 1 ORDER BY 2 DESC`,
     db.$queryRaw<{ difficulty: Difficulty; n: bigint }[]>`SELECT difficulty, COUNT(*) AS n FROM questions GROUP BY 1`,
+    db.$queryRaw<{ part: TestPart; level: number | null; manual: bigint; n: bigint }[]>`
+      SELECT part, bloom_level AS level, COUNT(*) FILTER (WHERE bloom_source = 'manual') AS manual, COUNT(*) AS n
+      FROM questions GROUP BY 1, 2 ORDER BY 1, 2`,
+    db.$queryRaw<{ trap: string | null; n: bigint }[]>`SELECT trap_type AS trap, COUNT(*) AS n FROM question_options WHERE is_correct = false GROUP BY 1`,
   ]);
   const num = (x: bigint) => Number(x);
   return {
@@ -276,5 +315,7 @@ export async function getTaggingCoverage() {
     labels: labelRows.map((l) => ({ slug: l.slug, count: num(l.n) })),
     topics: topicRows.map((t) => ({ slug: t.slug, count: num(t.n) })),
     difficulty: diffRows.map((d) => ({ level: d.difficulty, count: num(d.n) })),
+    bloom: bloomRows.map((b) => ({ part: b.part, level: b.level, manual: num(b.manual), count: num(b.n) })),
+    traps: trapRows.map((t) => ({ trap: t.trap, count: num(t.n) })),
   };
 }

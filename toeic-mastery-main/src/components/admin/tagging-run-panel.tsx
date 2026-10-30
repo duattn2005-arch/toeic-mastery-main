@@ -43,7 +43,7 @@ export function TaggingRunPanel({ initial }: { initial: Progress }) {
           <p>
             Lần chạy gần nhất ({new Date(last.finishedAt).toLocaleString("vi-VN")}, {last.trigger}): quét {last.scanned.toLocaleString("vi-VN")} câu, cập nhật{" "}
             <b>{last.updated.toLocaleString("vi-VN")}</b> — chủ điểm {last.grammar}, dạng câu {last.strategy}, từ vựng {last.vocab}, độ khó theo dữ liệu {last.difficultyFromData}, theo luật{" "}
-            {last.difficultyFromRules}, AI đọc thêm {last.ai ?? 0}.
+            {last.difficultyFromRules}, AI đọc thêm {last.ai ?? 0}, bậc Bloom {last.bloom ?? 0}, mã bẫy {last.traps ?? 0}.
           </p>
         ) : (
           <p className="text-muted-foreground">Server tự chạy 2 phút sau mỗi lần khởi động, 30 phút một lần cho câu mới/vừa sửa, và toàn bộ mỗi ngày.</p>

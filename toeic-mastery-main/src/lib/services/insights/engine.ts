@@ -1,7 +1,26 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { MENTOR_LEVEL_LABEL_VI, PART_META, TEST_PARTS } from "@/lib/constants/toeic";
-import { GATE_PASS_THRESHOLD, HONG_LABEL_THRESHOLD, isEligibleForLevelGate } from "@/lib/services/mentor/level-gate";
+import { isEligibleForLevelGate } from "@/lib/services/mentor/level-gate";
+import {
+  MASTERY_THRESHOLD,
+  MIN_ATTEMPTS_PER_CELL,
+  MIN_SAMPLE_FOR_WEAKNESS,
+  MIN_TOTAL_ATTEMPTS_FOR_ROUTING,
+  NOISE_MAX_SECONDS,
+  NOISE_MIN_SECONDS,
+  PART_STANDARD_SECONDS,
+  SPEED_BONUS_MAX,
+  TRAP_PENALTY,
+  TRAP_PENALTY_MAX,
+  VOCAB_MASTERY_THRESHOLD,
+  WEAK_THRESHOLD,
+  BLOOM_BY_ID,
+  TIER_LEVELS,
+  type BloomLevelId,
+} from "@/lib/bloom/config";
+import { getLearnerBloom, type LearnerBloom } from "@/lib/bloom/bank";
+import { grammarLabel, strategyLabel, partLabel } from "@/lib/bloom/classify";
 import { computeStaminaCurve, type StaminaBlock } from "@/lib/services/mentor/advanced-readiness";
 import type { Difficulty, MentorLevel, TestPart } from "@/generated/prisma/enums";
 
@@ -17,8 +36,10 @@ import type { Difficulty, MentorLevel, TestPart } from "@/generated/prisma/enums
  *  3. Chấm điểm — per label: accuracy on its most recent clean answers,
  *     + a small speed bonus − a penalty for switching away from right
  *     answers (same formula as the mentor's competency heatmap), and a
- *     status: Đạt ≥70% / Cận đạt 50–69% / Hổng <50%, judged only once
- *     there are LABEL_MIN_SAMPLE answers.
+ *     status: Vững ≥80% / Cận đạt 50–79% / Hổng <50% (Mastery Learning,
+ *     src/lib/bloom/config.ts), judged only once there are LABEL_MIN_SAMPLE
+ *     answers. An answer whose explanation was opened before it was picked
+ *     doesn't count; one opened after counts the first pick.
  *  4. Phân luồng — read the whole map against the docs' thresholds and pick
  *     a branch (đang thu thập / sẵn sàng / tinh chỉnh / tái cấu trúc) with a
  *     concrete step-by-step plan, each step a practice set this app can
@@ -28,26 +49,29 @@ import type { Difficulty, MentorLevel, TestPart } from "@/generated/prisma/enums
  * reported on their own (they used to drag every Part down to a few %).
  */
 
+// Every threshold comes from the one Bloom config (src/lib/bloom/config.ts).
 /** Accuracy a learner should reach on a skill before calling it solid. */
-export const TARGET_ACCURACY = GATE_PASS_THRESHOLD;
-/** "Đạt" bar for one label (Cấp B mục 4). */
-export const LABEL_PASS = 0.7;
+export const TARGET_ACCURACY = MASTERY_THRESHOLD;
+/** "Vững" bar for one label — the same Mastery Learning bar as everything else. */
+export const LABEL_PASS = MASTERY_THRESHOLD;
+/** "Hổng" bar for one label. */
+const HONG_LABEL_THRESHOLD = WEAK_THRESHOLD;
 /** Fewer answers than this is too little to flag a weakness at all. */
-export const MIN_SAMPLE = 5;
-/** A label's status is only judged with this many answers (Cấp B mục 4). */
-export const LABEL_MIN_SAMPLE = 10;
+export const MIN_SAMPLE = MIN_SAMPLE_FOR_WEAKNESS;
+/** A label's status is only judged with this many answers. */
+export const LABEL_MIN_SAMPLE = MIN_ATTEMPTS_PER_CELL;
 /** "Độ chính xác gần nhất": a label is scored on its latest answers. */
 const RECENT_WINDOW = 20;
 /** Reading answers faster than this look like guesses (đoán mò). */
-const RUSH_SEC = 8;
+const RUSH_SEC = NOISE_MIN_SECONDS;
 /** Reading answers slower than this lost focus or got stuck. */
-const STUCK_SEC = 150;
+const STUCK_SEC = NOISE_MAX_SECONDS;
 /** Roughly what one more right answer is worth on the 10–990 scale. */
 const POINTS_PER_QUESTION = 5;
-const MAX_SPEED_BONUS = 0.05;
-const MAX_TRAP_PENALTY = 0.15;
+const MAX_SPEED_BONUS = SPEED_BONUS_MAX;
+const MAX_TRAP_PENALTY = TRAP_PENALTY_MAX;
 /** Below this many answers there's nothing to route on yet. */
-const ROUTING_MIN_ANSWERS = 40;
+const ROUTING_MIN_ANSWERS = MIN_TOTAL_ATTEMPTS_FOR_ROUTING;
 
 export type Band = "weak" | "fair" | "strong";
 export type LabelStatus = "pass" | "near" | "gap" | "unknown";
@@ -100,6 +124,8 @@ export interface Weakness extends SkillStat {
   pointsGain: number;
   /** Enough answers for the docs' per-label bar — otherwise an early signal. */
   confident: boolean;
+  /** Where on the Bloom scale this label is stuck (nguyên tắc tầng), when known. */
+  bloom: { level: number; nameVi: string; score: number | null; status: string } | null;
 }
 
 export interface MistakeQuestion {
@@ -114,7 +140,7 @@ export interface MistakeQuestion {
 }
 
 export type PracticeTarget =
-  | { kind: DimensionKind; key: string; foundation?: boolean }
+  | { kind: DimensionKind; key: string; foundation?: boolean; /** Practise exactly this Bloom level (clamped to the label's frontier). */ bloom?: number }
   | { kind: "mix"; foundation?: boolean }
   | { kind: "mistakes" };
 
@@ -180,6 +206,8 @@ export interface LearningInsights {
   routing: Routing;
   /** One-paragraph overall reading. */
   summary: string;
+  /** Bloom profile: label x thinking-level heatmap, level mastery, tier, frontier per label. */
+  bloom: LearnerBloom;
 }
 
 export function bandOf(accuracy: number): Band {
@@ -195,7 +223,7 @@ function statusOf(attempted: number, score: number): LabelStatus {
   return "pass";
 }
 
-export const STATUS_LABEL: Record<LabelStatus, string> = { pass: "Đạt", near: "Cận đạt", gap: "Hổng", unknown: "Chưa đủ dữ liệu" };
+export const STATUS_LABEL: Record<LabelStatus, string> = { pass: "Vững", near: "Cận đạt", gap: "Hổng", unknown: "Chưa đủ dữ liệu" };
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const PART_ADVICE: Record<TestPart, string[]> = {
@@ -246,7 +274,7 @@ function stat(kind: DimensionKind, key: string, title: string, parts: TestPart[]
   if (kind === "part" && PART_META[key as TestPart].skill === "READING") {
     const timed = clean.filter((r) => r.timeSpentSec > 0);
     if (timed.length >= MIN_SAMPLE) {
-      const target = PART_META[key as TestPart].targetSeconds;
+      const target = PART_STANDARD_SECONDS[key as TestPart] ?? PART_META[key as TestPart].targetSeconds;
       const avg = timed.reduce((s, r) => s + r.timeSpentSec, 0) / timed.length;
       if (avg <= target) speedBonus = Math.min(MAX_SPEED_BONUS, ((target - avg) / target) * MAX_SPEED_BONUS);
     }
@@ -254,7 +282,7 @@ function stat(kind: DimensionKind, key: string, title: string, parts: TestPart[]
   // Same trap penalty as the mentor's competency heatmap: right→wrong
   // switches as a share of every answer on the label.
   const flips = rows.filter(flipped).length;
-  const trapPenalty = rows.length ? Math.min(MAX_TRAP_PENALTY, (flips / rows.length) * 0.5) : 0;
+  const trapPenalty = rows.length ? Math.min(MAX_TRAP_PENALTY, (flips / rows.length) * TRAP_PENALTY) : 0;
   const score = Math.max(0, Math.min(1, recentAccuracy + speedBonus - trapPenalty));
 
   return {
@@ -286,7 +314,8 @@ async function latestFullTest(userId: string) {
 }
 
 export async function buildLearningInsights(userId: string): Promise<LearningInsights> {
-  const [rows, topics, labels, profile, fullTest, vocabTotal, vocabLearned] = await Promise.all([
+  const bloomPromise = getLearnerBloom(userId);
+  const [loaded, topics, labels, profile, fullTest, vocabTotal, vocabLearned] = await Promise.all([
     db.attemptAnswer.findMany({
       where: { attempt: { userId, status: "SUBMITTED" } },
       select: {
@@ -296,6 +325,9 @@ export async function buildLearningInsights(userId: string): Promise<LearningIns
         initialSelectedLabel: true,
         isCorrect: true,
         timeSpentSec: true,
+        explanationViewedAt: true,
+        firstAnsweredAt: true,
+        attempt: { select: { submittedAt: true } },
         question: {
           select: {
             part: true,
@@ -310,7 +342,7 @@ export async function buildLearningInsights(userId: string): Promise<LearningIns
         },
       },
       orderBy: { updatedAt: "asc" },
-    }) as Promise<AnswerRow[]>,
+    }) as Promise<(AnswerRow & { explanationViewedAt: Date | null; firstAnsweredAt: Date | null; attempt: { submittedAt: Date | null } })[]>,
     db.grammarTopic.findMany({ select: { slug: true, title: true } }),
     db.strategicLabel.findMany({ select: { slug: true, title: true } }),
     db.profile.findUnique({ where: { id: userId }, select: { mentorLevel: true, targetScore: true } }),
@@ -318,6 +350,17 @@ export async function buildLearningInsights(userId: string): Promise<LearningIns
     db.userVocabulary.count({ where: { userId } }),
     db.userVocabulary.count({ where: { userId, isLearned: true } }),
   ]);
+  // Explanation opened during the attempt: before the first pick, the answer
+  // proves nothing (left out); after it, the first pick is the real attempt.
+  const honest = (r: (typeof loaded)[number]): AnswerRow | null => {
+    const viewed = r.explanationViewedAt?.getTime() ?? null;
+    const during = viewed !== null && r.attempt.submittedAt !== null && viewed < r.attempt.submittedAt.getTime();
+    if (!during || r.selectedLabel === null) return r;
+    const first = r.firstAnsweredAt?.getTime() ?? null;
+    if (first === null || viewed! < first) return null;
+    return r.initialSelectedLabel ? { ...r, isCorrect: r.initialSelectedLabel === r.question.correctLabel } : r;
+  };
+  const rows = loaded.map(honest).filter((r): r is AnswerRow => r !== null);
   const answered = rows.filter((r) => r.selectedLabel !== null);
   const skippedRows = rows.filter((r) => r.selectedLabel === null);
   const clean = answered.filter((r) => !isNoise(r));
@@ -427,7 +470,8 @@ export async function buildLearningInsights(userId: string): Promise<LearningIns
     .map((s) => ({ s, cost: (TARGET_ACCURACY - s.score) * Math.log(1 + s.attempted) * weight(s) }))
     .sort((a, b) => b.cost - a.cost)
     .map(({ s }) => s);
-  const weaknesses: Weakness[] = ranked.slice(0, 6).map((s) => describeWeakness(s, parts, answered));
+  const bloom = await bloomPromise;
+  const weaknesses: Weakness[] = ranked.slice(0, 6).map((s) => describeWeakness(s, parts, answered, bloom));
 
   const strengths = [...parts, ...grammar, ...strategies]
     .filter((s) => s.attempted >= MIN_SAMPLE && s.score >= LABEL_PASS)
@@ -456,6 +500,7 @@ export async function buildLearningInsights(userId: string): Promise<LearningIns
     vocabRate: vocabTotal > 0 ? vocabLearned / vocabTotal : null,
     openMistakes: openMistakes.length,
     focusVocabulary: focusVocabulary.length,
+    bloom,
   });
 
   return {
@@ -478,10 +523,23 @@ export async function buildLearningInsights(userId: string): Promise<LearningIns
     alerts,
     routing,
     summary: summarize(answered.length, accuracy, weaknesses, strengths, behaviors, routing),
+    bloom,
   };
 }
 
-function describeWeakness(s: SkillStat, parts: PartInsight[], answered: AnswerRow[]): Weakness {
+/** The Bloom row of a label stat (part / grammar topic / question type), if the learner has one. */
+function bloomRowOf(s: SkillStat, bloom: LearnerBloom) {
+  const label = s.kind === "grammar" ? grammarLabel(s.key) : s.kind === "strategy" ? strategyLabel(s.key) : partLabel(s.key);
+  return bloom.rows.find((r) => r.label === label) ?? null;
+}
+
+/** Practice target for a label, aimed at its frontier level (nguyên tắc tầng). */
+function targetFor(s: SkillStat, bloom: LearnerBloom, foundation = false): PracticeTarget {
+  const level = bloomRowOf(s, bloom)?.frontier.level ?? undefined;
+  return { kind: s.kind, key: s.key, ...(foundation ? { foundation } : {}), ...(level ? { bloom: level } : {}) };
+}
+
+function describeWeakness(s: SkillStat, parts: PartInsight[], answered: AnswerRow[], bloom: LearnerBloom): Weakness {
   const findings: string[] = [
     s.recentAccuracy !== s.accuracy && s.attempted > RECENT_WINDOW
       ? `${RECENT_WINDOW} câu gần nhất đúng ${pct(s.recentAccuracy)} (cả quá trình ${pct(s.accuracy)}) — mốc cần đạt là ${pct(LABEL_PASS)}, vững là ${pct(TARGET_ACCURACY)}.`
@@ -527,7 +585,19 @@ function describeWeakness(s: SkillStat, parts: PartInsight[], answered: AnswerRo
     pointsGain = Math.round(Math.max(0, TARGET_ACCURACY - s.score) * Math.min(8, s.parts.length * 3)) * POINTS_PER_QUESTION;
   }
 
-  return { ...s, id: `${s.kind}:${s.key}`, headline, findings, advice, pointsGain, confident: s.attempted >= LABEL_MIN_SAMPLE };
+  const row = bloomRowOf(s, bloom);
+  const f = row?.frontier;
+  const bloomInfo = f?.level
+    ? { level: f.level, nameVi: BLOOM_BY_ID.get(f.level as BloomLevelId)!.nameVi, score: f.cell?.status === "insufficient" ? null : (f.cell?.score ?? null), status: f.cell?.status ?? "insufficient" }
+    : null;
+  if (bloomInfo) {
+    findings.push(
+      bloomInfo.score === null
+        ? `Theo thang Bloom, nhãn này cần làm thêm câu ở bậc ${bloomInfo.level} (${bloomInfo.nameVi}) trước khi lên bậc cao hơn.`
+        : `Theo thang Bloom, nhãn này đang dừng ở bậc ${bloomInfo.level} (${bloomInfo.nameVi}): đạt ${pct(bloomInfo.score)}, cần ${pct(MASTERY_THRESHOLD)} để lên bậc tiếp.`
+    );
+  }
+  return { ...s, id: `${s.kind}:${s.key}`, headline, findings, advice, pointsGain, confident: s.attempted >= LABEL_MIN_SAMPLE, bloom: bloomInfo };
 }
 
 function buildAlerts(
@@ -596,6 +666,7 @@ async function buildRouting(input: {
   vocabRate: number | null;
   openMistakes: number;
   focusVocabulary: number;
+  bloom: LearnerBloom;
 }): Promise<Routing> {
   const { level, answered, accuracy, weaknesses } = input;
   const levelLabel = MENTOR_LEVEL_LABEL_VI[level] ?? level;
@@ -622,11 +693,27 @@ async function buildRouting(input: {
     { label: "Độ chính xác từ 80%", ok: accuracy >= TARGET_ACCURACY, detail: `Hiện ${pct(accuracy)}` },
     { label: "Không còn nhãn “Hổng”", ok: judged.length > 0 && gaps.length === 0, detail: judged.length === 0 ? "Chưa đủ dữ liệu" : gaps.length ? `${gaps.length} nhãn dưới 50%` : "Không còn" },
     {
-      label: "Từ vựng đã nhớ từ 70%",
-      ok: (input.vocabRate ?? 0) >= 0.7,
+      label: `Từ vựng đã nhớ từ ${pct(VOCAB_MASTERY_THRESHOLD)}`,
+      ok: (input.vocabRate ?? 0) >= VOCAB_MASTERY_THRESHOLD,
       detail: input.vocabRate === null ? "Chưa lưu từ nào" : `Hiện ${pct(input.vocabRate)}`,
     }
   );
+  // Mastery Learning on the Bloom scale: every thinking level of the
+  // learner's current tier must be solid (B: Nhớ + Hiểu, I: Vận dụng, A: Phân tích + Đánh giá).
+  const tierLevels = TIER_LEVELS[level === "BEGINNER" ? "B" : level === "INTERMEDIATE" ? "I" : "A"];
+  const tierMissing = tierLevels.filter((l) => !input.bloom.profile.levels[l].mastered);
+  checklist.push({
+    label: `Vững bậc tư duy ${tierLevels.map((l) => BLOOM_BY_ID.get(l)!.nameVi).join(" + ")}`,
+    ok: tierMissing.length === 0,
+    detail: tierMissing.length
+      ? tierMissing
+          .map((l) => {
+            const m = input.bloom.profile.levels[l];
+            return `${BLOOM_BY_ID.get(l)!.nameVi}: ${m.score === null ? "chưa đủ dữ liệu" : pct(m.score)}`;
+          })
+          .join(" · ")
+      : "Đã vững",
+  });
   if (level === "ADVANCED") {
     checklist.push(
       {
@@ -663,6 +750,10 @@ async function buildRouting(input: {
       ? { title: "Mock Test như thi thật", detail: "200 câu, không tạm dừng, xem đường cong sức bền sau bài.", action: { type: "link", href: "/practice", label: "Chọn đề Full Test" } }
       : { title: "Kiểm tra lên cấp (Gate Test)", detail: "Khi đủ điều kiện, AI Mentor tạo bài kiểm tra cuối cấp để xét lên cấp tiếp theo.", action: { type: "link", href: "/mentor", label: "Mở AI Mentor" } };
   const compact = (steps: (PlanStep | null)[]) => steps.filter((s): s is PlanStep => s !== null);
+  const bloomStep = (s: SkillStat) => {
+    const l = weaknesses.find((w) => w.kind === s.kind && w.key === s.key)?.bloom?.level;
+    return l ? ` · bậc ${l} (${BLOOM_BY_ID.get(l as BloomLevelId)!.nameVi})` : "";
+  };
 
   if (answered < ROUTING_MIN_ANSWERS) {
     return {
@@ -687,7 +778,8 @@ async function buildRouting(input: {
     const seen = new Set<string>();
     const targets = [...weaknesses.filter((w) => w.status !== "pass"), ...[...gaps].sort((a, b) => a.score - b.score)]
       .filter((s) => !seen.has(`${s.kind}:${s.key}`) && seen.add(`${s.kind}:${s.key}`))
-      .slice(0, 3);
+      .slice(0, 3)
+      .sort((a, b) => (bloomRowOf(a, input.bloom)?.frontier.level ?? 9) - (bloomRowOf(b, input.bloom)?.frontier.level ?? 9));
     return {
       level,
       levelLabel,
@@ -700,9 +792,9 @@ async function buildRouting(input: {
         ...targets.flatMap((s) => [
           lessonFor(s),
           {
-            title: `Luyện nền tảng: ${labelName(s)}`,
+            title: `Luyện nền tảng: ${labelName(s)}${bloomStep(s)}`,
             detail: `Câu mức Dễ–Trung bình, thời gian rộng gấp đôi. Đang đạt ${pct(s.score)}.`,
-            action: practice({ kind: s.kind, key: s.key, foundation: true }),
+            action: practice(targetFor(s, input.bloom, true)),
           },
         ]),
         vocabStep,
@@ -728,7 +820,8 @@ async function buildRouting(input: {
     };
   }
 
-  const focus = weaknesses.slice(0, 3);
+  // Nguyên tắc tầng: the lowest stuck thinking level is fixed first.
+  const focus = [...weaknesses].slice(0, 3).sort((a, b) => (a.bloom?.level ?? 9) - (b.bloom?.level ?? 9));
   return {
     level,
     levelLabel,
@@ -742,7 +835,7 @@ async function buildRouting(input: {
     plan: compact([
       ...focus.flatMap((s) => [
         lessonFor(s),
-        { title: `Luyện: ${labelName(s)}`, detail: `Câu bạn từng sai được làm lại trước, rồi đến câu mới. Đang đạt ${pct(s.score)}.`, action: practice({ kind: s.kind, key: s.key }) },
+        { title: `Luyện: ${labelName(s)}${bloomStep(s)}`, detail: `Câu bạn từng sai được làm lại trước, rồi đến câu mới. Đang đạt ${pct(s.score)}.`, action: practice(targetFor(s, input.bloom)) },
       ]),
       vocabStep,
       retestStep,
@@ -766,7 +859,7 @@ function summarize(
     const gain = weaknesses.slice(0, 3).reduce((s, w) => s + w.pointsGain, 0);
     parts.push(`Ưu tiên nhất: ${top.join(" và ")}${gain > 0 ? ` — vá 3 điểm yếu hàng đầu có thể thêm khoảng ${gain} điểm` : ""}.`);
   } else {
-    parts.push("Không có kỹ năng nào dưới 70% — hãy tăng độ khó và luyện đề Full Test để giữ phong độ.");
+    parts.push(`Không có kỹ năng nào dưới ${pct(LABEL_PASS)} — hãy tăng độ khó và luyện đề Full Test để giữ phong độ.`);
   }
   if (strengths.length) parts.push(`Bạn làm tốt ${strengths.slice(0, 2).map(labelName).join(" và ")}.`);
   if (behaviors.rightToWrong >= 3) parts.push(`Có ${behaviors.rightToWrong} câu bạn đã chọn đúng rồi đổi sang sai — hãy tin lựa chọn đầu khi chưa có căn cứ rõ ràng.`);

@@ -2,9 +2,10 @@ import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getAuthedProfileOrNull } from "@/lib/auth";
 import { hasReachedRevealLimit } from "@/lib/services/reveal-limit";
+import { recordExplanationView } from "@/lib/bloom/answer-log";
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ attemptId: string; questionId: string }> }
 ) {
   const profile = await getAuthedProfileOrNull();
@@ -46,6 +47,7 @@ export async function GET(
   }
 
   await db.answerRevealLog.create({ data: { userId: profile.id, questionId } });
+  await recordExplanationView(attemptId, questionId, new URL(request.url).searchParams.get("picked"), attempt.status === "IN_PROGRESS");
 
   return NextResponse.json({
     correctLabel: question.correctLabel,

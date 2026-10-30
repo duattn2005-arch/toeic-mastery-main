@@ -7,6 +7,7 @@ import { FREE_PRACTICE_STARTS_PER_DAY } from "@/lib/constants/limits";
 import { PART_META } from "@/lib/constants/toeic";
 import { buildLearningInsights, type DimensionKind, type PracticeTarget } from "@/lib/services/insights/engine";
 import type { Prisma } from "@/generated/prisma/client";
+import { BLOOM_SELECT, bloomGate, type BloomFields, type BloomGate } from "@/lib/bloom/gate";
 import type { TestPart } from "@/generated/prisma/enums";
 
 /** Questions in one practice set (whole passage groups may push it a little over). */
@@ -31,6 +32,7 @@ function dimensionWhere(kind: DimensionKind, key: string, foundation = false): P
 
 type Candidate = { id: string; part: TestPart; passageId: string | null; testId: string | null; orderIndex: number };
 
+
 /**
  * Picks `size` questions for one weakness: the learner's own misses on it
  * first (spaced re-testing), then questions they've never seen, never
@@ -38,7 +40,7 @@ type Candidate = { id: string; part: TestPart; passageId: string | null; testId:
  * are taken a whole passage/conversation at a time so nothing is shown
  * without its context.
  */
-async function pickQuestions(userId: string, where: Prisma.QuestionWhereInput, size: number, allowPro: boolean): Promise<Candidate[]> {
+async function pickQuestions(userId: string, where: Prisma.QuestionWhereInput, size: number, allowPro: boolean, gate: BloomGate): Promise<Candidate[]> {
   const since = new Date(Date.now() - RECENT_RIGHT_DAYS * 86_400_000);
   const [history, pool] = await Promise.all([
     db.attemptAnswer.findMany({
@@ -52,28 +54,32 @@ async function pickQuestions(userId: string, where: Prisma.QuestionWhereInput, s
         status: "PUBLISHED",
         test: { status: "PUBLISHED", ...(allowPro ? {} : { isPro: false }) },
       },
-      select: { id: true, part: true, passageId: true, testId: true, orderIndex: true },
+      select: BLOOM_SELECT,
       take: 600,
     }),
   ]);
+  const allowed = pool.filter(gate.allow);
 
   const latest = new Map<string, { right: boolean; at: Date }>();
   for (const h of history) latest.set(h.questionId, { right: h.isCorrect === true && h.selectedLabel !== null, at: h.updatedAt });
 
-  const missed: Candidate[] = [];
-  const fresh: Candidate[] = [];
-  for (const q of pool) {
+  const missed: BloomFields[] = [];
+  const fresh: BloomFields[] = [];
+  for (const q of allowed) {
     const last = latest.get(q.id);
     if (!last) fresh.push(q);
     else if (!last.right) missed.push(q);
     else if (last.at < since) fresh.push(q);
   }
   const shuffle = <T,>(a: T[]) => a.map((v) => [Math.random(), v] as const).sort((x, y) => x[0] - y[0]).map(([, v]) => v);
-  const ordered = [...shuffle(missed), ...shuffle(fresh)];
+  // Misses first, then new questions; inside each, the frontier level first.
+  const byLevel = (list: BloomFields[]) => shuffle(list).sort((a, b) => gate.rank(a) - gate.rank(b));
+  const ordered = [...byLevel(missed), ...byLevel(fresh)];
 
   // Whole groups for grouped Parts.
   const byPassage = new Map<string, Candidate[]>();
-  for (const q of pool) if (q.passageId) byPassage.set(q.passageId, [...(byPassage.get(q.passageId) ?? []), q]);
+  // Whole groups — but only the group's questions the learner may take on.
+  for (const q of allowed) if (q.passageId) byPassage.set(q.passageId, [...(byPassage.get(q.passageId) ?? []), q]);
   const picked: Candidate[] = [];
   const taken = new Set<string>();
   for (const q of ordered) {
@@ -121,8 +127,9 @@ export async function startWeaknessPracticeAction(target: PracticeTarget) {
     if (top.length === 0) redirect("/analytics?noWeakness=1");
     const each = Math.ceil(MIX_SIZE / top.length);
     const seen = new Set<string>();
+    const gate = await bloomGate(profile.id);
     for (const w of top) {
-      for (const q of await pickQuestions(profile.id, dimensionWhere(w.kind, w.key, target.foundation), each, pro)) {
+      for (const q of await pickQuestions(profile.id, dimensionWhere(w.kind, w.key, target.foundation), each, pro, gate)) {
         if (!seen.has(q.id)) {
           seen.add(q.id);
           questions.push(q);
@@ -130,9 +137,11 @@ export async function startWeaknessPracticeAction(target: PracticeTarget) {
       }
     }
   } else {
-    questions = await pickQuestions(profile.id, dimensionWhere(target.kind, target.key, target.foundation), SET_SIZE, pro);
-    // Too few easy questions on this label: fall back to every difficulty.
-    if (target.foundation && questions.length < SET_SIZE / 2) questions = await pickQuestions(profile.id, dimensionWhere(target.kind, target.key), SET_SIZE, pro);
+    const gate = await bloomGate(profile.id, typeof target.bloom === "number" && target.bloom >= 1 && target.bloom <= 5 ? target.bloom : undefined);
+    questions = await pickQuestions(profile.id, dimensionWhere(target.kind, target.key, target.foundation), SET_SIZE, pro, gate);
+    // Too few easy questions on this label: fall back to every difficulty
+    // (still never above the label's Bloom frontier).
+    if (target.foundation && questions.length < SET_SIZE / 2) questions = await pickQuestions(profile.id, dimensionWhere(target.kind, target.key), SET_SIZE, pro, gate);
   }
 
   if (questions.length === 0) redirect("/analytics?noQuestions=1");

@@ -99,7 +99,15 @@ async function fetchMentorTest(mentorTestId: string): Promise<MentorTestDTO> {
   return data.mentorTest;
 }
 
-async function submitMentorTest(mentorTestId: string, answers: { questionId: string; selectedLabel: string }[]): Promise<SubmitResult> {
+interface SubmittedAnswer {
+  questionId: string;
+  selectedLabel: string;
+  /** Decision log (Bloom bậc 5): first pick and how often it changed. */
+  initialSelectedLabel: string;
+  answerChangeCount: number;
+}
+
+async function submitMentorTest(mentorTestId: string, answers: SubmittedAnswer[]): Promise<SubmitResult> {
   const res = await fetch(`/api/mentor/tests/${mentorTestId}/submit`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -133,7 +141,15 @@ export function MentorTestRunnerDialog({
 }) {
   const queryClient = useQueryClient();
   const [answers, setAnswers] = React.useState<Record<string, string>>({});
+  const decisions = React.useRef<Record<string, { first: string; changes: number }>>({});
   const [result, setResult] = React.useState<SubmitResult | null>(null);
+
+  function pick(questionId: string, label: string) {
+    const d = decisions.current[questionId];
+    if (!d) decisions.current[questionId] = { first: label, changes: 0 };
+    else if (answers[questionId] && answers[questionId] !== label) d.changes++;
+    setAnswers((prev) => ({ ...prev, [questionId]: label }));
+  }
 
   const testQuery = useQuery({
     queryKey: ["mentor-test", mentorTestId],
@@ -145,7 +161,12 @@ export function MentorTestRunnerDialog({
     mutationFn: () =>
       submitMentorTest(
         mentorTestId,
-        Object.entries(answers).map(([questionId, selectedLabel]) => ({ questionId, selectedLabel }))
+        Object.entries(answers).map(([questionId, selectedLabel]) => ({
+          questionId,
+          selectedLabel,
+          initialSelectedLabel: decisions.current[questionId]?.first ?? selectedLabel,
+          answerChangeCount: decisions.current[questionId]?.changes ?? 0,
+        }))
       ),
     onSuccess: (data) => {
       setResult(data);
@@ -169,6 +190,7 @@ export function MentorTestRunnerDialog({
       // (relevant only if the test wasn't graded — a graded test always
       // shows its stored result via `alreadyGraded` instead).
       setAnswers({});
+      decisions.current = {};
       setResult(null);
     }
     onOpenChange(next);
@@ -226,7 +248,7 @@ export function MentorTestRunnerDialog({
                     <AnswerOptionList
                       options={q.options}
                       selectedLabel={answers[q.id] ?? null}
-                      onSelect={(label) => setAnswers((prev) => ({ ...prev, [q.id]: label }))}
+                      onSelect={(label) => pick(q.id, label)}
                     />
                   </div>
                 ))}

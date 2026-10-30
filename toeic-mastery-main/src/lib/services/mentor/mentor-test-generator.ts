@@ -1,4 +1,5 @@
 import "server-only";
+import { BLOOM_SELECT, bloomGate } from "@/lib/bloom/gate";
 import { db } from "@/lib/db";
 import { getUnlockedDifficulty } from "./skill-mastery";
 import { TEST_PARTS, PART_META } from "@/lib/constants/toeic";
@@ -61,18 +62,23 @@ export async function generateMentorTest(params: {
   // Oversample then shuffle in JS rather than ORDER BY random() in SQL —
   // cheap at this table size and keeps question selection out of the DB
   // layer, where it'd be easy to accidentally make it deterministic again.
-  let candidates = await db.question.findMany({ where, select: { id: true }, take: count * 3 });
+  // Nguyên tắc tầng (src/lib/bloom): never above the Bloom frontier of each
+  // question's own label; questions right at the frontier first.
+  const gate = await bloomGate(params.userId);
+  const gated = async (w: Prisma.QuestionWhereInput) =>
+    shuffle((await db.question.findMany({ where: w, select: BLOOM_SELECT, take: count * 6 })).filter(gate.allow)).sort((a, b) => gate.rank(a) - gate.rank(b));
+  let candidates = await gated(where);
   if (candidates.length === 0) {
     // Falls back to "any difficulty" rather than failing outright — a
     // brand-new dimension with only a handful of seeded questions at one
     // difficulty shouldn't leave the learner with no mini-test at all.
-    candidates = await db.question.findMany({ where: { ...where, difficulty: undefined }, select: { id: true }, take: count * 3 });
+    candidates = await gated({ ...where, difficulty: undefined });
   }
   if (candidates.length === 0) {
     throw new Error(`Không tìm thấy câu hỏi PUBLISHED phù hợp cho ${params.dimensionType}=${params.dimensionKey}.`);
   }
 
-  const selected = shuffle(candidates).slice(0, Math.min(count, candidates.length));
+  const selected = candidates.slice(0, Math.min(count, candidates.length));
 
   const mentorTest = await db.mentorTest.create({
     data: {

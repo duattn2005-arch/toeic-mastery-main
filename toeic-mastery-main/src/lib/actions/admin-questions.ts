@@ -72,6 +72,7 @@ export async function createQuestionAction(input: QuestionFormInput): Promise<Ac
         vocabularyFocus: splitList(data.vocabularyFocus),
         evidenceText: data.evidenceText || null,
         difficulty: data.difficulty,
+        ...bloomFields(data.bloomLevel),
         status: data.status,
         options: {
           create: data.options.map((o) => ({
@@ -145,6 +146,7 @@ export async function updateQuestionAction(questionId: string, input: QuestionFo
         vocabularyFocus: splitList(data.vocabularyFocus),
         evidenceText: data.evidenceText || null,
         difficulty: data.difficulty,
+        ...bloomFields(data.bloomLevel),
         status: data.status,
         // What the admin saved is now the manual labelling — the auto
         // labeller only fills fields left empty from here on.
@@ -193,6 +195,14 @@ export async function deleteQuestionAction(questionId: string): Promise<ActionRe
   return {};
 }
 
+/** Bloom level from the admin form: a number is a reviewed (manual) level the
+ * labeller never overwrites; "auto" hands it back to the labeller. */
+function bloomFields(value: QuestionFormInput["bloomLevel"]) {
+  if (!value) return {};
+  if (value === "auto") return { bloomSource: null };
+  return { bloomLevel: Number(value), bloomSource: "manual" };
+}
+
 function mapImportRow(row: ImportQuestionInput) {
   const partNumber = typeof row.part === "number" ? row.part : parseInt(String(row.part).replace(/\D/g, ""), 10);
   const part = `PART${partNumber}` as TestPart;
@@ -209,6 +219,7 @@ function mapImportRow(row: ImportQuestionInput) {
     imageUrl: row.imageUrl ?? null,
     transcript: row.transcript ?? null,
     grammarTopicSlug: row.grammarTopicSlug ?? null,
+    bloomLevel: row.bloomLevel ?? null,
     testId: (row.testId || null) as string | null,
     testSectionId: null as string | null,
     orderIndex: 0,
@@ -303,6 +314,7 @@ export async function importQuestionsAction(rawJson: string): Promise<ActionResu
           imageUrl: q.imageUrl,
           transcript: q.transcript,
           grammarTopicSlug: q.grammarTopicSlug,
+          ...(q.bloomLevel ? { bloomLevel: q.bloomLevel, bloomSource: "manual" } : {}),
           status: q.status,
           options: { create: q.options },
         },

@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import type { SkillDimensionType, Difficulty } from "@/generated/prisma/enums";
+import { MASTERY_THRESHOLD, MIN_SAMPLE_FOR_WEAKNESS } from "@/lib/bloom/config";
 
 /** Weight on the newest data point — recent attempts move the score faster
  * than old ones, so mastery reflects "how the learner is doing lately", not
@@ -97,11 +98,10 @@ export interface WeakDimension {
   attemptedCount: number;
 }
 
-const MIN_SAMPLE_SIZE = 5;
-/** Below this mastery score counts as "weak"/"Hổng" — reused as-is by
- * level-gate.ts's REMEDIATE/RESTART classification so the two features
- * never disagree on what "weak enough to matter" means. */
-export const WEAK_THRESHOLD = 0.6;
+const MIN_SAMPLE_SIZE = MIN_SAMPLE_FOR_WEAKNESS;
+/** Below this mastery score a dimension is worth recommending practice on —
+ * Mastery Learning (src/lib/bloom/config.ts): anything not yet mastered. */
+export const WEAK_THRESHOLD = MASTERY_THRESHOLD;
 
 /** Weakest-first dimensions with a real sample size — the same bar
  * recommendation.ts already uses, kept consistent so the rule-based

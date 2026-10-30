@@ -3,6 +3,9 @@ import { getAuthedProfileOrNull } from "@/lib/auth";
 import { buildLearningInsights, STATUS_LABEL, type SkillStat } from "@/lib/services/insights/engine";
 import { PART_META } from "@/lib/constants/toeic";
 import type { TestPart } from "@/generated/prisma/enums";
+import { BLOOM_BY_ID, SCORED_LEVELS } from "@/lib/bloom/config";
+
+const round = (x: number | null) => (x === null ? null : Math.round(x * 100) / 100);
 
 /**
  * GET: the learner's distilled competency profile as a JSON download — the
@@ -44,6 +47,24 @@ export async function GET() {
     openMistakes: i.openMistakes.length,
     focusVocabulary: i.focusVocabulary.map((v) => v.word),
     notes: i.alerts.filter((a) => a.tone === "warn").map((a) => `${a.title}: ${a.detail}`),
+    // Thang Bloom (src/lib/bloom): thinking levels, tier, and where each label stands.
+    bloom: {
+      tier: i.bloom.profile.tier,
+      levels: SCORED_LEVELS.map((l) => {
+        const m = i.bloom.profile.levels[l];
+        return { level: l, name: BLOOM_BY_ID.get(l)!.nameVi, tier: m.tier, score: round(m.score), mastered: m.mastered, attempts: m.attempts, blockers: m.blockers };
+      }),
+      labels: i.bloom.rows.map((r) => ({
+        label: r.label,
+        title: r.title,
+        frontierLevel: r.frontier.level,
+        cells: Object.fromEntries(
+          Object.entries(i.bloom.profile.heatmap[r.label] ?? {}).map(([lv, c]) => [lv, { score: round(c!.score), status: c!.inferred ? "inferred" : c!.status, attempts: c!.attempts }])
+        ),
+      })),
+      behavior: i.bloom.profile.behavior,
+      noiseRemoved: i.bloom.profile.noise,
+    },
   };
   return new NextResponse(JSON.stringify(body, null, 2), {
     headers: {

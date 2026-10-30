@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { logPracticeAnswerAction } from "@/lib/actions/practice-answers";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,6 +21,9 @@ import { cn } from "@/lib/utils";
 import { useDictionaryHintTutorial } from "@/hooks/use-dictionary-hint-tutorial";
 import { trackEvent } from "@/lib/analytics";
 
+
+/** Wall clock for the per-question timer (Bloom evidence), kept out of render. */
+const nowMs = () => Date.now();
 const AUDIO_ONLY_PARTS = new Set(["PART1", "PART2"]);
 const AUTO_ADVANCE_MS = 1400;
 
@@ -114,9 +118,21 @@ export function QuickStudyRunner({
     if (index > 0) setIndex((i) => i - 1);
   }
 
+  // Bloom evidence: one log per question per session (a requeued question
+  // comes back after its answer was shown — that measures memory, not skill).
+  const shownAt = React.useRef(0);
+  const logged = React.useRef(new Set<string>());
+  React.useEffect(() => {
+    shownAt.current = nowMs();
+  }, [index]);
+
   function handleAnswer(label: string) {
     if (!current || current.type !== "question" || answers[index] !== undefined) return;
     setAnswers((a) => ({ ...a, [index]: label }));
+    if (!logged.current.has(current.id)) {
+      logged.current.add(current.id);
+      void logPracticeAnswerAction({ questionId: current.id, selectedLabel: label, source: "quick_study", timeSpentSec: (nowMs() - shownAt.current) / 1000 }).catch(() => {});
+    }
     if (label === current.correctLabel) setCorrectCount((c) => c + 1);
     else setWrongCount((c) => c + 1);
     advanceTimeoutRef.current = setTimeout(advance, AUTO_ADVANCE_MS);

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Crown, Eye, Flag, Loader2 } from "lucide-react";
+import { Crown, Eye, Flag, Lightbulb, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { AudioPlayer } from "@/components/exam/audio-player";
@@ -62,12 +62,36 @@ export function ExamQuestionPanel({
   const [reveal, setReveal] = React.useState<RevealData | null>(null);
   const [revealLoading, setRevealLoading] = React.useState(false);
   const [revealError, setRevealError] = React.useState<string | null>(null);
+  const [hints, setHints] = React.useState<string[]>([]);
+  const [hintTotal, setHintTotal] = React.useState(2);
+  const [hintLoading, setHintLoading] = React.useState(false);
+
+  // Step-by-step hint read from the question's own script — never the
+  // answer. Each step opened is logged; a right answer after a hint only
+  // earns part of the competency credit (src/lib/bloom).
+  async function handleHint() {
+    setHintLoading(true);
+    try {
+      const res = await fetch(`/api/attempts/${attemptId}/questions/${question.id}/hint?step=${hints.length + 1}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Không lấy được gợi ý");
+      setHints((h) => [...h, data.text as string]);
+      setHintTotal(data.total as number);
+    } catch (err) {
+      setRevealError(err instanceof Error ? err.message : "Có lỗi xảy ra");
+    } finally {
+      setHintLoading(false);
+    }
+  }
 
   async function handleReveal() {
     setRevealLoading(true);
     setRevealError(null);
     try {
-      const res = await fetch(`/api/attempts/${attemptId}/questions/${question.id}/reveal`);
+      // The current pick goes along so the server records it as made BEFORE
+      // the answer was shown, even if the periodic sync hasn't sent it yet.
+      const picked = selectedLabel ? `?picked=${selectedLabel}` : "";
+      const res = await fetch(`/api/attempts/${attemptId}/questions/${question.id}/reveal${picked}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Không thể tải đáp án");
       setReveal(data as RevealData);
@@ -141,6 +165,27 @@ export function ExamQuestionPanel({
             onSelect={onSelectAnswer}
             hideText={isAudioOnly && !reveal}
           />
+
+          {mode === "PRACTICE" && !reveal && (hints.length > 0 || !selectedLabel) && (
+            <div className="flex flex-col gap-2">
+              {hints.map((h, i) => (
+                <p key={i} className="flex gap-2 rounded-xl border border-warning/30 bg-warning/10 p-3 text-sm leading-relaxed">
+                  <Lightbulb className="mt-0.5 size-4 shrink-0 text-warning" />
+                  <span>
+                    <span className="font-semibold">Gợi ý {i + 1}: </span>
+                    {h}
+                  </span>
+                </p>
+              ))}
+              {!selectedLabel && hints.length < hintTotal && (
+                <Button type="button" variant="ghost" size="sm" onClick={handleHint} disabled={hintLoading} className="self-start text-muted-foreground">
+                  {hintLoading ? <Loader2 className="size-3.5 animate-spin" /> : <Lightbulb className="size-3.5" />}
+                  {hints.length === 0 ? "Gợi ý" : "Gợi ý thêm"}
+                  <span className="text-[11px] font-normal opacity-80">· câu đúng nhờ gợi ý được tính nửa điểm</span>
+                </Button>
+              )}
+            </div>
+          )}
 
           {mode === "PRACTICE" && (
             <div className="border-t border-border pt-4">

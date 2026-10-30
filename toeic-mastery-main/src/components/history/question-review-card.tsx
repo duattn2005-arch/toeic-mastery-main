@@ -40,6 +40,17 @@ function StatusBadge({ review }: { review: QuestionReview }) {
 
 export function QuestionReviewCard({ review, index, attemptId }: { review: QuestionReview; index: number; attemptId: string }) {
   const [open, setOpen] = React.useState(false);
+  const viewLogged = React.useRef(false);
+
+  function toggleOpen() {
+    setOpen((v) => !v);
+    // First look at the explanation — a level-2 (Hiểu) side signal for the
+    // Bloom distillation; fire-and-forget, never blocks the UI.
+    if (!viewLogged.current && review.selectedLabel) {
+      viewLogged.current = true;
+      void fetch(`/api/attempts/${attemptId}/questions/${review.id}/explanation-view`, { method: "POST" }).catch(() => {});
+    }
+  }
   const [bookmarked, setBookmarked] = React.useState(review.isBookmarked);
   const [bookmarkPending, startBookmarkTransition] = React.useTransition();
   const [vocabPending, startVocabTransition] = React.useTransition();
@@ -75,7 +86,7 @@ export function QuestionReviewCard({ review, index, attemptId }: { review: Quest
     <div className={cn("rounded-2xl border bg-card shadow-soft", review.isFlagged ? "border-warning/40" : "border-border")}>
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
+        onClick={toggleOpen}
         className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left"
       >
         <div className="flex min-w-0 items-center gap-3">

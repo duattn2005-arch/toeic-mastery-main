@@ -7,6 +7,7 @@ import { PART_META } from "@/lib/constants/toeic";
 import { getTaggingCoverage, taggingState } from "@/lib/services/tagging/run";
 import { TaggingRunPanel } from "@/components/admin/tagging-run-panel";
 import { Button } from "@/components/ui/button";
+import { BLOOM_LEVELS, TRAP_TYPES, type TrapType } from "@/lib/bloom/config";
 
 export const metadata: Metadata = { title: "Nhãn & chưng cất câu hỏi" };
 export const dynamic = "force-dynamic";
@@ -36,6 +37,12 @@ export default async function LabelsPage() {
   const total = coverage.parts.reduce((s, p) => s + p.total, 0);
   const labelled = coverage.parts.reduce((s, p) => s + p.strategy, 0);
   const diffTotal = coverage.difficulty.reduce((s, d) => s + d.count, 0);
+  const bloomOf = (part: string, level: number) => coverage.bloom.find((b) => b.part === part && b.level === level)?.count ?? 0;
+  const bloomTotal = (level: number) => coverage.bloom.filter((b) => b.level === level).reduce((s, b) => s + b.count, 0);
+  const bloomUnset = coverage.bloom.filter((b) => b.level === null).reduce((s, b) => s + b.count, 0);
+  const bloomManual = coverage.bloom.reduce((s, b) => s + b.manual, 0);
+  const wrongOptions = coverage.traps.reduce((s, t) => s + t.count, 0);
+  const trapped = coverage.traps.filter((t) => t.trap).reduce((s, t) => s + t.count, 0);
 
   return (
     <div className="flex flex-col gap-6">
@@ -100,6 +107,70 @@ export default async function LabelsPage() {
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
           Câu nghe Part 1–2 chỉ có audio (không transcript, đáp án không có chữ) sẽ chưa có dạng câu — thêm transcript cho câu đó là lần chạy sau tự gắn được.
+        </p>
+      </section>
+
+      <section className="rounded-2xl border border-border bg-card p-5">
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-semibold">Thang Bloom — bậc tư duy của từng câu</h2>
+          <p className="text-xs text-muted-foreground">
+            {bloomManual.toLocaleString("vi-VN")} câu đã duyệt tay · {bloomUnset.toLocaleString("vi-VN")} câu chưa gắn (lần chạy tới sẽ gắn)
+          </p>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[620px] text-sm">
+            <thead>
+              <tr className="text-left text-xs uppercase text-muted-foreground">
+                <th className="py-2 pr-3">Part</th>
+                {BLOOM_LEVELS.filter((l) => l.id <= 5).map((l) => (
+                  <th key={l.id} className="py-2 pr-3">
+                    {l.id}. {l.nameVi}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {coverage.parts.map((p) => (
+                <tr key={p.part} className="border-t border-border">
+                  <td className="py-2 pr-3 font-medium">{PART_META[p.part].shortLabel}</td>
+                  {BLOOM_LEVELS.filter((l) => l.id <= 5).map((l) => {
+                    const n = bloomOf(p.part, l.id);
+                    return (
+                      <td key={l.id} className={n ? "py-2 pr-3 tabular-nums" : "py-2 pr-3 text-muted-foreground"}>
+                        {n ? `${n.toLocaleString("vi-VN")} (${pct(n, p.total)})` : "—"}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
+              <tr className="border-t border-border font-semibold">
+                <td className="py-2 pr-3">Tổng</td>
+                {BLOOM_LEVELS.filter((l) => l.id <= 5).map((l) => (
+                  <td key={l.id} className="py-2 pr-3 tabular-nums">
+                    {bloomTotal(l.id).toLocaleString("vi-VN")}
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div className="mt-4 border-t border-border pt-3">
+          <p className="mb-2 text-xs font-semibold">
+            Mã bẫy của đáp án sai: {pct(trapped, wrongOptions)} đã xác định ({trapped.toLocaleString("vi-VN")}/{wrongOptions.toLocaleString("vi-VN")})
+          </p>
+          <ul className="flex flex-wrap gap-2 text-xs">
+            {coverage.traps
+              .filter((t) => t.trap)
+              .sort((a, b) => b.count - a.count)
+              .map((t) => (
+                <li key={t.trap} className="rounded-full bg-muted px-2.5 py-1" title={TRAP_TYPES[t.trap as TrapType]?.description}>
+                  {TRAP_TYPES[t.trap as TrapType]?.nameVi ?? t.trap}: <b className="tabular-nums">{t.count.toLocaleString("vi-VN")}</b>
+                </li>
+              ))}
+          </ul>
+        </div>
+        <p className="mt-3 text-xs text-muted-foreground">
+          Bậc do luật gắn tự động theo nhãn của câu (src/lib/bloom/classify.ts). Mở một câu và chọn “Bậc tư duy” để duyệt tay — bậc đã duyệt không bao giờ bị ghi đè.
         </p>
       </section>
 

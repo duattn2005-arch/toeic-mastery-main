@@ -3,6 +3,7 @@ import { z } from "zod";
 export const TEST_PART_VALUES = ["PART1", "PART2", "PART3", "PART4", "PART5", "PART6", "PART7"] as const;
 export const DIFFICULTY_VALUES = ["EASY", "MEDIUM", "HARD"] as const;
 export const OPTION_LABEL_VALUES = ["A", "B", "C", "D"] as const;
+export const BLOOM_FORM_VALUES = ["auto", "1", "2", "3", "4", "5"] as const;
 
 export const testFormSchema = z.object({
   title: z.string().trim().min(3, "Tối thiểu 3 ký tự"),
@@ -46,6 +47,8 @@ export const questionFormSchema = z
     vocabularyFocus: z.string().trim().optional(),
     evidenceText: z.string().trim().optional(),
     difficulty: z.enum(DIFFICULTY_VALUES),
+    /** Thang Bloom: "auto" = bộ gắn nhãn tự quyết; "1"–"5" = admin duyệt tay (không bị ghi đè). */
+    bloomLevel: z.enum(BLOOM_FORM_VALUES).optional(),
     status: z.enum(QUESTION_STATUS_VALUES),
     options: z.array(questionOptionFormSchema).min(2).max(4),
   })
@@ -63,6 +66,8 @@ export const importQuestionSchema = z.object({
   correctAnswer: z.enum(OPTION_LABEL_VALUES),
   explanation: z.string().trim().min(1),
   difficulty: z.enum(["easy", "medium", "hard", "EASY", "MEDIUM", "HARD"]).optional(),
+  /** Thang Bloom 1–5 (Nhớ, Hiểu, Vận dụng, Phân tích, Đánh giá) — bỏ trống để hệ thống tự gắn. */
+  bloomLevel: z.number().int().min(1).max(5).optional(),
   audioUrl: z.string().trim().url().optional(),
   imageUrl: z.string().trim().url().optional(),
   transcript: z.string().trim().optional(),

@@ -18,11 +18,16 @@ import {
   type ExtraAdvanceRequirements,
 } from "@/lib/services/mentor/level-gate";
 import type { TestPart, MentorLevel } from "@/generated/prisma/enums";
+import { answerSnapshot, SNAPSHOT_QUESTION_SELECT } from "@/lib/bloom/answer-log";
 
 interface SubmittedAnswer {
   questionId: string;
   selectedLabel: string;
+  initialSelectedLabel?: string;
+  answerChangeCount?: number;
 }
+
+const LABEL = /^[A-D]$/;
 
 function parseAnswers(body: unknown): SubmittedAnswer[] {
   if (!body || typeof body !== "object" || !Array.isArray((body as { answers?: unknown }).answers)) return [];
@@ -50,7 +55,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const mentorTest = await db.mentorTest.findUnique({
     where: { id: mentorTestId },
     include: {
-      questions: { include: { question: { select: { correctLabel: true, part: true, grammarTopicSlug: true, strategicLabelSlugs: true } } } },
+      questions: { include: { question: { select: SNAPSHOT_QUESTION_SELECT } } },
     },
   });
   if (!mentorTest || mentorTest.userId !== profile.id) {
@@ -62,6 +67,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const answers = parseAnswers(await request.json().catch(() => null));
   const answerMap = new Map(answers.map((a) => [a.questionId, a.selectedLabel]));
+  const decisionMap = new Map(answers.map((a) => [a.questionId, a]));
 
   let correctCount = 0;
   const graded: GradedGateQuestion[] = [];
@@ -70,13 +76,31 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       const selectedLabel = answerMap.get(q.questionId) ?? null;
       const isCorrect = selectedLabel !== null && selectedLabel === q.question.correctLabel;
       if (isCorrect) correctCount += 1;
+      const snapshot = answerSnapshot(q.question, selectedLabel);
       graded.push({
         part: q.question.part,
         grammarTopicSlug: q.question.grammarTopicSlug,
         strategicLabelSlugs: q.question.strategicLabelSlugs,
+        bloomLevel: snapshot.bloomLevel,
         isCorrect,
       });
-      return db.mentorTestQuestion.update({ where: { id: q.id }, data: { selectedLabel, isCorrect, answeredAt: new Date() } });
+      // Decision log + Bloom snapshot (the runner shows every question at
+      // once, so per-question time can't be measured — left at 0, which the
+      // Bloom engine treats as "not measured").
+      const d = decisionMap.get(q.questionId);
+      const initial = d?.initialSelectedLabel && LABEL.test(d.initialSelectedLabel) ? d.initialSelectedLabel : selectedLabel;
+      const changes = typeof d?.answerChangeCount === "number" && Number.isFinite(d.answerChangeCount) ? Math.max(0, Math.min(50, Math.floor(d.answerChangeCount))) : 0;
+      const now = new Date();
+      return db.mentorTestQuestion.update({
+        where: { id: q.id },
+        data: {
+          selectedLabel,
+          isCorrect,
+          answeredAt: now,
+          ...(selectedLabel ? { initialSelectedLabel: initial, answerChangeCount: changes, firstAnsweredAt: q.firstAnsweredAt ?? now } : {}),
+          ...snapshot,
+        },
+      });
     })
   );
 
@@ -90,7 +114,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   // that REMEDIATE, not a pass). Compute the branch up front so `passed`
   // and the stored `status` stay consistent with it instead of the
   // generic threshold.
-  let levelGateResult = mentorTest.dimensionType === "LEVEL_GATE" ? evaluateLevelGate(graded) : null;
+  const gateFrom = profile.mentorLevel === "BEGINNER" || profile.mentorLevel === "INTERMEDIATE" ? profile.mentorLevel : undefined;
+  let levelGateResult = mentorTest.dimensionType === "LEVEL_GATE" ? evaluateLevelGate(graded, gateFrom) : null;
   // Gate Test score alone isn't the whole ADVANCE bar per the B/I source
   // docs — "từ vựng đã nhớ ≥70%" (both docs) and, for I→A specifically,
   // "Placement test ≥80%" must also hold. Re-check and downgrade to

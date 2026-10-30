@@ -30,6 +30,7 @@ export default async function EditQuestionPage({ params }: { params: Promise<{ i
         <QuestionForm
           questionId={question.id}
           testOptions={tests}
+          autoBloomLevel={question.bloomSource === "manual" ? null : question.bloomLevel}
           defaultValues={{
             testId: question.testId ?? "",
             part: question.part,
@@ -43,6 +44,7 @@ export default async function EditQuestionPage({ params }: { params: Promise<{ i
             vocabularyFocus: question.vocabularyFocus.join(", "),
             evidenceText: question.evidenceText ?? "",
             difficulty: question.difficulty,
+            bloomLevel: question.bloomSource === "manual" && question.bloomLevel ? (String(question.bloomLevel) as "1" | "2" | "3" | "4" | "5") : "auto",
             status: question.status,
             options: question.options.map((o) => ({
               label: o.label as "A" | "B" | "C" | "D",

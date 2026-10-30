@@ -5,6 +5,18 @@ import { TEST_PARTS } from "@/lib/constants/toeic";
 import { buildAdvancedHandoffNotes } from "./advanced-readiness";
 import type { Prisma } from "@/generated/prisma/client";
 import type { MentorLevel, SkillDimensionType, TestPart } from "@/generated/prisma/enums";
+import {
+  ADVANCED_PLACEMENT_THRESHOLD as ADVANCED_PLACEMENT_BAR,
+  GATE_MAX_BLOOM_LEVEL,
+  GATE_MIN_QUESTIONS_PER_LEVEL,
+  GATE_MIN_SAMPLE_PER_LABEL,
+  GATE_MIN_TOTAL_ATTEMPTED,
+  GATE_PASS_THRESHOLD as GATE_PASS_BAR,
+  GATE_RESTART_THRESHOLD as GATE_RESTART_BAR,
+  TIER_LEVELS,
+  VOCAB_MASTERY_THRESHOLD as VOCAB_BAR,
+  WEAK_THRESHOLD,
+} from "@/lib/bloom/config";
 
 /**
  * Beginner->Intermediate->Advanced level gate (see docs/ai-mentor-
@@ -30,14 +42,15 @@ export interface CoreLabel {
   dimensionKey: string;
 }
 
-const MIN_SAMPLE_PER_LABEL: Record<GateableLevel, number> = { BEGINNER: 10, INTERMEDIATE: 15 };
-const MIN_TOTAL_ATTEMPTED: Record<GateableLevel, number> = { BEGINNER: 100, INTERMEDIATE: 200 };
+// Every number below comes from the one Bloom config (src/lib/bloom/config.ts).
+const MIN_SAMPLE_PER_LABEL: Record<GateableLevel, number> = GATE_MIN_SAMPLE_PER_LABEL;
+const MIN_TOTAL_ATTEMPTED: Record<GateableLevel, number> = GATE_MIN_TOTAL_ATTEMPTED;
 const GATE_TARGET_LEVEL: Record<GateableLevel, MentorLevel> = { BEGINNER: "INTERMEDIATE", INTERMEDIATE: "ADVANCED" };
 /** Exported for competency-heatmap.ts (mục 12) so the heatmap's Green/
  * Yellow/Red bands use the exact same cutoffs as the Gate Test itself,
  * instead of a second, potentially-drifting copy of these numbers. */
-export const GATE_PASS_THRESHOLD = 0.8;
-const GATE_RESTART_THRESHOLD = 0.5;
+export const GATE_PASS_THRESHOLD = GATE_PASS_BAR;
+const GATE_RESTART_THRESHOLD = GATE_RESTART_BAR;
 const REMEDIATE_MAX_LABELS = 3;
 const GATE_QUESTIONS_PER_LABEL = 3;
 /**
@@ -52,14 +65,14 @@ const GATE_QUESTIONS_PER_LABEL = 3;
  * (2026-09-22). Exported for competency-heatmap.ts (mục 12) — see
  * GATE_PASS_THRESHOLD's own export comment just above.
  */
-export const HONG_LABEL_THRESHOLD = 0.5;
+export const HONG_LABEL_THRESHOLD = WEAK_THRESHOLD;
 /** Cấp I mục V's "Đạt chuẩn lên A" table — Placement test ≥80% and Gate
  * Test I ≥80% (already GATE_PASS_THRESHOLD). Only re-checked for the I→A
  * transition; Cấp B's own table has no placement re-check. */
-const ADVANCED_PLACEMENT_THRESHOLD = 0.8;
+const ADVANCED_PLACEMENT_THRESHOLD = ADVANCED_PLACEMENT_BAR;
 /** Both B and I docs' "từ vựng đã nhớ ≥70%" condition — re-checked for
  * every ADVANCE branch (B→I and I→A alike). */
-const VOCAB_MASTERY_THRESHOLD = 0.7;
+const VOCAB_MASTERY_THRESHOLD = VOCAB_BAR;
 /** Extra "ôn tập tổng quát" questions a remediation test tops up with, spread
  * across core labels OTHER than the ones actually weak — so học bù never
  * feels like being locked into a single Part/topic forever (2026-09-22). */
@@ -174,7 +187,8 @@ export async function generateLevelGateTest(params: {
 
   const targetLevel = GATE_TARGET_LEVEL[params.currentLevel];
   const labels = await getCoreLabels(params.currentLevel);
-  const excludeFilter = excludeIdsFilter(await recentlySeenIds(params.userId));
+  // Nguyên tắc tầng: a gate never asks above the thinking levels its tier covers.
+  const excludeFilter: Prisma.QuestionWhereInput = { AND: [excludeIdsFilter(await recentlySeenIds(params.userId)), bloomCap(params.currentLevel)] };
   const selectedIds = await pickQuestionsForLabels(labels, excludeFilter, GATE_QUESTIONS_PER_LABEL);
 
   if (selectedIds.length === 0) {
@@ -206,6 +220,11 @@ async function recentlySeenIds(userId: string): Promise<string[]> {
     select: { questionId: true },
   });
   return recentlySeen.map((r) => r.questionId);
+}
+
+/** Questions within the Bloom levels a gate/remediation of this tier may ask (unclassified ones still count). */
+function bloomCap(level: GateableLevel): Prisma.QuestionWhereInput {
+  return { OR: [{ bloomLevel: null }, { bloomLevel: { lte: GATE_MAX_BLOOM_LEVEL[level] } }] };
 }
 
 function excludeIdsFilter(ids: string[]): Prisma.QuestionWhereInput {
@@ -275,7 +294,7 @@ export async function generateRemediationTest(params: {
   if (params.labels.length === 0) return null;
 
   const baseExcludeIds = await recentlySeenIds(params.userId);
-  const focusedIds = await pickQuestionsForLabels(params.labels, excludeIdsFilter(baseExcludeIds), GATE_QUESTIONS_PER_LABEL);
+  const focusedIds = await pickQuestionsForLabels(params.labels, { AND: [excludeIdsFilter(baseExcludeIds), bloomCap(params.fromLevel)] }, GATE_QUESTIONS_PER_LABEL);
 
   const targetKeys = new Set(params.labels.map((l) => `${l.dimensionType}:${l.dimensionKey}`));
   const allCoreLabels = await getCoreLabels(params.fromLevel);
@@ -354,6 +373,10 @@ export interface LevelGateResult {
   weakLabels: LevelGateLabelScore[];
   /** RESTART only — every "Hổng" (score < HONG_LABEL_THRESHOLD) label. */
   hongLabels: LevelGateLabelScore[];
+  /** Score per Bloom level on this gate (levels with questions only). */
+  bloomLevelScores: { level: number; correct: number; total: number; score: number }[];
+  /** Levels of the tier being left that were asked often enough and missed the mastery bar. */
+  bloomLevelsBelow: number[];
 }
 
 export interface GradedGateQuestion {
@@ -363,6 +386,8 @@ export interface GradedGateQuestion {
    * top of its PART/GRAMMAR_TOPIC label (see StrategicLabel). Empty/absent
    * for B→I gating, where no question carries a strategic label yet. */
   strategicLabelSlugs?: string[];
+  /** Bloom level of the question (src/lib/bloom); absent on old data. */
+  bloomLevel?: number | null;
   isCorrect: boolean;
 }
 
@@ -403,7 +428,7 @@ export function scoreByLabel(graded: GradedGateQuestion[]): LevelGateLabelScore[
  * loại bỏ toàn bộ dữ liệu chứ không phải "nhiễu". Bỏ qua bước lọc cho tới
  * khi có một luồng ghi timeSpentSec thật.
  */
-export function evaluateLevelGate(graded: GradedGateQuestion[]): LevelGateResult {
+export function evaluateLevelGate(graded: GradedGateQuestion[], fromLevel?: GateableLevel): LevelGateResult {
   const totalCount = graded.length;
   const correctCount = graded.filter((g) => g.isCorrect).length;
   const overallScore = totalCount > 0 ? correctCount / totalCount : 0;
@@ -411,12 +436,29 @@ export function evaluateLevelGate(graded: GradedGateQuestion[]): LevelGateResult
   const labelScores = scoreByLabel(graded);
   const weakSorted = labelScores.filter((l) => l.score < HONG_LABEL_THRESHOLD).sort((a, b) => a.score - b.score);
 
+  // Mastery Learning per Bloom level: the levels of the tier being left
+  // (B: 1-2, I: 3) must each clear the bar on their own whenever the gate
+  // asked enough of them - a strong overall score can't hide a level gap.
+  const byLevel = new Map<number, { correct: number; total: number }>();
+  for (const g of graded) {
+    if (!g.bloomLevel) continue;
+    const e = byLevel.get(g.bloomLevel) ?? { correct: 0, total: 0 };
+    e.total++;
+    if (g.isCorrect) e.correct++;
+    byLevel.set(g.bloomLevel, e);
+  }
+  const bloomLevelScores = [...byLevel.entries()].sort((a, b) => a[0] - b[0]).map(([level, e]) => ({ level, ...e, score: e.correct / e.total }));
+  const tierLevels: number[] = fromLevel ? TIER_LEVELS[fromLevel === "BEGINNER" ? "B" : "I"] : [];
+  const bloomLevelsBelow = bloomLevelScores
+    .filter((l) => tierLevels.includes(l.level) && l.total >= GATE_MIN_QUESTIONS_PER_LEVEL && l.score < GATE_PASS_THRESHOLD)
+    .map((l) => l.level);
+
   // "≥80% và không nhãn nào Hổng" -> lên cấp. Nếu đạt ≥80% tổng nhưng vẫn
   // còn nhãn Hổng, spec gốc không nói rõ — xử lý như REMEDIATE (không lên
   // cấp khi còn lỗ hổng rõ rệt, nhưng cũng không nặng tay bắt học lại từ
   // đầu như RESTART).
   let branch: LevelGateBranch;
-  if (overallScore >= GATE_PASS_THRESHOLD && weakSorted.length === 0) branch = "ADVANCE";
+  if (overallScore >= GATE_PASS_THRESHOLD && weakSorted.length === 0 && bloomLevelsBelow.length === 0) branch = "ADVANCE";
   else if (overallScore >= GATE_RESTART_THRESHOLD) branch = "REMEDIATE";
   else branch = "RESTART";
 
@@ -426,6 +468,8 @@ export function evaluateLevelGate(graded: GradedGateQuestion[]): LevelGateResult
     labelScores,
     weakLabels: branch === "REMEDIATE" ? weakSorted.slice(0, REMEDIATE_MAX_LABELS) : [],
     hongLabels: branch === "RESTART" ? weakSorted : [],
+    bloomLevelScores,
+    bloomLevelsBelow,
   };
 }
 

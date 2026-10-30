@@ -4,6 +4,8 @@ import { Prisma } from "@/generated/prisma/client";
 import { completeMentorTask, MentorConfigError } from "@/lib/services/mentor/llm-client";
 import { STRATEGIC_LABELS } from "../../../../prisma/seed-data/strategic-labels";
 import type { LabelMeta } from "./run";
+import { classifyBloom } from "@/lib/bloom/classify";
+import { bloomInputOf } from "@/lib/bloom/from-question";
 
 /**
  * The second pass behind "every question is labelled": Part 5/6 questions
@@ -83,9 +85,12 @@ export async function runAiLabelling(opts: { ids?: string[] } = {}): Promise<num
           explanationVi: true,
           grammarTopicSlug: true,
           strategicLabelSlugs: true,
+          difficulty: true,
+          bloomLevel: true,
+          bloomSource: true,
           labelMeta: true,
           options: { select: { label: true, content: true }, orderBy: { label: "asc" } },
-          passage: { select: { texts: true } },
+          passage: { select: { texts: true, layout: true } },
         },
       });
       if (batch.length === 0) continue;
@@ -149,6 +154,14 @@ Trả về CHÍNH XÁC một mảng JSON, mỗi câu một phần tử:
           fields.push("strategy");
         }
         if (fields.length) labelled++;
+        // New labels move the Bloom level too (unless an admin fixed it).
+        if (fields.length && q.bloomSource !== "manual") {
+          const bloom = classifyBloom(bloomInputOf({ ...q, grammarTopicSlug: grammar ?? q.grammarTopicSlug, strategicLabelSlugs: (data.strategicLabelSlugs as string[] | undefined) ?? q.strategicLabelSlugs }));
+          if (bloom.level !== q.bloomLevel) {
+            data.bloomLevel = bloom.level;
+            data.bloomSource = "auto";
+          }
+        }
         const meta: LabelMeta = {
           ...old,
           auto: [...new Set([...(old.auto ?? []), ...fields])],
