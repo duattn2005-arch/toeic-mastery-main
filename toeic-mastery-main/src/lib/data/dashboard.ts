@@ -4,11 +4,20 @@ import { REAL_STUDY } from "@/lib/data/real-study";
 import { db } from "@/lib/db";
 import { getOverallStats, getPartAccuracies } from "@/lib/data/skill-stats";
 import { getVocabularyReminder } from "@/lib/data/vocabulary";
-import { generateRecommendations } from "@/lib/services/recommendation";
+import { generateRecommendations, type Recommendation } from "@/lib/services/recommendation";
 import { computeXp, getXpProgress } from "@/lib/services/xp";
 import { srsDueCutoff } from "@/lib/services/spaced-repetition";
 
-export async function getDashboardData(userId: string) {
+/** Stands in for the personal recommendations, which name the learner's
+ * weakest Parts and their accuracy — the same data as the Pro-only radar. */
+const FREE_RECOMMENDATION: Recommendation = {
+  title: "Xem Part nào đang kéo điểm của bạn xuống",
+  description: "Gói Pro phân tích từng câu bạn đã làm và gợi ý nên luyện gì tiếp theo.",
+  href: "/pricing",
+  priority: 0,
+};
+
+export async function getDashboardData(userId: string, pro: boolean) {
   const [
     profile,
     latestScore,
@@ -41,7 +50,7 @@ export async function getDashboardData(userId: string) {
           },
         },
       }),
-      getPartAccuracies(userId),
+      pro ? getPartAccuracies(userId) : [],
       getOverallStats(userId),
       db.userVocabulary.findMany({
         where: { userId, nextReviewDate: { lte: srsDueCutoff() } },
@@ -75,7 +84,7 @@ export async function getDashboardData(userId: string) {
 
   const vocabularyMistakeRate = wrongTotalAgg > 0 ? (vocabMistakeAgg._count._all ?? 0) / wrongTotalAgg : 0;
 
-  const recommendations = generateRecommendations({ partAccuracies, vocabularyMistakeRate });
+  const recommendations = pro ? generateRecommendations({ partAccuracies, vocabularyMistakeRate }) : [FREE_RECOMMENDATION];
 
   const weeklyStudySeconds = await db.studySession.aggregate({
     where: { userId, startedAt: { gte: new Date(Date.now() - 7 * 86_400_000) }, ...REAL_STUDY },

@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     conversationId = created.id;
   }
 
-  const suggestions = await getNextStepSuggestions(profile.id, access.maxSuggestedItems);
+  const suggestions = await getNextStepSuggestions(profile.id, access.maxSuggestedItems, access.unlimitedNextSteps);
 
   const summaryText =
     suggestions.length > 0

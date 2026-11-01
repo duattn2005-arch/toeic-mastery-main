@@ -2,6 +2,7 @@ import "server-only";
 import { BLOOM_SELECT, bloomGate } from "@/lib/bloom/gate";
 import { db } from "@/lib/db";
 import { getUnlockedDifficulty } from "./skill-mastery";
+import { questionAccessFilterFor } from "@/lib/data/question-access";
 import { TEST_PARTS, PART_META } from "@/lib/constants/toeic";
 import type { Prisma } from "@/generated/prisma/client";
 import type { SkillDimensionType, Difficulty, TestPart } from "@/generated/prisma/enums";
@@ -53,6 +54,7 @@ export async function generateMentorTest(params: {
 
   const where: Prisma.QuestionWhereInput = {
     status: "PUBLISHED",
+    ...(await questionAccessFilterFor(params.userId)),
     difficulty,
     ...(excludeIds.length > 0 ? { id: { notIn: excludeIds } } : {}),
     ...(params.dimensionType === "PART" ? { part: params.dimensionKey as TestPart } : {}),
@@ -126,7 +128,7 @@ export async function generatePlacementTest(params: { userId: string; conversati
     select: { questionId: true },
   });
   const excludeIds = recentlySeen.map((r) => r.questionId);
-  const excludeFilter = excludeIds.length > 0 ? { id: { notIn: excludeIds } } : {};
+  const excludeFilter: Prisma.QuestionWhereInput = { ...(excludeIds.length > 0 ? { id: { notIn: excludeIds } } : {}), ...(await questionAccessFilterFor(params.userId)) };
 
   const selectedIds: string[] = [];
 

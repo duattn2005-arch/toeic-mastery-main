@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { requireUser, isPro } from "@/lib/auth";
+import { rateLimit } from "@/lib/rate-limit";
 import { FREE_PRACTICE_STARTS_PER_DAY } from "@/lib/constants/limits";
 import { TEST_PART_VALUES } from "@/lib/validations/admin";
 import type { TestPart } from "@/generated/prisma/enums";
@@ -30,6 +31,13 @@ function normalizeParts(parts: TestPart[]): TestPart[] {
 export async function startAttemptAction(testId: string, mode: "PRACTICE" | "EXAM" = "EXAM", parts: TestPart[] = []) {
   const profile = await requireUser();
   const normalizedParts = normalizeParts(parts);
+
+  // Before the update below, so a refused start can't abandon a live attempt.
+  // Test ids reach this action from the client, hence the published check too.
+  const startable = await db.test.findFirst({ where: { id: testId, status: "PUBLISHED" }, select: { id: true } });
+  if (!startable) redirect("/practice");
+  // Pro has no daily cap, and each start exposes a whole test's questions.
+  if (!rateLimit(`attempt-start:${profile.id}`, 30, 60 * 60 * 1000).ok) redirect(`/practice/${testId}?limitReached=1`);
 
   // "Bắt đầu" always starts a genuinely new attempt: full time, question 1
   // — not a silent drop back into whatever the same scope (this test + this

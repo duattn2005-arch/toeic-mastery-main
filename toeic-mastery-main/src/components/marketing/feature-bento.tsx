@@ -46,7 +46,7 @@ export function FeatureBento() {
         <Cell
           icon={BarChart3}
           title="Biết rõ mình yếu Part nào"
-          description="Radar 7 Part tính từ chính bài làm của bạn, kèm gợi ý nên luyện gì tiếp theo."
+          description="Gói Pro: radar 7 Part tính từ chính bài làm của bạn, kèm gợi ý nên luyện gì tiếp theo."
           glow="bottom-left"
         >
           <RadarPreview />

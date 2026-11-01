@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { getAuthedProfileOrNull } from "@/lib/auth";
+import { rateLimit } from "@/lib/rate-limit";
 
 export interface SearchResultItem {
   type: "test" | "vocabulary" | "grammar" | "dictionary";
@@ -9,6 +11,12 @@ export interface SearchResultItem {
 }
 
 export async function GET(request: Request) {
+  // Only the logged-in command palette calls this. Left open, it let anyone
+  // walk the word bank and test catalogue with a script.
+  const profile = await getAuthedProfileOrNull();
+  if (!profile) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!rateLimit(`search:${profile.id}`, 60, 60_000).ok) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+
   const { searchParams } = new URL(request.url);
   const q = (searchParams.get("q") ?? "").trim();
 

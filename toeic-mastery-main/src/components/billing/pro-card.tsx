@@ -21,6 +21,7 @@ import {
 import type { NewMemberOfferState } from "@/lib/services/new-member-offer"; // type-only: server-only module, erased at build time
 
 const PRO_BENEFITS = [
+  "Radar kỹ năng & Phân tích năng lực chi tiết, kèm bài luyện vá điểm yếu",
   "Không giới hạn Mock Test, Tra từ bôi đen & Chữa câu tức thì",
   "Mở khóa toàn bộ Từ đồng nghĩa & Ví dụ chuyên sâu",
   "Tùy chỉnh Quick Study trượt 5 – 60 phút",

@@ -2,11 +2,12 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpen, CheckCircle2, Clock3, Layers, Lightbulb, ListChecks, Radar as RadarIcon, Timer } from "lucide-react";
 
-import { requireUser } from "@/lib/auth";
+import { requireUser, isPro } from "@/lib/auth";
 import { getDashboardData } from "@/lib/data/dashboard";
 import { getSiteThemeId } from "@/lib/data/site-theme";
 import { StatCard } from "@/components/shared/stat-card";
 import { SkillRadar } from "@/components/shared/skill-radar";
+import { ProLockedRadar } from "@/components/billing/pro-locked-radar";
 import { SectionHeader } from "@/components/shared/section-header";
 import { TestCard } from "@/components/practice/test-card";
 import { ContinueLearningCard } from "@/components/dashboard/continue-learning-card";
@@ -112,7 +113,8 @@ const PANEL = "rounded-[2rem] border border-border/60 bg-card p-6 shadow-soft";
 
 export default async function DashboardPage() {
   const profile = await requireUser();
-  const [data, siteThemeId] = await Promise.all([getDashboardData(profile.id), getSiteThemeId(profile.id)]);
+  const pro = isPro(profile);
+  const [data, siteThemeId] = await Promise.all([getDashboardData(profile.id, pro), getSiteThemeId(profile.id)]);
   const firstName = (data.profile.fullName ?? "bạn").split(" ").pop() ?? "bạn";
   const score = data.predictedScore?.total ?? data.profile.currentScore;
   const todayMinutes = data.activityHeatmap[data.activityHeatmap.length - 1]?.minutes ?? 0;
@@ -137,8 +139,10 @@ export default async function DashboardPage() {
 
   const skillPanel = (
     <section className={`${PANEL} flex h-full flex-col`}>
-      <SectionHeader icon={RadarIcon} title="Phân tích kỹ năng" action={compact ? undefined : <AnalysisLink />} />
-      {hasSkillData ? (
+      <SectionHeader icon={RadarIcon} title="Phân tích kỹ năng" action={pro && !compact ? <AnalysisLink /> : undefined} />
+      {!pro ? (
+        <ProLockedRadar height={compact ? 250 : 340} />
+      ) : hasSkillData ? (
         <Link
           href="/analytics"
           aria-label="Mở phân tích năng lực chi tiết"
@@ -163,7 +167,7 @@ export default async function DashboardPage() {
           </div>
         </div>
       )}
-      {compact && (
+      {pro && compact && (
         <div className="mt-auto pt-3">
           <AnalysisLink block />
         </div>

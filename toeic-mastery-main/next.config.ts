@@ -9,6 +9,24 @@ import type { NextConfig } from "next";
 const uploadsUrl = process.env.NEXT_PUBLIC_UPLOADS_URL ? new URL(process.env.NEXT_PUBLIC_UPLOADS_URL) : null;
 
 const nextConfig: NextConfig = {
+  poweredByHeader: false,
+  productionBrowserSourceMaps: false,
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          // Nobody may embed the site in a frame (the site embeds no frames of its own either).
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "Content-Security-Policy", value: "frame-ancestors 'none'; base-uri 'self'; object-src 'none'" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          { key: "Strict-Transport-Security", value: "max-age=31536000" },
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+        ],
+      },
+    ];
+  },
   // sharp ships native (.node) bindings — bundling it like ordinary JS
   // breaks those at runtime, so it must stay an external require both for
   // Next's own image optimizer (handled automatically) and for our own

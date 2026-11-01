@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getAuthedProfileOrNull, isPro } from "@/lib/auth";
+import { rateLimit } from "@/lib/rate-limit";
 import { generatePlacementTest, PlacementTestUnavailableError } from "@/lib/services/mentor/mentor-test-generator";
 
 /** A placement test is a one-shot diagnostic, not something worth retaking
@@ -21,6 +22,8 @@ const FREE_PLACEMENT_TESTS_PER_DAY = 1;
 export async function POST(request: Request) {
   const profile = await getAuthedProfileOrNull();
   if (!profile) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Applies to Pro too: every call samples ~50 fresh questions, so an unlimited loop copies the bank.
+  if (!rateLimit(`placement-test:${profile.id}`, 5, 60 * 60 * 1000).ok) return NextResponse.json({ error: "Bạn đã tạo quá nhiều bài kiểm tra. Vui lòng thử lại sau." }, { status: 429 });
 
   if (!isPro(profile)) {
     const startOfToday = new Date();

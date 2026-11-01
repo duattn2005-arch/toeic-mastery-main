@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { RECENT_EXCLUSION_DAYS, shuffle } from "./mentor-test-generator";
 import { TEST_PARTS } from "@/lib/constants/toeic";
 import { buildAdvancedHandoffNotes } from "./advanced-readiness";
+import { questionAccessFilterFor } from "@/lib/data/question-access";
 import type { Prisma } from "@/generated/prisma/client";
 import type { MentorLevel, SkillDimensionType, TestPart } from "@/generated/prisma/enums";
 import {
@@ -188,7 +189,9 @@ export async function generateLevelGateTest(params: {
   const targetLevel = GATE_TARGET_LEVEL[params.currentLevel];
   const labels = await getCoreLabels(params.currentLevel);
   // Nguyên tắc tầng: a gate never asks above the thinking levels its tier covers.
-  const excludeFilter: Prisma.QuestionWhereInput = { AND: [excludeIdsFilter(await recentlySeenIds(params.userId)), bloomCap(params.currentLevel)] };
+  const excludeFilter: Prisma.QuestionWhereInput = {
+    AND: [excludeIdsFilter(await recentlySeenIds(params.userId)), bloomCap(params.currentLevel), await questionAccessFilterFor(params.userId)],
+  };
   const selectedIds = await pickQuestionsForLabels(labels, excludeFilter, GATE_QUESTIONS_PER_LABEL);
 
   if (selectedIds.length === 0) {
@@ -294,7 +297,8 @@ export async function generateRemediationTest(params: {
   if (params.labels.length === 0) return null;
 
   const baseExcludeIds = await recentlySeenIds(params.userId);
-  const focusedIds = await pickQuestionsForLabels(params.labels, { AND: [excludeIdsFilter(baseExcludeIds), bloomCap(params.fromLevel)] }, GATE_QUESTIONS_PER_LABEL);
+  const access = await questionAccessFilterFor(params.userId);
+  const focusedIds = await pickQuestionsForLabels(params.labels, { AND: [excludeIdsFilter(baseExcludeIds), bloomCap(params.fromLevel), access] }, GATE_QUESTIONS_PER_LABEL);
 
   const targetKeys = new Set(params.labels.map((l) => `${l.dimensionType}:${l.dimensionKey}`));
   const allCoreLabels = await getCoreLabels(params.fromLevel);
@@ -303,7 +307,7 @@ export async function generateRemediationTest(params: {
   const reviewIds: string[] = [];
   for (const label of reviewLabelPool) {
     if (reviewIds.length >= REMEDIATION_EXTRA_REVIEW_COUNT) break;
-    const where = questionWhereForLabel(label, excludeIdsFilter([...baseExcludeIds, ...focusedIds, ...reviewIds]));
+    const where = questionWhereForLabel(label, { AND: [excludeIdsFilter([...baseExcludeIds, ...focusedIds, ...reviewIds]), access] });
     const candidates = await db.question.findMany({ where, select: { id: true }, take: 3 });
     const picked = shuffle(candidates)[0];
     if (picked) reviewIds.push(picked.id);

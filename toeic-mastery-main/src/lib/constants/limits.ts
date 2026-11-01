@@ -38,5 +38,5 @@ export const FREE_MENTOR_NEXT_STEPS_PER_DAY = 4;
 export const FREE_MENTOR_SUGGESTED_ITEMS = 4;
 
 /** Free-tier daily cap on starting Practice-mode attempts of any kind (a
- * test, a mistake retry, a weakness practice set) — Pro is unlimited. */
+ * test, a mistake retry) — Pro is unlimited. */
 export const FREE_PRACTICE_STARTS_PER_DAY = 2;

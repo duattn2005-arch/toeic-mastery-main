@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { srsDueCutoff } from "@/lib/services/spaced-repetition";
+import { questionAccessFilter } from "@/lib/data/question-access";
 
 export interface QuickStudyQuestionItem {
   type: "question";
@@ -87,8 +88,9 @@ function fillByTimeBudget(targetSeconds: number, pools: { key: keyof typeof AVG_
  * reasonable follow-up, not required to fix the time-budget bug this
  * rewrite targets.
  */
-export async function buildQuickStudySession(userId: string, durationMinutes: number): Promise<QuickStudyItem[]> {
+export async function buildQuickStudySession(userId: string, durationMinutes: number, pro: boolean): Promise<QuickStudyItem[]> {
   const targetSeconds = Math.max(60, Math.round(durationMinutes * 60));
+  const access = questionAccessFilter(pro);
 
   const [dueWords, newWords, part1Questions, part2Questions, part5Questions] = await Promise.all([
     db.userVocabulary.findMany({
@@ -105,17 +107,17 @@ export async function buildQuickStudySession(userId: string, durationMinutes: nu
     db.question.findMany({
       // Photo-description part: only usable if it actually has both its
       // recorded audio and its photo, never a partial/placeholder stand-in.
-      where: { part: "PART1", status: "PUBLISHED", audioUrl: { not: null }, imageUrl: { not: null } },
+      where: { part: "PART1", status: "PUBLISHED", audioUrl: { not: null }, imageUrl: { not: null }, ...access },
       include: { options: { orderBy: { label: "asc" } } },
       take: 15,
     }),
     db.question.findMany({
-      where: { part: "PART2", status: "PUBLISHED", audioUrl: { not: null } },
+      where: { part: "PART2", status: "PUBLISHED", audioUrl: { not: null }, ...access },
       include: { options: { orderBy: { label: "asc" } } },
       take: 15,
     }),
     db.question.findMany({
-      where: { part: "PART5", status: "PUBLISHED" },
+      where: { part: "PART5", status: "PUBLISHED", ...access },
       include: { options: { orderBy: { label: "asc" } } },
       take: 40,
     }),

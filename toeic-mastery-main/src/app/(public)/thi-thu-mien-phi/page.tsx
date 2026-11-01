@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 const FAQS = [
   { q: "Bài kiểm tra này có cần đăng nhập không?", a: "Không. Bạn làm và xem kết quả ngay, không cần tài khoản hay email." },
   { q: "Bài kiểm tra có tính điểm TOEIC không?", a: "Không. Đây là 10 câu luyện tập theo dạng Part 5 để bạn biết mình mạnh yếu dạng ngữ pháp nào, không quy đổi sang điểm TOEIC." },
-  { q: "Làm xong thì nên làm gì tiếp theo?", a: "Xem lại các câu sai theo từng dạng, đọc bài ngữ pháp Part 5, rồi luyện đề đầy đủ 7 Part trên TOEIC Mastery để có thống kê điểm yếu chi tiết." },
+  { q: "Làm xong thì nên làm gì tiếp theo?", a: "Xem lại các câu sai theo từng dạng, đọc bài ngữ pháp Part 5, rồi luyện đề đầy đủ 7 Part trên TOEIC Mastery. Gói Pro có thêm thống kê điểm yếu chi tiết." },
 ];
 
 export default function FreeQuizPage() {

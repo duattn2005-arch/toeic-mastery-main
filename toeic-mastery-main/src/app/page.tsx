@@ -46,7 +46,7 @@ const STEPS = [
   },
   {
     title: "Xem điểm yếu từng Part",
-    description: "Biểu đồ radar chỉ ra Part nào đang kéo điểm xuống và dạng câu nào bạn hay sai.",
+    description: "Với gói Pro, biểu đồ radar chỉ ra Part nào đang kéo điểm xuống và dạng câu nào bạn hay sai.",
   },
   {
     title: "Luyện đúng chỗ cần luyện",

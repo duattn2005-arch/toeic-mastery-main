@@ -2,8 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { requireUser, isPro } from "@/lib/auth";
-import { FREE_PRACTICE_STARTS_PER_DAY } from "@/lib/constants/limits";
+import { requirePro } from "@/lib/auth";
 import { PART_META } from "@/lib/constants/toeic";
 import { buildLearningInsights, type DimensionKind, type PracticeTarget } from "@/lib/services/insights/engine";
 import type { Prisma } from "@/generated/prisma/client";
@@ -40,7 +39,7 @@ type Candidate = { id: string; part: TestPart; passageId: string | null; testId:
  * are taken a whole passage/conversation at a time so nothing is shown
  * without its context.
  */
-async function pickQuestions(userId: string, where: Prisma.QuestionWhereInput, size: number, allowPro: boolean, gate: BloomGate): Promise<Candidate[]> {
+async function pickQuestions(userId: string, where: Prisma.QuestionWhereInput, size: number, gate: BloomGate): Promise<Candidate[]> {
   const since = new Date(Date.now() - RECENT_RIGHT_DAYS * 86_400_000);
   const [history, pool] = await Promise.all([
     db.attemptAnswer.findMany({
@@ -52,7 +51,7 @@ async function pickQuestions(userId: string, where: Prisma.QuestionWhereInput, s
       where: {
         ...where,
         status: "PUBLISHED",
-        test: { status: "PUBLISHED", ...(allowPro ? {} : { isPro: false }) },
+        test: { status: "PUBLISHED" },
       },
       select: BLOOM_SELECT,
       take: 600,
@@ -101,17 +100,10 @@ async function pickQuestions(userId: string, where: Prisma.QuestionWhereInput, s
  * (a Part, a grammar topic, a question type), a mix of the top three, or
  * the questions whose latest answer is still wrong — and opens it in the
  * normal exam runner as a Practice attempt (instant feedback available).
+ * Pro only: the set it builds would otherwise reveal a Free account's weaknesses.
  */
 export async function startWeaknessPracticeAction(target: PracticeTarget) {
-  const profile = await requireUser();
-  const pro = isPro(profile);
-
-  if (!pro) {
-    const startOfToday = new Date();
-    startOfToday.setHours(0, 0, 0, 0);
-    const startsToday = await db.attempt.count({ where: { userId: profile.id, mode: "PRACTICE", createdAt: { gte: startOfToday } } });
-    if (startsToday >= FREE_PRACTICE_STARTS_PER_DAY) redirect("/analytics?practiceLimitReached=1");
-  }
+  const profile = await requirePro();
 
   let questions: Candidate[] = [];
   if (target.kind === "mistakes") {
@@ -129,7 +121,7 @@ export async function startWeaknessPracticeAction(target: PracticeTarget) {
     const seen = new Set<string>();
     const gate = await bloomGate(profile.id);
     for (const w of top) {
-      for (const q of await pickQuestions(profile.id, dimensionWhere(w.kind, w.key, target.foundation), each, pro, gate)) {
+      for (const q of await pickQuestions(profile.id, dimensionWhere(w.kind, w.key, target.foundation), each, gate)) {
         if (!seen.has(q.id)) {
           seen.add(q.id);
           questions.push(q);
@@ -138,10 +130,10 @@ export async function startWeaknessPracticeAction(target: PracticeTarget) {
     }
   } else {
     const gate = await bloomGate(profile.id, typeof target.bloom === "number" && target.bloom >= 1 && target.bloom <= 5 ? target.bloom : undefined);
-    questions = await pickQuestions(profile.id, dimensionWhere(target.kind, target.key, target.foundation), SET_SIZE, pro, gate);
+    questions = await pickQuestions(profile.id, dimensionWhere(target.kind, target.key, target.foundation), SET_SIZE, gate);
     // Too few easy questions on this label: fall back to every difficulty
     // (still never above the label's Bloom frontier).
-    if (target.foundation && questions.length < SET_SIZE / 2) questions = await pickQuestions(profile.id, dimensionWhere(target.kind, target.key), SET_SIZE, pro, gate);
+    if (target.foundation && questions.length < SET_SIZE / 2) questions = await pickQuestions(profile.id, dimensionWhere(target.kind, target.key), SET_SIZE, gate);
   }
 
   if (questions.length === 0) redirect("/analytics?noQuestions=1");

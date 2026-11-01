@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ETS_2026_TRANSCRIPTS } from "@/lib/content/transcripts";
 import { BLANK_PATTERN } from "@/lib/content/transcripts/types";
-import { requireUser } from "@/lib/auth";
+import { requireUser, isPro } from "@/lib/auth";
 import { getSkillHubData } from "@/lib/data/skill-hub";
 import { getSiteThemeId } from "@/lib/data/site-theme";
 import { SkillHubView } from "@/components/skills/skill-hub-view";
@@ -29,7 +29,8 @@ function transcriptStats() {
 
 export default async function ListeningPage() {
   const profile = await requireUser();
-  const [items, siteThemeId] = await Promise.all([getSkillHubData(profile.id, "LISTENING"), getSiteThemeId(profile.id)]);
+  const pro = isPro(profile);
+  const [items, siteThemeId] = await Promise.all([getSkillHubData(profile.id, "LISTENING", pro), getSiteThemeId(profile.id)]);
   const stats = transcriptStats();
 
   return (
@@ -39,6 +40,7 @@ export default async function ListeningPage() {
         subtitle="Luyện nghe theo từng Part — Photographs, Question-Response, Conversations, Talks."
         items={items}
         basePath="listening"
+        pro={pro}
         banner={
           <TranscriptMasteryBanner
             href={`/listening/transcripts/${ETS_2026_TRANSCRIPTS.key}`}

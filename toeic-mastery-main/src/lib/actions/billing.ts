@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { randomUUID } from "node:crypto";
 import { db } from "@/lib/db";
 import { requireUser } from "@/lib/auth";
+import { rateLimit } from "@/lib/rate-limit";
 import { buildPaymentUrl } from "@/lib/services/vnpay";
 import { grantProDays } from "@/lib/services/pro-grant";
 import { getNewMemberOfferState } from "@/lib/services/new-member-offer";
@@ -31,6 +32,8 @@ export async function redeemActivationCodeAction(rawCode: string): Promise<Actio
   const profile = await requireUser();
   const code = rawCode.trim().toUpperCase();
   if (!code) return { error: "Vui lòng nhập mã kích hoạt" };
+  // Stops guessing codes to get Pro for free.
+  if (!rateLimit(`activation-code:${profile.id}`, 10, 15 * 60 * 1000).ok) return { error: "Bạn đã thử quá nhiều lần. Vui lòng thử lại sau 15 phút." };
 
   const record = await db.activationCode.findUnique({ where: { code } });
   if (!record) return { error: "Mã kích hoạt không hợp lệ" };

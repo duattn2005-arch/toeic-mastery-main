@@ -1,6 +1,7 @@
 import { NextResponse, type NextFetchEvent, type NextRequest } from "next/server";
 import { SESSION_COOKIE, SESSION_REFRESH_THRESHOLD_SEC, sessionCookieOptions, signSessionToken, verifySessionToken } from "@/lib/auth/session";
 import { internalTrackSecret } from "@/lib/internal-track-secret";
+import { rateLimit } from "@/lib/rate-limit";
 
 const AUTH_ROUTES = ["/login", "/register", "/forgot-password", "/reset-password"];
 // "/practice" and "/practice/start" are deliberate exceptions to the
@@ -14,6 +15,11 @@ const PUBLIC_ROUTES = ["/", "/practice", "/practice/start", ...AUTH_ROUTES];
 // guides, the free quiz, the blog — see src/app/(public)). Whole subtrees, unlike the
 // exact matches above, since the pages are keyed by slug.
 const PUBLIC_PREFIXES = ["/tu-vung", "/huong-dan", "/thi-thu-mien-phi", "/blog"];
+
+/** Common scraping and site-copying tools. Trivial to get around by faking the
+ * User-Agent, so this only stops casual copying; real limits live in Nginx
+ * (README §12). */
+const SCRAPER_UA = /httrack|wget|curl|scrapy|python-requests|python-urllib|aiohttp|httpx|go-http-client|node-fetch|axios|libwww|headlesschrome|phantomjs|puppeteer|playwright/i;
 
 /** First-touch attribution cookie: whichever referral link a visitor
  * clicks first is kept for 60 days, even if they later click a different
@@ -112,7 +118,27 @@ export async function updateSession(request: NextRequest, event: NextFetchEvent)
   // public like /api/dictionary) — redirecting a fetch() call to an HTML
   // login page would break every client-side call.
   if (pathname.startsWith("/api/")) {
+    // The cron routes compare against `Bearer ${CRON_SECRET}`, which an unset
+    // secret turns into the guessable "Bearer undefined".
+    if (pathname.startsWith("/api/cron/") && !process.env.CRON_SECRET) {
+      return NextResponse.json({ error: "CRON_SECRET is not set" }, { status: 503 });
+    }
     return withReferralCookie(response, referralCodeToPersist);
+  }
+
+  // A health check or script on the server itself must keep working. Its last
+  // X-Forwarded-For hop is loopback (Next fills the header in for direct
+  // requests); through Nginx the last hop is always the real client address.
+  const lastHop = request.headers.get("x-forwarded-for")?.split(",").pop()?.trim() ?? "";
+  const isLocal = /^(127\.|::1$|::ffff:127\.)/.test(lastHop);
+  if (!isLocal && SCRAPER_UA.test(request.headers.get("user-agent") ?? "")) {
+    return new NextResponse("Forbidden", { status: 403 });
+  }
+
+  // Per account, stopping a logged-in script walking every page. Generous
+  // because one real page view also prefetches the links on it.
+  if (session && !rateLimit(`pages:${session.sub}`, 600, 60_000).ok) {
+    return new NextResponse("Too many requests", { status: 429, headers: { "Retry-After": "60" } });
   }
 
   const isPublic = PUBLIC_ROUTES.includes(pathname) || PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));

@@ -37,7 +37,13 @@ export function rateLimit(key: string, limit: number, windowMs: number): RateLim
   return { ok, remaining: Math.max(0, limit - existing.count), resetAt: existing.resetAt };
 }
 
+/** The last X-Forwarded-For entry: Nginx appends the address it actually saw
+ * (README §12), while anything before it is whatever the client chose to send,
+ * so keying on the first entry would let a client dodge every limit. */
+export function clientKeyFromHeaders(headers: Headers): string {
+  return headers.get("x-forwarded-for")?.split(",").pop()?.trim() || "unknown";
+}
+
 export function clientKeyFromRequest(request: Request): string {
-  const forwardedFor = request.headers.get("x-forwarded-for");
-  return forwardedFor?.split(",")[0]?.trim() ?? "unknown";
+  return clientKeyFromHeaders(request.headers);
 }

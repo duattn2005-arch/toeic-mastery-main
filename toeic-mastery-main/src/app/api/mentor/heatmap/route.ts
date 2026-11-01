@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAuthedProfileOrNull } from "@/lib/auth";
+import { getAuthedProfileOrNull, isPro } from "@/lib/auth";
 import { buildCompetencyHeatmap } from "@/lib/services/mentor/competency-heatmap";
 
 /**
@@ -12,6 +12,7 @@ import { buildCompetencyHeatmap } from "@/lib/services/mentor/competency-heatmap
 export async function GET() {
   const profile = await getAuthedProfileOrNull();
   if (!profile) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!isPro(profile)) return NextResponse.json({ error: "PRO_REQUIRED" }, { status: 403 });
 
   const heatmap = await buildCompetencyHeatmap(profile.id);
   return NextResponse.json({ heatmap });

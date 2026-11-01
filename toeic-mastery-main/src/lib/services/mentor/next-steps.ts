@@ -22,7 +22,7 @@ export interface NextStepSuggestion {
  * (mentor-context.ts) is where the LLM adds real value: open-ended
  * conversation, not "rank these four numbers".
  */
-export async function getNextStepSuggestions(userId: string, maxItems: number): Promise<NextStepSuggestion[]> {
+export async function getNextStepSuggestions(userId: string, maxItems: number, pro: boolean): Promise<NextStepSuggestion[]> {
   const suggestions: NextStepSuggestion[] = [];
 
   const [partMastery, dueVocabCount, weakGrammar] = await Promise.all([
@@ -89,5 +89,7 @@ export async function getNextStepSuggestions(userId: string, maxItems: number): 
     });
   }
 
-  return suggestions.slice(0, maxItems);
+  const items = suggestions.slice(0, maxItems);
+  // Free keeps the suggestion but not the accuracy numbers, which are Pro analysis data.
+  return pro ? items : items.map((s) => (s.kind === "FULL_TEST" ? s : { ...s, description: "Gói Pro cho bạn xem số liệu phân tích chi tiết." }));
 }

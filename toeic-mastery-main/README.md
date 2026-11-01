@@ -211,6 +211,29 @@ and uploaded files all live on one server you control.
    }
    ```
    Then get HTTPS via [Certbot](https://certbot.eff.org/) (`certbot --nginx`).
+
+   **Anti-scraping (recommended)**: cap requests per IP and refuse other sites
+   hotlinking question audio and images. `limit_req_zone` goes in the `http {}`
+   block. `/uploads/` is still public to anyone holding a file's URL.
+   ```nginx
+   limit_req_zone $binary_remote_addr zone=toeic_pages:10m rate=5r/s;
+
+   server {
+     server_tokens off;
+
+     location /uploads/ {
+       alias /var/app-uploads/;
+       valid_referers none blocked server_names;
+       if ($invalid_referer) { return 403; }
+     }
+
+     location / {
+       limit_req zone=toeic_pages burst=60 nodelay;
+       limit_req_status 429;
+       # ...proxy settings as above
+     }
+   }
+   ```
 5. **Cron jobs**: every `/api/cron/*` route checks
    `Authorization: Bearer $CRON_SECRET`. Schedule them with a plain crontab:
    ```bash

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getAuthedProfileOrNull } from "@/lib/auth";
+import { getAuthedProfileOrNull, isPro } from "@/lib/auth";
 import { buildLearningInsights, STATUS_LABEL, type SkillStat } from "@/lib/services/insights/engine";
 import { PART_META } from "@/lib/constants/toeic";
 import type { TestPart } from "@/generated/prisma/enums";
@@ -17,6 +17,7 @@ const round = (x: number | null) => (x === null ? null : Math.round(x * 100) / 1
 export async function GET() {
   const profile = await getAuthedProfileOrNull();
   if (!profile) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!isPro(profile)) return NextResponse.json({ error: "PRO_REQUIRED" }, { status: 403 });
 
   const i = await buildLearningInsights(profile.id);
   const label = (s: SkillStat) => ({

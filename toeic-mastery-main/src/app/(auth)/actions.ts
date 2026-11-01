@@ -1,8 +1,9 @@
 "use server";
 
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
+import { rateLimit, clientKeyFromHeaders } from "@/lib/rate-limit";
 import { Prisma } from "@/generated/prisma/client";
 import { SESSION_COOKIE, sessionCookieOptions, signSessionToken } from "@/lib/auth/session";
 import { AUTH_EVENT_COOKIE, authEventCookieOptions } from "@/lib/analytics";
@@ -24,6 +25,12 @@ export interface ActionResult {
 }
 
 const RESET_CODE_TTL_MINUTES = 15;
+const AUTH_WINDOW_MS = 15 * 60 * 1000;
+const TOO_MANY_ATTEMPTS = "Bạn đã thử quá nhiều lần. Vui lòng thử lại sau 15 phút.";
+
+async function clientIp(): Promise<string> {
+  return clientKeyFromHeaders(await headers());
+}
 
 async function establishSession(profile: { id: string; email: string }, gaEvent: "sign_up" | "login"): Promise<void> {
   const token = await signSessionToken({ sub: profile.id, email: profile.email });
@@ -45,6 +52,8 @@ export async function registerAction(input: RegisterInput): Promise<ActionResult
   const parsed = registerSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ" };
   const { fullName, email, password } = parsed.data;
+
+  if (!rateLimit(`register:${await clientIp()}`, 10, 60 * 60 * 1000).ok) return { error: TOO_MANY_ATTEMPTS };
 
   const passwordHash = await hashPassword(password);
 
@@ -69,6 +78,13 @@ export async function loginAction(input: LoginInput): Promise<ActionResult> {
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ" };
   const { email, password } = parsed.data;
 
+  // Per email+IP so an attacker can't lock a victim out from elsewhere; the
+  // wider per-IP cap catches one address trying many accounts.
+  const ip = await clientIp();
+  if (!rateLimit(`login:${ip}:${email}`, 10, AUTH_WINDOW_MS).ok || !rateLimit(`login-ip:${ip}`, 100, AUTH_WINDOW_MS).ok) {
+    return { error: TOO_MANY_ATTEMPTS };
+  }
+
   const profile = await db.profile.findUnique({ where: { email } });
   if (!profile) return { error: "Email hoặc mật khẩu không đúng" };
   if (!profile.passwordHash) return { error: "Tài khoản này đăng nhập bằng Google — hãy dùng nút \"Đăng nhập với Google\"" };
@@ -88,6 +104,10 @@ export async function requestPasswordResetAction(input: ForgotPasswordInput): Pr
   const parsed = forgotPasswordSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ" };
   const { email } = parsed.data;
+
+  if (!rateLimit(`reset-request:${email}`, 3, AUTH_WINDOW_MS).ok || !rateLimit(`reset-request-ip:${await clientIp()}`, 20, AUTH_WINDOW_MS).ok) {
+    return { error: TOO_MANY_ATTEMPTS };
+  }
 
   const profile = await db.profile.findUnique({ where: { email } });
   if (!profile || !profile.passwordHash) return {};
@@ -119,6 +139,10 @@ export async function resetPasswordAction(input: ResetPasswordInput): Promise<Ac
   const parsed = resetPasswordSchema.safeParse(input);
   if (!parsed.success) return { error: parsed.error.issues[0]?.message ?? "Dữ liệu không hợp lệ" };
   const { email, code, password } = parsed.data;
+
+  // Keyed by email alone, not IP: the code has only a million possible values,
+  // so guesses must stay capped however many addresses they come from.
+  if (!rateLimit(`reset-verify:${email}`, 5, AUTH_WINDOW_MS).ok) return { error: TOO_MANY_ATTEMPTS };
 
   const profile = await db.profile.findUnique({ where: { email } });
   if (!profile || !profile.resetCodeHash || !profile.resetCodeExpiresAt) {

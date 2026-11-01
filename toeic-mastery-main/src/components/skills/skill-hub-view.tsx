@@ -25,12 +25,14 @@ export function SkillHubView({
   subtitle,
   items,
   basePath,
+  pro,
   banner,
 }: {
   title: string;
   subtitle: string;
   items: SkillHubItem[];
   basePath: "listening" | "reading";
+  pro: boolean;
   /** Featured block shown right under the title, above the Parts. */
   banner?: React.ReactNode;
 }) {
@@ -57,11 +59,15 @@ export function SkillHubView({
               <ArrowRight className="size-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
             </div>
 
-            <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
-              <span>Độ chính xác</span>
-              <span className="font-medium text-foreground">{item.attempted > 0 ? `${Math.round(item.accuracy * 100)}%` : "Chưa có dữ liệu"}</span>
-            </div>
-            <Progress value={item.accuracy * 100} className="h-1.5" />
+            {pro && (
+              <>
+                <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
+                  <span>Độ chính xác</span>
+                  <span className="font-medium text-foreground">{item.attempted > 0 ? `${Math.round(item.accuracy * 100)}%` : "Chưa có dữ liệu"}</span>
+                </div>
+                <Progress value={item.accuracy * 100} className="h-1.5" />
+              </>
+            )}
 
             <div className="mt-1 flex items-center justify-between text-xs text-muted-foreground">
               <span>{item.testCount} đề luyện tập</span>

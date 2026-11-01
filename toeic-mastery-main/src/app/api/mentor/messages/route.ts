@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getAuthedProfileOrNull } from "@/lib/auth";
+import { getAuthedProfileOrNull, isPro } from "@/lib/auth";
+import { rateLimit } from "@/lib/rate-limit";
 import { getMentorAccess, hasReachedNextStepsLimit } from "@/lib/services/mentor/mentor-access";
 import { buildMentorContext } from "@/lib/services/mentor/mentor-context";
 import { streamMentorReply, getActiveChatModelId, MentorConfigError } from "@/lib/services/mentor/llm-client";
@@ -48,6 +49,11 @@ function toJsonInput<T>(value: T): Prisma.InputJsonValue {
 const RECOMMEND_TEST_MARKER = /\n?\[\[RECOMMEND_TEST:(\w+):([A-Za-z0-9_-]+)\]\]\s*$/;
 const RECOMMEND_TEST_SUPPORTED_TYPES = new Set<SkillDimensionType>(["PART", "GRAMMAR_TOPIC"]);
 const RECOMMEND_NEXT_STEPS_MARKER = /\n?\[\[RECOMMEND_NEXT_STEPS\]\]\s*$/;
+/** Far above normal chat, low enough to stop a script from probing the prompt
+ * or running up the AI bill. */
+const MAX_MESSAGE_LENGTH = 4000;
+const MAX_MESSAGES_PER_MINUTE = 15;
+const MAX_MESSAGES_PER_HOUR = 150;
 
 type MentorAttachments =
   | { type: "mentor_test"; mentorTestId: string; questionCount: number }
@@ -68,6 +74,12 @@ export async function POST(request: Request) {
   if (!conversationId || !content) {
     return NextResponse.json({ error: "conversationId và content là bắt buộc" }, { status: 400 });
   }
+  if (content.length > MAX_MESSAGE_LENGTH) {
+    return NextResponse.json({ error: `Tin nhắn dài tối đa ${MAX_MESSAGE_LENGTH} ký tự` }, { status: 400 });
+  }
+  if (!rateLimit(`mentor-chat:${profile.id}`, MAX_MESSAGES_PER_MINUTE, 60_000).ok || !rateLimit(`mentor-chat-hour:${profile.id}`, MAX_MESSAGES_PER_HOUR, 60 * 60 * 1000).ok) {
+    return NextResponse.json({ error: "Bạn đang gửi quá nhanh, vui lòng thử lại sau ít phút." }, { status: 429 });
+  }
 
   const conversation = await db.mentorConversation.findUnique({
     where: { id: conversationId },
@@ -82,6 +94,7 @@ export async function POST(request: Request) {
   // message and it'd end up duplicated when appended to `messages` below.
   const context = await buildMentorContext({
     userId: profile.id,
+    pro: isPro(profile),
     conversationId,
     questionId: conversation.originQuestionId,
     attemptId: conversation.originAttemptId,
@@ -158,7 +171,7 @@ export async function POST(request: Request) {
                     "Bạn đã dùng hết lượt gợi ý lộ trình hôm nay (4 lần/ngày cho tài khoản Free). Nâng cấp Pro để nhận gợi ý lộ trình cá nhân hóa không giới hạn.",
                 };
               } else {
-                const items = await getNextStepSuggestions(profile.id, access.maxSuggestedItems);
+                const items = await getNextStepSuggestions(profile.id, access.maxSuggestedItems, access.unlimitedNextSteps);
                 attachments = { type: "next_steps", items };
               }
             }

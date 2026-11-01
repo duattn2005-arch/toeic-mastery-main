@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireUser, isPro } from "@/lib/auth";
+import { rateLimit } from "@/lib/rate-limit";
 import { touchStudyStreak } from "@/lib/services/study-streak";
 import { buildQuickStudySession, type QuickStudyItem } from "@/lib/data/quick-study";
 
@@ -22,10 +23,13 @@ export async function startQuickStudySessionAction(
 ): Promise<{ items: QuickStudyItem[]; durationSec: number } | { error: string }> {
   const profile = await requireUser();
   const pro = isPro(profile);
+  // Each session hands over questions with their answers, so calling this in a
+  // loop would otherwise copy the bank out.
+  if (!rateLimit(`quick-study:${profile.id}`, 20, 60 * 60 * 1000).ok) return { error: "Bạn đã bắt đầu quá nhiều phiên học. Vui lòng thử lại sau." };
 
   const minutes = pro ? Math.min(MAX_PRO_QUICK_STUDY_MINUTES, Math.max(MIN_PRO_QUICK_STUDY_MINUTES, Math.round(requestedMinutes))) : FREE_QUICK_STUDY_MINUTES;
 
-  const items = await buildQuickStudySession(profile.id, minutes);
+  const items = await buildQuickStudySession(profile.id, minutes, pro);
   return { items, durationSec: minutes * 60 };
 }
 

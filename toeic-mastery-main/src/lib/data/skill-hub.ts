@@ -9,9 +9,11 @@ import type { TestPart } from "@/generated/prisma/enums";
  * this, accuracy is too noisy to reorder by. */
 const MIN_SAMPLE_SIZE = 5;
 
-export async function getSkillHubData(userId: string, skill: "LISTENING" | "READING") {
+/** Free accounts get no accuracy data at all (it's the radar's data), so their
+ * Parts stay in the plain Part 1→7 order instead of hinting at the weakest one. */
+export async function getSkillHubData(userId: string, skill: "LISTENING" | "READING", pro: boolean) {
   const parts = skill === "LISTENING" ? LISTENING_PARTS : READING_PARTS;
-  const accuracies = await getPartAccuracies(userId);
+  const accuracies = pro ? await getPartAccuracies(userId) : [];
   const accuracyByPart = new Map(accuracies.map((a) => [a.part, a]));
 
   const testCounts = await db.testSection.groupBy({

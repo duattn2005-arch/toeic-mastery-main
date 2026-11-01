@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getAuthedProfileOrNull } from "@/lib/auth";
+import { rateLimit } from "@/lib/rate-limit";
 import { hasReachedRevealLimit } from "@/lib/services/reveal-limit";
 import { recordExplanationView } from "@/lib/bloom/answer-log";
 
@@ -10,6 +11,8 @@ export async function GET(
 ) {
   const profile = await getAuthedProfileOrNull();
   if (!profile) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Nobody reads 30 explanations a minute; a script copying answers does. Pro has no daily cap, so this is its only limit.
+  if (!rateLimit(`reveal:${profile.id}`, 30, 60_000).ok) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
 
   const { attemptId, questionId } = await params;
 

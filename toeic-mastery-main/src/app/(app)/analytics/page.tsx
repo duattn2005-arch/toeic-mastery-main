@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Clock3, Download, ListChecks, Radar as RadarIcon, TrendingUp } from "lucide-react";
-import { requireUser } from "@/lib/auth";
+import { requireUser, isPro } from "@/lib/auth";
 import { getAnalyticsData } from "@/lib/data/analytics";
 import { buildLearningInsights } from "@/lib/services/insights/engine";
-import { FREE_PRACTICE_STARTS_PER_DAY } from "@/lib/constants/limits";
+import { ProLockedRadar } from "@/components/billing/pro-locked-radar";
 import { StatCard } from "@/components/shared/stat-card";
 import { SkillRadar } from "@/components/shared/skill-radar";
 import { SectionHeader } from "@/components/shared/section-header";
@@ -30,13 +30,27 @@ import { BloomPanel } from "@/components/analytics/bloom-panel";
 export const metadata: Metadata = { title: "Phân tích năng lực" };
 
 const NOTICES: Record<string, string> = {
-  practiceLimitReached: `Gói Free được bắt đầu ${FREE_PRACTICE_STARTS_PER_DAY} bài luyện mỗi ngày. Nâng cấp Pro để luyện điểm yếu không giới hạn, hoặc quay lại vào ngày mai.`,
   noWeakness: "Chưa tìm thấy điểm yếu đủ dữ liệu để ghép đề tổng hợp — làm thêm vài bài nhé.",
   noQuestions: "Ngân hàng câu hỏi chưa có đủ câu cho mục này. Hãy thử một điểm yếu khác.",
 };
 
 export default async function AnalyticsPage({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const profile = await requireUser();
+  // Checked before any query runs, so a Free account's response never carries analysis data.
+  if (!isPro(profile)) {
+    return (
+      <div className="flex flex-col gap-6">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Phân tích năng lực</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Radar kỹ năng, thang Bloom, điểm yếu và bài luyện vá lỗi riêng cho bạn đều nằm trong gói Pro.</p>
+        </div>
+        <section className={PANEL}>
+          <ProLockedRadar />
+        </section>
+      </div>
+    );
+  }
+
   const [data, insights, params] = await Promise.all([getAnalyticsData(profile.id), buildLearningInsights(profile.id), searchParams]);
   const notice = Object.keys(NOTICES).find((k) => params[k]);
 

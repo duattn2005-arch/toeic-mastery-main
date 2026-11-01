@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { requireUser } from "@/lib/auth";
+import { requireUser, isPro } from "@/lib/auth";
 import { getGrammarTopicDetail } from "@/lib/data/grammar";
 import { GrammarPracticeQuiz } from "@/components/grammar/grammar-practice-quiz";
 import { GrammarStudyTimer } from "@/components/grammar/grammar-study-timer";
@@ -11,8 +11,8 @@ export async function generateMetadata({ params }: { params: Promise<{ topic: st
 
 export default async function GrammarTopicPage({ params }: { params: Promise<{ topic: string }> }) {
   const { topic: slug } = await params;
-  await requireUser();
-  const { topic, lesson, questions } = await getGrammarTopicDetail(slug);
+  const profile = await requireUser();
+  const { topic, lesson, questions } = await getGrammarTopicDetail(slug, isPro(profile));
 
   const examples = (lesson?.examples as unknown as { en: string; vi: string }[]) ?? [];
 
