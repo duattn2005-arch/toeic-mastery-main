@@ -140,8 +140,10 @@ export async function buildMentorContext(input: MentorContextInput): Promise<Men
       ...(selectedAnswer
         ? [`Học viên đã chọn: ${selectedAnswer.selectedLabel ?? "(bỏ qua)"} — ${selectedAnswer.isCorrect ? "ĐÚNG" : "SAI"}`]
         : []),
-      `Giải thích chuẩn: ${originQuestion.explanationVi}`,
-      ...(originQuestion.evidenceText ? [`Bằng chứng trong bài: ${originQuestion.evidenceText}`] : []),
+      // Left blank for Free: the mentor still explains the question in its own
+      // words (see the instruction below) but can't be made to recite ours.
+      ...(input.pro ? [`Giải thích chuẩn: ${originQuestion.explanationVi}`] : []),
+      ...(input.pro && originQuestion.evidenceText ? [`Bằng chứng trong bài: ${originQuestion.evidenceText}`] : []),
       "Khi học viên nhờ giải thích câu này: dịch/tóm tắt nghĩa câu, chỉ ra vì sao đáp án đúng là đúng (điểm ngữ pháp/từ vựng/cấu trúc then chốt), vì sao từng lựa chọn còn lại sai, và nếu học viên chọn sai thì nói rõ họ nhầm ở đâu. Nếu phần \"Giải thích chuẩn\" trống hoặc chỉ là ghi chú chưa bổ sung, tự giải thích dựa trên đề bài và đáp án đúng ở trên — không được nói là chưa có giải thích."
     );
   }

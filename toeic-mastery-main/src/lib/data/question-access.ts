@@ -3,6 +3,11 @@ import { db } from "@/lib/db";
 import { isPro } from "@/lib/auth";
 import type { Prisma } from "@/generated/prisma/client";
 
+/** Replaces a question's explanation for Free accounts wherever it isn't
+ * already covered by the daily reveal cap. Set server-side so the text itself
+ * never reaches the browser. */
+export const PRO_EXPLANATION_NOTE = "Lời giải chi tiết dành cho gói Pro.";
+
 const FREE_QUESTIONS: Prisma.QuestionWhereInput = { OR: [{ testId: null }, { test: { isPro: false } }] };
 
 /** Spread into any `where` that pulls from the question bank outside a test

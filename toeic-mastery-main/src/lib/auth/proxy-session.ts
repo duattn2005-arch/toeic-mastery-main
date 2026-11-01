@@ -137,7 +137,7 @@ export async function updateSession(request: NextRequest, event: NextFetchEvent)
 
   // Per account, stopping a logged-in script walking every page. Generous
   // because one real page view also prefetches the links on it.
-  if (session && !rateLimit(`pages:${session.sub}`, 600, 60_000).ok) {
+  if (session && (!rateLimit(`pages:${session.sub}`, 600, 60_000).ok || !rateLimit(`pages-day:${session.sub}`, 30_000, 24 * 60 * 60 * 1000).ok)) {
     return new NextResponse("Too many requests", { status: 429, headers: { "Retry-After": "60" } });
   }
 

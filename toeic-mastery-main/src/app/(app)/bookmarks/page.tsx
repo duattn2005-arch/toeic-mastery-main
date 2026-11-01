@@ -10,7 +10,7 @@ export const metadata: Metadata = { title: "Đã lưu" };
 
 export default async function BookmarksPage() {
   const profile = await requireUser();
-  const { questionBookmarks, savedWords } = await getBookmarks(profile.id);
+  const { questionBookmarks, savedWords } = await getBookmarks(profile.id, isPro(profile));
   const categories = [...new Set(savedWords.map((w) => w.category).filter((c): c is string => !!c))].sort();
 
   return (

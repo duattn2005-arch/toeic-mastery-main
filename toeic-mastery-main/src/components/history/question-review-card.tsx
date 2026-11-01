@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { CheckCircle2, ChevronDown, Flag, MinusCircle, Star, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
@@ -132,6 +133,11 @@ export function QuestionReviewCard({ review, index, attemptId }: { review: Quest
           <div className="rounded-xl bg-accent/50 p-4 text-sm">
             <p className="font-semibold text-foreground">Giải thích</p>
             <p className="mt-1 whitespace-pre-line text-foreground/90">{review.explanationVi}</p>
+            {review.explanationLocked && (
+              <Link href="/pricing" className="mt-2 inline-block text-xs font-semibold text-primary hover:underline">
+                Nâng cấp Pro để xem lời giải và transcript
+              </Link>
+            )}
             {review.options.some((o) => o.distractorExplanation) && (
               <ul className="mt-2 flex flex-col gap-1 text-xs text-muted-foreground">
                 {review.options
@@ -145,7 +151,7 @@ export function QuestionReviewCard({ review, index, attemptId }: { review: Quest
             )}
           </div>
 
-          {(review.transcript || review.passage?.transcript) && (
+          {!review.explanationLocked && (review.transcript || review.passage?.transcript) && (
             <details>
               <summary className="cursor-pointer text-xs font-medium text-muted-foreground">Xem transcript</summary>
               <p className="mt-1.5 whitespace-pre-line text-xs text-muted-foreground">

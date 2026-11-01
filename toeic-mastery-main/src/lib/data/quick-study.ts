@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { srsDueCutoff } from "@/lib/services/spaced-repetition";
-import { questionAccessFilter } from "@/lib/data/question-access";
+import { PRO_EXPLANATION_NOTE, questionAccessFilter } from "@/lib/data/question-access";
 
 export interface QuickStudyQuestionItem {
   type: "question";
@@ -202,7 +202,7 @@ export async function buildQuickStudySession(userId: string, durationMinutes: nu
       audioUrl: q.audioUrl,
       options: q.options.map((o) => ({ label: o.label, content: o.content })),
       correctLabel: q.correctLabel,
-      explanationVi: q.explanationVi,
+      explanationVi: pro ? q.explanationVi : PRO_EXPLANATION_NOTE,
       bookmarked: bookmarkedQuestionIds.has(q.id),
     };
   }

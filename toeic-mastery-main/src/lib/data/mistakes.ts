@@ -1,6 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { PART_META } from "@/lib/constants/toeic";
+import { PRO_EXPLANATION_NOTE } from "@/lib/data/question-access";
 import type { TestPart } from "@/generated/prisma/enums";
 
 export interface MistakeQuestion {
@@ -22,7 +23,7 @@ export interface MistakeQuestion {
  * bookmark/star bookkeeping to keep in sync (and without risking collision
  * with the unrelated manual question-bookmark feature).
  */
-export async function getMistakeQuestions(userId: string): Promise<{ questions: MistakeQuestion[]; countByPart: Partial<Record<TestPart, number>> }> {
+export async function getMistakeQuestions(userId: string, pro: boolean): Promise<{ questions: MistakeQuestion[]; countByPart: Partial<Record<TestPart, number>> }> {
   const answers = await db.attemptAnswer.findMany({
     where: { attempt: { userId, status: "SUBMITTED" }, isCorrect: { not: null } },
     select: { questionId: true, isCorrect: true, attempt: { select: { submittedAt: true } } },
@@ -53,7 +54,7 @@ export async function getMistakeQuestions(userId: string): Promise<{ questions: 
     audioUrl: q.audioUrl,
     options: q.options.map((o) => ({ label: o.label, content: o.content })),
     correctLabel: q.correctLabel,
-    explanationVi: q.explanationVi,
+    explanationVi: pro ? q.explanationVi : PRO_EXPLANATION_NOTE,
     passage: q.passage
       ? {
           title: q.passage.title,

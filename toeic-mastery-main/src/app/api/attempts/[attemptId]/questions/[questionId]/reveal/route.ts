@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getAuthedProfileOrNull } from "@/lib/auth";
+import { getAuthedProfileOrNull, isPro } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
 import { hasReachedRevealLimit } from "@/lib/services/reveal-limit";
 import { recordExplanationView } from "@/lib/bloom/answer-log";
@@ -13,6 +13,11 @@ export async function GET(
   if (!profile) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   // Nobody reads 30 explanations a minute; a script copying answers does. Pro has no daily cap, so this is its only limit.
   if (!rateLimit(`reveal:${profile.id}`, 30, 60_000).ok) return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  if (!rateLimit(`reveal-day:${profile.id}`, 500, 24 * 60 * 60 * 1000).ok) {
+    console.warn("possible content copying: daily answer reveal limit hit", { userId: profile.id, email: profile.email });
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+  const pro = isPro(profile);
 
   const { attemptId, questionId } = await params;
 
@@ -57,8 +62,9 @@ export async function GET(
     explanationVi: question.explanationVi,
     grammarTopicSlug: question.grammarTopicSlug,
     vocabularyFocus: question.vocabularyFocus,
-    transcript: question.transcript,
-    evidenceText: question.evidenceText,
-    options: question.options.map((o) => ({ label: o.label, distractorExplanation: o.distractorExplanation })),
+    // Free's capped reveal is the correct answer and explanation; the rest is Pro.
+    transcript: pro ? question.transcript : null,
+    evidenceText: pro ? question.evidenceText : null,
+    options: question.options.map((o) => ({ label: o.label, distractorExplanation: pro ? o.distractorExplanation : null })),
   });
 }

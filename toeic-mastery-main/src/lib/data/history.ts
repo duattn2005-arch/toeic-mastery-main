@@ -3,9 +3,14 @@ import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
 import { TEST_PARTS } from "@/lib/constants/toeic";
 import { computeAttemptXp } from "@/lib/services/xp";
+import { PRO_EXPLANATION_NOTE } from "@/lib/data/question-access";
 import type { TestPart } from "@/generated/prisma/enums";
 
-export async function getAttemptResult(attemptId: string, userId: string) {
+/** Free keeps the score, right/wrong and the correct answer. The explanation,
+ * evidence and script are Pro: a Free account could otherwise submit a blank
+ * test and read them all, with no daily cap. A script stays only where there's
+ * no recording and text-to-speech needs it. */
+export async function getAttemptResult(attemptId: string, userId: string, pro: boolean) {
   const attempt = await db.attempt.findUnique({
     where: { id: attemptId },
     include: { test: true },
@@ -57,9 +62,10 @@ export async function getAttemptResult(attemptId: string, userId: string) {
       prompt: q.prompt,
       imageUrl: q.imageUrl,
       audioUrl: q.audioUrl,
-      transcript: q.transcript,
-      evidenceText: q.evidenceText,
-      explanationVi: q.explanationVi,
+      explanationLocked: !pro,
+      transcript: pro || !q.audioUrl ? q.transcript : null,
+      evidenceText: pro ? q.evidenceText : null,
+      explanationVi: pro ? q.explanationVi : PRO_EXPLANATION_NOTE,
       grammarTopicSlug: q.grammarTopicSlug,
       vocabularyFocus: q.vocabularyFocus,
       correctLabel: q.correctLabel,
@@ -67,7 +73,7 @@ export async function getAttemptResult(attemptId: string, userId: string) {
       isCorrect: answer?.isCorrect ?? false,
       isFlagged: answer?.isFlagged ?? false,
       isBookmarked: bookmarkedQuestionIds.has(q.id),
-      options: q.options.map((o) => ({ label: o.label, content: o.content, isCorrect: o.isCorrect, distractorExplanation: o.distractorExplanation })),
+      options: q.options.map((o) => ({ label: o.label, content: o.content, isCorrect: o.isCorrect, distractorExplanation: pro ? o.distractorExplanation : null })),
       passage: q.passage
         ? {
             id: q.passage.id,
@@ -75,7 +81,7 @@ export async function getAttemptResult(attemptId: string, userId: string) {
             texts: q.passage.texts as unknown as { label: string; content: string }[],
             audioUrl: q.passage.audioUrl,
             imageUrl: q.passage.imageUrl,
-            transcript: q.passage.transcript,
+            transcript: pro || !q.passage.audioUrl ? q.passage.transcript : null,
           }
         : null,
     };

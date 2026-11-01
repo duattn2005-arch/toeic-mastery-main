@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import type { StudyItem } from "@/lib/services/study-game";
 import type { SavedWord } from "@/generated/prisma/client";
 import type { MistakeQuestion } from "@/lib/data/mistakes";
+import { PRO_EXPLANATION_NOTE } from "@/lib/data/question-access";
 
 /** Fully-hydrated saved questions (options/passage/correct answer/
  * explanation included) — needed both to open a question's detail (fixes
@@ -11,7 +12,7 @@ import type { MistakeQuestion } from "@/lib/data/mistakes";
  * MistakePracticeRunner for "Học lại". Order follows the bookmark's own
  * (most-recently-saved first), not Prisma's default `question.findMany`
  * order. */
-async function getBookmarkedQuestions(userId: string): Promise<MistakeQuestion[]> {
+async function getBookmarkedQuestions(userId: string, pro: boolean): Promise<MistakeQuestion[]> {
   const bookmarks = await db.bookmark.findMany({
     where: { userId, type: "QUESTION" },
     orderBy: { createdAt: "desc" },
@@ -37,7 +38,7 @@ async function getBookmarkedQuestions(userId: string): Promise<MistakeQuestion[]
       audioUrl: q.audioUrl,
       options: q.options.map((o) => ({ label: o.label, content: o.content })),
       correctLabel: q.correctLabel,
-      explanationVi: q.explanationVi,
+      explanationVi: pro ? q.explanationVi : PRO_EXPLANATION_NOTE,
       passage: q.passage
         ? {
             title: q.passage.title,
@@ -49,9 +50,9 @@ async function getBookmarkedQuestions(userId: string): Promise<MistakeQuestion[]
     }));
 }
 
-export async function getBookmarks(userId: string) {
+export async function getBookmarks(userId: string, pro: boolean) {
   const [questionBookmarks, savedWords] = await Promise.all([
-    getBookmarkedQuestions(userId),
+    getBookmarkedQuestions(userId, pro),
     db.savedWord.findMany({ where: { userId }, orderBy: { createdAt: "desc" } }),
   ]);
 

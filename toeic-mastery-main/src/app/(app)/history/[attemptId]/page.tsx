@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { RotateCcw, Sparkles, Target } from "lucide-react";
-import { requireUser } from "@/lib/auth";
+import { requireUser, isPro } from "@/lib/auth";
 import { getAttemptResult } from "@/lib/data/history";
 import { startAttemptAction, startMistakeRetryAction } from "@/lib/actions/attempts";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
   const { attemptId } = await params;
   const profile = await requireUser();
 
-  const { attempt, questionReviews, partBreakdown, timeUsedSec, xpEarned } = await getAttemptResult(attemptId, profile.id);
+  const { attempt, questionReviews, partBreakdown, timeUsedSec, xpEarned } = await getAttemptResult(attemptId, profile.id, isPro(profile));
 
   if (attempt.status === "IN_PROGRESS") redirect(`/exam/${attemptId}`);
 

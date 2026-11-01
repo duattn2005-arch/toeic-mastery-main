@@ -38,6 +38,10 @@ export async function startAttemptAction(testId: string, mode: "PRACTICE" | "EXA
   if (!startable) redirect("/practice");
   // Pro has no daily cap, and each start exposes a whole test's questions.
   if (!rateLimit(`attempt-start:${profile.id}`, 30, 60 * 60 * 1000).ok) redirect(`/practice/${testId}?limitReached=1`);
+  if (!rateLimit(`attempt-start-day:${profile.id}`, 40, 24 * 60 * 60 * 1000).ok) {
+    console.warn("possible content copying: daily attempt start limit hit", { userId: profile.id, email: profile.email });
+    redirect(`/practice/${testId}?limitReached=1`);
+  }
 
   // "Bắt đầu" always starts a genuinely new attempt: full time, question 1
   // — not a silent drop back into whatever the same scope (this test + this
