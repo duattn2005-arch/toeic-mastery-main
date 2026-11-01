@@ -100,7 +100,8 @@ export async function getExamData(attemptId: string, userId: string): Promise<Ex
         texts: q.passage.texts as unknown as { label: string; content: string }[],
         audioUrl: q.passage.audioUrl,
         imageUrls: q.passage.imageUrls,
-        transcript: q.passage.transcript,
+        // Only needed to synthesize speech when there's no recording; otherwise it would hand over the script.
+        transcript: q.passage.audioUrl ? null : q.passage.transcript,
       };
     }
   }
@@ -121,7 +122,7 @@ export async function getExamData(attemptId: string, userId: string): Promise<Ex
       prompt: q.prompt,
       imageUrl: q.imageUrl,
       audioUrl: q.audioUrl,
-      transcript: q.transcript,
+      transcript: q.audioUrl ? null : q.transcript,
       passageId: q.passageId,
       options: q.options,
     })),

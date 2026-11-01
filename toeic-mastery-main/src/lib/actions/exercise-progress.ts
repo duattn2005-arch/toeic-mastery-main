@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/lib/db";
-import { getCurrentProfile } from "@/lib/auth";
+import { getCurrentProfile, isPro } from "@/lib/auth";
 
 const KEY_PATTERN = /^(mastery|vocab):[a-z0-9:_-]{1,160}$/;
 const LABELS = new Set(["A", "B", "C", "D"]);
@@ -68,6 +68,7 @@ export interface SaveTranscriptProgressInput {
 export async function saveTranscriptProgressAction(input: SaveTranscriptProgressInput): Promise<{ error?: string }> {
   const profile = await getCurrentProfile();
   if (!profile) return { error: "Bạn cần đăng nhập để lưu tiến trình" };
+  if (!isPro(profile)) return { error: "Transcript ETS dành cho gói Pro" };
 
   const { setKey, testNumber, part, total, checked, result } = input;
   if (

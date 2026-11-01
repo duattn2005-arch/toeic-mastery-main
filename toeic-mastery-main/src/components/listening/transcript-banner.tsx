@@ -43,7 +43,7 @@ export function TranscriptMasteryBanner({
           </span>
           <div>
             <p className="inline-flex rounded-full bg-amber-400/25 px-2.5 py-0.5 text-[11px] font-bold text-amber-800 ring-1 ring-amber-500/40 dark:bg-amber-400/20 dark:text-amber-200 dark:ring-amber-300/40">
-              Độc quyền
+              Độc quyền gói Pro
             </p>
             <h2 className="mt-2 text-2xl leading-tight font-extrabold tracking-tight sm:text-3xl dark:[text-shadow:0_2px_12px_rgba(0,0,0,0.5)]">{title}</h2>
             <p className="mt-1.5 text-sm leading-relaxed text-foreground/75 dark:text-white/85 dark:[text-shadow:0_1px_6px_rgba(0,0,0,0.6)]">

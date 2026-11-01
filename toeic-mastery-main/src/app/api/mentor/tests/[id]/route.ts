@@ -74,7 +74,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
         prompt: q.question.prompt,
         imageUrl: q.question.imageUrl,
         audioUrl: q.question.audioUrl,
-        transcript: q.question.transcript,
+        // Only needed to synthesize speech when there's no recording.
+        transcript: q.question.audioUrl ? null : q.question.transcript,
         passageId: q.question.passageId,
         passage: q.question.passage
           ? {
@@ -83,7 +84,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
               texts: q.question.passage.texts as unknown as { label: string; content: string }[],
               audioUrl: q.question.passage.audioUrl,
               imageUrls: q.question.passage.imageUrls,
-              transcript: q.question.passage.transcript,
+              transcript: q.question.passage.audioUrl ? null : q.question.passage.transcript,
             }
           : null,
         options: q.question.options,

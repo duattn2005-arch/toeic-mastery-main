@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { requirePro } from "@/lib/auth";
 import { getTranscriptSet, getTranscriptTest } from "@/lib/content/transcripts";
 import { getTranscriptAnswerKey, getTranscriptAudioMap, getTranscriptGroupKeys, getTranscriptSegments } from "@/lib/data/transcripts";
 import { getExerciseProgress } from "@/lib/data/exercise-progress";
@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
 
 export default async function TranscriptTestPage({ params }: { params: Params }) {
   const { set: key, test: testParam } = await params;
-  const profile = await requireUser();
+  const profile = await requirePro();
   const set = getTranscriptSet(key);
   const test = set && getTranscriptTest(set, Number(testParam));
   if (!set || !test) notFound();

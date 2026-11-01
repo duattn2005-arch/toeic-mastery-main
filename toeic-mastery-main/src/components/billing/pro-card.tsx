@@ -22,6 +22,7 @@ import type { NewMemberOfferState } from "@/lib/services/new-member-offer"; // t
 
 const PRO_BENEFITS = [
   "Radar kỹ năng & Phân tích năng lực chi tiết, kèm bài luyện vá điểm yếu",
+  "Transcript ETS: nghe chép chính tả, dịch song ngữ & đáp án",
   "Không giới hạn Mock Test, Tra từ bôi đen & Chữa câu tức thì",
   "Mở khóa toàn bộ Từ đồng nghĩa & Ví dụ chuyên sâu",
   "Tùy chỉnh Quick Study trượt 5 – 60 phút",

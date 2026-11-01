@@ -37,11 +37,20 @@ export function rateLimit(key: string, limit: number, windowMs: number): RateLim
   return { ok, remaining: Math.max(0, limit - existing.count), resetAt: existing.resetAt };
 }
 
-/** The last X-Forwarded-For entry: Nginx appends the address it actually saw
- * (README §12), while anything before it is whatever the client chose to send,
- * so keying on the first entry would let a client dodge every limit. */
+/** Proxies between the visitor and Nginx. Production sits behind one CDN/WAF
+ * (README §12); set to 0 if Nginx ever faces visitors directly. */
+function trustedProxyHops(): number {
+  const hops = Number(process.env.TRUSTED_PROXY_HOPS ?? 1);
+  return Number.isInteger(hops) && hops >= 0 ? hops : 1;
+}
+
+/** Counts back from the end of X-Forwarded-For, past each trusted proxy: Nginx
+ * appends the address it saw (here the CDN's, shared by many visitors), and
+ * entries further left than the visitor are whatever the client chose to send.
+ * So neither end of the list is safe to key limits on. */
 export function clientKeyFromHeaders(headers: Headers): string {
-  return headers.get("x-forwarded-for")?.split(",").pop()?.trim() || "unknown";
+  const hops = headers.get("x-forwarded-for")?.split(",").map((entry) => entry.trim()).filter(Boolean) ?? [];
+  return hops[Math.max(0, hops.length - 1 - trustedProxyHops())] || "unknown";
 }
 
 export function clientKeyFromRequest(request: Request): string {

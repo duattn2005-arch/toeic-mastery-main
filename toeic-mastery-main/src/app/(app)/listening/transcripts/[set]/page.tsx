@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ChevronRight, Headphones, Music } from "lucide-react";
-import { requireUser } from "@/lib/auth";
+import { requirePro } from "@/lib/auth";
 import { BLANK_PATTERN } from "@/lib/content/transcripts/types";
 import { getTranscriptSet } from "@/lib/content/transcripts";
 import { getTranscriptAudioMap } from "@/lib/data/transcripts";
@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ set: stri
 
 export default async function TranscriptSetPage({ params }: { params: Promise<{ set: string }> }) {
   const { set: key } = await params;
-  await requireUser();
+  await requirePro();
   const set = getTranscriptSet(key);
   if (!set) notFound();
   const audio = await getTranscriptAudioMap(set.key);

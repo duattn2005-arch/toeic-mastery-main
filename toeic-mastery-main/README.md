@@ -213,9 +213,22 @@ and uploaded files all live on one server you control.
    Then get HTTPS via [Certbot](https://certbot.eff.org/) (`certbot --nginx`).
 
    **Anti-scraping (recommended)**: cap requests per IP and refuse other sites
-   hotlinking question audio and images. `limit_req_zone` goes in the `http {}`
-   block. `/uploads/` is still public to anyone holding a file's URL.
+   hotlinking question audio and images. `/uploads/` is still public to anyone
+   holding a file's URL.
+
+   **Production sits behind a CDN/WAF**, so without the `real_ip` lines Nginx
+   sees the CDN's address for every visitor and `limit_req` would throttle the
+   whole site as one client. Never enable `limit_req` until `set_real_ip_from`
+   lists the CDN's real ranges (from the provider, or from the first column of
+   `access.log`), and check that log then shows visitor addresses. The app's own
+   limits need `TRUSTED_PROXY_HOPS` to match: 1 behind one CDN (the default), 0
+   when Nginx faces visitors directly. Where the CDN offers rate limiting,
+   prefer it; it stops traffic before it reaches this server.
    ```nginx
+   # http {} block
+   set_real_ip_from <CDN_RANGE>; # one line per range
+   real_ip_header X-Forwarded-For;
+   real_ip_recursive on;
    limit_req_zone $binary_remote_addr zone=toeic_pages:10m rate=5r/s;
 
    server {
