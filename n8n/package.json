@@ -1,0 +1,16 @@
+{
+  "name": "toeic-threads-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "n8n automation + screenshot service for TOEIC Threads",
+  "scripts": {
+    "screenshot": "node screenshot-service.js",
+    "n8n": "npx n8n",
+    "start": "node start-all.js"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "puppeteer": "^23.0.0"
+  }
+}
+

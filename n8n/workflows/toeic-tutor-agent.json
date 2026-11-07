@@ -1,5 +1,5 @@
 {
-  "name": "TOEIC Tutor AI Agent",
+  "name": "TOEIC Tutor AI Agent (Gemini)",
   "nodes": [
     {
       "parameters": {
@@ -31,18 +31,20 @@
     },
     {
       "parameters": {
-        "model": {
-          "__rl": true,
-          "mode": "id",
-          "value": "claude-sonnet-5-5"
-        },
+        "modelName": "models/gemini-2.0-flash",
         "options": {}
       },
       "id": "5b0c9a1e-1f0e-4c43-9a0a-6f1d2b7c0a03",
-      "name": "Anthropic Chat Model",
-      "type": "@n8n/n8n-nodes-langchain.lmChatAnthropic",
-      "typeVersion": 1.6,
-      "position": [180, 220]
+      "name": "Gemini Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [180, 220],
+      "credentials": {
+        "googlePalmApi": {
+          "id": "GEMINI_CREDENTIAL_ID",
+          "name": "Gemini API"
+        }
+      }
     },
     {
       "parameters": {
@@ -59,7 +61,7 @@
     "When chat message received": {
       "main": [[{ "node": "AI Agent", "type": "main", "index": 0 }]]
     },
-    "Anthropic Chat Model": {
+    "Gemini Chat Model": {
       "ai_languageModel": [[{ "node": "AI Agent", "type": "ai_languageModel", "index": 0 }]]
     },
     "Simple Memory": {

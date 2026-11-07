@@ -1,0 +1,551 @@
+{
+  "name": "TOEIC Mastery – Threads 10 bài/ngày",
+  "nodes": [
+
+    {
+      "id": "cron-trigger",
+      "name": "Cron – 10 lần/ngày",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "parameters": {
+        "rule": {
+          "interval": [
+            { "field": "hours", "hoursInterval": 2 }
+          ]
+        }
+      },
+      "notes": "Mỗi 2 tiếng = 10 lần/ngày (8:00 → 22:00). Điều chỉnh giờ bắt đầu trong cài đặt n8n timezone."
+    },
+
+    {
+      "id": "manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [0, 180]
+    },
+
+    {
+      "id": "merge-triggers",
+      "name": "Merge triggers",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [220, 80],
+      "parameters": {
+        "mode": "passThrough",
+        "output": "first"
+      }
+    },
+
+    {
+      "id": "pick-post-type",
+      "name": "Chọn loại bài ngẫu nhiên",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 80],
+      "parameters": {
+        "jsCode": "// 60% bài kèm ảnh chụp web, 40% bài chữ + comment link\nconst rand = Math.random();\nconst postType = rand < 0.6 ? 'image_post' : 'text_post';\n\n// Danh sách trang web TOEIC viral để lấy content\nconst viralSources = [\n  'https://dethitoeic.com',\n  'https://toeichanquoc.com',\n  'https://prep.vn/toeic',\n  'https://study4.vn/blog',\n  'https://ets.org/toeic'\n];\n\n// Danh sách trang của website để chụp ảnh\nconst websitePages = [\n  { url: 'http://localhost:3000', label: 'Trang chủ TOEIC Mastery', page: 'home' },\n  { url: 'http://localhost:3000/thi-thu-mien-phi', label: 'Thi thử TOEIC miễn phí', page: 'exam' },\n  { url: 'http://localhost:3000/vocabulary', label: 'Từ vựng TOEIC', page: 'vocab' },\n  { url: 'http://localhost:3000/grammar', label: 'Ngữ pháp TOEIC', page: 'grammar' },\n  { url: 'http://localhost:3000/dashboard', label: 'Dashboard học tập', page: 'dashboard' },\n  { url: 'http://localhost:3000/tu-vung', label: 'Từ vựng theo chủ đề', page: 'tu-vung' },\n  { url: 'http://localhost:3000/tips', label: 'Tips luyện TOEIC', page: 'tips' }\n];\n\n// Danh sách viral TOEIC topics để tạo content\nconst toeicTopics = [\n  'Part 5 ngữ pháp hay gặp nhất',\n  'Từ vựng TOEIC chủ đề văn phòng',\n  'Chiến thuật làm Part 7 nhanh',\n  'Lỗi sai thường gặp trong TOEIC',\n  'Từ vựng TOEIC chủ đề tài chính',\n  'Phương pháp học từ vựng hiệu quả',\n  'Part 2 câu hỏi dạng WH',\n  'Tips nghe Part 3 và Part 4',\n  'Từ đồng nghĩa hay xuất hiện trong TOEIC',\n  'Cách đọc hiểu email nhanh Part 7',\n  'Grammar: Mệnh đề quan hệ trong TOEIC',\n  'Từ vựng TOEIC chủ đề vận chuyển'\n];\n\nconst randomSource = viralSources[Math.floor(Math.random() * viralSources.length)];\nconst randomPage = websitePages[Math.floor(Math.random() * websitePages.length)];\nconst randomTopic = toeicTopics[Math.floor(Math.random() * toeicTopics.length)];\n\nreturn [{\n  json: {\n    postType,\n    viralSource: randomSource,\n    websitePage: randomPage,\n    topic: randomTopic,\n    timestamp: new Date().toISOString()\n  }\n}];"
+      }
+    },
+
+    {
+      "id": "scrape-viral",
+      "name": "Scrape nội dung viral TOEIC",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, -60],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $json.viralSource }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 15000,
+          "redirect": {
+            "redirect": {
+              "followRedirects": true,
+              "maxRedirects": 3
+            }
+          }
+        },
+        "headers": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            }
+          ]
+        }
+      },
+      "continueOnFail": true,
+      "notes": "Lấy HTML từ trang viral TOEIC để AI đọc lấy ý tưởng content"
+    },
+
+    {
+      "id": "extract-text",
+      "name": "Trích xuất text từ HTML",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, -60],
+      "parameters": {
+        "jsCode": "const html = $input.first().json?.data || $input.first().json?.body || '';\n\n// Loại bỏ HTML tags, lấy text\nlet text = html\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, '')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, '')\n  .replace(/<[^>]+>/g, ' ')\n  .replace(/&nbsp;/g, ' ')\n  .replace(/&amp;/g, '&')\n  .replace(/&lt;/g, '<')\n  .replace(/&gt;/g, '>')\n  .replace(/\\s+/g, ' ')\n  .trim()\n  .substring(0, 3000); // Giới hạn 3000 ký tự để gửi cho AI\n\nconst prevData = $('Chọn loại bài ngẫu nhiên').first().json;\n\nreturn [{\n  json: {\n    ...prevData,\n    scrapedText: text || 'Không lấy được nội dung từ web, dùng kiến thức TOEIC chung.'\n  }\n}];"
+      }
+    },
+
+    {
+      "id": "screenshot-web",
+      "name": "Chụp ảnh giao diện web",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [660, 220],
+      "parameters": {
+        "method": "POST",
+        "url": "http://localhost:3001/screenshot",
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "url": "={{ $('Chọn loại bài ngẫu nhiên').first().json.websitePage.url }}",
+          "width": 1280,
+          "height": 800,
+          "fullPage": false,
+          "waitFor": 3000,
+          "selector": "main"
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "continueOnFail": true,
+      "notes": "Gọi screenshot service (Node.js Puppeteer server chạy tại port 3001). Xem file screenshot-service.js để setup."
+    },
+
+    {
+      "id": "merge-content",
+      "name": "Gộp dữ liệu",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1100, 80],
+      "parameters": {
+        "mode": "combineByPosition",
+        "options": {}
+      }
+    },
+
+    {
+      "id": "create-prompt",
+      "name": "Tạo prompt cho AI",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1320, 80],
+      "parameters": {
+        "jsCode": "const data = $input.first().json;\nconst postType = data.postType || 'text_post';\nconst topic = data.topic || 'TOEIC tips';\nconst scrapedText = data.scrapedText || '';\nconst pageLabel = data.websitePage?.label || 'TOEIC Mastery';\nconst pageUrl = data.websitePage?.url?.replace('localhost:3000', 'toeicmastery.vn') || 'https://toeicmastery.vn';\n\nlet prompt = '';\n\nif (postType === 'image_post') {\n  prompt = `Bạn là chuyên gia TOEIC người Việt, đang quản lý trang Threads giáo dục.\nViết 1 bài Threads ngắn (tối đa 500 ký tự) về chủ đề: \"${topic}\".\n\nTham khảo nội dung sau để lấy ý tưởng (không copy nguyên văn):\n${scrapedText.substring(0, 1500)}\n\nYêu cầu:\n- Viết tiếng Việt tự nhiên, như người thật đang chia sẻ kinh nghiệm học TOEIC\n- Mở đầu bằng hook thu hút (câu hỏi, sự thật thú vị, hoặc lời khuyên mạnh)\n- Có 3-5 điểm chính dạng bullet (dùng emoji phù hợp)\n- Cuối bài: gọi action nhẹ nhàng (ví dụ: \"Thử ngay tại link trong bio!\" hoặc \"Save lại để ôn nhé!\")\n- KHÔNG đề cập tên website trong bài chính (sẽ comment link riêng)\n- Viết như người đã học TOEIC lâu năm, chia sẻ thực tế\n\nChỉ trả về nội dung bài viết, không giải thích gì thêm.`;\n} else {\n  prompt = `Bạn là chuyên gia TOEIC người Việt, đang quản lý trang Threads giáo dục.\nViết 1 bài Threads (tối đa 400 ký tự) về chủ đề: \"${topic}\".\n\nTham khảo nội dung sau để lấy ý tưởng:\n${scrapedText.substring(0, 1500)}\n\nYêu cầu:\n- Viết tiếng Việt tự nhiên, chân thực\n- Dạng chia sẻ kinh nghiệm hoặc tip ngắn gọn\n- Dùng 2-4 emoji phù hợp\n- Cuối bài để trống 1 dòng rồi thêm: \"🔗 Luyện tập miễn phí tại: ${pageUrl}\"\n- Giọng văn thân thiện, không quảng cáo lộ liễu\n\nChỉ trả về nội dung bài viết, không giải thích gì thêm.`;\n}\n\nreturn [{\n  json: {\n    ...data,\n    prompt,\n    pageUrl\n  }\n}];"
+      }
+    },
+
+    {
+      "id": "gemini-generate",
+      "name": "Gemini tạo content",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1540, 80],
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "body": {
+          "contents": [
+            {
+              "parts": [
+                {
+                  "text": "={{ $json.prompt }}"
+                }
+              ]
+            }
+          ],
+          "generationConfig": {
+            "temperature": 0.85,
+            "maxOutputTokens": 600,
+            "topP": 0.95
+          },
+          "safetySettings": [
+            {
+              "category": "HARM_CATEGORY_HARASSMENT",
+              "threshold": "BLOCK_NONE"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "THAY_GEMINI_CREDENTIAL_ID",
+          "name": "Gemini API Key"
+        }
+      },
+      "notes": "Cần tạo credential 'HTTP Query Auth' với name=key, value=YOUR_GEMINI_API_KEY tại https://aistudio.google.com/apikey"
+    },
+
+    {
+      "id": "parse-ai-response",
+      "name": "Parse kết quả AI",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1760, 80],
+      "parameters": {
+        "jsCode": "const aiResponse = $input.first().json;\nconst prevData = $('Tạo prompt cho AI').first().json;\n\n// Lấy text từ Gemini response\nlet generatedContent = '';\ntry {\n  generatedContent = aiResponse.candidates?.[0]?.content?.parts?.[0]?.text || '';\n} catch(e) {\n  generatedContent = 'Hôm nay học Part 5 TOEIC nhé! 📚\\n\\n• Chú ý thì động từ trong câu\\n• Phân biệt danh từ/tính từ/trạng từ\\n• Practice nhiều là key!\\n\\n💪 Luyện ngay tại toeicmastery.vn';\n}\n\ngeneratedContent = generatedContent.trim();\n\n// Tạo comment link (nếu là image_post)\nlet linkComment = '';\nif (prevData.postType === 'image_post') {\n  const url = prevData.pageUrl || 'https://toeicmastery.vn';\n  linkComment = `🔗 Luyện tập miễn phí ngay tại: ${url}\\n#TOEIC #HọcTiếngAnh #TOEICMastery #LuyệnThi`;\n}\n\n// Thêm hashtag nếu chưa có\nconst hashtags = '#TOEIC #HọcTiếngAnh #TOEICMastery #LuyệnThiTOEIC';\nif (!generatedContent.includes('#TOEIC')) {\n  generatedContent += `\\n\\n${hashtags}`;\n}\n\nreturn [{\n  json: {\n    ...prevData,\n    generatedContent,\n    linkComment,\n    hasImage: prevData.postType === 'image_post'\n  }\n}];"
+      }
+    },
+
+    {
+      "id": "check-has-image",
+      "name": "Kiểm tra loại bài",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1980, 80],
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "cond-1",
+              "leftValue": "={{ $json.hasImage }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true"
+              }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+
+    {
+      "id": "post-with-image",
+      "name": "Đăng Threads KÈM ẢNH",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2200, -40],
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.threads.net/v1.0/{{ $json.THREADS_USER_ID }}/threads",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "form",
+        "body": {
+          "parameters": [
+            { "name": "media_type", "value": "IMAGE" },
+            { "name": "image_url", "value": "={{ $json.screenshotPublicUrl }}" },
+            { "name": "text", "value": "={{ $json.generatedContent }}" },
+            { "name": "access_token", "value": "={{ $credentials.httpHeaderAuth.value }}" }
+          ]
+        },
+        "options": { "timeout": 30000 }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "THAY_THREADS_CREDENTIAL_ID",
+          "name": "Threads Access Token"
+        }
+      },
+      "notes": "Bước 1 trong 2 bước đăng ảnh: Tạo media container"
+    },
+
+    {
+      "id": "publish-image-post",
+      "name": "Publish bài ảnh",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2420, -40],
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.threads.net/v1.0/{{ $('Parse kết quả AI').first().json.THREADS_USER_ID }}/threads_publish",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "form",
+        "body": {
+          "parameters": [
+            { "name": "creation_id", "value": "={{ $json.id }}" },
+            { "name": "access_token", "value": "={{ $credentials.httpHeaderAuth.value }}" }
+          ]
+        },
+        "options": { "timeout": 15000 }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "THAY_THREADS_CREDENTIAL_ID",
+          "name": "Threads Access Token"
+        }
+      }
+    },
+
+    {
+      "id": "wait-for-comment",
+      "name": "Chờ 10s rồi comment link",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [2640, -40],
+      "parameters": {
+        "unit": "seconds",
+        "amount": 10
+      }
+    },
+
+    {
+      "id": "comment-link",
+      "name": "Comment link vào bài ảnh",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2860, -40],
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.threads.net/v1.0/{{ $('Publish bài ảnh').first().json.id }}/replies",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "form",
+        "body": {
+          "parameters": [
+            { "name": "text", "value": "={{ $('Parse kết quả AI').first().json.linkComment }}" },
+            { "name": "access_token", "value": "={{ $credentials.httpHeaderAuth.value }}" }
+          ]
+        },
+        "options": { "timeout": 15000 }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "THAY_THREADS_CREDENTIAL_ID",
+          "name": "Threads Access Token"
+        }
+      }
+    },
+
+    {
+      "id": "post-text-only",
+      "name": "Đăng Threads CHỮ + LINK",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2200, 220],
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.threads.net/v1.0/{{ $json.THREADS_USER_ID }}/threads",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "form",
+        "body": {
+          "parameters": [
+            { "name": "media_type", "value": "TEXT" },
+            { "name": "text", "value": "={{ $json.generatedContent }}" },
+            { "name": "access_token", "value": "={{ $credentials.httpHeaderAuth.value }}" }
+          ]
+        },
+        "options": { "timeout": 30000 }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "THAY_THREADS_CREDENTIAL_ID",
+          "name": "Threads Access Token"
+        }
+      }
+    },
+
+    {
+      "id": "publish-text-post",
+      "name": "Publish bài chữ",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2420, 220],
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.threads.net/v1.0/{{ $('Parse kết quả AI').first().json.THREADS_USER_ID }}/threads_publish",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "form",
+        "body": {
+          "parameters": [
+            { "name": "creation_id", "value": "={{ $json.id }}" },
+            { "name": "access_token", "value": "={{ $credentials.httpHeaderAuth.value }}" }
+          ]
+        },
+        "options": { "timeout": 15000 }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "THAY_THREADS_CREDENTIAL_ID",
+          "name": "Threads Access Token"
+        }
+      }
+    },
+
+    {
+      "id": "merge-after-post",
+      "name": "Gộp sau khi đăng",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [3080, 80],
+      "parameters": {
+        "mode": "passThrough",
+        "output": "first"
+      }
+    },
+
+    {
+      "id": "log-to-sheet",
+      "name": "Ghi log vào Google Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [3300, 80],
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "THAY_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Sheet1",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Thời gian": "={{ $('Parse kết quả AI').first().json.timestamp }}",
+            "Loại bài": "={{ $('Parse kết quả AI').first().json.postType }}",
+            "Chủ đề": "={{ $('Parse kết quả AI').first().json.topic }}",
+            "Nguồn viral": "={{ $('Parse kết quả AI').first().json.viralSource }}",
+            "Trang chụp": "={{ $('Parse kết quả AI').first().json.websitePage.label }}",
+            "Nội dung": "={{ $('Parse kết quả AI').first().json.generatedContent }}",
+            "Post ID": "={{ $json.id || 'N/A' }}",
+            "Trạng thái": "Đã đăng"
+          }
+        }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "THAY_GOOGLE_SHEETS_CREDENTIAL_ID",
+          "name": "Google Sheets"
+        }
+      },
+      "notes": "Lưu log tất cả bài đăng. Tạo Google Sheet mới và điền Sheet ID vào đây."
+    },
+
+    {
+      "id": "wait-30-min",
+      "name": "Chờ 30 phút",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [3520, 80],
+      "parameters": {
+        "unit": "minutes",
+        "amount": 30
+      },
+      "notes": "Delay giữa các bài để tránh spam. Chỉ áp dụng khi chạy trong loop, không ảnh hưởng Cron trigger."
+    }
+
+  ],
+
+  "connections": {
+    "Cron – 10 lần/ngày": {
+      "main": [[{ "node": "Merge triggers", "type": "main", "index": 0 }]]
+    },
+    "Manual Trigger": {
+      "main": [[{ "node": "Merge triggers", "type": "main", "index": 1 }]]
+    },
+    "Merge triggers": {
+      "main": [[{ "node": "Chọn loại bài ngẫu nhiên", "type": "main", "index": 0 }]]
+    },
+    "Chọn loại bài ngẫu nhiên": {
+      "main": [
+        [
+          { "node": "Scrape nội dung viral TOEIC", "type": "main", "index": 0 },
+          { "node": "Chụp ảnh giao diện web", "type": "main", "index": 0 }
+        ]
+      ]
+    },
+    "Scrape nội dung viral TOEIC": {
+      "main": [[{ "node": "Trích xuất text từ HTML", "type": "main", "index": 0 }]]
+    },
+    "Trích xuất text từ HTML": {
+      "main": [[{ "node": "Gộp dữ liệu", "type": "main", "index": 0 }]]
+    },
+    "Chụp ảnh giao diện web": {
+      "main": [[{ "node": "Gộp dữ liệu", "type": "main", "index": 1 }]]
+    },
+    "Gộp dữ liệu": {
+      "main": [[{ "node": "Tạo prompt cho AI", "type": "main", "index": 0 }]]
+    },
+    "Tạo prompt cho AI": {
+      "main": [[{ "node": "Gemini tạo content", "type": "main", "index": 0 }]]
+    },
+    "Gemini tạo content": {
+      "main": [[{ "node": "Parse kết quả AI", "type": "main", "index": 0 }]]
+    },
+    "Parse kết quả AI": {
+      "main": [[{ "node": "Kiểm tra loại bài", "type": "main", "index": 0 }]]
+    },
+    "Kiểm tra loại bài": {
+      "main": [
+        [{ "node": "Đăng Threads KÈM ẢNH", "type": "main", "index": 0 }],
+        [{ "node": "Đăng Threads CHỮ + LINK", "type": "main", "index": 0 }]
+      ]
+    },
+    "Đăng Threads KÈM ẢNH": {
+      "main": [[{ "node": "Publish bài ảnh", "type": "main", "index": 0 }]]
+    },
+    "Publish bài ảnh": {
+      "main": [[{ "node": "Chờ 10s rồi comment link", "type": "main", "index": 0 }]]
+    },
+    "Chờ 10s rồi comment link": {
+      "main": [[{ "node": "Comment link vào bài ảnh", "type": "main", "index": 0 }]]
+    },
+    "Comment link vào bài ảnh": {
+      "main": [[{ "node": "Gộp sau khi đăng", "type": "main", "index": 0 }]]
+    },
+    "Đăng Threads CHỮ + LINK": {
+      "main": [[{ "node": "Publish bài chữ", "type": "main", "index": 0 }]]
+    },
+    "Publish bài chữ": {
+      "main": [[{ "node": "Gộp sau khi đăng", "type": "main", "index": 1 }]]
+    },
+    "Gộp sau khi đăng": {
+      "main": [[{ "node": "Ghi log vào Google Sheet", "type": "main", "index": 0 }]]
+    },
+    "Ghi log vào Google Sheet": {
+      "main": [[{ "node": "Chờ 30 phút", "type": "main", "index": 0 }]]
+    }
+  },
+
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "pinData": {},
+  "tags": ["toeic", "threads", "automation", "social-media"]
+}
+
