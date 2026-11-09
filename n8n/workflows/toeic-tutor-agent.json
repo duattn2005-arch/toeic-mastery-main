@@ -31,7 +31,7 @@
     },
     {
       "parameters": {
-        "modelName": "models/gemini-2.0-flash",
+        "modelName": "models/gemini-flash-latest",
         "options": {}
       },
       "id": "5b0c9a1e-1f0e-4c43-9a0a-6f1d2b7c0a03",
