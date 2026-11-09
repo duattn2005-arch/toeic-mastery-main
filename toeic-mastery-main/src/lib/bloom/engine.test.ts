@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
+  analyzeAnswers,
   applyEvaluateBehavior,
   buildBloomHeatmap,
   buildBloomProfile,
@@ -175,4 +176,68 @@ test("buildBloomProfile: flashcards count at level 1 but not in totalAnswered", 
   const p = buildBloomProfile([...many(3, { source: "flashcard", knowledgeLabel: "vocab", bloomLevel: 1, part: null, timeSpentSec: null }), att()], NOW);
   assert.equal(p.totalAnswered, 1);
   assert.equal(p.heatmap.vocab[1]!.attempts, 3);
+  assert.equal(p.answers.answered, 1);
+});
+
+test("analyzeAnswers: empty input is safe", () => {
+  const res = analyzeAnswers([]);
+  assert.equal(res.answered, 0);
+  assert.equal(res.correct, 0);
+  assert.equal(res.accuracy, 0);
+  assert.equal(res.unclassifiedWrong, 0);
+  assert.deepEqual(res.traps, []);
+  assert.equal(res.rightToWrong, 0);
+  assert.equal(res.wrongToRight, 0);
+  assert.equal(res.avgSecCorrect, null);
+  assert.equal(res.avgSecWrong, null);
+  assert.equal(res.hintedCorrect, 0);
+  assert.equal(res.byLevel[1].answered, 0);
+  assert.equal(res.byLevel[1].accuracy, 0);
+  assert.equal(res.byLevel[5].answered, 0);
+  assert.equal(res.byLevel[5].accuracy, 0);
+});
+
+test("analyzeAnswers: noise, unanswered, and flashcard attempts are excluded", () => {
+  const attempts = [
+    att({ isCorrect: null }), // skipped
+    att({ revealedBeforeAnswer: true, isCorrect: true }), // revealed
+    att({ timeSpentSec: 3, isCorrect: true }), // guess (Reading Part 5 < 8s)
+    att({ timeSpentSec: 200, isCorrect: false }), // stuck (Reading Part 5 > 180s)
+    att({ source: "flashcard", isCorrect: true }), // flashcard
+    att({ isCorrect: true, timeSpentSec: 25, hintUsedCount: 1 }), // hinted correct
+    att({ isCorrect: true, timeSpentSec: 15, hintUsedCount: 0 }), // pure correct
+    att({ isCorrect: false, timeSpentSec: 35 }), // wrong
+  ];
+  const res = analyzeAnswers(attempts);
+  assert.equal(res.answered, 3);
+  assert.equal(res.correct, 2);
+  assert.equal(res.accuracy, 2 / 3);
+  assert.equal(res.hintedCorrect, 1);
+  assert.equal(res.avgSecCorrect, 20); // (25 + 15) / 2
+  assert.equal(res.avgSecWrong, 35);
+});
+
+test("analyzeAnswers: traps are sorted descending and unclassifiedWrong is tracked", () => {
+  const attempts = [
+    att({ isCorrect: false, trapTypeHit: "same_word_trap" }),
+    att({ isCorrect: false, trapTypeHit: "sound_alike" }),
+    att({ isCorrect: false, trapTypeHit: "sound_alike" }),
+    att({ isCorrect: false, trapTypeHit: "same_word_trap" }),
+    att({ isCorrect: false, trapTypeHit: "sound_alike" }),
+    att({ isCorrect: false, trapTypeHit: "not_stated" }),
+    att({ isCorrect: false, trapTypeHit: null }),
+    att({ isCorrect: false, trapTypeHit: null }),
+    att({ isCorrect: true, trapTypeHit: null }),
+  ];
+  const res = analyzeAnswers(attempts);
+  assert.equal(res.answered, 9);
+  assert.equal(res.correct, 1);
+  assert.equal(res.unclassifiedWrong, 2);
+  assert.equal(res.traps.length, 3);
+  assert.equal(res.traps[0].trap, "sound_alike");
+  assert.equal(res.traps[0].count, 3);
+  assert.equal(res.traps[1].trap, "same_word_trap");
+  assert.equal(res.traps[1].count, 2);
+  assert.equal(res.traps[2].trap, "not_stated");
+  assert.equal(res.traps[2].count, 1);
 });

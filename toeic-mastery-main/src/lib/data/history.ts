@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { TEST_PARTS } from "@/lib/constants/toeic";
 import { computeAttemptXp } from "@/lib/services/xp";
 import { PRO_EXPLANATION_NOTE } from "@/lib/data/question-access";
+import { analyzeAttempt, answerInsight, type AnsweredQuestion } from "@/lib/services/attempt-analysis";
 import type { TestPart } from "@/generated/prisma/enums";
 
 /** Free keeps the score, right/wrong and the correct answer. The explanation,
@@ -46,16 +47,34 @@ export async function getAttemptResult(attemptId: string, userId: string, pro: b
   });
   const bookmarkedQuestionIds = new Set(bookmarks.map((b) => b.questionId));
 
-  const partBuckets = new Map<TestPart, { correct: number; total: number }>();
-  for (const part of TEST_PARTS) partBuckets.set(part, { correct: 0, total: 0 });
+  const partBuckets = new Map<TestPart, { correct: number; skipped: number; total: number }>();
+  for (const part of TEST_PARTS) partBuckets.set(part, { correct: 0, skipped: 0, total: 0 });
+
+  const answeredQuestions: AnsweredQuestion[] = [];
 
   const questionReviews = questions.map((q) => {
     const answer = answerByQuestion.get(q.id) ?? null;
     const bucket = partBuckets.get(q.part)!;
     bucket.total += 1;
     if (answer?.isCorrect) bucket.correct += 1;
+    if (!answer?.selectedLabel) bucket.skipped += 1;
+
+    const answered: AnsweredQuestion = {
+      part: q.part,
+      selectedLabel: answer?.selectedLabel ?? null,
+      correctLabel: q.correctLabel,
+      isCorrect: answer?.isCorrect ?? false,
+      isFlagged: answer?.isFlagged ?? false,
+      initialSelectedLabel: answer?.initialSelectedLabel ?? null,
+      hintUsedCount: answer?.hintUsedCount ?? 0,
+      timeSpentSec: answer?.timeSpentSec ?? 0,
+      trapTypeHit: answer?.trapTypeHit ?? null,
+      grammarTopicSlug: q.grammarTopicSlug,
+    };
+    answeredQuestions.push(answered);
 
     return {
+      insight: pro ? answerInsight(answered) : null,
       id: q.id,
       part: q.part,
       orderIndex: q.orderIndex,
@@ -89,8 +108,15 @@ export async function getAttemptResult(attemptId: string, userId: string, pro: b
 
   const partBreakdown = TEST_PARTS.map((part) => {
     const bucket = partBuckets.get(part)!;
-    return { part, correct: bucket.correct, total: bucket.total, accuracy: bucket.total > 0 ? bucket.correct / bucket.total : 0 };
+    return { part, correct: bucket.correct, skipped: bucket.skipped, wrong: bucket.total - bucket.correct - bucket.skipped, total: bucket.total };
   }).filter((p) => p.total > 0);
+
+  // Pro-only like the rest of the learner analytics: a Free response never carries it.
+  const analysis = pro ? analyzeAttempt(answeredQuestions) : null;
+  const topicRows = analysis?.topics.length
+    ? await db.grammarTopic.findMany({ where: { slug: { in: analysis.topics.map((t) => t.slug) } }, select: { slug: true, title: true } })
+    : [];
+  const topicTitles = new Map(topicRows.map((t) => [t.slug, t.title]));
 
   const timeUsedSec = attempt.allowedDurationSec - attempt.remainingSec;
   // XP earned from this specific attempt (correct answers + completion
@@ -103,6 +129,7 @@ export async function getAttemptResult(attemptId: string, userId: string, pro: b
     attempt,
     questionReviews,
     partBreakdown,
+    analysis: analysis && { ...analysis, topics: analysis.topics.flatMap((t) => (topicTitles.has(t.slug) ? [{ ...t, title: topicTitles.get(t.slug)! }] : [])) },
     timeUsedSec,
     xpEarned,
   };

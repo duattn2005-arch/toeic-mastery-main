@@ -1,16 +1,16 @@
 "use client";
 
 import * as React from "react";
-import { motion, useMotionValue, useTransform, animate } from "framer-motion";
-import { CheckCircle2, Clock, MinusCircle, XCircle } from "lucide-react";
+import { useMotionValue, useReducedMotion, useTransform, animate } from "framer-motion";
 
 function AnimatedNumber({ value }: { value: number }) {
   const motionValue = useMotionValue(0);
   const rounded = useTransform(motionValue, (v) => Math.round(v));
   const [display, setDisplay] = React.useState(0);
+  const reducedMotion = useReducedMotion();
 
   React.useEffect(() => {
-    const controls = animate(motionValue, value, { duration: 1.1, ease: "easeOut" });
+    const controls = animate(motionValue, value, { duration: reducedMotion ? 0 : 1.1, ease: "easeOut" });
     const unsubscribe = rounded.on("change", setDisplay);
     return () => {
       controls.stop();
@@ -49,80 +49,68 @@ export function ScoreResultHeader({
   accuracy: number;
   timeUsedSec: number;
 }) {
+  const total = correctCount + wrongCount + skippedCount;
+
   return (
-    <div className="rounded-2xl border border-border bg-card p-6 shadow-soft sm:p-8">
-      <div className="flex flex-col items-center gap-2 text-center">
-        {totalScore !== null ? (
-          <>
-            <p className="text-xs font-medium text-muted-foreground">{isEstimated ? "Điểm ước tính" : "Điểm số"}</p>
-            <motion.p
-              initial={{ scale: 0.9, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.4 }}
-              className="text-4xl font-bold tracking-tight text-primary sm:text-5xl"
-            >
+    <div className="grid items-start gap-x-10 gap-y-6 md:grid-cols-[auto_minmax(0,1fr)] lg:grid-cols-[auto_minmax(0,1fr)_minmax(0,1.2fr)]">
+      {totalScore !== null ? (
+        <>
+          <div>
+            <p className="text-sm text-muted-foreground">{isEstimated ? "Điểm ước tính" : "Điểm số"}</p>
+            <p className="mt-1 text-6xl leading-none font-extrabold tracking-tighter text-primary tabular-nums sm:text-7xl">
               <AnimatedNumber value={totalScore} />
-              <span className="text-xl font-medium text-muted-foreground"> / 990</span>
-            </motion.p>
-            <div className="mt-2 flex gap-6 text-sm">
-              <span>
-                Listening: <span className="font-semibold">{listeningScore}</span>
-              </span>
-              <span>
-                Reading: <span className="font-semibold">{readingScore}</span>
-              </span>
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="text-xs font-medium text-muted-foreground">Kết quả luyện tập</p>
-            <p className="text-3xl font-bold tracking-tight">
-              {correctCount}/{correctCount + wrongCount + skippedCount} câu đúng
+              <span className="ml-2 text-xl font-medium tracking-normal text-muted-foreground">/ 990</span>
             </p>
-            <p className="text-xs text-muted-foreground">Bài luyện tập một phần không quy đổi ra thang điểm 990.</p>
-          </>
-        )}
-      </div>
+          </div>
+          <div className="flex flex-col gap-3 md:pt-6">
+            <SkillScore label="Listening" score={listeningScore} />
+            <SkillScore label="Reading" score={readingScore} />
+          </div>
+        </>
+      ) : (
+        <div>
+          <p className="text-sm text-muted-foreground">Kết quả luyện tập</p>
+          <p className="mt-1 text-5xl leading-none font-extrabold tracking-tighter text-primary tabular-nums">
+            {correctCount}
+            <span className="ml-2 text-xl font-medium tracking-normal text-muted-foreground">/ {total} câu đúng</span>
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">Bài luyện tập một phần không quy đổi ra thang điểm 990.</p>
+        </div>
+      )}
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <StatPill icon={CheckCircle2} label="Câu đúng" value={correctCount} tone="success" />
-        <StatPill icon={XCircle} label="Câu sai" value={wrongCount} tone="destructive" />
-        <StatPill icon={MinusCircle} label="Bỏ qua" value={skippedCount} tone="muted" />
-        <StatPill icon={Clock} label="Thời gian" value={formatTime(timeUsedSec)} tone="info" />
-      </div>
+      <dl className="grid grid-cols-3 gap-x-4 gap-y-3 text-sm md:col-span-2 lg:col-span-1">
+        <Fact label="Câu đúng" value={`${correctCount}/${total}`} valueClassName="text-success" />
+        <Fact label="Câu sai" value={wrongCount} valueClassName="text-destructive" />
+        <Fact label="Bỏ qua" value={skippedCount} />
+        <Fact label="Thời gian" value={formatTime(timeUsedSec)} />
+        <div className="col-span-2">
+          {/* Named in full: it differs from correct/total above because skipped questions don't count. */}
+          <Fact label="Tỷ lệ đúng trên câu đã làm" value={`${Math.round(accuracy * 100)}%`} />
+        </div>
+      </dl>
+    </div>
+  );
+}
 
-      <div className="mt-4 text-center text-sm text-muted-foreground">
-        Độ chính xác: <span className="font-semibold text-foreground">{Math.round(accuracy * 100)}%</span>
+function SkillScore({ label, score }: { label: string; score: number | null }) {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between text-sm">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-semibold tabular-nums">{score ?? "–"} / 495</span>
+      </div>
+      <div aria-hidden className="mt-1 h-1.5 rounded-full bg-muted">
+        <div className="h-full rounded-full bg-primary" style={{ width: `${((score ?? 0) / 495) * 100}%` }} />
       </div>
     </div>
   );
 }
 
-function StatPill({
-  icon: Icon,
-  label,
-  value,
-  tone,
-}: {
-  icon: React.ElementType;
-  label: string;
-  value: React.ReactNode;
-  tone: "success" | "destructive" | "muted" | "info";
-}) {
-  const toneClass = {
-    success: "text-success bg-success/10",
-    destructive: "text-destructive bg-destructive/10",
-    muted: "text-muted-foreground bg-muted",
-    info: "text-info bg-info/10",
-  }[tone];
-
+function Fact({ label, value, valueClassName }: { label: string; value: React.ReactNode; valueClassName?: string }) {
   return (
-    <div className="flex flex-col items-center gap-1.5 rounded-xl border border-border py-3">
-      <span className={`flex size-8 items-center justify-center rounded-lg ${toneClass}`}>
-        <Icon className="size-4" />
-      </span>
-      <span className="text-sm font-semibold">{value}</span>
-      <span className="text-[11px] text-muted-foreground">{label}</span>
+    <div>
+      <dt className="text-xs text-muted-foreground">{label}</dt>
+      <dd className={`mt-0.5 text-base font-semibold tabular-nums ${valueClassName ?? ""}`}>{value}</dd>
     </div>
   );
 }
