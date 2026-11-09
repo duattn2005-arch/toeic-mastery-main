@@ -107,7 +107,8 @@ function HeatCell({ row, level, cell }: { row: BloomLabelRow; level: ScoredBloom
       >
         {st === "insufficient" ? (
           <>
-            <span>{pct(cell.score)}</span>
+            {/* No valid answer left after noise filtering: unknown, not a score of 0%. */}
+            <span>{cell.attempts > 0 ? pct(cell.score) : "–"}</span>
             <span className="text-[9px] font-medium opacity-80">
               {cell.attempts}/{MIN_ATTEMPTS_PER_CELL}
             </span>

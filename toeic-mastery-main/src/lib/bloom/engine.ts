@@ -208,7 +208,8 @@ export function scoreCell(attempts: BloomAttempt[], now: number = Date.now()): C
   // Speed bonus: Reading only, measured time, correct answers without hints.
   let speedBonus = 0;
   const fastPool = window.filter((p) => p.a.isCorrect && hasTime(p.a) && isReadingPart(p.a.part) && !(p.a.hintUsedCount && p.a.hintUsedCount > 0));
-  if (fastPool.length >= Math.min(5, Math.ceil(window.length / 2))) {
+  // An empty window passes the threshold below (0 >= 0), so guard the 0/0 average.
+  if (fastPool.length > 0 && fastPool.length >= Math.min(5, Math.ceil(window.length / 2))) {
     const ratios = fastPool.map((p) => {
       const std = PART_STANDARD_SECONDS[p.a.part!];
       return std ? Math.max(0, (std - p.a.timeSpentSec!) / std) : 0;

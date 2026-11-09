@@ -241,3 +241,11 @@ test("analyzeAnswers: traps are sorted descending and unclassifiedWrong is track
   assert.equal(res.traps[2].trap, "not_stated");
   assert.equal(res.traps[2].count, 1);
 });
+
+test("a cell whose answers were all filtered as noise scores 0, not NaN", () => {
+  const cell = scoreCell(many(3, { revealedBeforeAnswer: true }), NOW);
+  assert.equal(cell.attempts, 0);
+  assert.equal(cell.score, 0);
+  const profile = buildBloomProfile(many(3, { revealedBeforeAnswer: true }), NOW);
+  for (const level of Object.values(profile.levels)) assert.ok(!Number.isNaN(level.score ?? 0));
+});
