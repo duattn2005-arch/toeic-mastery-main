@@ -1,0 +1,21 @@
+{
+  "name": "TOEIC Threads – Upload ảnh lên Cloudflare/Imgur (helper)",
+  "nodes": [
+    {
+      "id": "note-1",
+      "name": "Sticky Note – Hướng dẫn upload ảnh",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, -200],
+      "parameters": {
+        "content": "## Upload ảnh để Threads dùng được\n\nThreads API yêu cầu ảnh phải có PUBLIC URL (https://).\nCó 3 cách:\n\n**Cách 1 (đơn giản nhất): Dùng Imgur**\n- Tạo app tại https://api.imgur.com/oauth2/addclient\n- Lấy Client ID\n- Upload ảnh → nhận public URL\n\n**Cách 2: Cloudflare Images**\n- Cần Cloudflare account có Images enabled\n- Upload qua API → nhận CDN URL\n\n**Cách 3: Dùng Google Drive public link**\n- Upload lên Drive → share public → dùng link direct\n\nWorkflow chính đã tích hợp Cloudflare theo ảnh gốc.",
+        "height": 300,
+        "width": 400,
+        "color": 5
+      }
+    }
+  ],
+  "connections": {},
+  "settings": { "executionOrder": "v1" }
+}
+
