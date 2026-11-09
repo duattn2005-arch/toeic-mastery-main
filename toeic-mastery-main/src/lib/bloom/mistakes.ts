@@ -102,15 +102,13 @@ function summarize(attempts: BloomAttempt[], now: number): MistakeScope {
   let skipped = 0;
 
   for (const a of attempts) {
-    const insight = a.isCorrect === true ? null : insightOf(a);
+    // Error types describe wrong picks: one abandoned test leaves hundreds of blanks and would drown them out.
+    const insight = a.isCorrect === false ? insightOf(a) : null;
     if (insight?.label && insight.tip) {
       addType(types, insight.label, insight.tip, a.timestamp >= since);
-      // "Most frequent error" names a wrong pick: a left-blank answer isn't one.
-      if (a.isCorrect === false) {
-        const forLabel = labelTypes.get(a.knowledgeLabel) ?? new Map<string, ErrorTypeStat>();
-        addType(forLabel, insight.label, insight.tip, a.timestamp >= since);
-        labelTypes.set(a.knowledgeLabel, forLabel);
-      }
+      const forLabel = labelTypes.get(a.knowledgeLabel) ?? new Map<string, ErrorTypeStat>();
+      addType(forLabel, insight.label, insight.tip, a.timestamp >= since);
+      labelTypes.set(a.knowledgeLabel, forLabel);
     }
     if (a.isCorrect === null) {
       skipped++;

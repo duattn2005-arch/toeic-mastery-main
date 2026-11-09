@@ -70,12 +70,12 @@ test("each wrong answer gets one error type, counted by frequency with a recent 
   assert.equal(r.topErrorByLabel["grammar:a"].label, "Bẫy gần nghĩa");
 });
 
-test("skipped answers count as an error type but aren't listed as wrong picks", () => {
+test("skipped answers are counted apart: not an error type and not a wrong pick", () => {
   const r = buildMistakeReport([att({ isCorrect: null, selectedAnswer: null, firstAnswer: null })], NOW);
   assert.equal(r.skipped, 1);
   assert.equal(r.wrongQuestions, 0);
   assert.deepEqual(r.questions, []);
-  assert.equal(r.types[0].label, "Bỏ qua");
+  assert.deepEqual(r.types, []);
   assert.equal(r.topErrorByLabel["grammar:a"], undefined);
 });
 

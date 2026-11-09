@@ -189,6 +189,8 @@ export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
     }
     return profile;
   } catch (dbErr) {
+    // Never in production: a database error must not hand every session a free Pro profile.
+    if (process.env.NODE_ENV === "production") throw dbErr;
     // Graceful fallback for local development when Postgres is offline
     return {
       id: session.sub,
@@ -200,7 +202,7 @@ export const getCurrentProfile = cache(async (): Promise<Profile | null> => {
       coins: 200,
       createdAt: new Date(),
       updatedAt: new Date(),
-    } as any;
+    } as unknown as Profile;
   }
 });
 

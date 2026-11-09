@@ -5,7 +5,9 @@ import {
   CheckCircle2,
   ChevronDown,
   Circle,
+  CircleAlert,
   Download,
+  Layers,
   Lightbulb,
   Lock,
   Route,
@@ -33,19 +35,22 @@ import type { BloomLabelRow, LearnerBloom, MistakeDetail } from "@/lib/bloom/ban
 import { MISTAKES_OVERALL, MISTAKES_PER_LEVEL, type ErrorTypeStat, type MistakeScope } from "@/lib/bloom/mistakes";
 import { ErrorTypes, MistakeCounts, MistakeQuestions } from "@/components/analytics/mistake-report";
 import { PracticeButton } from "@/components/analytics/practice-button";
+import { PanelHeader } from "@/components/analytics/panel-header";
+import { PANEL } from "@/components/analytics/insights-view";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const LEVEL = new Map(BLOOM_LEVELS.map((l) => [l.id, l]));
-const PANEL = "min-w-0 rounded-[1.75rem] border border-border/60 bg-card p-5 shadow-soft sm:p-6";
+const FOLD_SUMMARY = "flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-border/60 bg-card px-4 py-3 text-sm font-bold transition-colors hover:border-primary/40 hover:bg-accent/40 focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none [&::-webkit-details-marker]:hidden";
+const MINI_CELL: Record<string, string> = { green: "bg-success", yellow: "bg-warning", red: "bg-destructive", insufficient: "bg-muted-foreground/35", inferred: "bg-success/40" };
 const MAX_ROWS = 12;
 const MAX_TASKS = 6;
 const KIND_LABEL: Record<BloomLabelRow["kind"], string> = { grammar: "Ngữ pháp", strategy: "Dạng câu", vocab: "Từ vựng", part: "Part" };
 // Tabs trigger defaults to a one-line pill; each step here is a tall card.
 const STEP_BASE =
-  "h-auto min-w-0 flex-col items-stretch justify-start gap-1.5 rounded-2xl border-2 p-3 text-left whitespace-normal text-foreground data-[state=active]:border-primary data-[state=active]:shadow-md data-[state=active]:ring-2 data-[state=active]:ring-primary/40 sm:p-3.5 dark:text-foreground dark:data-[state=active]:border-primary";
+  "an-lift relative h-auto min-w-0 flex-col items-stretch justify-start gap-1.5 overflow-hidden rounded-2xl border-2 p-3 pt-4 text-left whitespace-normal text-foreground data-[state=active]:border-primary data-[state=active]:shadow-md data-[state=active]:ring-2 data-[state=active]:ring-primary/40 sm:p-3.5 dark:text-foreground dark:data-[state=active]:border-primary";
 
 const STATUS_CELL: Record<string, string> = {
   green: "bg-success/15 text-success ring-success/30",
@@ -88,7 +93,7 @@ function HeatCell({ row, level, cell }: { row: BloomLabelRow; level: ScoredBloom
       <td className="p-1">
         <div
           className={cn(
-            "flex h-11 items-center justify-center rounded-lg text-xs",
+            "flex h-12 items-center justify-center rounded-xl text-xs",
             available ? "border border-dashed border-border text-muted-foreground" : "text-muted-foreground/40",
             isFrontier && "border-primary/60 ring-2 ring-primary/40"
           )}
@@ -104,7 +109,7 @@ function HeatCell({ row, level, cell }: { row: BloomLabelRow; level: ScoredBloom
     <td className="p-1">
       <div
         className={cn(
-          "flex h-11 flex-col items-center justify-center rounded-lg text-xs font-bold ring-1 tabular-nums ring-inset",
+          "flex h-12 flex-col items-center justify-center rounded-xl text-sm font-bold ring-1 tabular-nums transition-transform duration-200 ring-inset hover:scale-105",
           STATUS_CELL[st],
           isFrontier && "ring-2 ring-primary/70"
         )}
@@ -195,9 +200,9 @@ function Signal({ title, body, icon, tone }: { title: string; body: string; icon
 
 function LevelBar({ value, status }: { value: number | null; status: string }) {
   return (
-    <span className="relative block h-1.5 overflow-hidden rounded-full bg-muted">
+    <span className="relative block h-2 overflow-hidden rounded-full bg-muted">
       <span
-        className={cn("block h-full rounded-full", status === "green" ? "bg-success" : status === "yellow" ? "bg-warning" : status === "red" ? "bg-destructive" : "bg-muted-foreground/40")}
+        className={cn("an-bar block h-full rounded-full", status === "green" ? "bg-success" : status === "yellow" ? "bg-warning" : status === "red" ? "bg-destructive" : "bg-muted-foreground/40")}
         style={{ width: `${Math.max(3, Math.round((value ?? 0) * 100))}%` }}
       />
       <span className="absolute inset-y-0 w-px bg-foreground/15" style={{ left: `${WEAK_THRESHOLD * 100}%` }} />
@@ -220,10 +225,8 @@ function StepTrigger({ m, current, next }: { m: LevelMastery; current: ScoredBlo
         m.mastered ? "border-success/40 bg-success/5" : isCurrent ? "border-primary/60 bg-primary/10" : "border-dashed border-border/80 bg-muted/20"
       )}
     >
-      <span className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
-        <span className="size-2 shrink-0 rounded-full" style={{ background: info.color }} />
-        Bậc {lvl}
-      </span>
+      <span aria-hidden className="absolute inset-x-0 top-0 h-1" style={{ background: info.color }} />
+      <span className="text-xs font-bold text-muted-foreground">Bậc {lvl}</span>
       <span className="truncate text-sm font-bold">{info.nameVi}</span>
       <span className={cn("text-2xl font-black tracking-tight tabular-nums", m.mastered ? "text-success" : isCurrent ? "text-primary" : "text-muted-foreground")}>
         {val === null ? "—" : scorePct(val)}
@@ -269,7 +272,7 @@ export function TaskAction({ task, level, hero }: { task: LevelTask; level: Scor
 function TaskRow({ task, level, topError }: { task: LevelTask; level: ScoredBloomLevel; topError: ErrorTypeStat | undefined }) {
   const { row, cell, state, need, blockedBy } = task;
   return (
-    <li className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+    <li className={cn("an-lift flex flex-col gap-3 rounded-2xl border border-l-4 border-border/60 bg-card p-4 sm:flex-row sm:items-center sm:justify-between sm:gap-4", state === "red" ? "border-l-destructive/70" : state === "yellow" ? "border-l-warning" : "border-l-muted-foreground/30")}>
       <div className="min-w-0">
         <p className="flex flex-wrap items-center gap-x-2 gap-y-1">
           <span className="text-sm font-semibold">{row.title}</span>
@@ -334,7 +337,7 @@ function LevelDetail({
     ...(lvl >= TIMED_EVIDENCE_FROM_LEVEL ? [{ label: `Có tính giờ (cần ${pct(MIN_TIMED_SHARE)})`, value: pct(m.timedShare) }] : []),
   ];
   return (
-    <div className="rounded-2xl border border-border/70 bg-background/60 p-4 sm:p-5">
+    <div className="rounded-3xl bg-background/70 p-4 sm:p-6">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <h4 className="text-lg font-black tracking-tight">
           Bậc {lvl}: {info.nameVi} <span className="text-sm font-medium text-muted-foreground">Cấp {m.tier}</span>
@@ -357,9 +360,9 @@ function LevelDetail({
       )}
 
       <div className="mt-5 grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        <div className="order-2 min-w-0">
-          <h5 className="mb-2 text-sm font-bold">Điều kiện để vững bậc này</h5>
-          <ul className="flex flex-col gap-2.5">
+        <div className="order-2 min-w-0 self-start rounded-2xl border border-border/60 bg-card p-4">
+          <h5 className="mb-3 text-sm font-bold">Điều kiện để vững bậc này</h5>
+          <ul className="flex flex-col gap-3">
             {requirements.map((r) => (
               <li key={r.label} className="flex items-start gap-2">
                 {r.ok ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" /> : <Circle className="mt-0.5 size-4 shrink-0 text-muted-foreground/60" />}
@@ -387,17 +390,17 @@ function LevelDetail({
           )
         ) : (
           <>
-            <ul className="divide-y divide-border/50">
+            <ul className="flex flex-col gap-2.5">
               {firstTasks.map((t) => (
                 <TaskRow key={t.row.label} task={t} level={lvl} topError={mistakes.topErrorByLabel[t.row.label]} />
               ))}
             </ul>
             {moreTasks.length > 0 && (
-              <details className="group/more mt-3">
+              <details className="an-fold group/more mt-3">
                 <summary className="flex cursor-pointer items-center gap-1 rounded text-xs font-semibold text-primary hover:underline focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none">
                   Xem thêm {moreTasks.length} nhãn <ChevronDown className="size-3.5 transition-transform group-open/more:rotate-180" />
                 </summary>
-                <ul className="mt-3 divide-y divide-border/50">
+                <ul className="mt-3 flex flex-col gap-2.5">
                   {moreTasks.map((t) => (
                     <TaskRow key={t.row.label} task={t} level={lvl} topError={mistakes.topErrorByLabel[t.row.label]} />
                   ))}
@@ -410,8 +413,8 @@ function LevelDetail({
       </div>
 
       {mistakes.wrongAnswers + mistakes.skipped > 0 && (
-        <details className="group/wrong mt-5 border-t border-border/50 pt-3">
-          <summary className="flex cursor-pointer items-center justify-between gap-3 rounded py-1 text-sm font-bold focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none [&::-webkit-details-marker]:hidden">
+        <details className="an-fold group/wrong mt-5">
+          <summary className={FOLD_SUMMARY}>
             Xem câu sai ở bậc này ({mistakes.wrongQuestions} câu)
             <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open/wrong:rotate-180" />
           </summary>
@@ -435,8 +438,8 @@ function LevelDetail({
         </details>
       )}
 
-      <details className="group/nums mt-2 border-t border-border/50 pt-3">
-        <summary className="flex cursor-pointer items-center justify-between gap-3 rounded py-1 text-sm font-bold focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none [&::-webkit-details-marker]:hidden">
+      <details className="an-fold group/nums mt-2.5">
+        <summary className={FOLD_SUMMARY}>
           Xem số liệu và cách đo
           <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open/nums:rotate-180" />
         </summary>
@@ -454,7 +457,7 @@ function LevelDetail({
       </details>
 
       {solid.length > 0 && (
-        <div className="mt-3 border-t border-border/50 pt-4">
+        <div className="mt-5">
           <h5 className="mb-2 text-sm font-bold">
             Đã vững ở bậc này <span className="font-normal text-muted-foreground">({solid.length} nhãn)</span>
           </h5>
@@ -491,15 +494,18 @@ export function BloomPanel({ bloom, mistakeDetails }: { bloom: LearnerBloom; mis
   const tiers: ("B" | "I" | "A")[] = ["B", "I", "A"];
   const roadmaps = new Map(SCORED_LEVELS.map((l) => [l, levelRoadmap(l, profile, rows)]));
   const nextLevel = current !== null ? (SCORED_LEVELS.find((l) => l > current && !levels[l].mastered) ?? 6) : null;
+  const statusCounts = { green: 0, yellow: 0, red: 0 };
+  for (const row of withData) {
+    for (const cell of Object.values(profile.heatmap[row.label] ?? {})) {
+      if (cell && cell.status !== "insufficient") statusCounts[cell.status]++;
+    }
+  }
 
   return (
     <section className={PANEL} id="bloom">
-      <h2 className="text-2xl font-extrabold tracking-tight">Thang Bloom</h2>
-      <p className="mt-1.5 max-w-[68ch] text-sm leading-relaxed text-muted-foreground">
-        Mỗi bậc cần đạt từ {pct(MASTERY_THRESHOLD)} trên ít nhất {MIN_ATTEMPTS_PER_LEVEL} câu. Bấm vào một bậc để xem cần luyện gì.
-      </p>
+      <PanelHeader icon={Layers} title="Thang Bloom" subtitle={`Mỗi bậc cần đạt từ ${pct(MASTERY_THRESHOLD)} trên ít nhất ${MIN_ATTEMPTS_PER_LEVEL} câu. Bấm vào một bậc để xem cần luyện gì.`} />
 
-      <ol className="mt-4 flex flex-wrap items-center gap-1.5 text-xs">
+      <ol className="flex flex-wrap items-center gap-1.5 text-xs">
         {tiers.map((t, i) => {
           const done = tier.reached !== null && tiers.indexOf(tier.reached) >= i;
           return (
@@ -560,13 +566,33 @@ export function BloomPanel({ bloom, mistakeDetails }: { bloom: LearnerBloom; mis
         </TabsContent>
       </Tabs>
 
-      <details className="group mt-6 rounded-2xl border border-border/70 bg-card/60 p-3 sm:p-4">
-        <summary className="flex cursor-pointer items-center justify-between gap-3 rounded-lg px-1 py-1 text-sm font-bold select-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none [&::-webkit-details-marker]:hidden">
-          Xem bản đồ tất cả nhãn theo từng bậc ({withData.length} nhãn)
-          <ChevronDown className="size-4 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" />
+      <details className="an-fold group mt-7">
+        <summary className="an-lift flex cursor-pointer flex-col gap-4 rounded-3xl bg-[linear-gradient(120deg,var(--primary),color-mix(in_srgb,var(--primary)_68%,var(--success)))] p-5 text-primary-foreground shadow-soft select-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:outline-none sm:flex-row sm:items-center sm:justify-between sm:p-6 [&::-webkit-details-marker]:hidden">
+          <span className="min-w-0">
+            <span className="block text-xl font-extrabold tracking-tight sm:text-2xl">Bản đồ nhãn kiến thức</span>
+            <span className="mt-1 block max-w-[52ch] text-sm leading-relaxed opacity-90">
+              {withData.length} nhãn trên 5 bậc: {statusCounts.green} ô vững, {statusCounts.yellow} ô đang hình thành, {statusCounts.red} ô hổng. Mở để xem bạn mạnh, yếu ở đâu.
+            </span>
+            <span className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-card px-4 py-2 text-sm font-bold text-accent-foreground">
+              <span className="group-open:hidden">Mở bản đồ</span>
+              <span className="hidden group-open:inline">Thu gọn</span>
+              <ChevronDown className="size-4 transition-transform duration-300 group-open:rotate-180" />
+            </span>
+          </span>
+          {/* A preview of the real map: one column per label, one row per level, lowest level at the bottom. */}
+          <span aria-hidden className="flex shrink-0 gap-1 self-start rounded-2xl bg-card p-3 shadow-soft sm:self-center">
+            {shown.map((row) => (
+              <span key={row.label} className="flex flex-col-reverse gap-1">
+                {SCORED_LEVELS.map((l) => {
+                  const cell = profile.heatmap[row.label]?.[l];
+                  return <span key={l} className={cn("size-3 rounded-[4px] sm:size-3.5", cell ? MINI_CELL[cellStatus(cell)] : "bg-foreground/6")} />;
+                })}
+              </span>
+            ))}
+          </span>
         </summary>
 
-        <div className="mt-4 space-y-6 border-t border-border/40 pt-4">
+        <div className="mt-4 space-y-6 rounded-3xl bg-background p-4 sm:p-6">
           <div>
             <div className="mb-3 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
               {HEAT_LEGEND.map(([cls, label]) => (
@@ -583,9 +609,10 @@ export function BloomPanel({ bloom, mistakeDetails }: { bloom: LearnerBloom; mis
                 <table className="w-full min-w-[640px] border-separate border-spacing-0 text-sm">
                   <thead>
                     <tr className="text-[11px] text-muted-foreground">
-                      <th className="px-2 pb-1.5 text-left font-semibold">Nhãn kiến thức</th>
+                      <th className="sticky left-0 z-10 bg-background px-2 pb-2 text-left font-semibold">Nhãn kiến thức</th>
                       {SCORED_LEVELS.map((l) => (
-                        <th key={l} className="w-[13%] px-1 pb-1.5 text-center font-semibold">
+                        <th key={l} className="w-[13%] px-1 pb-2 text-center font-semibold">
+                          <span className="mx-auto mb-1 block h-1 w-8 rounded-full" style={{ background: LEVEL.get(l)!.color }} />
                           {l}. {LEVEL.get(l)!.nameVi}
                         </th>
                       ))}
@@ -594,8 +621,8 @@ export function BloomPanel({ bloom, mistakeDetails }: { bloom: LearnerBloom; mis
                   </thead>
                   <tbody>
                     {shown.map((row) => (
-                      <tr key={row.label}>
-                        <td className="max-w-[220px] px-2 py-1">
+                      <tr key={row.label} className="transition-colors hover:bg-accent/30">
+                        <td className="sticky left-0 z-10 max-w-[180px] bg-background px-2 py-1 sm:max-w-[220px]">
                           <p className="truncate font-medium" title={row.title}>
                             {row.title}
                           </p>
@@ -649,13 +676,12 @@ export function MistakeMap({ bloom, mistakeDetails }: { bloom: LearnerBloom; mis
   const labelTitles = new Map(rows.map((r) => [r.label, r.title]));
   return (
     <section className={PANEL}>
-      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h2 className="text-2xl font-extrabold tracking-tight">Bản đồ lỗi sai</h2>
-          <p className="mt-1.5 max-w-[68ch] text-sm text-muted-foreground">Câu nào bạn sai, sai kiểu gì và lặp lại bao nhiêu lần.</p>
-        </div>
-        {mistakes.questions.some((q) => q.stillWrong && q.reviewAttemptId) && <PracticeButton target={{ kind: "mistakes" }} label="Làm lại câu đang sai" />}
-      </div>
+      <PanelHeader
+            icon={CircleAlert}
+            title="Bản đồ lỗi sai"
+            subtitle="Câu nào bạn sai, sai kiểu gì và lặp lại bao nhiêu lần."
+            action={mistakes.questions.some((q) => q.stillWrong && q.reviewAttemptId) ? <PracticeButton target={{ kind: "mistakes" }} label="Làm lại câu đang sai" /> : undefined}
+          />
       {mistakes.wrongAnswers + mistakes.skipped === 0 ? (
         <p className="text-sm text-muted-foreground">Chưa có câu sai nào. Làm thêm bài để bản đồ bắt đầu hiện ra.</p>
       ) : (
@@ -687,14 +713,14 @@ export function AnswerHabits({ bloom }: { bloom: LearnerBloom }) {
   const insights = answerInsights(answers, profile.hintsUsed, tier.frontier);
   return (
     <section className={PANEL}>
-      <h2 className="text-lg font-bold">Thói quen làm bài</h2>
+      <PanelHeader icon={Lightbulb} title="Thói quen làm bài" />
       {answers.answered < MIN_ATTEMPTS_PER_CELL ? (
         <p className="mt-2 text-sm text-muted-foreground">
           Bạn có {answers.answered}/{MIN_ATTEMPTS_PER_CELL} câu hợp lệ. Làm thêm {MIN_ATTEMPTS_PER_CELL - answers.answered} câu để xem thói quen làm bài.
         </p>
       ) : (
         <>
-          <div className="mt-3 flex items-start gap-3 rounded-2xl bg-accent/60 p-4">
+          <div className="flex items-start gap-3 rounded-2xl bg-accent/60 p-4">
             <Lightbulb className="mt-0.5 size-5 shrink-0 text-accent-foreground" />
             <p className="max-w-[72ch] text-sm leading-relaxed font-medium">{insights.recommendation}</p>
           </div>

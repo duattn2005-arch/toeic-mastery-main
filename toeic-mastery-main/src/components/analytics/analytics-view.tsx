@@ -1,4 +1,4 @@
-import { Clock3, ListChecks, Radar as RadarIcon, TrendingUp } from "lucide-react";
+import { CircleAlert, Clock3, Layers, ListChecks, ListTodo, Radar as RadarIcon, TrendingUp } from "lucide-react";
 import type { MistakeDetail } from "@/lib/bloom/bank";
 import type { getAnalyticsData } from "@/lib/data/analytics";
 import type { LearningInsights } from "@/lib/services/insights/engine";
@@ -21,19 +21,19 @@ import {
 import { ScoreTrendChart } from "@/components/analytics/score-trend-chart";
 import { StudyTimeChart } from "@/components/analytics/study-time-chart";
 import { EmptyState } from "@/components/shared/empty-state";
-import { SectionHeader } from "@/components/shared/section-header";
+import { PanelHeader } from "@/components/analytics/panel-header";
 import { SkillRadar } from "@/components/shared/skill-radar";
 import { StatCard } from "@/components/shared/stat-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const TABS = [
-  { value: "todo", label: "Việc cần làm" },
-  { value: "bloom", label: "Thang Bloom" },
-  { value: "mistakes", label: "Lỗi sai" },
-  { value: "skills", label: "Kỹ năng" },
-  { value: "progress", label: "Tiến độ" },
+  { value: "todo", label: "Việc cần làm", icon: ListTodo },
+  { value: "bloom", label: "Thang Bloom", icon: Layers },
+  { value: "mistakes", label: "Lỗi sai", icon: CircleAlert },
+  { value: "skills", label: "Kỹ năng", icon: RadarIcon },
+  { value: "progress", label: "Tiến độ", icon: TrendingUp },
 ];
-const TAB_BODY = "flex flex-col gap-6";
+const TAB_BODY = "an-enter flex flex-col gap-6";
 
 /** One job per tab, so the page opens on what to do next rather than on every number at once. */
 export function AnalyticsView({
@@ -60,8 +60,9 @@ export function AnalyticsView({
               <TabsTrigger
                 key={t.value}
                 value={t.value}
-                className="h-auto flex-none rounded-full px-4 py-2 text-sm font-semibold text-muted-foreground data-[state=active]:bg-primary data-[state=active]:text-primary-foreground sm:px-5 dark:text-muted-foreground dark:data-[state=active]:border-transparent dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground"
+                className="h-auto flex-none gap-2 rounded-full px-4 py-2.5 text-sm font-semibold text-muted-foreground transition-colors hover:bg-accent/60 data-[state=active]:bg-primary data-[state=active]:shadow-soft data-[state=active]:text-primary-foreground sm:px-5 dark:text-muted-foreground dark:data-[state=active]:border-transparent dark:data-[state=active]:bg-primary dark:data-[state=active]:text-primary-foreground"
               >
+                <t.icon className="size-4" />
                 {t.label}
               </TabsTrigger>
             ))}
@@ -93,7 +94,7 @@ export function AnalyticsView({
           <PartTable parts={insights.parts} />
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <section className={PANEL}>
-              <SectionHeader icon={RadarIcon} title="Radar kỹ năng theo Part" />
+              <PanelHeader icon={RadarIcon} title="Radar kỹ năng theo Part" />
               <SkillRadar data={data.partAccuracies} />
             </section>
             <StrengthsPanel strengths={insights.strengths} />
@@ -106,12 +107,12 @@ export function AnalyticsView({
             <StatCard icon={Clock3} label="Tổng giờ học" value={formatStudyDuration(data.overallStats.totalStudySeconds)} />
           </div>
           <section className={PANEL}>
-            <SectionHeader icon={TrendingUp} title="Tiến độ điểm số theo thời gian" />
+            <PanelHeader icon={TrendingUp} title="Tiến độ điểm số theo thời gian" />
             {data.scoreTrend.length === 0 ? <EmptyState icon={TrendingUp} title="Chưa có dữ liệu điểm số" description="Hoàn thành một đề Full Test để bắt đầu theo dõi." /> : <ScoreTrendChart data={data.scoreTrend} />}
           </section>
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
             <section className={PANEL}>
-              <SectionHeader icon={Clock3} title="Thời gian học (14 ngày gần đây)" />
+              <PanelHeader icon={Clock3} title="Thời gian học (14 ngày gần đây)" />
               <StudyTimeChart data={data.studyTimeTrend} />
             </section>
             <StaminaPanel stamina={insights.stamina} />

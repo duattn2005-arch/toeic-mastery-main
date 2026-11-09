@@ -8,13 +8,18 @@ import type { TestPart } from "@/generated/prisma/enums";
 
 const VISIBLE_QUESTIONS = 5;
 const CHIP = "rounded-full px-2 py-0.5 text-[11px] font-semibold";
+// Parts 1 and 2 have no question text: their stored prompt is the section's directions.
+const NO_TEXT_PARTS = new Set(["PART1", "PART2"]);
+const promptOf = (q: MistakeQuestionStat, detail: MistakeDetail | undefined) =>
+  NO_TEXT_PARTS.has(q.part) ? "" : (detail?.prompt.replace(/\*\*/g, "").replace(/\s+/g, " ").trim() ?? "");
 const dateOf = (t: number) => new Date(t).toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
 
 /** How often each kind of error happens, most frequent first. */
 export function ErrorTypes({ types }: { types: ErrorTypeStat[] }) {
   const max = types[0]?.count ?? 0;
+  if (types.length === 0) return <p className="text-sm text-muted-foreground">Chưa có câu chọn sai nào.</p>;
   return (
-    <ul className="flex flex-col gap-3.5">
+    <ul className="flex flex-col gap-4">
       {types.map((t) => (
         <li key={t.label}>
           <div className="flex flex-wrap items-baseline justify-between gap-x-3 text-sm">
@@ -23,8 +28,8 @@ export function ErrorTypes({ types }: { types: ErrorTypeStat[] }) {
               <b className="text-sm font-semibold text-foreground">{t.count} lần</b> · {t.recent} lần trong 30 ngày qua
             </span>
           </div>
-          <div aria-hidden className="mt-1.5 h-2 rounded-full bg-muted">
-            <div className="h-full rounded-full bg-destructive/70" style={{ width: `${(t.count / max) * 100}%` }} />
+          <div aria-hidden className="mt-2 h-2.5 overflow-hidden rounded-full bg-muted">
+            <div className="an-bar h-full rounded-full bg-[linear-gradient(90deg,var(--warning),var(--destructive))]" style={{ width: `${(t.count / max) * 100}%` }} />
           </div>
           <p className="mt-1 text-xs leading-relaxed text-muted-foreground">{t.tip}</p>
         </li>
@@ -35,19 +40,19 @@ export function ErrorTypes({ types }: { types: ErrorTypeStat[] }) {
 
 export function MistakeCounts({ scope }: { scope: MistakeScope }) {
   const items = [
-    { label: "Lần trả lời sai", value: scope.wrongAnswers },
-    { label: "Câu từng sai", value: scope.wrongQuestions },
-    { label: "Vẫn đang sai", value: scope.stillWrong },
-    { label: "Đã làm lại đúng", value: scope.fixed },
-    { label: "Sai từ 2 lần trở lên", value: scope.repeated },
-    { label: "Bỏ trống", value: scope.skipped },
+    { label: "Lần trả lời sai", value: scope.wrongAnswers, tone: "bg-muted/60" },
+    { label: "Câu từng sai", value: scope.wrongQuestions, tone: "bg-muted/60" },
+    { label: "Vẫn đang sai", value: scope.stillWrong, tone: "bg-destructive/10 text-destructive" },
+    { label: "Đã làm lại đúng", value: scope.fixed, tone: "bg-success/10 text-success" },
+    { label: "Sai từ 2 lần trở lên", value: scope.repeated, tone: "bg-warning/15" },
+    { label: "Bỏ trống", value: scope.skipped, tone: "bg-muted/60" },
   ];
   return (
-    <dl className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-6">
+    <dl className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
       {items.map((i) => (
-        <div key={i.label}>
-          <dt className="text-xs text-muted-foreground">{i.label}</dt>
-          <dd className="text-lg font-extrabold tabular-nums">{i.value}</dd>
+        <div key={i.label} className={cn("rounded-2xl p-3.5", i.tone)}>
+          <dd className="text-2xl font-extrabold tracking-tight tabular-nums">{i.value.toLocaleString("vi-VN")}</dd>
+          <dt className="mt-0.5 text-xs leading-snug font-medium opacity-80">{i.label}</dt>
         </div>
       ))}
     </dl>
@@ -110,10 +115,10 @@ function QuestionBody({ q, detail }: { q: MistakeQuestionStat; detail: MistakeDe
 }
 
 function QuestionRow({ q, detail, labelTitle }: { q: MistakeQuestionStat; detail: MistakeDetail | undefined; labelTitle: string | undefined }) {
-  const prompt = detail?.prompt.replace(/\s+/g, " ").trim();
+  const prompt = promptOf(q, detail);
   return (
     <li>
-      <details className="group/q rounded-xl border border-border/60 bg-card/40 p-3">
+      <details className={cn("an-fold an-lift group/q rounded-2xl border border-l-4 border-border/60 bg-card p-3.5", q.stillWrong ? "border-l-destructive/70" : "border-l-success/70")}>
         <summary className="flex cursor-pointer list-none items-start justify-between gap-3 rounded focus-visible:ring-2 focus-visible:ring-primary focus-visible:outline-none [&::-webkit-details-marker]:hidden">
           <span className="min-w-0">
             <span className="flex flex-wrap items-center gap-1.5">
@@ -122,7 +127,7 @@ function QuestionRow({ q, detail, labelTitle }: { q: MistakeQuestionStat; detail
               <span className={cn(CHIP, "bg-warning/20 text-foreground")}>{q.errorLabel}</span>
               {labelTitle && <span className="text-[11px] text-muted-foreground">{labelTitle}</span>}
             </span>
-            <span className="mt-1.5 line-clamp-2 block text-sm font-medium">{prompt || "(Câu nghe / không có đề bài chữ)"}</span>
+            <span className="mt-1.5 line-clamp-2 block text-sm font-medium">{prompt || "Câu nghe, không có đề bài chữ. Mở lại bài làm để nghe."}</span>
             <span className="mt-1 block text-xs text-muted-foreground tabular-nums">
               Sai {q.wrongCount}/{q.tries} lần làm
               {q.correctAnswer && <> · {q.lastPicked ? `Lần gần nhất chọn ${q.lastPicked}, đáp án ${q.correctAnswer}` : `Đáp án ${q.correctAnswer}`}</>} · {dateOf(q.lastWrongAt)}

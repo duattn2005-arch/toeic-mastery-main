@@ -19,15 +19,15 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { PART_META } from "@/lib/constants/toeic";
-import { MASTERY_THRESHOLD, MIN_ATTEMPTS_PER_CELL, NOISE_MAX_SECONDS, NOISE_MIN_SECONDS, WEAK_THRESHOLD } from "@/lib/bloom/config";
+import { MASTERY_THRESHOLD, MIN_ATTEMPTS_PER_CELL, WEAK_THRESHOLD } from "@/lib/bloom/config";
 import { STATUS_LABEL, type Alert, type LabelStatus, type LearningInsights, type PartInsight, type SkillStat, type Weakness } from "@/lib/services/insights/engine";
-import { SectionHeader } from "@/components/shared/section-header";
+import { PanelHeader } from "@/components/analytics/panel-header";
 import { PracticeButton } from "@/components/analytics/practice-button";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import type { TestPart } from "@/generated/prisma/enums";
 
-export const PANEL = "min-w-0 rounded-[1.75rem] border border-border/60 bg-card p-5 shadow-soft sm:p-6";
+export const PANEL = "min-w-0 rounded-[1.75rem] border border-border/60 bg-card p-5 shadow-soft sm:p-7";
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 const nameOf = (s: SkillStat) => (s.kind === "part" ? PART_META[s.key as TestPart].shortLabel : s.title);
 
@@ -40,8 +40,8 @@ const STATUS_STYLE: Record<LabelStatus, { tile: string; dot: string; text: strin
 
 function Meter({ value, status, className }: { value: number; status: LabelStatus; className?: string }) {
   return (
-    <div className={cn("relative h-1.5 w-full overflow-hidden rounded-full bg-muted", className)}>
-      <div className={cn("h-full rounded-full", STATUS_STYLE[status].bar)} style={{ width: `${Math.max(3, Math.round(value * 100))}%` }} />
+    <div className={cn("relative h-2 w-full overflow-hidden rounded-full bg-muted", className)}>
+      <div className={cn("an-bar h-full rounded-full", STATUS_STYLE[status].bar)} style={{ width: `${Math.max(3, Math.round(value * 100))}%` }} />
       {/* Hổng / Vững marks (src/lib/bloom/config.ts). */}
       <span className="absolute inset-y-0 w-px bg-foreground/15" style={{ left: `${WEAK_THRESHOLD * 100}%` }} />
       <span className="absolute inset-y-0 w-px bg-foreground/25" style={{ left: `${MASTERY_THRESHOLD * 100}%` }} />
@@ -64,9 +64,27 @@ function ReadinessRing({ value }: { value: number }) {
   const c = 2 * Math.PI * r;
   return (
     <div className="relative size-28 shrink-0">
-      <svg viewBox="0 0 110 110" className="size-full -rotate-90">
+      <svg viewBox="0 0 110 110" className="size-full -rotate-90" aria-hidden>
+        <defs>
+          <linearGradient id="readiness-ring" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="var(--primary)" />
+            <stop offset="100%" stopColor="var(--success)" />
+          </linearGradient>
+        </defs>
         <circle cx="55" cy="55" r={r} fill="none" stroke="var(--muted)" strokeWidth="9" />
-        <circle cx="55" cy="55" r={r} fill="none" stroke="var(--primary)" strokeWidth="9" strokeLinecap="round" strokeDasharray={c} strokeDashoffset={c * (1 - value)} />
+        <circle
+          cx="55"
+          cy="55"
+          r={r}
+          fill="none"
+          stroke="url(#readiness-ring)"
+          strokeWidth="9"
+          strokeLinecap="round"
+          strokeDasharray={c}
+          strokeDashoffset={c * (1 - value)}
+          className="an-ring"
+          style={{ "--an-ring-full": c } as React.CSSProperties}
+        />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-[1.65rem] leading-none font-extrabold tabular-nums">{Math.round(value * 100)}%</span>
@@ -91,9 +109,9 @@ export function ReadinessCard({ insights }: { insights: LearningInsights }) {
           </p>
         </div>
       </div>
-      <ul className="mt-5 flex flex-col gap-3">
+      <ul className="mt-5 flex flex-col gap-2">
         {r.checklist.map((c) => (
-          <li key={c.label} className="flex items-start gap-2.5">
+          <li key={c.label} className={cn("flex items-start gap-2.5 rounded-xl p-2.5", c.ok ? "bg-success/8" : "bg-muted/40")}>
             {c.ok ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" /> : <Circle className="mt-0.5 size-4 shrink-0 text-muted-foreground/50" />}
             <div className="min-w-0">
               <p className={cn("text-sm leading-snug", c.ok ? "text-muted-foreground" : "font-medium text-foreground")}>{c.label}</p>
@@ -115,11 +133,11 @@ const ALERT_STYLE: Record<Alert["tone"], { badge: string; icon: typeof Info }> =
 export function AlertsStrip({ alerts }: { alerts: Alert[] }) {
   if (alerts.length === 0) return null;
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-3 sm:grid-cols-[repeat(auto-fit,minmax(18rem,1fr))]">
       {alerts.map((a) => {
         const { badge, icon: Icon } = ALERT_STYLE[a.tone];
         return (
-          <div key={a.title} className="flex gap-3 rounded-2xl border border-border/60 bg-card p-4 shadow-soft">
+          <div key={a.title} className="an-lift flex gap-3 rounded-2xl border border-border/60 bg-card p-4 shadow-soft">
             <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-xl", badge)}>
               <Icon className="size-4" />
             </span>
@@ -139,16 +157,15 @@ export function PlanTimeline({ insights }: { insights: LearningInsights }) {
   if (plan.length === 0) return null;
   return (
     <section className={PANEL}>
-      <SectionHeader icon={Route} title="Lộ trình AI đề xuất" />
-      <p className="mb-4 text-sm text-muted-foreground">Làm theo thứ tự — mỗi bước tự sinh từ dữ liệu của bạn và được tính lại sau mỗi bài.</p>
+      <PanelHeader icon={Route} title="Lộ trình AI đề xuất" subtitle="Làm theo thứ tự. Các bước được tính lại sau mỗi bài." />
       <ol className="relative flex flex-col gap-3">
         {plan.map((step, i) => (
           <li key={`${step.title}-${i}`} className="relative flex gap-3">
             <div className="flex flex-col items-center">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary/12 text-sm font-bold text-primary ring-1 ring-primary/25">{i + 1}</span>
+              <span className={cn("flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-bold", i === 0 ? "bg-primary text-primary-foreground shadow-soft" : "bg-primary/12 text-primary ring-1 ring-primary/25")}>{i + 1}</span>
               {i < plan.length - 1 && <span className="mt-1 w-px flex-1 bg-border" />}
             </div>
-            <div className="flex flex-1 flex-col gap-2 rounded-2xl border border-border/60 bg-background/50 p-3.5 sm:flex-row sm:items-center sm:justify-between">
+            <div className={cn("an-lift flex flex-1 flex-col gap-3 rounded-2xl border p-4 sm:flex-row sm:items-center sm:justify-between", i === 0 ? "border-primary/30 bg-accent/50" : "border-border/60 bg-background/50")}>
               <div>
                 <p className="text-sm font-bold">{step.title}</p>
                 <p className="text-sm text-muted-foreground">{step.detail}</p>
@@ -171,7 +188,8 @@ export function PlanTimeline({ insights }: { insights: LearningInsights }) {
 
 function WeaknessCard({ w, rank }: { w: Weakness; rank: number }) {
   return (
-    <article className="flex flex-col gap-3 rounded-3xl border border-border/60 bg-background/60 p-5">
+    <article className="an-lift relative flex flex-col gap-3 overflow-hidden rounded-3xl border border-border/60 bg-background/60 p-5 pt-6">
+      <span aria-hidden className={cn("absolute inset-x-0 top-0 h-1.5", STATUS_STYLE[w.status === "unknown" ? (w.score < 0.5 ? "gap" : "near") : w.status].bar)} />
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-3">
           <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-destructive/12 text-sm font-black text-destructive">#{rank}</span>
@@ -191,8 +209,8 @@ function WeaknessCard({ w, rank }: { w: Weakness; rank: number }) {
       <Meter value={w.score} status={w.status === "unknown" ? (w.score < 0.5 ? "gap" : "near") : w.status} />
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
-          <p className="mb-1 flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            <Brain className="size-3.5" /> Dữ liệu cho thấy
+          <p className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold">
+            <Brain className="size-4 text-muted-foreground" /> Dữ liệu cho thấy
           </p>
           <ul className="flex flex-col gap-1 text-sm leading-relaxed">
             {w.findings.map((f) => (
@@ -204,8 +222,8 @@ function WeaknessCard({ w, rank }: { w: Weakness; rank: number }) {
           </ul>
         </div>
         <div>
-          <p className="mb-1 flex items-center gap-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            <Target className="size-3.5" /> Cách khắc phục
+          <p className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold">
+            <Target className="size-4 text-primary" /> Cách khắc phục
           </p>
           <ul className="flex flex-col gap-1 text-sm leading-relaxed">
             {w.advice.map((a) => (
@@ -238,7 +256,7 @@ function WeaknessCard({ w, rank }: { w: Weakness; rank: number }) {
 export function WeaknessSection({ insights }: { insights: LearningInsights }) {
   return (
     <section id="diem-yeu" className={cn(PANEL, "scroll-mt-6")}>
-      <SectionHeader icon={TrendingDown} title="Điểm yếu cần vá" />
+      <PanelHeader icon={TrendingDown} title="Điểm yếu cần vá" subtitle={insights.weaknesses.length > 0 ? "Xếp theo mức mất điểm. Câu bạn từng sai được đưa vào đề luyện trước." : undefined} />
       {insights.weaknesses.length === 0 ? (
         <p className="text-sm text-muted-foreground">
           {insights.answered < 10
@@ -247,7 +265,6 @@ export function WeaknessSection({ insights }: { insights: LearningInsights }) {
         </p>
       ) : (
         <>
-          <p className="mb-4 text-sm text-muted-foreground">Xếp theo mức mất điểm: độ hổng × số câu dạng này trong một đề thật. Câu bạn từng sai được đưa vào đề luyện trước.</p>
           <div className="grid gap-4 xl:grid-cols-2">
             {insights.weaknesses.map((w, i) => (
               <WeaknessCard key={w.id} w={w} rank={i + 1} />
@@ -263,7 +280,7 @@ function HeatTile({ s }: { s: SkillStat }) {
   const style = STATUS_STYLE[s.status];
   const practicable = s.attempted >= 5 && s.status !== "pass";
   return (
-    <div className={cn("flex flex-col gap-2 rounded-2xl border p-3", style.tile)}>
+    <div className={cn("an-lift flex flex-col gap-2 rounded-2xl border p-3.5", style.tile)}>
       <div className="flex items-start justify-between gap-2">
         <p className="line-clamp-2 text-sm font-semibold leading-snug">{nameOf(s)}</p>
         <span className={cn("text-base font-extrabold tabular-nums", style.text)}>{s.attempted ? pct(s.score) : "—"}</span>
@@ -287,9 +304,10 @@ export function CompetencyMap({ insights }: { insights: LearningInsights }) {
   ];
   return (
     <section className={PANEL}>
-      <SectionHeader
+      <PanelHeader
         icon={Layers}
         title="Bản đồ năng lực"
+        subtitle={`Vững từ ${Math.round(MASTERY_THRESHOLD * 100)}%, Hổng dưới ${Math.round(WEAK_THRESHOLD * 100)}%, chỉ xếp loại khi đủ ${MIN_ATTEMPTS_PER_CELL} câu.`}
         action={
           <div className="hidden items-center gap-3 text-[11px] text-muted-foreground sm:flex">
             {(["pass", "near", "gap", "unknown"] as LabelStatus[]).map((st) => (
@@ -300,15 +318,12 @@ export function CompetencyMap({ insights }: { insights: LearningInsights }) {
           </div>
         }
       />
-      <p className="mb-4 text-sm text-muted-foreground">
-        Điểm năng lực = độ chính xác {20} câu gần nhất (đã lọc câu đoán &lt; {NOISE_MIN_SECONDS} giây, câu ngâm &gt; {NOISE_MAX_SECONDS} giây và câu xem đáp án trước khi chọn) + thưởng tốc độ − trừ điểm đổi đáp án đúng thành sai. Vững ≥ {Math.round(MASTERY_THRESHOLD * 100)}%, Cận đạt {Math.round(WEAK_THRESHOLD * 100)}–{Math.round(MASTERY_THRESHOLD * 100) - 1}%, Hổng &lt; {Math.round(WEAK_THRESHOLD * 100)}%; chỉ xếp loại khi đủ {MIN_ATTEMPTS_PER_CELL} câu.
-      </p>
       <div className="flex flex-col gap-5">
         {groups.map((g) =>
           g.items.length === 0 ? null : (
             <div key={g.title}>
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                {g.title} <span className="font-normal normal-case">· {g.hint}</span>
+              <p className="mb-2.5 text-sm font-bold">
+                {g.title} <span className="font-normal text-muted-foreground">({g.hint})</span>
               </p>
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                 {g.items.map((s) => (
@@ -336,11 +351,11 @@ function PaceCell({ p }: { p: PartInsight }) {
 export function PartTable({ parts }: { parts: PartInsight[] }) {
   return (
     <section className={PANEL}>
-      <SectionHeader icon={ListChecks} title="Chi tiết từng Part" />
+      <PanelHeader icon={ListChecks} title="Chi tiết từng Part" />
       <div className="-mx-2 overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
           <thead>
-            <tr className="text-left text-xs uppercase tracking-wide text-muted-foreground">
+            <tr className="text-left text-xs text-muted-foreground">
               <th className="px-2 py-2 font-semibold">Part</th>
               <th className="px-2 py-2 font-semibold">Năng lực</th>
               <th className="px-2 py-2 font-semibold">Đúng</th>
@@ -352,7 +367,7 @@ export function PartTable({ parts }: { parts: PartInsight[] }) {
           </thead>
           <tbody>
             {parts.map((p) => (
-              <tr key={p.part} className="border-t border-border/60">
+              <tr key={p.part} className="border-t border-border/60 transition-colors hover:bg-accent/40">
                 <td className="px-2 py-2.5">
                   <div className="font-semibold">{PART_META[p.part].shortLabel}</div>
                   <div className="text-xs text-muted-foreground">{PART_META[p.part].label.split("— ")[1]}</div>
@@ -401,10 +416,10 @@ export function BehaviorPanel({ insights }: { insights: LearningInsights }) {
   ];
   return (
     <section className={PANEL}>
-      <SectionHeader icon={Brain} title="Hành vi làm bài" />
-      <div className="grid grid-cols-2 gap-2.5">
+      <PanelHeader icon={Brain} title="Hành vi làm bài" />
+      <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">
         {items.map((it) => (
-          <div key={it.label} className={cn("rounded-2xl border p-3", it.bad ? "border-warning/35 bg-warning/10" : "border-border/60 bg-background/50")}>
+          <div key={it.label} className={cn("an-lift rounded-2xl border p-3.5", it.bad ? "border-warning/35 bg-warning/10" : "border-border/60 bg-background/50")}>
             <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
               <it.icon className="size-3.5" /> {it.label}
             </div>
@@ -414,7 +429,7 @@ export function BehaviorPanel({ insights }: { insights: LearningInsights }) {
         ))}
       </div>
       <div className="mt-5">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Theo độ khó</p>
+        <p className="mb-2.5 text-sm font-bold">Theo độ khó</p>
         <div className="flex flex-col gap-2">
           {insights.difficulty.map((d) => {
             const status: LabelStatus = d.attempted < MIN_ATTEMPTS_PER_CELL ? "unknown" : d.accuracy < WEAK_THRESHOLD ? "gap" : d.accuracy < MASTERY_THRESHOLD ? "near" : "pass";
@@ -437,7 +452,7 @@ export function BehaviorPanel({ insights }: { insights: LearningInsights }) {
 export function StaminaPanel({ stamina }: { stamina: LearningInsights["stamina"] }) {
   return (
     <section className={PANEL}>
-      <SectionHeader icon={Gauge} title="Đường cong sức bền" />
+      <PanelHeader icon={Gauge} title="Đường cong sức bền" />
       {!stamina ? (
         <p className="text-sm text-muted-foreground">Hoàn thành một đề Full Test liền mạch để AI đo độ chính xác theo từng khối 30 phút và phát hiện điểm sụt hiệu suất cuối bài.</p>
       ) : (
@@ -458,7 +473,7 @@ export function StaminaPanel({ stamina }: { stamina: LearningInsights["stamina"]
                   <span className="text-xs font-bold tabular-nums">{pct(b.accuracy)}</span>
                   <div className="flex h-28 w-full items-end rounded-t-xl bg-muted/50">
                     <div
-                      className={cn("w-full rounded-t-xl", stamina.hasCliff && last ? "bg-destructive/70" : "bg-primary/70")}
+                      className={cn("an-step w-full rounded-t-xl", stamina.hasCliff && last ? "bg-destructive/70" : "bg-[linear-gradient(180deg,var(--primary),color-mix(in_srgb,var(--primary)_55%,transparent))]")}
                       style={{ height: `${Math.max(6, b.accuracy * 100)}%` }}
                     />
                   </div>
@@ -484,10 +499,10 @@ export function FocusVocabulary({ words }: { words: LearningInsights["focusVocab
   if (words.length === 0) return null;
   return (
     <section className={PANEL}>
-      <h2 className="mb-3 text-lg font-bold">Từ vựng hay gặp trong câu sai</h2>
+      <PanelHeader icon={BookOpen} title="Từ vựng hay gặp trong câu sai" subtitle="Bấm vào một từ để tra nghĩa." />
       <div className="flex flex-wrap gap-1.5">
         {words.map((v) => (
-          <Link key={v.word} href={`/dictionary/${encodeURIComponent(v.word)}`} className="rounded-full border border-border/70 bg-background/60 px-2.5 py-1 text-xs font-medium hover:border-primary/40 hover:text-primary">
+          <Link key={v.word} href={`/dictionary/${encodeURIComponent(v.word)}`} className="an-lift rounded-full border border-border/70 bg-background/60 px-3.5 py-1.5 text-sm font-medium hover:border-primary/40 hover:text-primary">
             {v.word}
             {v.misses > 1 && <span className="ml-1 text-muted-foreground">×{v.misses}</span>}
           </Link>
@@ -500,7 +515,7 @@ export function FocusVocabulary({ words }: { words: LearningInsights["focusVocab
 export function StrengthsPanel({ strengths }: { strengths: SkillStat[] }) {
   return (
     <section className={PANEL}>
-      <SectionHeader icon={TrendingUp} title="Điểm mạnh" />
+      <PanelHeader icon={TrendingUp} title="Điểm mạnh" />
       {strengths.length === 0 ? (
         <p className="text-sm text-muted-foreground">Chưa có kỹ năng nào đạt {Math.round(MASTERY_THRESHOLD * 100)}% với đủ số câu.</p>
       ) : (

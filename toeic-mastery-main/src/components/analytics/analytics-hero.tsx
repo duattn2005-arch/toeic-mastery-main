@@ -18,26 +18,33 @@ function Staircase({ levels, current }: { levels: Record<ScoredBloomLevel, Level
   const standingOn = current ?? 5;
   return (
     <ol className="flex h-48 w-full items-end gap-1.5 sm:h-56 sm:gap-2 lg:h-72" aria-label="Vị trí của bạn trên thang Bloom">
-      {SCORED_LEVELS.map((lvl) => {
+      {SCORED_LEVELS.map((lvl, i) => {
         const m = levels[lvl];
         const here = lvl === standingOn;
         const val = m.score ?? m.pooledAccuracy;
         return (
           <li key={lvl} className={cn("relative flex min-w-0 flex-1 flex-col justify-end", STEP_HEIGHT[lvl])} aria-current={here ? "step" : undefined}>
             {here && (
+              <span className="an-mascot absolute bottom-full left-[calc(50%-1.5rem)] mb-1.5 block size-12 sm:left-[calc(50%-2rem)] sm:size-16 lg:left-[calc(50%-2.5rem)] lg:size-20">
               <Image
                 src="/mascot-avatar.png"
                 alt=""
                 width={96}
                 height={96}
-                className="absolute bottom-full left-1/2 mb-1.5 size-12 max-w-none -translate-x-1/2 rounded-full shadow-soft ring-3 ring-card sm:size-16 lg:size-20"
+                className="size-full rounded-full shadow-lift ring-3 ring-card"
               />
+              </span>
             )}
             <div
               className={cn(
-                "flex h-full flex-col justify-between rounded-t-2xl p-1.5 text-center sm:p-2.5",
-                m.mastered ? "bg-primary text-primary-foreground" : here ? "bg-card text-foreground ring-2 ring-primary ring-inset" : "bg-card/50 text-muted-foreground"
+                "an-step flex h-full flex-col justify-between rounded-t-2xl p-1.5 text-center sm:p-2.5",
+                m.mastered
+                  ? "bg-[linear-gradient(180deg,var(--primary),color-mix(in_srgb,var(--primary)_70%,var(--success)))] text-primary-foreground shadow-soft"
+                  : here
+                    ? "bg-card text-foreground shadow-lift ring-2 ring-primary ring-inset"
+                    : "bg-card/50 text-muted-foreground"
               )}
+              style={{ "--an-i": i } as React.CSSProperties}
             >
               <span className="text-sm font-extrabold tabular-nums sm:text-base">{val === null ? "" : scorePct(val)}</span>
               <span className="text-[10px] leading-tight font-semibold sm:text-xs">{LEVEL.get(lvl)!.nameVi}</span>
@@ -84,8 +91,10 @@ export function AnalyticsHero({ insights }: { insights: LearningInsights }) {
   ];
 
   return (
-    <section className="relative overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,var(--accent),color-mix(in_srgb,var(--accent)_35%,var(--card)))] p-6 sm:p-9 lg:p-12">
-      <div className="grid items-end gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
+    <section className="relative overflow-hidden rounded-[2rem] bg-[linear-gradient(135deg,var(--accent),color-mix(in_srgb,var(--accent)_35%,var(--card)))] p-6 shadow-soft sm:p-9 lg:p-12">
+      <div aria-hidden className="hero-blob pointer-events-none absolute -top-24 -right-16 size-80 rounded-full bg-primary/15 blur-3xl" />
+      <div aria-hidden className="hero-blob pointer-events-none absolute -bottom-28 left-1/4 size-72 rounded-full bg-success/10 blur-3xl" />
+      <div className="relative grid items-end gap-x-10 gap-y-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)]">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full bg-card px-3.5 py-1.5 text-sm font-semibold text-accent-foreground shadow-soft">{r.levelLabel}</span>
@@ -118,9 +127,9 @@ export function AnalyticsHero({ insights }: { insights: LearningInsights }) {
         </div>
       </div>
 
-      <dl className="mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <dl className="relative mt-8 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {stats.map((s) => (
-          <div key={s.label} className="flex items-center gap-3 rounded-2xl bg-card p-3.5 shadow-soft sm:p-4">
+          <div key={s.label} className="an-lift flex items-center gap-3 rounded-2xl bg-card p-3.5 shadow-soft sm:p-4">
             <span className="hidden size-10 shrink-0 items-center justify-center rounded-xl bg-accent text-accent-foreground sm:flex">
               <s.icon className="size-5" />
             </span>
