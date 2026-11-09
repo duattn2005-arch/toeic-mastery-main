@@ -1,4 +1,4 @@
-import { PART_STANDARD_SECONDS, TRAP_TYPES, type TrapType } from "@/lib/bloom/config";
+import { BLOOM_LEVELS, MASTERY_THRESHOLD, NOISE_MIN_SECONDS, PART_STANDARD_SECONDS, SCORED_LEVELS, TRAP_TYPES, type TrapType } from "@/lib/bloom/config";
 import { PART_META, TEST_PARTS } from "@/lib/constants/toeic";
 import type { TestPart } from "@/generated/prisma/enums";
 
@@ -13,6 +13,7 @@ export type AnsweredQuestion = {
   timeSpentSec: number;
   trapTypeHit: string | null;
   grammarTopicSlug: string | null;
+  bloomLevel: number | null;
 };
 
 export type LossCause = "skipped" | "flipped" | "trap" | "rushed" | "overtime" | "other";
@@ -46,6 +47,27 @@ export function lossCause(a: AnsweredQuestion): LossCause | null {
   return "other";
 }
 
+export type Decision = "fastRight" | "slowRight" | "fastWrong" | "slowWrong";
+
+export const DECISIONS: Record<Decision, { label: string; tip: string }> = {
+  fastRight: { label: "Nhanh và đúng", tip: "Phần bạn đã thành phản xạ. Giữ nhịp này." },
+  slowRight: { label: "Chậm nhưng đúng", tip: "Bạn hiểu bài nhưng chưa nhanh. Luyện có tính giờ để tăng tốc." },
+  fastWrong: { label: "Nhanh nhưng sai", tip: "Có thể bạn chọn vội. Đọc hết các đáp án trước khi chọn." },
+  slowWrong: { label: "Chậm mà vẫn sai", tip: "Đây là phần còn hổng. Nên ôn kiến thức trước khi luyện tốc độ." },
+};
+
+/** Reading only, against the Part's standard time. Under the noise floor is a likely guess, so a lucky hit isn't called a reflex. */
+export function decisionOf(a: AnsweredQuestion): Decision | "guess" | null {
+  const target = targetSeconds(a.part);
+  if (!target || !a.selectedLabel || a.timeSpentSec <= 0) return null;
+  if (a.timeSpentSec < NOISE_MIN_SECONDS) return "guess";
+  const fast = a.timeSpentSec <= target;
+  if (a.isCorrect) return fast ? "fastRight" : "slowRight";
+  return fast ? "fastWrong" : "slowWrong";
+}
+
+const bloomInfo = (level: number | null) => BLOOM_LEVELS.find((l) => l.id === level) ?? null;
+
 export function answerInsight(a: AnsweredQuestion) {
   const cause = lossCause(a);
   const trap = cause === "trap" ? knownTrap(a.trapTypeHit) : null;
@@ -54,6 +76,8 @@ export function answerInsight(a: AnsweredQuestion) {
     tip: cause && (trap?.description ?? CAUSES[cause].tip),
     timeSpentSec: a.timeSpentSec,
     targetSec: targetSeconds(a.part),
+    decision: decisionOf(a),
+    bloomName: bloomInfo(a.bloomLevel)?.nameVi ?? null,
     changedFrom: a.initialSelectedLabel && a.selectedLabel && a.initialSelectedLabel !== a.selectedLabel ? a.initialSelectedLabel : null,
   };
 }
@@ -117,7 +141,14 @@ export function analyzeAttempt(answers: AnsweredQuestion[]) {
     return [{ part, targetSec: target, avgSec: Math.round(timed.reduce((sum, a) => sum + a.timeSpentSec, 0) / timed.length) }];
   });
 
-  return { headline: headline(answers.length, causes, lostByPart), causes, changes, flagged, hintedCorrect, traps, topics, pacing };
+  const bloom = SCORED_LEVELS.map((level) => {
+    const rows = answers.filter((a) => a.bloomLevel === level);
+    return { level, nameVi: bloomInfo(level)!.nameVi, correct: rows.filter((a) => a.isCorrect).length, total: rows.length };
+  });
+  // Two questions at least: one miss in one question is no reason to send someone back a level.
+  const bloomFocus = bloom.find((b) => b.total >= 2 && b.correct / b.total < MASTERY_THRESHOLD) ?? null;
+
+  return { bloom, bloomFocus, headline: headline(answers.length, causes, lostByPart), causes, changes, flagged, hintedCorrect, traps, topics, pacing };
 }
 
 function headline(total: number, causes: { cause: LossCause; count: number; label: string }[], lostByPart: Map<TestPart, number>) {

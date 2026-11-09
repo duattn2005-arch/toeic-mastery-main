@@ -1,14 +1,17 @@
 import Link from "next/link";
 import { Crown } from "lucide-react";
 import { PANEL } from "@/components/analytics/insights-view";
+import { answerMarkClass } from "@/components/history/answer-sheet";
 import { PART_META } from "@/lib/constants/toeic";
+import { DECISIONS, type Decision } from "@/lib/services/attempt-analysis";
 import { cn } from "@/lib/utils";
 import type { AttemptResult } from "@/lib/data/history";
 
 type Analysis = NonNullable<AttemptResult["analysis"]>;
 type PartRow = AttemptResult["partBreakdown"][number];
+type Review = AttemptResult["questionReviews"][number];
 
-export function AnswerAnalysis({ parts, analysis }: { parts: PartRow[]; analysis: AttemptResult["analysis"] }) {
+export function AnswerAnalysis({ parts, analysis, reviews }: { parts: PartRow[]; analysis: AttemptResult["analysis"]; reviews: Review[] }) {
   return (
     <section className={cn(PANEL, "flex flex-col gap-6")} aria-labelledby="answer-analysis-title">
       <div>
@@ -31,6 +34,13 @@ export function AnswerAnalysis({ parts, analysis }: { parts: PartRow[]; analysis
           <ProLock />
         )}
       </div>
+
+      {analysis && (
+        <div className="flex flex-col gap-8 border-t border-border pt-6">
+          <BloomStairs bloom={analysis.bloom} focus={analysis.bloomFocus} />
+          <DecisionMap reviews={reviews} />
+        </div>
+      )}
     </section>
   );
 }
@@ -74,6 +84,98 @@ function PartBars({ parts, pacing }: { parts: PartRow[]; pacing: Analysis["pacin
           );
         })}
       </ul>
+    </div>
+  );
+}
+
+/** Each step is taller than the last, and fills up with this attempt's correct share. */
+function BloomStairs({ bloom, focus }: { bloom: Analysis["bloom"]; focus: Analysis["bloomFocus"] }) {
+  return (
+    <div>
+      <h3 className="text-sm font-semibold">Thang tư duy của bài này</h3>
+      <p className="mt-1 mb-4 max-w-[52ch] text-sm text-muted-foreground">
+        {focus
+          ? `Nên ôn từ bậc ${focus.level} (${focus.nameVi}): bạn đúng ${focus.correct}/${focus.total} câu, chưa đạt 80%.`
+          : "Các bậc có từ 2 câu trở lên trong bài này đều đạt từ 80%."}
+      </p>
+      <ol className="flex h-44 items-end gap-1.5 sm:gap-2">
+        {bloom.map((b, i) => {
+          const share = b.total > 0 ? b.correct / b.total : 0;
+          return (
+            <li key={b.level} className="flex min-w-0 flex-1 flex-col justify-end text-center" style={{ height: `${48 + i * 13}%` }}>
+              <div
+                role="img"
+                aria-label={b.total > 0 ? `Bậc ${b.level} ${b.nameVi}: đúng ${b.correct} trên ${b.total} câu` : `Bậc ${b.level} ${b.nameVi}: bài này không có câu nào`}
+                className={cn(
+                  "relative flex min-h-0 flex-1 items-center justify-center overflow-hidden rounded-t-xl border text-sm font-bold tabular-nums",
+                  b.total === 0 ? "border-dashed border-border text-muted-foreground" : "border-transparent bg-muted",
+                  focus?.level === b.level && "ring-2 ring-primary ring-offset-2 ring-offset-card"
+                )}
+              >
+                <span aria-hidden className="absolute inset-x-0 bottom-0 bg-primary/35" style={{ height: `${share * 100}%` }} />
+                <span className="relative">{b.total > 0 ? `${b.correct}/${b.total}` : "–"}</span>
+              </div>
+              <p className="mt-1.5 truncate text-xs font-medium">{b.nameVi}</p>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  );
+}
+
+const DECISION_TINT: Record<Decision, string> = {
+  fastRight: "bg-success/12",
+  slowRight: "bg-accent/60",
+  fastWrong: "bg-warning/15",
+  slowWrong: "bg-destructive/12",
+};
+
+/** Every timed Reading answer placed by right/wrong and fast/slow. Marks link to the question, like the answer sheet. */
+function DecisionMap({ reviews }: { reviews: Review[] }) {
+  const numbered = reviews.map((review, index) => ({ review, number: index + 1 }));
+  const inCell = (key: Decision | "guess") => numbered.filter(({ review }) => review.insight?.decision === key);
+  const keys = Object.keys(DECISIONS) as Decision[];
+  const guesses = inCell("guess").length;
+  if (keys.every((k) => inCell(k).length === 0) && guesses === 0) return null;
+
+  return (
+    <div>
+      <h3 className="text-sm font-semibold">Cách bạn ra quyết định</h3>
+      <p className="mt-1 mb-4 text-sm text-muted-foreground">Các câu phần Đọc, so với thời gian chuẩn của từng Part. Bấm số để mở câu đó.</p>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {keys.map((key) => {
+          const cell = inCell(key);
+          return (
+            <div key={key} className={cn("rounded-2xl p-3.5", DECISION_TINT[key])}>
+              <div className="flex items-baseline justify-between gap-2">
+                <h4 className="text-sm font-semibold">{DECISIONS[key].label}</h4>
+                <span className="text-lg font-extrabold tabular-nums">{cell.length}</span>
+              </div>
+              <p className="mt-0.5 text-xs text-foreground/75">{DECISIONS[key].tip}</p>
+              {cell.length > 0 && (
+                <ol className="mt-2 flex flex-wrap gap-1">
+                  {cell.map(({ review, number }) => (
+                    <li key={review.id}>
+                      <a
+                        href={`#q-${review.id}`}
+                        aria-label={`Câu ${number}`}
+                        className={cn(
+                          "flex size-6 items-center justify-center rounded-full text-[10px] tabular-nums outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                          review.isCorrect ? "bg-card" : answerMarkClass(review)
+                        )}
+                      >
+                        {number}
+                      </a>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {guesses > 0 && <p className="mt-2 text-xs text-muted-foreground">Còn {guesses} câu làm dưới 8 giây, nhiều khả năng là đoán nên không xếp vào bảng.</p>}
     </div>
   );
 }
@@ -177,7 +279,7 @@ function ProLock() {
       <Crown className="size-5 text-primary" />
       <h3 className="text-sm font-semibold">Biết vì sao bạn mất điểm</h3>
       <p className="max-w-[44ch] text-sm text-muted-foreground">
-        Gói Pro chỉ ra lý do mất từng câu, bẫy bạn hay dính, tốc độ làm bài, số lần đổi đáp án và phần ngữ pháp nên ôn.
+        Gói Pro chỉ ra lý do mất từng câu, thang tư duy Bloom của bài, cách bạn ra quyết định, bẫy hay dính và phần ngữ pháp nên ôn.
       </p>
       <Link
         href="/pricing"

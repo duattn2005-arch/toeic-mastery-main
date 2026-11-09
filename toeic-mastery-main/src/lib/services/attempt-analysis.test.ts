@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { analyzeAttempt, answerInsight, lossCause, type AnsweredQuestion } from "./attempt-analysis";
+import { analyzeAttempt, answerInsight, decisionOf, lossCause, type AnsweredQuestion } from "./attempt-analysis";
 
 const a = (over: Partial<AnsweredQuestion>): AnsweredQuestion => ({
   part: "PART5",
@@ -13,6 +13,7 @@ const a = (over: Partial<AnsweredQuestion>): AnsweredQuestion => ({
   timeSpentSec: 20, // Part 5's standard is 25s, so this is normal pace
   trapTypeHit: null,
   grammarTopicSlug: null,
+  bloomLevel: 2,
   ...over,
 });
 
@@ -104,6 +105,41 @@ test("a perfect attempt has no causes", () => {
   const { headline, causes } = analyzeAttempt([a({ selectedLabel: "A", isCorrect: true })]);
   assert.equal(headline, "Bạn trả lời đúng cả 1 câu.");
   assert.deepEqual(causes, []);
+});
+
+test("decisionOf crosses right/wrong with fast/slow against the Part standard", () => {
+  assert.equal(decisionOf(a({ selectedLabel: "A", isCorrect: true, timeSpentSec: 20 })), "fastRight");
+  assert.equal(decisionOf(a({ selectedLabel: "A", isCorrect: true, timeSpentSec: 40 })), "slowRight");
+  assert.equal(decisionOf(a({ timeSpentSec: 20 })), "fastWrong");
+  assert.equal(decisionOf(a({ timeSpentSec: 40 })), "slowWrong");
+});
+
+test("decisionOf calls under 8 seconds a guess, even when correct", () => {
+  assert.equal(decisionOf(a({ selectedLabel: "A", isCorrect: true, timeSpentSec: 5 })), "guess");
+});
+
+test("decisionOf ignores Listening, skipped and untimed answers", () => {
+  assert.equal(decisionOf(a({ part: "PART2", timeSpentSec: 20 })), null);
+  assert.equal(decisionOf(a({ selectedLabel: null })), null);
+  assert.equal(decisionOf(a({ timeSpentSec: 0 })), null);
+});
+
+test("bloom focus is the lowest level under 80% with enough questions", () => {
+  const { bloom, bloomFocus } = analyzeAttempt([
+    a({ bloomLevel: 1 }),
+    a({ bloomLevel: 2 }),
+    a({ bloomLevel: 2, selectedLabel: "A", isCorrect: true }),
+    a({ bloomLevel: 3 }),
+    a({ bloomLevel: 3 }),
+    a({ bloomLevel: null }),
+  ]);
+  assert.equal(bloomFocus?.level, 2);
+  assert.deepEqual(bloom.map((b) => b.total), [1, 2, 2, 0, 0]);
+});
+
+test("no bloom focus when every level with enough questions is solid", () => {
+  const right = { selectedLabel: "A", isCorrect: true, bloomLevel: 1 };
+  assert.equal(analyzeAttempt([a(right), a(right)]).bloomFocus, null);
 });
 
 test("answerInsight names the trap and the original answer", () => {

@@ -63,7 +63,7 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
         <AnswerSheet reviews={questionReviews} />
       </div>
 
-      <AnswerAnalysis parts={partBreakdown} analysis={analysis} />
+      <AnswerAnalysis parts={partBreakdown} analysis={analysis} reviews={questionReviews} />
 
       <div className="flex flex-wrap items-center gap-3">
         {/* Both start a brand new real Attempt (same exam-runner UI as any

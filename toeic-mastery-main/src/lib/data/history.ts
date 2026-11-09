@@ -4,6 +4,7 @@ import { db } from "@/lib/db";
 import { TEST_PARTS } from "@/lib/constants/toeic";
 import { computeAttemptXp } from "@/lib/services/xp";
 import { PRO_EXPLANATION_NOTE } from "@/lib/data/question-access";
+import { bloomOfQuestion } from "@/lib/bloom/from-question";
 import { analyzeAttempt, answerInsight, type AnsweredQuestion } from "@/lib/services/attempt-analysis";
 import type { TestPart } from "@/generated/prisma/enums";
 
@@ -70,6 +71,8 @@ export async function getAttemptResult(attemptId: string, userId: string, pro: b
       timeSpentSec: answer?.timeSpentSec ?? 0,
       trapTypeHit: answer?.trapTypeHit ?? null,
       grammarTopicSlug: q.grammarTopicSlug,
+      // Level saved at submit first; older answers have none, so derive it from the question.
+      bloomLevel: pro ? (answer?.bloomLevel ?? bloomOfQuestion(q).level) : null,
     };
     answeredQuestions.push(answered);
 

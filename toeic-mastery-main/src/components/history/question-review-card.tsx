@@ -14,6 +14,7 @@ import { PassageViewer } from "@/components/exam/passage-viewer";
 import { AnswerOptionList } from "@/components/exam/answer-option";
 import { ReportQuestionDialog } from "@/components/history/report-question-dialog";
 import { answerMarkClass } from "@/components/history/answer-sheet";
+import { DECISIONS } from "@/lib/services/attempt-analysis";
 import { AskMentorButton } from "@/components/shared/ask-mentor-button";
 import { toggleQuestionBookmarkAction, saveQuestionVocabularyAction } from "@/lib/actions/bookmarks";
 import type { QuestionReview } from "@/lib/data/history";
@@ -43,7 +44,8 @@ function StatusBadge({ review }: { review: QuestionReview }) {
 function InsightNote({ insight, selectedLabel }: { insight: NonNullable<QuestionReview["insight"]>; selectedLabel: string | null }) {
   // Listening has no target: the recording sets the pace, so its time says nothing.
   const timed = !!selectedLabel && insight.timeSpentSec > 0 && !!insight.targetSec;
-  if (!insight.label && !insight.changedFrom && !timed) return null;
+  const decision = insight.decision && insight.decision !== "guess" ? DECISIONS[insight.decision].label : null;
+  if (!insight.label && !insight.changedFrom && !timed && !insight.bloomName) return null;
 
   return (
     <div className="rounded-xl border border-border p-4 text-sm">
@@ -53,8 +55,11 @@ function InsightNote({ insight, selectedLabel }: { insight: NonNullable<Question
           <span className="font-medium text-destructive">{insight.label}.</span> {insight.tip}
         </p>
       )}
-      {(insight.changedFrom || timed) && (
+      {(insight.changedFrom || timed || insight.bloomName) && (
         <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          {insight.bloomName && <li>Bậc tư duy: {insight.bloomName}</li>}
+          {decision && <li>{decision}</li>}
+          {insight.decision === "guess" && <li>Dưới 8 giây, có thể là đoán</li>}
           {insight.changedFrom && (
             <li>
               Đổi từ {insight.changedFrom} sang {selectedLabel}
