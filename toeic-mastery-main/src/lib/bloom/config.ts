@@ -138,6 +138,11 @@ export const NOISE_TIMED_SKILLS: readonly ("LISTENING" | "READING")[] = ["READIN
 
 /** Ô (nhãn × bậc) có ít câu (khác nhau) hơn mức này → Xám "chưa đủ dữ liệu". */
 export const MIN_ATTEMPTS_PER_CELL = 15;
+/**
+ * Một BẬC được chấm khi tổng số câu khác nhau của bậc đạt mức này, kể cả khi
+ * từng nhãn chưa đủ: Mastery Learning xét năng lực ở bậc, không bắt mỗi nhãn đủ riêng.
+ */
+export const MIN_ATTEMPTS_PER_LEVEL = MIN_ATTEMPTS_PER_CELL;
 /** Tổng số câu đã làm tối thiểu trước khi AI phân luồng / xếp lộ trình. */
 export const MIN_TOTAL_ATTEMPTS_FOR_ROUTING = 100;
 /** Một ô được chấm trên chừng này câu gần nhất (năng lực hiện tại, không phải trung bình cả đời). */
@@ -158,7 +163,10 @@ export const TRAP_PENALTY = 0.5;
 export const TRAP_PENALTY_MAX = 0.15;
 /** Câu đúng nhưng đã dùng gợi ý chỉ được tính chừng này phần điểm. */
 export const HINT_CREDIT = 0.5;
-/** Câu đúng mà trước đó đã từng làm đúng (dễ là nhớ đáp án) chỉ được tính chừng này. */
+/**
+ * Câu đúng mà trước đó đã từng làm đúng (dễ là nhớ đáp án) chỉ được tính chừng này.
+ * Không áp dụng cho flashcard: nhớ lại từ qua các lần ôn chính là năng lực bậc Nhớ.
+ */
 export const REPEAT_CORRECT_CREDIT = 0.8;
 
 /**

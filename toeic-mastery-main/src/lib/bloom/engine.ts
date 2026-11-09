@@ -7,8 +7,9 @@
  * HỔNG ở bậc tư duy nào, của nhãn kiến thức nào.
  *
  * Hai nguyên tắc cốt lõi:
- *  - MASTERY LEARNING: một ô / một bậc chỉ “vững” khi đạt ≥ MASTERY_THRESHOLD
- *    trên đủ MIN_ATTEMPTS_PER_CELL câu khác nhau.
+ *  - MASTERY LEARNING: một ô chỉ “vững” khi đạt ≥ MASTERY_THRESHOLD trên đủ
+ *    MIN_ATTEMPTS_PER_CELL câu khác nhau; một bậc xét trên đủ MIN_ATTEMPTS_PER_LEVEL
+ *    câu của cả bậc. Bậc cao đã vững thì suy ra các bậc dưới còn thiếu dữ liệu.
  *  - NGUYÊN TẮC TẦNG: trong mỗi nhãn, bậc được phép luyện là bậc thấp nhất
  *    chưa vững (frontierLevel) — không đẩy lên bậc cao khi bậc dưới còn hổng.
  *
@@ -27,6 +28,7 @@ import {
   HINT_CREDIT,
   INFER_FROM_HIGHER_MIN_ATTEMPTS,
   LEVEL_TO_TIER,
+  MIN_ATTEMPTS_PER_LEVEL,
   MASTERY_STALE_DAYS,
   MASTERY_THRESHOLD,
   MIN_ATTEMPTS_PER_CELL,
@@ -44,6 +46,7 @@ import {
   TIMED_EVIDENCE_FROM_LEVEL,
   TRAP_PENALTY,
   TRAP_PENALTY_MAX,
+  WEAK_THRESHOLD,
   statusForScore,
   type CellStatus,
   type ScoredBloomLevel,
@@ -66,6 +69,8 @@ export interface BloomAttempt {
   isCorrect: boolean | null;
   selectedAnswer: string | null;
   firstAnswer: string | null;
+  /** Đáp án đúng của câu; không có với flashcard. */
+  correctAnswer?: string;
   answerChanged: boolean;
   changedFromCorrectToWrong: boolean;
   /** null = không đo được thời gian. */
@@ -196,7 +201,7 @@ export function scoreCell(attempts: BloomAttempt[], now: number = Date.now()): C
   const latest = new Map<string, { a: BloomAttempt; repeatCorrect: boolean }>();
   const rightBefore = new Set<string>();
   for (const a of kept) {
-    latest.set(a.questionId, { a, repeatCorrect: a.isCorrect === true && rightBefore.has(a.questionId) });
+    latest.set(a.questionId, { a, repeatCorrect: a.source !== "flashcard" && a.isCorrect === true && rightBefore.has(a.questionId) });
     if (a.isCorrect) rightBefore.add(a.questionId);
   }
   const points = [...latest.values()].sort((x, y) => x.a.timestamp - y.a.timestamp);
@@ -262,6 +267,11 @@ export function scoreCell(attempts: BloomAttempt[], now: number = Date.now()): C
 
 export type BloomHeatmap = Record<KnowledgeLabel, Partial<Record<ScoredBloomLevel, CellResult>>>;
 
+/** Một bậc cao hơn của cùng nhãn đã Xanh với đủ câu: bằng chứng ngược cho các bậc dưới còn thiếu dữ liệu. */
+export function impliedByHigher(row: Partial<Record<ScoredBloomLevel, CellResult>> | undefined, level: ScoredBloomLevel) {
+  return SCORED_LEVELS.some((h) => h > level && row?.[h]?.status === "green" && row[h]!.attempts >= INFER_FROM_HIGHER_MIN_ATTEMPTS);
+}
+
 /** Một ô có được coi là đã vững để đi tiếp lên bậc trên không. */
 export const isMastered = (c: CellResult | undefined) => !!c && (c.status === "green" || c.inferred);
 
@@ -282,8 +292,7 @@ export function buildBloomHeatmap(attempts: BloomAttempt[], now: number = Date.n
     for (const level of SCORED_LEVELS) {
       const c = cells[level];
       if (!c || c.status !== "insufficient") continue;
-      const higherGreen = SCORED_LEVELS.some((h) => h > level && cells[h]?.status === "green" && cells[h]!.attempts >= INFER_FROM_HIGHER_MIN_ATTEMPTS);
-      if (higherGreen) c.inferred = true;
+      if (impliedByHigher(cells, level)) c.inferred = true;
     }
     out[label] = cells;
   }
@@ -297,15 +306,21 @@ export function buildBloomHeatmap(attempts: BloomAttempt[], now: number = Date.n
 export interface LevelMastery {
   level: ScoredBloomLevel;
   tier: Tier;
-  /** Trung bình có trọng số (theo số câu) của các ô đủ dữ liệu; null khi chưa có ô nào đủ. */
+  /** Trung bình có trọng số (theo số câu) của mọi ô có dữ liệu thật; null khi cả bậc chưa đủ MIN_ATTEMPTS_PER_LEVEL câu. */
   score: number | null;
   /** Ước lượng gộp mọi câu của bậc (kể cả ô chưa đủ) — để hiển thị khi score còn null. */
   pooledAccuracy: number | null;
   attempts: number;
+  /** Số câu tính vào điểm bậc (không gồm ô suy ra). */
+  scoredAttempts: number;
   cells: { green: number; yellow: number; red: number; insufficient: number; inferred: number };
   status: CellStatus;
-  /** Vững bậc này: điểm ≥ ngưỡng, có ít nhất một ô đủ dữ liệu và không còn ô Đỏ nào. */
+  /** Tỷ lệ câu có giờ trên các câu tính vào điểm bậc. */
+  timedShare: number;
+  /** Vững bậc này: điểm ≥ ngưỡng, có ít nhất một ô đủ dữ liệu, không còn ô Đỏ nào và (từ bậc 3) đủ câu có giờ. */
   mastered: boolean;
+  /** Bậc thiếu dữ liệu được coi là vững nhờ bậc này (Anderson & Krathwohl); null nếu không suy ra. */
+  inferredFrom: ScoredBloomLevel | null;
   /** Vì sao chưa vững (để hiển thị). */
   blockers: string[];
 }
@@ -316,9 +331,9 @@ export function levelMastery(heatmap: BloomHeatmap): Record<ScoredBloomLevel, Le
     const cells = Object.values(heatmap)
       .map((row) => row[level])
       .filter((c): c is CellResult => !!c);
-    const sufficient = cells.filter((c) => c.status !== "insufficient");
-    const weight = sufficient.reduce((s, c) => s + c.attempts, 0);
-    const score = weight ? sufficient.reduce((s, c) => s + c.score * c.attempts, 0) / weight : null;
+    const counted = cells.filter((c) => !c.inferred);
+    const weight = counted.reduce((s, c) => s + c.attempts, 0);
+    const score = weight >= MIN_ATTEMPTS_PER_LEVEL ? counted.reduce((s, c) => s + c.score * c.attempts, 0) / weight : null;
     const all = cells.reduce((s, c) => s + c.attempts, 0);
     const pooledAccuracy = all ? cells.reduce((s, c) => s + c.accuracy * c.attempts, 0) / all : null;
     const count = {
@@ -329,12 +344,16 @@ export function levelMastery(heatmap: BloomHeatmap): Record<ScoredBloomLevel, Le
       inferred: cells.filter((c) => c.inferred).length,
     };
     const blockers: string[] = [];
-    if (score === null) blockers.push(`Chưa có nhãn nào đủ ${MIN_ATTEMPTS_PER_CELL} câu ở bậc này`);
+    if (score === null) blockers.push(`Mới có ${weight} câu ở bậc này, cần ${MIN_ATTEMPTS_PER_LEVEL} câu`);
     else if (score < MASTERY_THRESHOLD) blockers.push(`Điểm bậc ${Math.round(score * 100)}% < ${Math.round(MASTERY_THRESHOLD * 100)}%`);
     if (count.red) blockers.push(`${count.red} nhãn đang hổng ở bậc này`);
+    const timedShare = weight ? counted.reduce((s, c) => s + c.timedShare * c.attempts, 0) / weight : 0;
+    // Same rule as a cell, over the whole level: one label short of timed work shouldn't hold back the rest.
+    const timedShort = score !== null && level >= TIMED_EVIDENCE_FROM_LEVEL && timedShare < MIN_TIMED_SHARE;
+    if (timedShort) blockers.push(`Mới có ${Math.round(timedShare * 100)}% câu làm có tính giờ, cần ${Math.round(MIN_TIMED_SHARE * 100)}%`);
     let status: CellStatus = score === null ? "insufficient" : statusForScore(score);
-    if (status === "green" && count.red) status = "yellow";
-    out[level] = { level, tier: LEVEL_TO_TIER[level], score, pooledAccuracy, attempts: all, cells: count, status, mastered: blockers.length === 0, blockers };
+    if (status === "green" && (count.red || timedShort)) status = "yellow";
+    out[level] = { level, tier: LEVEL_TO_TIER[level], score, pooledAccuracy, attempts: all, scoredAttempts: weight, cells: count, status, timedShare, inferredFrom: null, mastered: blockers.length === 0, blockers };
   }
   return out;
 }
@@ -359,7 +378,8 @@ export function frontierLevel(row: Partial<Record<ScoredBloomLevel, CellResult>>
   const levels = [...available].sort((a, b) => a - b);
   for (const level of levels) {
     const c = row?.[level];
-    if (!isMastered(c)) return { level, maxAllowed: level, cell: c ?? null };
+    // A level never tried is implied by a solid one above it; real Yellow/Red data on it still holds the label back.
+    if (!isMastered(c) && (c || !impliedByHigher(row, level))) return { level, maxAllowed: level, cell: c ?? null };
   }
   const top = levels[levels.length - 1] ?? 5;
   return { level: null, maxAllowed: top, cell: null };
@@ -429,6 +449,23 @@ export function applyEvaluateBehavior(levels: Record<ScoredBloomLevel, LevelMast
   if (behavior.stabilityOk === false) blockers.push(`Điểm các Mock test gần nhất chênh ${Math.round((behavior.mockSpread ?? 0) * 100)}%`);
   const status = blockers.length > l5.blockers.length && l5.status === "green" ? "yellow" : l5.status;
   return { ...levels, 5: { ...l5, blockers, status, mastered: blockers.length === 0 } };
+}
+
+/**
+ * Thang tích lũy nới lỏng (Anderson & Krathwohl): bậc chưa đủ dữ liệu được coi
+ * là vững khi một bậc cao hơn đã vững THẬT. Chạy sau applyEvaluateBehavior.
+ * Dữ liệu thật thắng suy luận: bậc đã có điểm giữ nguyên, và bậc tuy ít câu
+ * nhưng đang dưới ngưỡng Hổng thì không được suy ra.
+ */
+export function inferLowerLevels(levels: Record<ScoredBloomLevel, LevelMastery>): Record<ScoredBloomLevel, LevelMastery> {
+  const out = { ...levels };
+  for (const level of SCORED_LEVELS) {
+    const m = levels[level];
+    if (m.score !== null || (m.pooledAccuracy !== null && m.pooledAccuracy < WEAK_THRESHOLD)) continue;
+    const from = SCORED_LEVELS.find((h) => h > level && levels[h].mastered);
+    if (from) out[level] = { ...m, inferredFrom: from, mastered: true, blockers: [] };
+  }
+  return out;
 }
 
 // ---------------------------------------------------------------------------
@@ -579,7 +616,7 @@ export interface BloomProfile {
 export function buildBloomProfile(attempts: BloomAttempt[], now: number = Date.now()): BloomProfile {
   const heatmap = buildBloomHeatmap(attempts, now);
   const behavior = evaluateBehavior(attempts);
-  const levels = applyEvaluateBehavior(levelMastery(heatmap), behavior);
+  const levels = inferLowerLevels(applyEvaluateBehavior(levelMastery(heatmap), behavior));
   const { counts } = filterNoise(attempts);
   return {
     heatmap,

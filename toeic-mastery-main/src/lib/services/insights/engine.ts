@@ -85,6 +85,8 @@ export interface SkillStat {
   parts: TestPart[];
   attempted: number;
   correct: number;
+  /** Answers `correct` and `accuracy` are counted over. */
+  judged: number;
   /** Accuracy over every clean (noise-filtered) answer. */
   accuracy: number;
   /** Accuracy over the latest RECENT_WINDOW clean answers. */
@@ -292,6 +294,7 @@ function stat(kind: DimensionKind, key: string, title: string, parts: TestPart[]
     parts,
     attempted: rows.length,
     correct,
+    judged: base.length,
     accuracy,
     recentAccuracy,
     score,
@@ -543,7 +546,7 @@ function describeWeakness(s: SkillStat, parts: PartInsight[], answered: AnswerRo
   const findings: string[] = [
     s.recentAccuracy !== s.accuracy && s.attempted > RECENT_WINDOW
       ? `${RECENT_WINDOW} câu gần nhất đúng ${pct(s.recentAccuracy)} (cả quá trình ${pct(s.accuracy)}) — mốc cần đạt là ${pct(LABEL_PASS)}, vững là ${pct(TARGET_ACCURACY)}.`
-      : `Đúng ${s.correct}/${s.attempted - s.noise} câu (${pct(s.accuracy)}) — mốc cần đạt là ${pct(LABEL_PASS)}, vững là ${pct(TARGET_ACCURACY)}.`,
+      : `Đúng ${s.correct}/${s.judged} câu (${pct(s.accuracy)}), cần đạt ${pct(TARGET_ACCURACY)}.`,
   ];
   if (s.noise >= 3) findings.push(`${s.noise} câu bị loại khỏi phép tính vì làm quá nhanh (đoán) hoặc quá lâu (ngâm câu).`);
   const advice: string[] = [];
@@ -709,7 +712,9 @@ async function buildRouting(input: {
       ? tierMissing
           .map((l) => {
             const m = input.bloom.profile.levels[l];
-            return `${BLOOM_BY_ID.get(l)!.nameVi}: ${m.score === null ? "chưa đủ dữ liệu" : pct(m.score)}`;
+            // A level can reach the score and still be held back, and "83%" alone wouldn't say why.
+            const why = m.score === null ? "chưa đủ dữ liệu" : m.score >= MASTERY_THRESHOLD ? m.blockers.join("; ") : pct(m.score);
+            return `${BLOOM_BY_ID.get(l)!.nameVi}: ${why}`;
           })
           .join(" · ")
       : "Đã vững",

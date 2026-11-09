@@ -6,6 +6,7 @@ import { parseKnowledgeLabel, type KnowledgeLabel } from "./classify";
 import { bloomOfQuestion } from "./from-question";
 import { buildBloomProfile, frontierLevel, type BloomProfile, type Frontier } from "./engine";
 import { loadBloomAttempts, loadRememberSignals } from "./evidence";
+import { MISTAKES_OVERALL, MISTAKES_PER_LEVEL, buildMistakeReport, type MistakeReport } from "./mistakes";
 
 /**
  * Ngân hàng câu theo ô (nhãn chính × bậc): nhãn nào có câu ở bậc nào — để
@@ -48,6 +49,30 @@ export interface LearnerBloom {
   profile: BloomProfile;
   rows: BloomLabelRow[];
   remember: { lookups30d: number; savedWords: number };
+  mistakes: MistakeReport;
+}
+
+export type MistakeDetail = {
+  prompt: string;
+  explanationVi: string;
+  options: { label: string; content: string; isCorrect: boolean; distractorExplanation: string | null }[];
+};
+
+/** Full text of the wrong questions on screen. Holds answer keys and explanations, so callers must be Pro-gated. */
+export async function getMistakeDetails(report: MistakeReport): Promise<Map<string, MistakeDetail>> {
+  const ids = new Set(report.questions.slice(0, MISTAKES_OVERALL).map((q) => q.questionId));
+  for (const scope of Object.values(report.byLevel)) for (const q of scope.questions.slice(0, MISTAKES_PER_LEVEL)) ids.add(q.questionId);
+  if (ids.size === 0) return new Map();
+  const rows = await db.question.findMany({
+    where: { id: { in: [...ids] } },
+    select: {
+      id: true,
+      prompt: true,
+      explanationVi: true,
+      options: { select: { label: true, content: true, isCorrect: true, distractorExplanation: true }, orderBy: { label: "asc" } },
+    },
+  });
+  return new Map(rows.map(({ id, ...detail }) => [id, detail]));
 }
 
 /** Hồ sơ Bloom đầy đủ của một người học + bậc rìa của từng nhãn. */
@@ -86,5 +111,5 @@ export async function getLearnerBloom(userId: string): Promise<LearnerBloom> {
   });
   // Lowest thinking level first, then the labels with the most evidence.
   rows.sort((a, b) => (a.frontier.level ?? 9) - (b.frontier.level ?? 9) || b.attempts - a.attempts);
-  return { profile, rows, remember };
+  return { profile, rows, remember, mistakes: buildMistakeReport(attempts) };
 }

@@ -1,4 +1,3 @@
-import type { ReactNode } from "react";
 import Link from "next/link";
 import {
   AlertTriangle,
@@ -14,12 +13,10 @@ import {
   ListChecks,
   Repeat2,
   Route,
-  Sparkles,
   Target,
   Timer,
   TrendingDown,
   TrendingUp,
-  Trophy,
 } from "lucide-react";
 import { PART_META } from "@/lib/constants/toeic";
 import { MASTERY_THRESHOLD, MIN_ATTEMPTS_PER_CELL, NOISE_MAX_SECONDS, NOISE_MIN_SECONDS, WEAK_THRESHOLD } from "@/lib/bloom/config";
@@ -39,14 +36,6 @@ const STATUS_STYLE: Record<LabelStatus, { tile: string; dot: string; text: strin
   near: { tile: "border-warning/35 bg-warning/10", dot: "bg-warning", text: "text-warning", bar: "bg-warning" },
   gap: { tile: "border-destructive/30 bg-destructive/10", dot: "bg-destructive", text: "text-destructive", bar: "bg-destructive" },
   unknown: { tile: "border-dashed border-border bg-muted/40", dot: "bg-muted-foreground/40", text: "text-muted-foreground", bar: "bg-muted-foreground/40" },
-};
-
-const LEVEL_LETTER: Record<string, string> = { BEGINNER: "B", INTERMEDIATE: "I", ADVANCED: "A" };
-const BRANCH_STYLE: Record<string, { chip: string; icon: typeof Route }> = {
-  collecting: { chip: "bg-info/15 text-info", icon: Sparkles },
-  ready: { chip: "bg-success/15 text-success", icon: Trophy },
-  refine: { chip: "bg-warning/15 text-warning", icon: Target },
-  rebuild: { chip: "bg-destructive/15 text-destructive", icon: Layers },
 };
 
 function Meter({ value, status, className }: { value: number; status: LabelStatus; className?: string }) {
@@ -87,211 +76,33 @@ function ReadinessRing({ value }: { value: number }) {
   );
 }
 
-function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
-  return <p className={cn("text-[11px] font-semibold tracking-[0.08em] text-muted-foreground uppercase", className)}>{children}</p>;
-}
-
-const partsOf = (s: SkillStat) => (s.kind === "part" ? null : s.parts.map((p) => PART_META[p].shortLabel).join(", "));
-const shownStatus = (w: SkillStat): LabelStatus => (w.status === "unknown" ? (w.score < 0.5 ? "gap" : "near") : w.status);
-
-/** One priority weakness: rank, name, where it comes from, how far off it is. */
-function PriorityRow({ w, rank }: { w: Weakness; rank: number }) {
-  const status = shownStatus(w);
-  const where = partsOf(w);
-  return (
-    <li className="grid grid-cols-[auto_1fr_auto] items-start gap-x-3 gap-y-2 py-3 first:pt-0 last:pb-0">
-      <span className={cn("mt-0.5 flex size-6 items-center justify-center rounded-full border text-[11px] font-bold tabular-nums", STATUS_STYLE[status].tile, STATUS_STYLE[status].text)}>{rank}</span>
-      <div className="min-w-0">
-        <p className="text-sm leading-snug font-semibold text-pretty">{nameOf(w)}</p>
-        <p className="mt-0.5 text-xs text-muted-foreground">
-          {where && <>{where} · </>}
-          {w.attempted} câu{!w.confident && " · dữ liệu sơ bộ"}
-        </p>
-      </div>
-      <div className="text-right">
-        <p className={cn("text-sm font-bold tabular-nums", STATUS_STYLE[status].text)}>{pct(w.score)}</p>
-        {w.pointsGain > 0 && <p className="text-[11px] font-medium text-success tabular-nums">+{w.pointsGain} điểm</p>}
-      </div>
-      <Meter value={w.score} status={status} className="col-start-2 col-end-4" />
-    </li>
-  );
-}
-
-function B({ children }: { children: ReactNode }) {
-  return <b className="font-bold tabular-nums">{children}</b>;
-}
-
-/** The hero's one-sentence verdict: how much was read, how accurate, where
- * the learner stands and what fixing it is worth. */
-function Overview({ insights, gain }: { insights: LearningInsights; gain: number }) {
+/** How close the next level is, condition by condition. */
+export function ReadinessCard({ insights }: { insights: LearningInsights }) {
   const r = insights.routing;
-  if (r.branch === "collecting") return <>{r.description}</>;
-  const base = (
-    <>
-      Trên <B>{insights.answered.toLocaleString("vi-VN")}</B> câu đã làm, bạn đúng <B>{pct(insights.accuracy)}</B>
-    </>
-  );
-  if (r.branch === "ready") {
-    return (
-      <>
-        {base} và không còn nhãn Hổng — {r.level === "ADVANCED" ? "đã sẵn sàng thi thật, giờ là lúc giữ phong độ." : "đạt chuẩn để làm Gate Test lên cấp tiếp theo."}
-      </>
-    );
-  }
-  const gaps = insights.weaknesses.filter((w) => w.status === "gap").length;
-  const n = r.branch === "rebuild" ? gaps || insights.weaknesses.length : Math.min(3, insights.weaknesses.length);
-  return (
-    <>
-      {base} — {r.branch === "rebuild" ? <>còn <B>{n}</B> nhãn ở mức Hổng, cần xây lại móng ở đúng các nhãn này trước khi làm đề khó</> : <>nền tảng đã có, còn <B>{n}</B> chỗ hổng chính</>}
-      {gain > 0 && (
-        <>
-          , vá xong có thể thêm khoảng <b className="font-bold text-success tabular-nums">{gain} điểm</b>
-        </>
-      )}
-      .
-    </>
-  );
-}
-
-export function RoutingHero({ insights }: { insights: LearningInsights }) {
-  const r = insights.routing;
-  const style = BRANCH_STYLE[r.branch];
-  const BranchIcon = style.icon;
-  const priorities = insights.weaknesses.slice(0, 3);
-  const strengths = insights.strengths.slice(0, 3);
-  const gain = priorities.reduce((s, w) => s + w.pointsGain, 0);
   const met = r.checklist.filter((c) => c.ok).length;
-  const filtered = insights.noise.guessed + insights.noise.stuck;
-  const stats = [
-    { value: insights.answered.toLocaleString("vi-VN"), label: "Câu đã làm", hint: "đề thi và bài luyện" },
-    { value: pct(insights.accuracy), label: "Độ chính xác", hint: "sau khi lọc nhiễu" },
-    { value: filtered.toLocaleString("vi-VN"), label: "Câu bị lọc", hint: `${insights.noise.guessed} đoán mò · ${insights.noise.stuck} ngâm lâu` },
-    { value: insights.skipped.toLocaleString("vi-VN"), label: "Bỏ trống", hint: "không tính vào điểm yếu" },
-  ];
-
   return (
-    <section className={cn(PANEL, "relative overflow-hidden p-0 sm:p-0")}>
-      <div className="pointer-events-none absolute -top-28 -left-20 size-72 rounded-full bg-primary/8 blur-3xl" aria-hidden />
-      <div className="relative grid lg:grid-cols-[minmax(0,1fr)_19rem]">
-        {/* Left: where the learner stands and what to fix first */}
-        <div className="flex min-w-0 flex-col gap-6 p-5 sm:p-7">
-          <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-primary text-lg font-black text-primary-foreground shadow-soft">{LEVEL_LETTER[r.level] ?? "B"}</span>
-            <div className="mr-auto flex flex-col">
-              <Eyebrow>AI Mentor định vị</Eyebrow>
-              <span className="text-[15px] font-bold">{r.levelLabel}</span>
-            </div>
-            <span className={cn("inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-bold", style.chip)}>
-              <BranchIcon className="size-3.5" /> {r.title}
-            </span>
-          </div>
-
-          <p className="max-w-[62ch] text-[17px] leading-relaxed font-medium text-pretty text-foreground">
-            <Overview insights={insights} gain={gain} />
+    <aside className={PANEL}>
+      <div className="flex items-center gap-4">
+        <ReadinessRing value={r.readiness} />
+        <div>
+          <h2 className="text-lg leading-snug font-bold">{r.level === "ADVANCED" ? "Điều kiện thi thật" : "Điều kiện lên cấp"}</h2>
+          <p className="mt-1 text-sm text-muted-foreground tabular-nums">
+            Đạt {met}/{r.checklist.length} điều kiện
           </p>
-
-          {priorities.length > 0 || strengths.length > 0 ? (
-            <div className={cn("grid gap-4", priorities.length > 0 && strengths.length > 0 && "md:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]")}>
-              {priorities.length > 0 && (
-                <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
-                  <div className="mb-3 flex items-baseline justify-between gap-3">
-                    <Eyebrow className="flex items-center gap-1.5">
-                      <TrendingDown className="size-3.5 text-destructive" /> Ưu tiên vá
-                    </Eyebrow>
-                    <span className="text-xs text-muted-foreground">xếp theo mức mất điểm</span>
-                  </div>
-                  <ol className="divide-y divide-border/60">
-                    {priorities.map((w, i) => (
-                      <PriorityRow key={w.id} w={w} rank={i + 1} />
-                    ))}
-                  </ol>
-                  <a href="#diem-yeu" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">
-                    {insights.weaknesses.length > priorities.length ? `Xem đủ ${insights.weaknesses.length} điểm yếu và cách khắc phục` : "Xem chẩn đoán và cách khắc phục"}
-                    <ArrowRight className="size-3.5" />
-                  </a>
-                </div>
-              )}
-              {strengths.length > 0 && (
-                <div className="rounded-2xl border border-border/60 bg-background/60 p-4">
-                  <Eyebrow className="mb-3 flex items-center gap-1.5">
-                    <TrendingUp className="size-3.5 text-success" /> Đang làm tốt
-                  </Eyebrow>
-                  <ul className="flex flex-col gap-3">
-                    {strengths.map((s) => (
-                      <li key={`${s.kind}:${s.key}`} className="flex items-start gap-2.5">
-                        <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" />
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm leading-snug font-medium text-pretty">{nameOf(s)}</p>
-                          {partsOf(s) && <p className="mt-0.5 text-xs text-muted-foreground">{partsOf(s)}</p>}
-                        </div>
-                        <span className="text-sm font-bold text-success tabular-nums">{pct(s.score)}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          ) : (
-            <p className="max-w-[60ch] text-sm leading-relaxed text-muted-foreground">{insights.summary}</p>
-          )}
-
-          {insights.behaviors.rightToWrong >= 3 && (
-            <p className="flex items-start gap-2 text-sm text-muted-foreground">
-              <Repeat2 className="mt-0.5 size-4 shrink-0 text-warning" />
-              <span>
-                <b className="font-semibold text-foreground">{insights.behaviors.rightToWrong} câu</b> bạn đã chọn đúng rồi đổi sang sai — hãy tin lựa chọn đầu khi chưa có căn cứ rõ ràng.
-              </span>
-            </p>
-          )}
-
-          {(insights.weaknesses.length > 0 || insights.openMistakes.length > 0) && (
-            <div className="flex flex-wrap items-center gap-2">
-              {insights.weaknesses.length > 0 && <PracticeButton target={{ kind: "mix", foundation: r.branch === "rebuild" }} label="Đề tổng hợp điểm yếu" size="default" />}
-              {insights.openMistakes.length > 0 && (
-                <PracticeButton target={{ kind: "mistakes" }} label={`Làm lại ${Math.min(20, insights.openMistakes.length)} câu đang sai`} variant="outline" size="default" />
-              )}
-            </div>
-          )}
         </div>
-
-        {/* Right: how close the next level is */}
-        <aside className="flex flex-col gap-5 border-t border-border/60 bg-muted/35 p-5 sm:p-7 lg:border-t-0 lg:border-l">
-          <div className="flex items-center gap-4">
-            <ReadinessRing value={r.readiness} />
-            <div>
-              <Eyebrow>{r.level === "ADVANCED" ? "Điều kiện thi thật" : "Điều kiện lên cấp"}</Eyebrow>
-              <p className="mt-1 text-2xl font-extrabold tabular-nums">
-                {met}
-                <span className="text-base font-semibold text-muted-foreground">/{r.checklist.length}</span>
-              </p>
-              <p className="text-xs text-muted-foreground">điều kiện đã đạt</p>
-            </div>
-          </div>
-          <ul className="flex flex-col gap-3">
-            {r.checklist.map((c) => (
-              <li key={c.label} className="flex items-start gap-2.5">
-                {c.ok ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" /> : <Circle className="mt-0.5 size-4 shrink-0 text-muted-foreground/50" />}
-                <div className="min-w-0">
-                  <p className={cn("text-sm leading-snug", c.ok ? "text-muted-foreground" : "font-medium text-foreground")}>{c.label}</p>
-                  <p className="mt-0.5 text-xs text-muted-foreground">{c.detail}</p>
-                </div>
-              </li>
-            ))}
-          </ul>
-        </aside>
       </div>
-
-      {/* Bottom: the raw numbers behind the reading */}
-      <dl className="relative grid grid-cols-2 border-t border-border/60 sm:grid-cols-4">
-        {stats.map((s, i) => (
-          <div key={s.label} className={cn("px-5 py-4 sm:px-7", i % 2 === 1 && "border-l border-border/60", i >= 2 && "border-t border-border/60 sm:border-t-0", i === 2 && "sm:border-l")}>
-            <dt className="text-xs font-medium text-muted-foreground">{s.label}</dt>
-            <dd className="mt-1 text-xl font-extrabold tabular-nums">{s.value}</dd>
-            <dd className="text-[11px] text-muted-foreground">{s.hint}</dd>
-          </div>
+      <ul className="mt-5 flex flex-col gap-3">
+        {r.checklist.map((c) => (
+          <li key={c.label} className="flex items-start gap-2.5">
+            {c.ok ? <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-success" /> : <Circle className="mt-0.5 size-4 shrink-0 text-muted-foreground/50" />}
+            <div className="min-w-0">
+              <p className={cn("text-sm leading-snug", c.ok ? "text-muted-foreground" : "font-medium text-foreground")}>{c.label}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{c.detail}</p>
+            </div>
+          </li>
         ))}
-      </dl>
-    </section>
+      </ul>
+    </aside>
   );
 }
 
@@ -553,7 +364,7 @@ export function PartTable({ parts }: { parts: PartInsight[] }) {
                   </div>
                 </td>
                 <td className="px-2 py-2.5 tabular-nums">
-                  {p.correct}/{p.attempted - p.noise}
+                  {p.correct}/{p.judged}
                 </td>
                 <td className="px-2 py-2.5">
                   {p.trend ? (
@@ -669,65 +480,19 @@ export function StaminaPanel({ stamina }: { stamina: LearningInsights["stamina"]
   );
 }
 
-export function MistakesPanel({ insights }: { insights: LearningInsights }) {
-  const list = insights.openMistakes.slice(0, 10);
+export function FocusVocabulary({ words }: { words: LearningInsights["focusVocabulary"] }) {
+  if (words.length === 0) return null;
   return (
     <section className={PANEL}>
-      <SectionHeader
-        icon={AlertTriangle}
-        title="Câu đang sai"
-        action={insights.openMistakes.length > 0 ? <PracticeButton target={{ kind: "mistakes" }} label="Thi lại" variant="outline" /> : undefined}
-      />
-      {list.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Không còn câu nào mà lần làm gần nhất vẫn sai.</p>
-      ) : (
-        <>
-          <p className="mb-3 text-sm text-muted-foreground">
-            {insights.openMistakes.length} câu có lần làm gần nhất vẫn sai, câu sai lặp lại nhiều lần xếp trước.
-          </p>
-          <ul className="flex flex-col divide-y divide-border/60">
-            {list.map((m) => (
-              <li key={m.questionId} className="flex items-center gap-3 py-2.5">
-                <span className="shrink-0 rounded-lg bg-muted px-2 py-1 text-[11px] font-bold">{PART_META[m.part].shortLabel}</span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm">{m.prompt || "(Câu nghe / không có đề bài chữ)"}</p>
-                  <p className="text-[11px] text-muted-foreground">
-                    {m.lastPicked ? (
-                      <>
-                        Chọn <b className="text-destructive">{m.lastPicked}</b> · đáp án <b className="text-success">{m.correctLabel}</b>
-                      </>
-                    ) : (
-                      <>Bỏ trống · đáp án {m.correctLabel}</>
-                    )}
-                    {m.wrongCount > 1 && <> · sai {m.wrongCount} lần</>}
-                    {m.testTitle && <> · {m.testTitle}</>}
-                  </p>
-                </div>
-                <Link href={`/history/${m.lastAttemptId}`} className="shrink-0 text-xs font-semibold text-primary hover:underline">
-                  Xem lời giải
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
-      {insights.focusVocabulary.length > 0 && (
-        <div className="mt-5 border-t border-border/60 pt-4">
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Từ vựng hay gặp trong câu sai</p>
-          <div className="flex flex-wrap gap-1.5">
-            {insights.focusVocabulary.map((v) => (
-              <Link
-                key={v.word}
-                href={`/dictionary/${encodeURIComponent(v.word)}`}
-                className="rounded-full border border-border/70 bg-background/60 px-2.5 py-1 text-xs font-medium hover:border-primary/40 hover:text-primary"
-              >
-                {v.word}
-                {v.misses > 1 && <span className="ml-1 text-muted-foreground">×{v.misses}</span>}
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
+      <h2 className="mb-3 text-lg font-bold">Từ vựng hay gặp trong câu sai</h2>
+      <div className="flex flex-wrap gap-1.5">
+        {words.map((v) => (
+          <Link key={v.word} href={`/dictionary/${encodeURIComponent(v.word)}`} className="rounded-full border border-border/70 bg-background/60 px-2.5 py-1 text-xs font-medium hover:border-primary/40 hover:text-primary">
+            {v.word}
+            {v.misses > 1 && <span className="ml-1 text-muted-foreground">×{v.misses}</span>}
+          </Link>
+        ))}
+      </div>
     </section>
   );
 }
@@ -748,7 +513,7 @@ export function StrengthsPanel({ strengths }: { strengths: SkillStat[] }) {
               </div>
               <Meter value={s.score} status="pass" />
               <span className="text-[11px] text-muted-foreground">
-                {s.correct}/{s.attempted - s.noise} câu đúng
+                {s.correct}/{s.judged} câu đúng
                 {s.kind !== "part" && ` · ${s.parts.map((p) => PART_META[p].shortLabel).join(", ")}`}
               </span>
             </li>
