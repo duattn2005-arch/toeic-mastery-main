@@ -13,6 +13,7 @@ import { TtsAudioPlayer } from "@/components/exam/tts-audio-player";
 import { PassageViewer } from "@/components/exam/passage-viewer";
 import { AnswerOptionList } from "@/components/exam/answer-option";
 import { ReportQuestionDialog } from "@/components/history/report-question-dialog";
+import { answerMarkClass } from "@/components/history/answer-sheet";
 import { AskMentorButton } from "@/components/shared/ask-mentor-button";
 import { toggleQuestionBookmarkAction, saveQuestionVocabularyAction } from "@/lib/actions/bookmarks";
 import type { QuestionReview } from "@/lib/data/history";
@@ -39,12 +40,54 @@ function StatusBadge({ review }: { review: QuestionReview }) {
   );
 }
 
-export function QuestionReviewCard({ review, index, attemptId }: { review: QuestionReview; index: number; attemptId: string }) {
+function InsightNote({ insight, selectedLabel }: { insight: NonNullable<QuestionReview["insight"]>; selectedLabel: string | null }) {
+  // Listening has no target: the recording sets the pace, so its time says nothing.
+  const timed = !!selectedLabel && insight.timeSpentSec > 0 && !!insight.targetSec;
+  if (!insight.label && !insight.changedFrom && !timed) return null;
+
+  return (
+    <div className="rounded-xl border border-border p-4 text-sm">
+      <p className="font-semibold text-foreground">Phân tích câu trả lời của bạn</p>
+      {insight.label && (
+        <p className="mt-1 text-foreground/90">
+          <span className="font-medium text-destructive">{insight.label}.</span> {insight.tip}
+        </p>
+      )}
+      {(insight.changedFrom || timed) && (
+        <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+          {insight.changedFrom && (
+            <li>
+              Đổi từ {insight.changedFrom} sang {selectedLabel}
+            </li>
+          )}
+          {timed && (
+            <li>
+              Làm trong {insight.timeSpentSec} giây, mức chuẩn {insight.targetSec} giây
+            </li>
+          )}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export function QuestionReviewCard({
+  review,
+  index,
+  attemptId,
+  jumpSeq,
+}: {
+  review: QuestionReview;
+  index: number;
+  attemptId: string;
+  /** Goes up each time the answer sheet links to this question; 0 otherwise. */
+  jumpSeq: number;
+}) {
   const [open, setOpen] = React.useState(false);
   const viewLogged = React.useRef(false);
+  const cardRef = React.useRef<HTMLDivElement>(null);
 
-  function toggleOpen() {
-    setOpen((v) => !v);
+  function logFirstView() {
     // First look at the explanation — a level-2 (Hiểu) side signal for the
     // Bloom distillation; fire-and-forget, never blocks the UI.
     if (!viewLogged.current && review.selectedLabel) {
@@ -52,6 +95,24 @@ export function QuestionReviewCard({ review, index, attemptId }: { review: Quest
       void fetch(`/api/attempts/${attemptId}/questions/${review.id}/explanation-view`, { method: "POST" }).catch(() => {});
     }
   }
+
+  function toggleOpen() {
+    setOpen((v) => !v);
+    logFirstView();
+  }
+
+  const [handledJump, setHandledJump] = React.useState(0);
+  if (jumpSeq && jumpSeq !== handledJump) {
+    setHandledJump(jumpSeq);
+    setOpen(true);
+  }
+
+  React.useEffect(() => {
+    if (!jumpSeq) return;
+    logFirstView();
+    cardRef.current?.scrollIntoView({ block: "start" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [jumpSeq]);
   const [bookmarked, setBookmarked] = React.useState(review.isBookmarked);
   const [bookmarkPending, startBookmarkTransition] = React.useTransition();
   const [vocabPending, startVocabTransition] = React.useTransition();
@@ -84,16 +145,24 @@ export function QuestionReviewCard({ review, index, attemptId }: { review: Quest
   }
 
   return (
-    <div className={cn("rounded-2xl border bg-card shadow-soft", review.isFlagged ? "border-warning/40" : "border-border")}>
+    <div
+      ref={cardRef}
+      id={`q-${review.id}`}
+      className={cn("scroll-mt-24 rounded-2xl border bg-card shadow-soft", review.isFlagged ? "border-warning/40" : "border-border")}
+    >
       <button
         type="button"
         onClick={toggleOpen}
+        aria-expanded={open}
         className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left"
       >
         <div className="flex min-w-0 items-center gap-3">
-          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-muted text-xs font-semibold">{index + 1}</span>
+          <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-full text-xs tabular-nums", answerMarkClass(review))}>{index + 1}</span>
           <div className="min-w-0">
-            <p className="text-xs font-medium text-primary">{PART_META[review.part as keyof typeof PART_META].shortLabel}</p>
+            <p className="text-xs text-muted-foreground">
+              <span className="font-medium text-primary">{PART_META[review.part as keyof typeof PART_META].shortLabel}</span>
+              {review.selectedLabel && !review.isCorrect && `, bạn chọn ${review.selectedLabel}, đáp án ${review.correctLabel}`}
+            </p>
             <p className="truncate text-sm text-foreground/80">{review.prompt || "(Câu hỏi dạng nghe)"}</p>
           </div>
         </div>
@@ -129,6 +198,8 @@ export function QuestionReviewCard({ review, index, attemptId }: { review: Quest
           {review.prompt && <p className="text-sm leading-relaxed">{review.prompt}</p>}
 
           <AnswerOptionList options={review.options} selectedLabel={review.selectedLabel} correctLabel={review.correctLabel} onSelect={() => {}} disabled />
+
+          {review.insight && <InsightNote insight={review.insight} selectedLabel={review.selectedLabel} />}
 
           <div className="rounded-xl bg-accent/50 p-4 text-sm">
             <p className="font-semibold text-foreground">Giải thích</p>

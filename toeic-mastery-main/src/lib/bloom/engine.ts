@@ -459,6 +459,105 @@ export function tierProgress(levels: Record<ScoredBloomLevel, LevelMastery>): Ti
   return { reached, working: null, missing: [], frontier: null };
 }
 
+export interface TrapAnalysisItem {
+  trap: TrapType;
+  trapTypeHit: TrapType;
+  count: number;
+}
+
+export interface LevelAnswerStat {
+  answered: number;
+  accuracy: number;
+}
+
+export interface AnswerAnalysis {
+  answered: number;
+  correct: number;
+  accuracy: number;
+  traps: TrapAnalysisItem[];
+  unclassifiedWrong: number;
+  rightToWrong: number;
+  wrongToRight: number;
+  /** Đổi đáp án nhưng trước và sau đều sai. */
+  wrongToWrong: number;
+  avgSecCorrect: number | null;
+  avgSecWrong: number | null;
+  hintedCorrect: number;
+  byLevel: Record<ScoredBloomLevel, LevelAnswerStat>;
+}
+
+export function analyzeAnswers(attempts: BloomAttempt[]): AnswerAnalysis {
+  const nonFlashcard = attempts.filter((a) => a.source !== "flashcard");
+  const { kept } = filterNoise(nonFlashcard);
+
+  const answered = kept.length;
+  const correctAttempts = kept.filter((a) => a.isCorrect === true);
+  const correct = correctAttempts.length;
+  const accuracy = answered > 0 ? correct / answered : 0;
+
+  const wrongAttempts = kept.filter((a) => a.isCorrect === false);
+  let unclassifiedWrong = 0;
+  const trapCounts = new Map<TrapType, number>();
+  for (const a of wrongAttempts) {
+    if (a.trapTypeHit) {
+      trapCounts.set(a.trapTypeHit, (trapCounts.get(a.trapTypeHit) ?? 0) + 1);
+    } else {
+      unclassifiedWrong++;
+    }
+  }
+
+  const traps: TrapAnalysisItem[] = [...trapCounts.entries()]
+    .map(([trap, count]) => ({ trap, trapTypeHit: trap, count }))
+    .sort((a, b) => b.count - a.count);
+
+  const rightToWrong = kept.filter((a) => a.changedFromCorrectToWrong).length;
+  const wrongToRight = kept.filter(
+    (a) =>
+      a.answerChanged &&
+      a.isCorrect === true &&
+      !a.changedFromCorrectToWrong &&
+      (a.firstAnswer === null || a.firstAnswer !== a.selectedAnswer)
+  ).length;
+  const wrongToWrong = wrongAttempts.filter(
+    (a) => a.answerChanged && !a.changedFromCorrectToWrong && a.firstAnswer !== null && a.firstAnswer !== a.selectedAnswer
+  ).length;
+
+  const correctTimed = correctAttempts.filter((a) => a.timeSpentSec !== null);
+  const avgSecCorrect =
+    correctTimed.length > 0 ? correctTimed.reduce((s, a) => s + a.timeSpentSec!, 0) / correctTimed.length : null;
+
+  const wrongTimed = wrongAttempts.filter((a) => a.timeSpentSec !== null);
+  const avgSecWrong =
+    wrongTimed.length > 0 ? wrongTimed.reduce((s, a) => s + a.timeSpentSec!, 0) / wrongTimed.length : null;
+
+  const hintedCorrect = correctAttempts.filter((a) => a.hintUsedCount !== null && a.hintUsedCount > 0).length;
+
+  const byLevel = {} as Record<ScoredBloomLevel, LevelAnswerStat>;
+  for (const lvl of SCORED_LEVELS) {
+    const lvlAttempts = kept.filter((a) => a.bloomLevel === lvl);
+    const lvlCorrect = lvlAttempts.filter((a) => a.isCorrect === true).length;
+    byLevel[lvl] = {
+      answered: lvlAttempts.length,
+      accuracy: lvlAttempts.length > 0 ? lvlCorrect / lvlAttempts.length : 0,
+    };
+  }
+
+  return {
+    answered,
+    correct,
+    accuracy,
+    traps,
+    unclassifiedWrong,
+    rightToWrong,
+    wrongToRight,
+    wrongToWrong,
+    avgSecCorrect,
+    avgSecWrong,
+    hintedCorrect,
+    byLevel,
+  };
+}
+
 // ---------------------------------------------------------------------------
 // Gói kết quả
 // ---------------------------------------------------------------------------
@@ -473,6 +572,7 @@ export interface BloomProfile {
   /** Tín hiệu phụ bậc 2: số lần xem giải thích. */
   explanationViews: number;
   hintsUsed: number;
+  answers: AnswerAnalysis;
 }
 
 export function buildBloomProfile(attempts: BloomAttempt[], now: number = Date.now()): BloomProfile {
@@ -489,5 +589,6 @@ export function buildBloomProfile(attempts: BloomAttempt[], now: number = Date.n
     totalAnswered: attempts.filter((a) => a.isCorrect !== null && a.source !== "flashcard").length,
     explanationViews: attempts.filter((a) => a.explanationViewed).length,
     hintsUsed: attempts.reduce((s, a) => s + (a.hintUsedCount ?? 0), 0),
+    answers: analyzeAnswers(attempts),
   };
 }

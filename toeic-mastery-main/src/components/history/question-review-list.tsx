@@ -9,6 +9,20 @@ type FilterKey = "ALL" | "CORRECT" | "WRONG" | "SKIPPED" | "FLAGGED";
 
 export function QuestionReviewList({ reviews, attemptId }: { reviews: QuestionReview[]; attemptId: string }) {
   const [filter, setFilter] = React.useState<FilterKey>("ALL");
+  const [jump, setJump] = React.useState({ id: "", seq: 0 });
+
+  // The answer sheet links here by hash. Clearing the hash lets the same mark fire again.
+  React.useEffect(() => {
+    function onHashChange() {
+      const id = window.location.hash.match(/^#q-(.+)$/)?.[1];
+      if (!id) return;
+      setFilter("ALL");
+      setJump((j) => ({ id, seq: j.seq + 1 }));
+      window.history.replaceState(window.history.state, "", window.location.pathname + window.location.search);
+    }
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
 
   const filtered = reviews.filter((r) => {
     switch (filter) {
@@ -63,7 +77,13 @@ export function QuestionReviewList({ reviews, attemptId }: { reviews: QuestionRe
           <p className="py-8 text-center text-sm text-muted-foreground">Không có câu hỏi nào trong mục này.</p>
         ) : (
           filtered.map((review) => (
-            <QuestionReviewCard key={review.id} review={review} index={reviews.indexOf(review)} attemptId={attemptId} />
+            <QuestionReviewCard
+              key={review.id}
+              review={review}
+              index={reviews.indexOf(review)}
+              attemptId={attemptId}
+              jumpSeq={jump.id === review.id ? jump.seq : 0}
+            />
           ))
         )}
       </div>

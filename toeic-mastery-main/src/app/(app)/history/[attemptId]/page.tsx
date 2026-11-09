@@ -6,7 +6,9 @@ import { getAttemptResult } from "@/lib/data/history";
 import { startAttemptAction, startMistakeRetryAction } from "@/lib/actions/attempts";
 import { Button } from "@/components/ui/button";
 import { ScoreResultHeader } from "@/components/history/score-result-header";
-import { ScoreChart } from "@/components/shared/score-chart";
+import { AnswerSheet } from "@/components/history/answer-sheet";
+import { AnswerAnalysis } from "@/components/history/answer-analysis";
+import { PANEL } from "@/components/analytics/insights-view";
 import { QuestionReviewList } from "@/components/history/question-review-list";
 import { ResultCelebration } from "@/components/history/result-celebration";
 import { StudyMascot } from "@/components/mascot/study-mascot";
@@ -18,7 +20,7 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
   const { attemptId } = await params;
   const profile = await requireUser();
 
-  const { attempt, questionReviews, partBreakdown, timeUsedSec, xpEarned } = await getAttemptResult(attemptId, profile.id, isPro(profile));
+  const { attempt, questionReviews, partBreakdown, analysis, timeUsedSec, xpEarned } = await getAttemptResult(attemptId, profile.id, isPro(profile));
 
   if (attempt.status === "IN_PROGRESS") redirect(`/exam/${attemptId}`);
 
@@ -26,7 +28,9 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
   const wrongCount = attempt.wrongCount ?? 0;
   const skippedCount = attempt.skippedCount ?? 0;
   const accuracy = correctCount + wrongCount > 0 ? correctCount / (correctCount + wrongCount) : 0;
-  const achievedTarget = !!profile.targetScore && !!attempt.totalScore && attempt.totalScore >= profile.targetScore;
+  const lostCount = wrongCount + skippedCount;
+  const doingWell = correctCount >= (correctCount + lostCount) * 0.7;
+  const achievedTarget =!!profile.targetScore && !!attempt.totalScore && attempt.totalScore >= profile.targetScore;
 
   return (
     <div className="flex flex-col gap-6">
@@ -39,35 +43,12 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
             Nộp bài lúc {attempt.submittedAt?.toLocaleString("vi-VN")} · Chế độ {attempt.mode === "EXAM" ? "Thi thử" : "Luyện tập"}
           </p>
         </div>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/10 px-3.5 py-1.5 text-sm font-semibold text-warning">
-          <Sparkles className="size-4" />+{xpEarned} XP từ bài này
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-warning/15 px-3.5 py-1.5 text-sm font-semibold text-foreground">
+          <Sparkles className="size-4 text-warning" />+{xpEarned} XP từ bài này
         </span>
       </div>
 
-      <div className="flex flex-wrap items-center justify-center gap-3">
-        {/* Both start a brand new real Attempt (same exam-runner UI as any
-           other attempt, timer/navigator/groups included) rather than some
-           separate lightweight review screen — "tất cả" reuses the exact
-           same testId+parts scope via startAttemptAction, "câu sai" needs
-           startMistakeRetryAction since no testId+parts combination can
-           express "just these specific questions". */}
-        <form action={startAttemptAction.bind(null, attempt.testId, "PRACTICE", attempt.parts)}>
-          <Button type="submit" size="lg">
-            <RotateCcw className="size-4" />
-            Luyện tập lại tất cả
-          </Button>
-        </form>
-        {wrongCount + skippedCount > 0 && (
-          <form action={startMistakeRetryAction.bind(null, attemptId)}>
-            <Button type="submit" size="lg" variant="destructive">
-              <Target className="size-4" />
-              Luyện tập lại câu sai ({wrongCount + skippedCount})
-            </Button>
-          </form>
-        )}
-      </div>
-
-      <div data-tour="history-result-score">
+      <div data-tour="history-result-score" className={`${PANEL} flex flex-col gap-6`}>
         <ScoreResultHeader
           isEstimated
           totalScore={attempt.totalScore}
@@ -79,23 +60,42 @@ export default async function AttemptResultPage({ params }: { params: Promise<{ 
           accuracy={accuracy}
           timeUsedSec={timeUsedSec}
         />
+        <AnswerSheet reviews={questionReviews} />
       </div>
 
-      {partBreakdown.length > 1 && (
-        <section className="rounded-2xl border border-border bg-card p-5 shadow-soft sm:p-6">
-          <h2 className="mb-1 text-sm font-semibold text-muted-foreground">PHÂN TÍCH THEO PART</h2>
-          <ScoreChart data={partBreakdown} />
-        </section>
-      )}
+      <AnswerAnalysis parts={partBreakdown} analysis={analysis} />
+
+      <div className="flex flex-wrap items-center gap-3">
+        {/* Both start a brand new real Attempt (same exam-runner UI as any
+           other attempt, timer/navigator/groups included) rather than some
+           separate lightweight review screen — "tất cả" reuses the exact
+           same testId+parts scope via startAttemptAction, "câu sai" needs
+           startMistakeRetryAction since no testId+parts combination can
+           express "just these specific questions". */}
+        {lostCount > 0 && (
+          <form action={startMistakeRetryAction.bind(null, attemptId)}>
+            <Button type="submit" size="lg">
+              <Target className="size-4" />
+              Luyện lại {lostCount} câu sai và bỏ qua
+            </Button>
+          </form>
+        )}
+        <form action={startAttemptAction.bind(null, attempt.testId, "PRACTICE", attempt.parts)}>
+          <Button type="submit" size="lg" variant={lostCount > 0 ? "outline" : "default"}>
+            <RotateCcw className="size-4" />
+            Luyện lại tất cả
+          </Button>
+        </form>
+      </div>
 
       <section data-tour="history-result-questions">
-        <h2 className="mb-3 text-sm font-semibold text-muted-foreground">XEM LẠI ĐÁP ÁN</h2>
+        <h2 className="mb-3 text-lg font-semibold">Xem lại đáp án</h2>
         <QuestionReviewList reviews={questionReviews} attemptId={attemptId} />
       </section>
 
       <StudyMascot
-        state="success"
-        message={`Bạn vừa nhận +${xpEarned} XP từ bài này! 🎉`}
+        state={doingWell ? "success" : "encouraging"}
+        message={doingWell ? "Làm tốt lắm! Xem lại vài câu sai là chắc hơn nữa." : "Chưa như ý cũng không sao. Bắt đầu từ các câu sai nhé."}
         equippedShopItemId={profile.equippedShopItemId}
       />
       <HistoryResultTour />
