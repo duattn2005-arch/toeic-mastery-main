@@ -2,14 +2,19 @@ import "server-only";
 import { db } from "@/lib/db";
 import { GUIDES } from "@/lib/content/guides";
 import { askJson, cleanStrings, clip, normalize } from "./llm";
+import { competitorBrands, mentionedBrand } from "./brands";
 
-const SYSTEM = `Bạn là trưởng nhóm nội dung SEO của TOEIC Mastery — website luyện thi TOEIC và học tiếng Anh online cho người Việt (luyện đề đủ 7 Part, từ vựng theo lộ trình, ngữ pháp, AI Mentor, bài thi thử miễn phí, từ vựng Tiếng Anh THPT).
+const SYSTEM = `Bạn là trưởng nhóm nội dung SEO của TOEIC Mastery — website luyện thi TOEIC Listening & Reading online cho người Việt (luyện đề đủ 7 Part, từ vựng theo lộ trình, ngữ pháp, AI Mentor, bài thi thử miễn phí, từ vựng Tiếng Anh THPT).
 
 Nhiệm vụ: đề xuất chủ đề bài blog MỚI để kéo người học từ Google về web. Ưu tiên:
 - từ khoá dài, cụ thể, người Việt thật sự gõ trên Google (viết tiếng Việt có dấu, hoặc tiếng Anh nếu người học hay gõ như vậy);
 - chủ đề đối thủ đang có mà web mình chưa có bài, hoặc góc nhìn tốt hơn họ;
 - chủ đề dẫn tự nhiên tới việc luyện đề, học từ vựng hoặc làm bài thi thử trên web;
 - KHÔNG trùng hoặc gần trùng với nội dung web đã có.
+
+Bắt buộc:
+- Chỉ đề xuất chủ đề về TOEIC Listening & Reading (Part 1–7, từ vựng, ngữ pháp, chiến thuật, điểm số, lộ trình, đăng ký thi) hoặc từ vựng Tiếng Anh THPT. Web KHÔNG dạy IELTS, TOEFL, VSTEP hay TOEIC Speaking & Writing: không đề xuất bài hướng dẫn luyện các kỳ thi hay kỹ năng đó.
+- Không đưa tên website, trung tâm, ứng dụng hay thương hiệu nào khác vào tiêu đề, từ khoá hay góc nhìn — kể cả tên xuất hiện trong dữ liệu đối thủ. Bỏ hẳn những từ khoá mang tên thương hiệu.
 
 Chỉ trả về đúng một mảng JSON, không thêm chữ nào khác:
 [{"title": "tiêu đề bài viết", "primaryKeyword": "từ khoá chính", "keywords": ["từ khoá phụ", "..."], "intent": "informational | commercial | navigational", "angle": "điểm khác biệt / giá trị riêng của bài"}]`;
@@ -42,9 +47,16 @@ export async function generateTopicIdeas(count: number) {
     select: { topic: true, keywords: true },
   });
   const have = await coverage();
+  const brands = await competitorBrands();
+  // Competitors' own brand keywords ("English Mastery luyện thi TOEIC") would
+  // otherwise come straight back as our topics.
+  const lines = competitors
+    .map((c) => ({ topic: c.topic && !mentionedBrand(c.topic, brands) ? c.topic : "", keywords: c.keywords.filter((k) => !mentionedBrand(k, brands)) }))
+    .filter((c) => c.topic || c.keywords.length)
+    .map((c) => `- ${c.topic || "(chủ đề có tên thương hiệu, đã bỏ)"} | ${c.keywords.join(", ")}`);
   const prompt = [
-    competitors.length
-      ? `Chủ đề và từ khoá của đối thủ:\n${competitors.map((c) => `- ${c.topic} | ${c.keywords.join(", ")}`).join("\n")}`
+    lines.length
+      ? `Chủ đề và từ khoá của đối thủ:\n${lines.join("\n")}`
       : "Chưa có dữ liệu đối thủ: hãy đề xuất dựa trên những gì người Việt hay tìm khi học TOEIC và tiếng Anh.",
     `Nội dung web ĐÃ CÓ (không đề xuất trùng):\n${have.lines.join("\n")}`,
     `Đề xuất ${count} chủ đề mới.`,
@@ -59,14 +71,17 @@ export async function generateTopicIdeas(count: number) {
     const title = typeof idea.title === "string" ? clip(idea.title, 150) : "";
     const primaryKeyword = typeof idea.primaryKeyword === "string" ? clip(idea.primaryKeyword, 100) : "";
     if (!title || !primaryKeyword || have.keywords.has(normalize(primaryKeyword))) continue;
+    const keywords = cleanStrings(idea.keywords, 8, 80);
+    const angle = typeof idea.angle === "string" ? clip(idea.angle, 300) : null;
+    if (mentionedBrand([title, primaryKeyword, ...keywords, angle ?? ""].join(" · "), brands)) continue;
     have.keywords.add(normalize(primaryKeyword));
     await db.seoTopic.create({
       data: {
         title,
         primaryKeyword,
-        keywords: cleanStrings(idea.keywords, 8, 80),
+        keywords,
         intent: typeof idea.intent === "string" ? clip(idea.intent, 40) : null,
-        angle: typeof idea.angle === "string" ? clip(idea.angle, 300) : null,
+        angle,
         source: competitors.length ? "competitor" : "ai",
       },
     });
