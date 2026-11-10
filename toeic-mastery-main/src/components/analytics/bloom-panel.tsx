@@ -88,43 +88,53 @@ function cellTitle(c: CellResult, level: ScoredBloomLevel) {
 function HeatCell({ row, level, cell }: { row: BloomLabelRow; level: ScoredBloomLevel; cell: CellResult | undefined }) {
   const available = row.available.includes(level);
   const isFrontier = row.frontier.level === level;
+  const frontier = isFrontier && "ring-2 ring-primary ring-offset-2 ring-offset-background";
+  const dot = isFrontier && <span aria-hidden className="absolute -top-1 -right-1 size-2.5 rounded-full border-2 border-background bg-primary" />;
   if (!cell) {
     return (
-      <td className="p-1">
+      <td className="border-b border-border/50 px-1.5 py-2">
         <div
           className={cn(
-            "flex h-12 items-center justify-center rounded-xl text-xs",
-            available ? "border border-dashed border-border text-muted-foreground" : "text-muted-foreground/40",
-            isFrontier && "border-primary/60 ring-2 ring-primary/40"
+            "relative flex h-11 items-center justify-center rounded-lg text-xs",
+            available && "bg-muted/40 text-muted-foreground/70",
+            isFrontier && "bg-primary/8 font-semibold text-primary",
+            frontier
           )}
           title={available ? `${LEVEL.get(level)!.nameVi}: chưa làm câu nào` : "Ngân hàng chưa có câu ở bậc này cho nhãn này"}
         >
-          {available ? "—" : "·"}
+          {dot}
+          {available && (isFrontier ? "Bắt đầu" : "—")}
         </div>
       </td>
     );
   }
   const st = cellStatus(cell);
   return (
-    <td className="p-1">
+    <td className="border-b border-border/50 px-1.5 py-2">
       <div
         className={cn(
-          "flex h-12 flex-col items-center justify-center rounded-xl text-sm font-bold ring-1 tabular-nums transition-transform duration-200 ring-inset hover:scale-105",
+          "relative flex h-11 flex-col items-center justify-center gap-0.5 rounded-lg text-sm leading-none font-bold tabular-nums transition-transform duration-200 hover:-translate-y-0.5",
           STATUS_CELL[st],
-          isFrontier && "ring-2 ring-primary/70"
+          frontier
         )}
         title={cellTitle(cell, level)}
       >
+        {dot}
         {st === "insufficient" ? (
           <>
             {/* No valid answer left after noise filtering: unknown, not a score of 0%. */}
-            <span>{cell.attempts > 0 ? scorePct(cell.score) : "–"}</span>
-            <span className="text-[9px] font-medium opacity-80">
-              {cell.attempts}/{MIN_ATTEMPTS_PER_CELL}
+            <span className="text-[13px]">{cell.attempts > 0 ? scorePct(cell.score) : "–"}</span>
+            <span className="flex items-center gap-1">
+              <span aria-hidden className="h-1 w-6 overflow-hidden rounded-full bg-foreground/10">
+                <span className="block h-full rounded-full bg-muted-foreground/60" style={{ width: `${Math.min(100, (cell.attempts / MIN_ATTEMPTS_PER_CELL) * 100)}%` }} />
+              </span>
+              <span className="text-[9px] font-medium">
+                {cell.attempts}/{MIN_ATTEMPTS_PER_CELL}
+              </span>
             </span>
           </>
         ) : st === "inferred" ? (
-          <span className="text-[10px] font-semibold">suy ra</span>
+          <span className="text-[11px] font-semibold">suy ra</span>
         ) : (
           <>
             <span>{scorePct(cell.score)}</span>
@@ -162,8 +172,8 @@ function RowAction({ row }: { row: BloomLabelRow }) {
 
 function Legend({ cls, label }: { cls: string; label: string }) {
   return (
-    <span className="flex items-center gap-1">
-      <span className={cn("size-3 rounded ring-1 ring-inset", cls)} /> {label}
+    <span className="flex items-center gap-1.5 rounded-full bg-muted/50 py-1 pr-2.5 pl-1.5">
+      <span className={cn("size-3.5 rounded-[5px] ring-1 ring-inset", cls)} /> {label}
     </span>
   );
 }
@@ -594,12 +604,15 @@ export function BloomPanel({ bloom, mistakeDetails }: { bloom: LearnerBloom; mis
 
         <div className="mt-4 space-y-6 rounded-3xl bg-background p-4 sm:p-6">
           <div>
-            <div className="mb-3 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
+            <div className="mb-4 flex flex-wrap items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
               {HEAT_LEGEND.map(([cls, label]) => (
                 <Legend key={label} cls={cls} label={label} />
               ))}
-              <span className="flex items-center gap-1">
-                <span className="size-3 rounded ring-2 ring-primary/70" /> Bậc cần luyện tiếp
+              <span className="flex items-center gap-1.5 rounded-full bg-primary/10 py-1 pr-2.5 pl-1.5 text-primary">
+                <span className="relative size-3.5 rounded-[5px] ring-2 ring-primary">
+                  <span className="absolute -top-1 -right-1 size-2 rounded-full bg-primary" />
+                </span>
+                Bậc cần luyện tiếp
               </span>
             </div>
             {shown.length === 0 ? (
@@ -609,31 +622,36 @@ export function BloomPanel({ bloom, mistakeDetails }: { bloom: LearnerBloom; mis
                 <table className="w-full min-w-[640px] border-separate border-spacing-0 text-sm">
                   <thead>
                     <tr className="text-[11px] text-muted-foreground">
-                      <th className="sticky left-0 z-10 bg-background px-2 pb-2 text-left font-semibold">Nhãn kiến thức</th>
+                      <th className="sticky left-0 z-10 border-b border-border bg-background px-3 pb-2.5 text-left font-semibold tracking-wide uppercase">Nhãn kiến thức</th>
                       {SCORED_LEVELS.map((l) => (
-                        <th key={l} className="w-[13%] px-1 pb-2 text-center font-semibold">
-                          <span className="mx-auto mb-1 block h-1 w-8 rounded-full" style={{ background: LEVEL.get(l)!.color }} />
-                          {l}. {LEVEL.get(l)!.nameVi}
+                        <th key={l} className="w-[13%] border-b border-border px-1 pb-2.5 text-center font-semibold">
+                          <span className="inline-flex items-center gap-1.5 rounded-full bg-muted/60 px-2.5 py-1 text-foreground/80">
+                            <span className="flex size-4 items-center justify-center rounded-full text-[10px] font-bold text-white" style={{ background: LEVEL.get(l)!.color }}>
+                              {l}
+                            </span>
+                            {LEVEL.get(l)!.nameVi}
+                          </span>
                         </th>
                       ))}
-                      <th className="w-[12%] pb-1.5" />
+                      <th className="w-[12%] border-b border-border pb-2.5" />
                     </tr>
                   </thead>
                   <tbody>
                     {shown.map((row) => (
-                      <tr key={row.label} className="transition-colors hover:bg-accent/30">
-                        <td className="sticky left-0 z-10 max-w-[180px] bg-background px-2 py-1 sm:max-w-[220px]">
-                          <p className="truncate font-medium" title={row.title}>
+                      <tr key={row.label} className="group/row">
+                        <td className="sticky left-0 z-10 max-w-[180px] border-b border-border/50 bg-background px-3 py-2 transition-colors group-hover/row:bg-muted sm:max-w-[240px]">
+                          <p className="truncate font-semibold" title={row.title}>
                             {row.title}
                           </p>
-                          <p className="text-[11px] text-muted-foreground">
-                            {KIND_LABEL[row.kind]}, {row.attempts} câu
+                          <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                            <span className="rounded bg-muted px-1.5 py-px font-medium">{KIND_LABEL[row.kind]}</span>
+                            {row.attempts} câu
                           </p>
                         </td>
                         {SCORED_LEVELS.map((l) => (
                           <HeatCell key={l} row={row} level={l} cell={profile.heatmap[row.label]?.[l]} />
                         ))}
-                        <td className="py-1 pl-1 text-right">
+                        <td className="border-b border-border/50 py-2 pr-2 pl-1 text-right">
                           <RowAction row={row} />
                         </td>
                       </tr>
