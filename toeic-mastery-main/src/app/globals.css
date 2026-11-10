@@ -1680,6 +1680,68 @@
 .an-ring { animation: an-ring 1s cubic-bezier(0.22, 1, 0.36, 1) both; }
 .an-lift { transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease; }
 .an-lift:hover { transform: translateY(-2px); box-shadow: 0 2px 4px hsl(var(--shadow-color) / 0.05), 0 14px 30px -12px hsl(var(--shadow-color) / 0.22); }
+/* Bloom heatmap: scored cells are raised 3D tiles, empty ones are recessed wells. --tile is the status colour. */
+@keyframes an-tile-in {
+  from { opacity: 0; transform: perspective(500px) rotateX(-75deg) translateY(10px); }
+}
+@keyframes an-tile-glow {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 color-mix(in srgb, var(--primary) 45%, transparent); }
+  50% { opacity: 0.75; box-shadow: 0 0 14px 3px color-mix(in srgb, var(--primary) 35%, transparent); }
+}
+.an-tile {
+  --tile: var(--muted-foreground);
+  position: relative;
+  background-image: linear-gradient(180deg, color-mix(in srgb, var(--tile) 24%, var(--card)), color-mix(in srgb, var(--tile) 12%, var(--card)));
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.6),
+    0 4px 0 color-mix(in srgb, var(--tile) 34%, var(--card)),
+    0 10px 16px -8px color-mix(in srgb, var(--tile) 55%, transparent);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+  /* backwards, not both: a held end transform would block the hover lift. */
+  animation: an-tile-in 0.55s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: calc(var(--an-i, 0) * 45ms);
+}
+.an-tile:hover {
+  transform: translateY(-3px);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 0.6),
+    0 7px 0 color-mix(in srgb, var(--tile) 34%, var(--card)),
+    0 18px 24px -10px color-mix(in srgb, var(--tile) 60%, transparent);
+}
+.an-tile[data-tone="green"] { --tile: var(--success); }
+.an-tile[data-tone="yellow"] { --tile: var(--warning); }
+.an-tile[data-tone="red"] { --tile: var(--destructive); }
+.an-tile[data-tone="inferred"] {
+  --tile: var(--success);
+  background-image:
+    repeating-linear-gradient(135deg, transparent 0 5px, color-mix(in srgb, var(--success) 14%, transparent) 5px 7px),
+    linear-gradient(180deg, color-mix(in srgb, var(--success) 12%, var(--card)), color-mix(in srgb, var(--success) 6%, var(--card)));
+}
+.an-well {
+  position: relative;
+  background: color-mix(in srgb, var(--muted) 70%, transparent);
+  box-shadow: inset 0 2px 5px rgb(0 0 0 / 0.08), inset 0 -1px 0 rgb(255 255 255 / 0.5);
+  animation: an-rise 0.4s ease backwards;
+  animation-delay: calc(var(--an-i, 0) * 45ms);
+}
+.an-frontier::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border: 2px solid var(--primary);
+  border-radius: 0.8rem;
+  pointer-events: none;
+  animation: an-tile-glow 2.4s ease-in-out infinite;
+}
+/* Mini preview on the folded banner: tilted into an isometric board, flattens on hover. */
+.an-iso { transform: perspective(700px) rotateX(48deg) rotateZ(-28deg); transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
+.an-iso:hover, details[open] .an-iso { transform: none; }
+.an-iso > span > span { box-shadow: 0 3px 0 rgb(0 0 0 / 0.14); }
+@media (prefers-reduced-motion: reduce) {
+  .an-tile, .an-well, .an-frontier::after { animation: none; }
+  .an-tile, .an-iso { transition: none; }
+  .an-tile:hover { transform: none; }
+}
 /* Browsers without ::details-content ignore this and just open instantly. */
 details.an-fold { interpolate-size: allow-keywords; }
 details.an-fold::details-content { block-size: 0; overflow: clip; transition: block-size 0.3s ease, content-visibility 0.3s allow-discrete; }
