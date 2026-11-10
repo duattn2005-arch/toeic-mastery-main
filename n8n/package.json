@@ -6,11 +6,11 @@
   "scripts": {
     "screenshot": "node screenshot-service.js",
     "n8n": "npx n8n",
-    "start": "node start-all.js"
+    "start": "node start-all.js",
+    "login": "node login-helper.js"
   },
   "dependencies": {
     "express": "^4.21.0",
     "puppeteer": "^23.0.0"
   }
 }
-
