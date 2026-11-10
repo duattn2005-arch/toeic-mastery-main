@@ -134,12 +134,12 @@
     {
       "parameters": {
         "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
         "authentication": "genericCredentialType",
         "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={{ JSON.stringify({ contents: [{ parts: [{ text: $json.prompt }] }], generationConfig: { temperature: 0.7, maxOutputTokens: 1024 } }) }}",
+        "jsonBody": "={{ JSON.stringify({ contents: [{ parts: [{ text: $json.prompt }] }], generationConfig: { temperature: 0.7, maxOutputTokens: 8192 } }) }}",
         "options": {
           "timeout": 120000
         }
@@ -157,11 +157,14 @@
           "id": "GEMINI_CREDENTIAL_ID",
           "name": "Gemini API key"
         }
-      }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 10000
     },
     {
       "parameters": {
-        "jsCode": "// Kiểm tra bài trước khi đăng. Bài không đạt -> báo lỗi và DỪNG, không đăng gì.\nconst prev = $('🧹 Đọc trang & tạo prompt').first().json;\nconst resp = $input.first().json;\n\nlet post = (resp.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\npost = post.replace(/\\*\\*/g, '').replace(/^[\"“]|[\"”]$/g, '').trim();\n\nconst problems = [];\nif (!post) problems.push('AI không trả về nội dung (finishReason: ' + (resp.candidates?.[0]?.finishReason || 'n/a') + ')');\nif (post.length > 500) problems.push('Dài ' + post.length + ' ký tự (Threads giới hạn 500)');\nif (!post.includes(prev.pageUrl)) problems.push('Thiếu link đúng của trang: ' + prev.pageUrl);\n\nconst lower = post.toLowerCase();\nfor (const brand of prev.BLOCKED_BRANDS) {\n  if (new RegExp(brand, 'i').test(lower)) problems.push('Nhắc thương hiệu bị chặn: ' + brand);\n}\n// Mọi domain khác ngoài toeicmastery.click đều không được phép.\nconst domains = lower.match(/\\b[a-z0-9-]+(\\.[a-z0-9-]+)*\\.(vn|com|net|org|edu|io|app|click|me|co)\\b/g) || [];\nfor (const d of domains) {\n  if (!/(^|\\.)toeicmastery\\.click$/.test(d)) problems.push('Có domain lạ: ' + d);\n}\n\nif (/không cần (đăng nhập|đăng ký|tài khoản)/.test(lower)) problems.push('Nói \"không cần đăng nhập\" – web phải đăng nhập');\nif (problems.length > 0) {\n  throw new Error('Bài KHÔNG được đăng:\\n- ' + problems.join('\\n- ') + '\\n\\nNội dung AI viết:\\n' + post);\n}\n\nreturn [{ json: { ...prev, generatedContent: post } }];"
+        "jsCode": "// Kiểm tra bài trước khi đăng. Bài không đạt -> báo lỗi và DỪNG, không đăng gì.\nconst prev = $('🧹 Đọc trang & tạo prompt').first().json;\nconst resp = $input.first().json;\n\nlet post = (resp.candidates?.[0]?.content?.parts || []).filter((p) => !p.thought).map((p) => p.text || '').join('').trim();\npost = post.replace(/\\*\\*/g, '').replace(/^[\"“]|[\"”]$/g, '').trim();\n\nconst problems = [];\nif (!post) problems.push('AI không trả về nội dung (finishReason: ' + (resp.candidates?.[0]?.finishReason || 'n/a') + ')');\nif (post.length > 500) problems.push('Dài ' + post.length + ' ký tự (Threads giới hạn 500)');\nif (!post.includes(prev.pageUrl)) problems.push('Thiếu link đúng của trang: ' + prev.pageUrl);\n\nconst lower = post.toLowerCase();\nfor (const brand of prev.BLOCKED_BRANDS) {\n  if (new RegExp(brand, 'i').test(lower)) problems.push('Nhắc thương hiệu bị chặn: ' + brand);\n}\n// Mọi domain khác ngoài toeicmastery.click đều không được phép.\nconst domains = lower.match(/\\b[a-z0-9-]+(\\.[a-z0-9-]+)*\\.(vn|com|net|org|edu|io|app|click|me|co)\\b/g) || [];\nfor (const d of domains) {\n  if (!/(^|\\.)toeicmastery\\.click$/.test(d)) problems.push('Có domain lạ: ' + d);\n}\n\nif (/không cần (đăng nhập|đăng ký|tài khoản)/.test(lower)) problems.push('Nói \"không cần đăng nhập\" – web phải đăng nhập');\nif (problems.length > 0) {\n  throw new Error('Bài KHÔNG được đăng:\\n- ' + problems.join('\\n- ') + '\\n\\nNội dung AI viết:\\n' + post);\n}\n\nreturn [{ json: { ...prev, generatedContent: post } }];"
       },
       "id": "validate-post",
       "name": "✅ Kiểm tra bài trước khi đăng",
