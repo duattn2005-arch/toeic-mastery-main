@@ -1,0 +1,438 @@
+{
+  "name": "TOEIC Mastery – Threads trả lời comment trên trang",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "*/20 7-23 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron",
+      "name": "⏰ Mỗi 20 phút (7h–23h)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "manual",
+      "name": "🖱️ Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "url": "https://graph.threads.net/v1.0/me/threads",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,text,timestamp,is_reply"
+            },
+            {
+              "name": "limit",
+              "value": "25"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "get-posts",
+      "name": "📥 Lấy bài của trang",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        220,
+        100
+      ],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "THREADS_CREDENTIAL_ID",
+          "name": "Threads access token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Bài của trang trong 3 ngày gần nhất: chỉ trả lời comment dưới các bài này.\nconst MY_USERNAME = 'toeicmasteryy';\nconst since = Date.now() - 3 * 24 * 60 * 60 * 1000;\nconst posts = ($input.first().json.data || []).filter((p) => p.timestamp && Date.parse(p.timestamp) >= since && !p.is_reply);\nreturn posts.map((p) => ({ json: { postId: p.id, postText: p.text || '', MY_USERNAME } }));"
+      },
+      "id": "pick-posts",
+      "name": "📋 Chọn bài gần đây",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        440,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ \"https://graph.threads.net/v1.0/\" + $json.postId + \"/conversation\" }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "fields",
+              "value": "id,text,username,timestamp,replied_to"
+            },
+            {
+              "name": "reverse",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 30000
+        }
+      },
+      "id": "get-conv",
+      "name": "💬 Lấy comment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        660,
+        100
+      ],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "THREADS_CREDENTIAL_ID",
+          "name": "Threads access token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Comment chưa trả lời, không phải của trang, tối đa 5 cái mỗi lần chạy.\nconst MAX_PER_RUN = 5;\nconst posts = $('📋 Chọn bài gần đây').all().map((i) => i.json);\nconst store = $getWorkflowStaticData('global');\nconst handled = new Set(store.handledReplyIds || []);\n\nconst todo = [];\n$input.all().forEach((item, i) => {\n  const post = posts[i];\n  for (const c of item.json.data || []) {\n    if (!c.text || !c.username || c.username === post.MY_USERNAME) continue;\n    if (handled.has(c.id)) continue;\n    // Đã có trả lời của trang ngay dưới comment này thì bỏ qua.\n    const answered = (item.json.data || []).some((r) => r.username === post.MY_USERNAME && r.replied_to && r.replied_to.id === c.id);\n    if (answered) { handled.add(c.id); continue; }\n    todo.push({ commentId: c.id, commentText: c.text, commenter: c.username, postText: post.postText });\n  }\n});\nstore.handledReplyIds = [...handled].slice(-500);\nreturn todo.slice(0, MAX_PER_RUN).map((t) => ({ json: t }));"
+      },
+      "id": "pick-comments",
+      "name": "🎯 Chọn comment cần trả lời",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const t = $json;\nconst prompt = [\n  'Bạn là admin trang Threads @toeicmasteryy của TOEIC Mastery – web luyện thi TOEIC Listening & Reading. Trả lời 1 comment dưới bài của trang.',\n  '',\n  'BÀI CỦA TRANG:',\n  '\"\"\"' + t.postText + '\"\"\"',\n  '',\n  'COMMENT CỦA @' + t.commenter + ':',\n  '\"\"\"' + t.commentText + '\"\"\"',\n  '',\n  'SỰ THẬT VỀ WEB (chỉ được nói trong phạm vi này): luyện đề bám sát đề thật (ETS 2023, Mastery ETS 2024, Mastery ETS 2026), luyện nghe từng Part 1–4, ngữ pháp Part 5–6 (32 bài học, 1065 câu luyện tập), từ vựng TOEIC 20 ngày với flashcard và ôn lặp lại ngắt quãng. Gói Pro: lời giải chi tiết, nghe chép chính tả ETS 2026, radar phân tích điểm yếu. Phải đăng ký tài khoản mới học được.',\n  '',\n  'CÁCH TRẢ LỜI:',\n  '- Giọng admin thân thiện, tự nhiên, ngắn gọn như người thật nói chuyện trên Threads (có thể \"nha\", \"nè\", \"=)))\"), xưng \"ad\" hoặc \"mình\".',\n  '- Nếu comment hỏi kiến thức TOEIC: trả lời đúng, ngắn. Nếu hỏi về web: trả lời theo SỰ THẬT ở trên, tính năng Pro thì nói rõ là Pro. Nếu khen/cảm ơn: cảm ơn lại tự nhiên. Nếu chê/góp ý: cảm ơn, ghi nhận, không cãi.',\n  '- KHÔNG chèn link hay tên miền. Không nói \"free/miễn phí\", \"không cần đăng nhập\". Không bịa số liệu, không hứa tăng điểm, không nhắc thương hiệu khác.',\n  '- Tối đa 250 ký tự.',\n  '- Nếu comment là spam, quảng cáo, chửi bới hoặc không cần trả lời: chỉ trả về đúng chữ SKIP.',\n  '',\n  'Chỉ trả về nội dung câu trả lời (hoặc SKIP).',\n].join('\\n');\nreturn { json: { ...t, prompt } };"
+      },
+      "id": "make-prompt",
+      "name": "🧹 Tạo prompt trả lời",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ contents: [{ parts: [{ text: $json.prompt }] }], generationConfig: { temperature: 0.8, maxOutputTokens: 8192 } }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "gemini",
+      "name": "🤖 Gemini – Viết trả lời",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        100
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "GEMINI_CREDENTIAL_ID",
+          "name": "Gemini API key"
+        }
+      },
+      "retryOnFail": true,
+      "maxTries": 3,
+      "waitBetweenTries": 10000
+    },
+    {
+      "parameters": {
+        "jsCode": "// Câu trả lời không đạt hoặc AI bảo SKIP -> bỏ qua comment đó (không dừng cả lượt).\nconst BLOCKED = /study4|prep\\.vn|dethitoeic|hochay|toeichanquoc|english mastery|mshoa|ms hoa|\\bzim\\b|ielts fighter|vocamax|ontoeic|openquiz/i;\nconst store = $getWorkflowStaticData('global');\nconst handled = new Set(store.handledReplyIds || []);\nconst items = $('🧹 Tạo prompt trả lời').all();\n\nconst ok = [];\n$input.all().forEach((item, i) => {\n  const t = items[i].json;\n  handled.add(t.commentId); // đánh dấu đã xử lý dù đăng hay bỏ qua, để không lặp lại\n  const parts = item.json.candidates?.[0]?.content?.parts || [];\n  const reply = parts.filter((p) => !p.thought).map((p) => p.text || '').join('').replace(/\\*\\*/g, '').trim();\n  const problems = [];\n  if (!reply || /^SKIP\\b/i.test(reply)) problems.push('AI bỏ qua (SKIP) hoặc không trả lời');\n  if (reply.length > 300) problems.push('dài ' + reply.length + ' ký tự');\n  if (/https?:\\/\\/|\\b[a-z0-9-]+\\.(vn|com|net|org|io|app|click|me|co)\\b/i.test(reply)) problems.push('có link/tên miền');\n  if (/\\bfree\\b|miễn phí|không cần (đăng nhập|đăng ký)/i.test(reply)) problems.push('nói free/không cần đăng nhập');\n  if (/\\d+([.,]\\d+)?\\s*%|tăng\\s*\\d+\\s*điểm|cam kết/i.test(reply)) problems.push('số liệu/cam kết');\n  if (BLOCKED.test(reply)) problems.push('nhắc thương hiệu khác');\n  if (/(lời giải|giải thích) chi tiết|chép chính tả|radar/i.test(reply) && !/\\bpro\\b/i.test(reply)) problems.push('tính năng Pro không ghi Pro');\n  if (problems.length) console.log('[bỏ qua] @' + t.commenter + ': ' + t.commentText + ' -> ' + problems.join(', ') + ' | ' + reply);\n  else ok.push({ json: { ...t, reply } });\n});\nstore.handledReplyIds = [...handled].slice(-500);\nreturn ok;"
+      },
+      "id": "validate",
+      "name": "✅ Kiểm tra câu trả lời",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1540,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.threads.net/v1.0/me/threads",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "media_type",
+              "value": "TEXT"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.reply }}"
+            },
+            {
+              "name": "reply_to_id",
+              "value": "={{ $json.commentId }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "create-reply",
+      "name": "📝 Tạo trả lời",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        100
+      ],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "THREADS_CREDENTIAL_ID",
+          "name": "Threads access token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "id": "wait",
+      "name": "⏱ Chờ 10s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1980,
+        100
+      ],
+      "webhookId": "toeic-replies-wait"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.threads.net/v1.0/me/threads_publish",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $json.id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "publish-reply",
+      "name": "🚀 Đăng trả lời",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        100
+      ],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "THREADS_CREDENTIAL_ID",
+          "name": "Threads access token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "return $('✅ Kiểm tra câu trả lời').all().map((item, i) => ({\n  json: { comment: '@' + item.json.commenter + ': ' + item.json.commentText, traLoi: item.json.reply, replyId: $input.all()[i]?.json.id || null },\n}));"
+      },
+      "id": "summary",
+      "name": "🎉 Tóm tắt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2420,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "⏰ Mỗi 20 phút (7h–23h)": {
+      "main": [
+        [
+          {
+            "node": "📥 Lấy bài của trang",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🖱️ Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "📥 Lấy bài của trang",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📥 Lấy bài của trang": {
+      "main": [
+        [
+          {
+            "node": "📋 Chọn bài gần đây",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📋 Chọn bài gần đây": {
+      "main": [
+        [
+          {
+            "node": "💬 Lấy comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💬 Lấy comment": {
+      "main": [
+        [
+          {
+            "node": "🎯 Chọn comment cần trả lời",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🎯 Chọn comment cần trả lời": {
+      "main": [
+        [
+          {
+            "node": "🧹 Tạo prompt trả lời",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🧹 Tạo prompt trả lời": {
+      "main": [
+        [
+          {
+            "node": "🤖 Gemini – Viết trả lời",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🤖 Gemini – Viết trả lời": {
+      "main": [
+        [
+          {
+            "node": "✅ Kiểm tra câu trả lời",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✅ Kiểm tra câu trả lời": {
+      "main": [
+        [
+          {
+            "node": "📝 Tạo trả lời",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📝 Tạo trả lời": {
+      "main": [
+        [
+          {
+            "node": "⏱ Chờ 10s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⏱ Chờ 10s": {
+      "main": [
+        [
+          {
+            "node": "🚀 Đăng trả lời",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🚀 Đăng trả lời": {
+      "main": [
+        [
+          {
+            "node": "🎉 Tóm tắt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Ho_Chi_Minh"
+  },
+  "pinData": {}
+}
