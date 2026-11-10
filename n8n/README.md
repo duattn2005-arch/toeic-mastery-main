@@ -8,7 +8,8 @@ Thư mục này chứa các workflow [n8n](https://n8n.io) (file JSON) và dịc
 
 | File | Mô tả |
 | --- | --- |
-| `workflows/toeic-threads-auto-v2.json` | **Đang dùng.** Tự đăng bài lên Threads 10 lần/ngày, nội dung lấy từ chính website. |
+| `workflows/toeic-threads-hype-v3.json` | **Đang dùng.** 4 bài/ngày (8h, 12h, 17h, 21h): khoe tính năng bằng giọng Gen Z, kèm ảnh chụp web thật, link để ở comment đầu tiên. |
+| `workflows/toeic-threads-auto-v2.json` | **Đang dùng.** 2 bài/ngày (10h, 19h): bài kiến thức/mẹo lấy từ trang công khai của website, có link. |
 | `workflows/toeic-tutor-agent.json` | Trợ lý luyện thi TOEIC dạng chat: Chat Trigger → AI Agent (Gemini) + Simple Memory. |
 | `workflows/toeic-threads-auto.json` | Bản cũ (v1): lấy nội dung từ web đối thủ và dẫn link sai domain. Không dùng. |
 | `workflows/image-upload-helper.json` | Workflow phụ cho bài có ảnh của v1. |
@@ -21,6 +22,23 @@ Thư mục này chứa các workflow [n8n](https://n8n.io) (file JSON) và dịc
 4. **🤖 Gemini viết bài** → **✅ Kiểm tra**: bài dài quá 500 ký tự, thiếu link đúng, nhắc thương hiệu bị chặn hoặc có domain lạ thì **dừng, không đăng**. Lý do dừng hiện trong tab Executions.
 5. **📱 Tạo bài → ⏱ Chờ 10s → 🚀 Publish** lên Threads → **🎉 Tóm tắt**.
 
+### Threads v3 hoạt động thế nào
+
+1. **⚙️ Cấu hình**: danh sách tính năng (`FEATURES`, mỗi cái có trang để chụp và các "sự thật" AI được phép nói), câu comment gắn link (`LINK_REPLIES`) và danh sách thương hiệu bị chặn.
+2. **📸 Chụp ảnh**: gọi `screenshot-service.js` (cổng 3001). Service đăng nhập tài khoản demo, tắt popup, chụp khổ điện thoại rồi upload lên litterbox.catbox.moe (link tự xoá sau 1 giờ) để Threads tải được ảnh.
+3. **🤖 Gemini viết bài** → **✅ Kiểm tra**: chặn bài nói "free/miễn phí", "không cần đăng nhập", có link trong bài, hứa tăng điểm, nhắc thương hiệu khác, hay tính năng Pro mà không ghi "Pro".
+4. **📱 Tạo bài kèm ảnh → 🚀 Publish → 💬 Comment link → 🚀 Publish comment**.
+
+Cần chạy `screenshot-service.js` cùng lúc với n8n (`npm start` chạy cả hai). Tài khoản demo khai báo trong `n8n/.env` (không commit):
+
+```
+SITE_URL=https://toeicmastery.click
+DEMO_EMAIL=...
+DEMO_PASSWORD=...
+```
+
+Tài khoản demo phải là tài khoản email + mật khẩu; tài khoản đăng nhập bằng Google không dùng được.
+
 ### Credentials cần tạo trong n8n
 
 | Tên credential | Loại | Điền |
@@ -28,7 +46,7 @@ Thư mục này chứa các workflow [n8n](https://n8n.io) (file JSON) và dịc
 | `Gemini API key` | Header Auth | Name: `x-goog-api-key`, Value: API key Gemini |
 | `Threads access token` | Query Auth | Name: `access_token`, Value: token Threads của @toeicmasteryy |
 
-Sau khi import, mở các node 🤖, 📱 và 🚀, chọn đúng credential vừa tạo.
+Sau khi import, mở các node 🤖, 📱, 💬 và 🚀, chọn đúng credential vừa tạo.
 
 ## Chạy n8n
 

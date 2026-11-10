@@ -1,0 +1,495 @@
+{
+  "name": "TOEIC Mastery – Threads khoe tính năng (ảnh + link ở comment)",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 8,12,17,21 * * *"
+            }
+          ]
+        }
+      },
+      "id": "cron",
+      "name": "⏰ Cron – 4 lần/ngày",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "manual",
+      "name": "🖱️ Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// ====== CẤU HÌNH – sửa ở đây ======\n// Token Threads và key Gemini nằm trong Credentials của n8n, KHÔNG để ở đây.\nconst SITE_URL = 'https://toeicmastery.click';\nconst SCREENSHOT_SERVICE = 'http://localhost:3001';\n\n// Tính năng để khoe. \"facts\" là sự thật về tính năng – AI chỉ được nói trong phạm vi này.\n// pro: true = tính năng của gói Pro, bài viết phải ghi rõ là Pro.\nconst FEATURES = [\n  { path: '/vocabulary', name: 'Từ vựng TOEIC 20 ngày', pro: false,\n    facts: 'Lộ trình từ vựng TOEIC 20 ngày, 312 từ; học theo lộ trình, theo band điểm hoặc theo cụm từ cố định; flashcard; ôn theo phương pháp lặp lại ngắt quãng (spaced repetition), web nhắc ôn đúng lúc để nhớ lâu.' },\n  { path: '/practice', name: 'Kho đề luyện thi', pro: false,\n    facts: 'Kho đề TOEIC bám sát cấu trúc đề thật: bộ ETS 2023 (10 đề), bộ Mastery ETS 2026 (10 đề), lọc theo Full Test, Listening, Reading hoặc từng Part, lọc theo độ khó.' },\n  { path: '/listening', name: 'Luyện Listening từng Part', pro: false,\n    facts: 'Luyện nghe theo từng Part 1–4 (mỗi Part 31 đề luyện tập). Gói Pro có thêm Transcript Mastery ETS 2026: nghe chép chính tả trọn bộ ETS 2026 Part 1–4, nghe lại từng câu, gợi ý chữ cái, chấm ngay từng câu, kèm dịch song ngữ và đáp án.' },\n  { path: '/grammar', name: 'Ngữ pháp TOEIC', pro: false,\n    facts: 'Lý thuyết, ví dụ và bài luyện tập cho từng chủ điểm ngữ pháp TOEIC (ví dụ Đại từ có 86 câu luyện tập). Có phần Mastery luyện chuyên sâu Ngữ pháp & Từ vựng Part 5–6 (danh từ, động từ, tính từ, trạng từ, giới từ): 32 bài học, 1065 câu luyện tập.' },\n  // Thêm lại khi tài khoản demo có từ đã lưu (trang đang trống):\n  // { path: '/dictionary', name: 'Từ điển thông minh', pro: false,\n  //   facts: 'Tra nghĩa, phát âm, ví dụ, hoặc bôi đen bất kỳ từ nào trên trang để tra nhanh; lưu từ để ôn lại. Tra từ bôi đen không giới hạn là của gói Pro.' },\n];\n\n// Câu comment gắn link (code chọn, không để AI viết, để link luôn đúng).\nconst LINK_REPLIES = [\n  'ngay đây thôi, gửi ae link học cho tiện nè 👉 ' + SITE_URL,\n  'link đây nha, đăng ký tài khoản là vô học được liền 👉 ' + SITE_URL,\n  'ai hỏi link thì đây nè 👇\\n' + SITE_URL,\n  'web đây ae ơi, lưu lại kẻo trôi 👉 ' + SITE_URL,\n];\n\n// Tên thương hiệu khác: bài nào nhắc tới sẽ KHÔNG được đăng.\nconst BLOCKED_BRANDS = [\n  'study4', 'prep\\\\.vn', 'dethitoeic', 'hochay', 'toeichanquoc', 'toeic hàn quốc', 'english mastery',\n  'mshoa', 'ms hoa', '\\\\bzim\\\\b', 'ielts fighter', 'tienganh123', 'elsa speak', 'duolingo',\n  'vocamax', 'ontoeic', 'openquiz', 'toeicmastery\\\\.vn',\n];\n\nconst pick = (a) => a[Math.floor(Math.random() * a.length)];\nconst store = $getWorkflowStaticData('global');\nconst recent = store.recentFeatures || [];\nconst pool = FEATURES.filter((f) => !recent.includes(f.path));\nconst feature = pick(pool.length ? pool : FEATURES);\n\nreturn [{\n  json: { SITE_URL, SCREENSHOT_SERVICE, feature, linkReply: pick(LINK_REPLIES), BLOCKED_BRANDS, timestamp: new Date().toISOString() },\n}];"
+      },
+      "id": "init",
+      "name": "⚙️ Cấu hình",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.SCREENSHOT_SERVICE }}/screenshot",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ path: $json.feature.path }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "screenshot",
+      "name": "📸 Chụp ảnh tính năng",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const init = $('⚙️ Cấu hình').first().json;\nconst shot = $input.first().json;\nif (!shot.publicUrl) throw new Error('Không có ảnh chụp: ' + (shot.error || 'screenshot service không trả về link'));\nconst f = init.feature;\n\nconst prompt = [\n  'Bạn là admin trang Threads @toeicmasteryy của TOEIC Mastery – web luyện thi TOEIC Listening & Reading. Viết 1 bài Threads khoe tính năng bên dưới, đăng kèm ảnh chụp màn hình tính năng đó.',\n  '',\n  'TÍNH NĂNG: ' + f.name + (f.pro ? ' (gói Pro)' : ''),\n  'SỰ THẬT ĐƯỢC PHÉP NÓI: ' + f.facts,\n  '',\n  'GIỌNG VĂN: Gen Z, tự nhiên như đang nói chuyện với bạn bè trên Threads: viết tắt kiểu \"ae\", \"vô\", \"lẹ\", \"nha\", \"nè\", \"=)))\", có thể viết HOA câu mở đầu để gây chú ý. Ngắn, có nhịp, không văn mẫu quảng cáo.',\n  'Ví dụ giọng (không chép lại):',\n  '- \"ĐỨA NÀO ĐANG ÔN TOEIC MÀ CHƯA THỬ NGHE CHÉP CHÍNH TẢ THÌ PHÍ LẮM NHA =))) TOEIC Mastery có trọn bộ ETS 2026 nghe từng câu, chấm liền từng câu luôn (gói Pro)\"',\n  '- \"học từ vựng xong 3 hôm quên sạch thì là do chưa ôn lặp lại ngắt quãng đó ae. web này nó nhắc ôn đúng lúc nên nhớ dai lắm\"',\n  '',\n  'QUY TẮC BẮT BUỘC:',\n  '1. Chỉ nói những gì có trong SỰ THẬT ĐƯỢC PHÉP NÓI. Không bịa số liệu, số người dùng, điểm số, cam kết tăng điểm.',\n  '2. Không dùng các chữ \"free\", \"miễn phí\", \"0đ\", \"không mất tiền\". Không nói \"không cần đăng nhập\" (web phải đăng ký tài khoản mới học được).' + (f.pro ? ' Phải ghi rõ đây là tính năng gói Pro.' : ''),\n  '3. Không kể chuyện cá nhân bịa (kiểu \"t đã tăng 300 điểm\"), không giả làm học viên. Đây là tài khoản của chính TOEIC Mastery.',\n  '4. Không nhắc tên website, ứng dụng, trung tâm hay thương hiệu nào khác.',\n  '5. KHÔNG chèn link hay tên miền vào bài (link sẽ để ở comment). Có thể kết bằng câu rủ xem comment, ví dụ \"link ở cmt nha\".',\n  '6. Tối đa 350 ký tự. Không markdown, không hashtag quá 1 cái (#TOEIC nếu muốn).',\n  '',\n  'Chỉ trả về nội dung bài viết.',\n].join('\\n');\n\nreturn [{ json: { ...init, imageUrl: shot.publicUrl, prompt } }];"
+      },
+      "id": "prompt",
+      "name": "🧹 Tạo prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ contents: [{ parts: [{ text: $json.prompt }] }], generationConfig: { temperature: 0.9, maxOutputTokens: 1024 } }) }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "id": "gemini",
+      "name": "🤖 Gemini – Viết bài",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        880,
+        100
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "GEMINI_CREDENTIAL_ID",
+          "name": "Gemini API key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Bài không đạt -> báo lỗi và DỪNG, không đăng gì.\nconst prev = $('🧹 Tạo prompt').first().json;\nconst resp = $input.first().json;\n\nlet post = (resp.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\npost = post.replace(/\\*\\*/g, '').replace(/^[\"“]|[\"”]$/g, '').trim();\n\nconst problems = [];\nif (!post) problems.push('AI không trả về nội dung (finishReason: ' + (resp.candidates?.[0]?.finishReason || 'n/a') + ')');\nif (post.length > 500) problems.push('Dài ' + post.length + ' ký tự (Threads giới hạn 500)');\nconst lower = post.toLowerCase();\nfor (const brand of prev.BLOCKED_BRANDS) {\n  if (new RegExp(brand, 'i').test(lower)) problems.push('Nhắc thương hiệu bị chặn: ' + brand);\n}\nif (/https?:\\/\\/|\\b[a-z0-9-]+\\.(vn|com|net|org|io|app|click|me|co)\\b/.test(lower)) problems.push('Bài có link/tên miền (link chỉ để ở comment)');\nif (/\\bfree\\b|miễn phí|0đ|0 đồng|không mất tiền/.test(lower)) problems.push('Nói \"free/miễn phí\" – không đúng với các tính năng Pro');\nif (/không cần (đăng nhập|đăng ký|tài khoản)/.test(lower)) problems.push('Nói \"không cần đăng nhập\" – web phải đăng nhập');\nif (/tăng\\s*\\d+\\s*điểm|cam kết/.test(lower)) problems.push('Có cam kết/hứa tăng điểm');\nif (prev.feature.pro && !/\\bpro\\b/.test(lower)) problems.push('Tính năng Pro nhưng bài không ghi rõ \"Pro\"');\n\nif (problems.length > 0) {\n  throw new Error('Bài KHÔNG được đăng:\\n- ' + problems.join('\\n- ') + '\\n\\nNội dung AI viết:\\n' + post);\n}\nreturn [{ json: { ...prev, generatedContent: post } }];"
+      },
+      "id": "validate",
+      "name": "✅ Kiểm tra bài",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.threads.net/v1.0/me/threads",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "media_type",
+              "value": "IMAGE"
+            },
+            {
+              "name": "image_url",
+              "value": "={{ $json.imageUrl }}"
+            },
+            {
+              "name": "text",
+              "value": "={{ $json.generatedContent }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "create-post",
+      "name": "📱 Tạo bài kèm ảnh",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        100
+      ],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "THREADS_CREDENTIAL_ID",
+          "name": "Threads access token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 30
+      },
+      "id": "wait-post",
+      "name": "⏱ Chờ 30s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1540,
+        100
+      ],
+      "webhookId": "toeic-v3-wait-post"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.threads.net/v1.0/me/threads_publish",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $('📱 Tạo bài kèm ảnh').first().json.id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "publish-post",
+      "name": "🚀 Publish bài",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1760,
+        100
+      ],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "THREADS_CREDENTIAL_ID",
+          "name": "Threads access token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 20
+      },
+      "id": "wait-reply",
+      "name": "⏱ Chờ 20s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1980,
+        100
+      ],
+      "webhookId": "toeic-v3-wait-reply"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.threads.net/v1.0/me/threads",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "media_type",
+              "value": "TEXT"
+            },
+            {
+              "name": "text",
+              "value": "={{ $('✅ Kiểm tra bài').first().json.linkReply }}"
+            },
+            {
+              "name": "reply_to_id",
+              "value": "={{ $('🚀 Publish bài').first().json.id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "create-reply",
+      "name": "💬 Tạo comment link",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        100
+      ],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "THREADS_CREDENTIAL_ID",
+          "name": "Threads access token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "id": "wait-reply-publish",
+      "name": "⏱ Chờ 10s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        2420,
+        100
+      ],
+      "webhookId": "toeic-v3-wait-reply-publish"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.threads.net/v1.0/me/threads_publish",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $('💬 Tạo comment link').first().json.id }}"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 60000
+        }
+      },
+      "id": "publish-reply",
+      "name": "🚀 Publish comment",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2640,
+        100
+      ],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "THREADS_CREDENTIAL_ID",
+          "name": "Threads access token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $('✅ Kiểm tra bài').first().json;\nconst store = $getWorkflowStaticData('global');\n// Nhớ 3 tính năng vừa khoe để lần sau đổi chủ đề.\nstore.recentFeatures = [prev.feature.path, ...(store.recentFeatures || []).filter((p) => p !== prev.feature.path)].slice(0, 3);\nreturn [{\n  json: {\n    status: 'ĐÃ ĐĂNG LÊN THREADS (kèm ảnh + comment link)',\n    thoiGian: new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),\n    tinhNang: prev.feature.name,\n    noiDung: prev.generatedContent,\n    commentLink: prev.linkReply,\n    postId: $('🚀 Publish bài').first().json.id,\n    replyId: $input.first().json.id,\n  },\n}];"
+      },
+      "id": "summary",
+      "name": "🎉 Tóm tắt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2860,
+        100
+      ]
+    }
+  ],
+  "connections": {
+    "⏰ Cron – 4 lần/ngày": {
+      "main": [
+        [
+          {
+            "node": "⚙️ Cấu hình",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🖱️ Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "⚙️ Cấu hình",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⚙️ Cấu hình": {
+      "main": [
+        [
+          {
+            "node": "📸 Chụp ảnh tính năng",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📸 Chụp ảnh tính năng": {
+      "main": [
+        [
+          {
+            "node": "🧹 Tạo prompt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🧹 Tạo prompt": {
+      "main": [
+        [
+          {
+            "node": "🤖 Gemini – Viết bài",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🤖 Gemini – Viết bài": {
+      "main": [
+        [
+          {
+            "node": "✅ Kiểm tra bài",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✅ Kiểm tra bài": {
+      "main": [
+        [
+          {
+            "node": "📱 Tạo bài kèm ảnh",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📱 Tạo bài kèm ảnh": {
+      "main": [
+        [
+          {
+            "node": "⏱ Chờ 30s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⏱ Chờ 30s": {
+      "main": [
+        [
+          {
+            "node": "🚀 Publish bài",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🚀 Publish bài": {
+      "main": [
+        [
+          {
+            "node": "⏱ Chờ 20s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⏱ Chờ 20s": {
+      "main": [
+        [
+          {
+            "node": "💬 Tạo comment link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "💬 Tạo comment link": {
+      "main": [
+        [
+          {
+            "node": "⏱ Chờ 10s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⏱ Chờ 10s": {
+      "main": [
+        [
+          {
+            "node": "🚀 Publish comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🚀 Publish comment": {
+      "main": [
+        [
+          {
+            "node": "🎉 Tóm tắt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Ho_Chi_Minh"
+  },
+  "pinData": {}
+}
