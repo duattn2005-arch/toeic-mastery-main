@@ -1,11 +1,13 @@
 /**
  * screenshot-service.js
- * Chụp ảnh các trang TOEIC Mastery khi đã đăng nhập tài khoản demo, rồi upload
- * lên litterbox.catbox.moe (link công khai, tự xoá sau 1 giờ) để Threads lấy ảnh.
+ * Chụp ảnh các trang TOEIC Mastery bằng phiên đăng nhập lưu trong n8n/.browser-profile,
+ * rồi upload lên litterbox.catbox.moe (link công khai, tự xoá sau 1 giờ) để Threads lấy ảnh.
  *
- * Cấu hình trong n8n/.env (không commit):
+ * Đăng nhập: chạy `npm run login` một lần (đăng nhập Google bằng tay), hoặc khai báo
+ * tài khoản email + mật khẩu trong n8n/.env (không commit):
  *   SITE_URL=https://toeicmastery.click
- *   DEMO_EMAIL=...        tài khoản email + mật khẩu (không phải tài khoản Google)
+ *   CHROME_PATH=C:\Program Files\Google\Chrome\Application\chrome.exe   (tuỳ chọn)
+ *   DEMO_EMAIL=...        (tuỳ chọn, chỉ cho tài khoản có mật khẩu)
  *   DEMO_PASSWORD=...
  *
  * Chạy: node screenshot-service.js   (cổng 3001)
@@ -18,21 +20,12 @@ const path = require('path');
 const fs = require('fs');
 
 const PORT = 3001;
+const { loadEnv, launchOptions } = require('./browser-config');
+
 const SCREENSHOT_DIR = path.join(__dirname, 'screenshots');
-const PROFILE_DIR = path.join(__dirname, '.browser-profile');
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36';
 
-function loadEnv() {
-  const file = path.join(__dirname, '.env');
-  if (!fs.existsSync(file)) return {};
-  return Object.fromEntries(
-    fs.readFileSync(file, 'utf8').split(/\r?\n/).filter((l) => l.includes('=') && !l.startsWith('#')).map((l) => {
-      const i = l.indexOf('=');
-      return [l.slice(0, i).trim(), l.slice(i + 1).trim()];
-    }),
-  );
-}
-const env = { ...loadEnv(), ...process.env };
+const env = loadEnv();
 const SITE_URL = (env.SITE_URL || 'https://toeicmastery.click').replace(/\/$/, '');
 
 fs.mkdirSync(SCREENSHOT_DIR, { recursive: true });
@@ -47,13 +40,15 @@ let browser = null;
 async function getBrowser() {
   if (!browser || !browser.isConnected()) {
     // Profile riêng giữ cookie đăng nhập và các popup đã tắt, nên bot luôn là một "thiết bị".
-    browser = await puppeteer.launch({ headless: 'new', userDataDir: PROFILE_DIR, args: ['--lang=vi-VN'] });
+    browser = await puppeteer.launch({ ...launchOptions(env), headless: 'new' });
   }
   return browser;
 }
 
 async function login(page) {
-  if (!env.DEMO_EMAIL || !env.DEMO_PASSWORD) throw new Error('Thiếu DEMO_EMAIL / DEMO_PASSWORD trong n8n/.env');
+  if (!env.DEMO_EMAIL || !env.DEMO_PASSWORD) {
+    throw new Error('Phiên đăng nhập đã hết hạn: tắt service, chạy `npm run login` trong thư mục n8n rồi đăng nhập lại');
+  }
   await page.goto(`${SITE_URL}/login`, { waitUntil: 'networkidle0', timeout: 45000 });
   await sleep(1500); // chờ React gắn sự kiện, gõ sớm hơn sẽ mất chữ
   await page.type('#email', env.DEMO_EMAIL, { delay: 20 });
