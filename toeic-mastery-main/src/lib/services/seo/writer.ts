@@ -5,6 +5,7 @@ import type { GuideBlock, GuideSection } from "@/lib/content/guides";
 import { BLOG_CTAS, countWords, isBlogCtaKey, keepKnownLinks, linkedPaths, slugify, contentTexts, type BlogAds, type BlogContent } from "@/lib/content/blog";
 import { askJson, cleanStrings, clip } from "./llm";
 import { buildLinkCatalog, relevantLinks } from "./link-catalog";
+import { competitorBrands, mentionedBrand } from "./brands";
 
 /** Facts the articles may state, so the model doesn't improvise exam details. */
 const FACTS = `Thông tin TOEIC được phép dùng (đừng tự bịa thêm số liệu chính thức khác):
@@ -13,13 +14,14 @@ const FACTS = `Thông tin TOEIC được phép dùng (đừng tự bịa thêm s
 - Điểm mỗi phần 5–495, tổng 10–990; không trừ điểm câu sai; điểm thường có hiệu lực khoảng 2 năm.
 - Đại diện chính thức của ETS tại Việt Nam là IIG Việt Nam. Speaking & Writing là bài thi riêng.`;
 
-const SYSTEM = `Bạn là biên tập viên nội dung SEO và giáo viên TOEIC giàu kinh nghiệm, viết cho blog của TOEIC Mastery — nền tảng luyện thi TOEIC và học tiếng Anh online cho người Việt.
+const SYSTEM = `Bạn là biên tập viên nội dung SEO và giáo viên TOEIC giàu kinh nghiệm, viết cho blog của TOEIC Mastery — nền tảng luyện thi TOEIC Listening & Reading online cho người Việt.
 
 Viết một bài blog HOÀN TOÀN MỚI, bằng tiếng Việt có dấu, giọng thân thiện, rõ ràng, thực tế, giúp người học làm được ngay. Yêu cầu:
 - 1200–1800 từ, 5–8 mục (sections), mỗi mục có tiêu đề H2 rõ ràng, nhiều đoạn văn ngắn, có danh sách, bảng hoặc ví dụ khi phù hợp.
 - Từ khoá chính xuất hiện tự nhiên trong tiêu đề, đoạn mở đầu và ít nhất một tiêu đề mục; dùng các từ khoá phụ tự nhiên, không nhồi nhét.
 - Nội dung chính xác. Không bịa số liệu, nghiên cứu, trích dẫn hay thông tin chính thức. Ví dụ tiếng Anh phải đúng ngữ pháp và đáp án phải đúng.
-- Không sao chép nội dung của website khác, không nhắc tên đối thủ, không chèn liên kết ra ngoài.
+- Không sao chép nội dung của website khác, không chèn liên kết ra ngoài. Không nhắc tên bất kỳ website, trung tâm, ứng dụng hay thương hiệu luyện thi nào khác — thương hiệu duy nhất được nhắc là TOEIC Mastery. Nếu tiêu đề định hướng hay từ khoá có tên thương hiệu khác, bỏ tên đó đi.
+- Chỉ giới thiệu những gì TOEIC Mastery thật sự có (luyện đề và luyện từng Part Listening & Reading, từ vựng, ngữ pháp, AI Mentor, phân tích điểm yếu, bài thi thử Part 5 miễn phí). Web không có luyện IELTS hay TOEIC Speaking & Writing.
 - Liên kết nội bộ: chèn 3–6 liên kết dạng [chữ neo](/đường-dẫn), CHỈ dùng đường dẫn trong danh sách được cung cấp, rải ở nhiều mục, chữ neo mô tả đúng trang đích.
 - Mục cuối gợi ý bước tiếp theo để người đọc luyện tập trên TOEIC Mastery.
 - 3–5 câu hỏi thường gặp (faqs) mà người tìm từ khoá này hay hỏi, câu trả lời ngắn gọn.
@@ -216,6 +218,8 @@ export async function writeArticleForTopic(topicId: string): Promise<string | nu
     return null;
   }
 
+  const brands = await competitorBrands();
+
   await db.seoTopic.update({ where: { id: topicId }, data: { status: "WRITING", error: null } });
   try {
     const catalog = await buildLinkCatalog();
@@ -242,6 +246,9 @@ export async function writeArticleForTopic(topicId: string): Promise<string | nu
       try {
         const answer = await askJson<Record<string, unknown>>({ system: SYSTEM, prompt, maxTokens: 16_000, timeoutMs: 240_000 });
         const parsed = toBlogContent(answer, allowed);
+        const root = articleRoot(answer);
+        const brand = mentionedBrand([str(root.title), str(root.description), ...contentTexts(parsed)].join("\n"), brands);
+        if (brand) throw new Error(`Bài nhắc tên thương hiệu khác: "${brand}"`);
         const n = countWords(parsed);
         if (n > words) [raw, content, words] = [articleRoot(answer), parsed, n];
         if (words >= MIN_WORDS) break;

@@ -1,15 +1,7 @@
 {
-  "name": "TOEIC Mastery – Threads 10 bài/ngày (HOÀN CHỈNH)",
+  "name": "TOEIC Mastery – Threads tự động (nội dung từ website)",
   "nodes": [
     {
-      "id": "cron-10x",
-      "name": "⏰ Cron – 10 lần/ngày",
-      "type": "n8n-nodes-base.scheduleTrigger",
-      "typeVersion": 1.2,
-      "position": [
-        0,
-        0
-      ],
       "parameters": {
         "rule": {
           "interval": [
@@ -20,9 +12,17 @@
           ]
         }
       },
-      "notes": "Đăng lúc: 8h, 10h, 12h, 13h, 14h, 15h, 16h, 17h, 19h, 21h"
+      "id": "cron-10x",
+      "name": "⏰ Cron – 10 lần/ngày",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ]
     },
     {
+      "parameters": {},
       "id": "manual-trig",
       "name": "🖱️ Manual Trigger",
       "type": "n8n-nodes-base.manualTrigger",
@@ -33,113 +33,151 @@
       ]
     },
     {
+      "parameters": {
+        "jsCode": "// ====== CẤU HÌNH – sửa ở đây ======\n// Token Threads và key Gemini KHÔNG để ở đây: chúng nằm trong Credentials của n8n.\nconst SITE_URL = 'https://toeicmastery.click';\n\n// Kiểu bài, chọn ngẫu nhiên mỗi lần chạy để feed không bị lặp.\nconst ANGLES = [\n  'Mẹo nhanh: 1 mẹo làm bài cụ thể, áp dụng được ngay',\n  'Lỗi sai hay gặp: chỉ ra 1 lỗi người học hay mắc và cách sửa',\n  'Mini quiz: 1 câu hỏi kiểu TOEIC Part 5 (4 đáp án A-D), đáp án và giải thích ngắn ở cuối bài',\n  '3 từ vựng: 3 từ/cụm từ hay gặp trong TOEIC, mỗi từ có nghĩa và 1 câu ví dụ ngắn',\n];\n\n// Tên thương hiệu khác: bài nào nhắc tới sẽ KHÔNG được đăng. Thêm tên vào đây khi cần.\nconst BLOCKED_BRANDS = [\n  // Không chặn \"prep\" đứng riêng: đó cũng là viết tắt của preposition và khung trả lời PREP.\n  'study4', 'prep\\\\.vn', 'dethitoeic', 'hochay', 'toeichanquoc', 'toeic hàn quốc', 'english mastery',\n  'mshoa', 'ms hoa', '\\\\bzim\\\\b', 'ielts fighter', 'tienganh123', 'elsa speak', 'duolingo',\n  'toeicmastery\\\\.vn',\n];\n\n// Trang KHÔNG đem đi quảng bá: đường dẫn chứa một trong các chữ này (web không dạy các kỹ năng/kỳ thi đó).\nconst SKIP_PATHS = ['speaking', 'writing', 'ielts', 'toefl', 'english-mastery'];\n\nreturn [{\n  json: {\n    SITE_URL,\n    angle: ANGLES[Math.floor(Math.random() * ANGLES.length)],\n    BLOCKED_BRANDS,\n    SKIP_PATHS,\n    timestamp: new Date().toISOString(),\n  },\n}];"
+      },
       "id": "init-data",
-      "name": "⚙️ Khởi tạo dữ liệu",
+      "name": "⚙️ Cấu hình",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        240,
+        220,
         100
-      ],
-      "parameters": {
-        "jsCode": "const THREADS_USER_ID = '28404365842574422'; // Tài khoản: @toeicmasteryy\nconst THREADS_ACCESS_TOKEN = 'THAAgxY61ZAOhZABYmJ3M0RrYlZAnLURkU21PVkpQTkNWdkhPbHhPbHpkMElQR0xHdjRmcFRJdDhrM3ZATTUxSWHBINm45OUJMalh3LUtoSnBpX1NmOWowNThQZAGdwVHJvLTV6RjlZAYkV0X3JhTGRYd3NhSEp1TnV2NVZAibmRqaDV2YXJ4Y1pqQjNnWlZARbE00TG8ZD';\nconst WEBSITE_BASE_URL = 'https://toeicmastery.vn';\nconst LOCAL_URL = 'http://localhost:3000';\n\nconst viralSources = [\n  'https://study4.vn/blog',\n  'https://prep.vn/toeic',\n  'https://dethitoeic.com',\n  'https://hochay.com/luyen-thi-toeic',\n  'https://toeichanquoc.com'\n];\n\nconst websitePages = [\n  { path: '/', label: 'Trang chủ – Luyện TOEIC toàn diện' },\n  { path: '/thi-thu-mien-phi', label: 'Thi thử TOEIC miễn phí 115 câu' },\n  { path: '/vocabulary', label: 'Từ vựng TOEIC 15 chủ đề' },\n  { path: '/grammar', label: 'Ngữ pháp TOEIC 15 chủ đề' },\n  { path: '/tu-vung', label: 'Từ vựng theo chủ đề' },\n  { path: '/tips', label: 'Chiến thuật thi TOEIC' },\n  { path: '/listening', label: 'Luyện Listening Part 1-4' },\n  { path: '/reading', label: 'Luyện Reading Part 5-7' }\n];\n\nconst topics = [\n  'Lỗi sai Part 5 nhiều người mắc nhất',\n  'Từ vựng TOEIC chủ đề văn phòng thường gặp',\n  'Chiến thuật làm Part 7 nhanh 20 phút',\n  'Phân biệt despite / although / however trong TOEIC',\n  'Từ vựng TOEIC chủ đề tài chính ngân hàng',\n  'Cách ghi điểm Part 2 Q&A không bị bẫy',\n  'Part 3 & 4: kỹ thuật nghe và predict câu hỏi',\n  '30 từ vựng TOEIC 900+ phải thuộc',\n  'Mệnh đề quan hệ trong TOEIC Part 5',\n  'Email tiếng Anh TOEIC Part 7 đọc hiểu nhanh',\n  'Collocations kinh doanh thường xuất hiện trong TOEIC',\n  'Part 1 ảnh tả cảnh: công thức nhận diện đáp án',\n  'Phương pháp học từ vựng TOEIC bằng spaced repetition',\n  'Tại sao điểm Listening luôn cao hơn Reading?',\n  'Từ đồng nghĩa hay xuất hiện trong TOEIC (synonym traps)'\n];\n\nconst viralSource = viralSources[Math.floor(Math.random() * viralSources.length)];\nconst page = websitePages[Math.floor(Math.random() * websitePages.length)];\nconst topic = topics[Math.floor(Math.random() * topics.length)];\n\nreturn [{\n  json: {\n    THREADS_USER_ID,\n    THREADS_ACCESS_TOKEN,\n    WEBSITE_BASE_URL,\n    LOCAL_URL,\n    viralSource,\n    websitePage: {\n      url: LOCAL_URL + page.path,\n      publicUrl: WEBSITE_BASE_URL + page.path,\n      label: page.label,\n      path: page.path\n    },\n    topic,\n    timestamp: new Date().toISOString()\n  }\n}];"
-      }
+      ]
     },
     {
-      "id": "scrape-viral-content",
-      "name": "🌐 Scrape web viral TOEIC",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        480,
-        100
-      ],
       "parameters": {
-        "method": "GET",
-        "url": "={{ $json.viralSource }}",
+        "url": "={{ $json.SITE_URL }}/sitemap.xml",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "ToeicMasteryBot/1.0 (+n8n; https://toeicmastery.click)"
+            }
+          ]
+        },
         "options": {
           "response": {
             "response": {
               "responseFormat": "text"
             }
           },
-          "timeout": 20000,
-          "redirect": {
-            "redirect": {
-              "followRedirects": true,
-              "maxRedirects": 5
-            }
-          }
-        },
-        "headers": {
+          "timeout": 20000
+        }
+      },
+      "id": "fetch-sitemap",
+      "name": "🗺️ Đọc sitemap website",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        440,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Chọn 1 trang công khai của chính TOEIC Mastery từ sitemap.\n// Chỉ lấy trang khách chưa đăng nhập xem được: hướng dẫn, từ vựng, blog, thi thử miễn phí.\nconst init = $('⚙️ Cấu hình').first().json;\nconst xml = String($input.first().json.data || '');\nconst urls = [...xml.matchAll(/<loc>\\s*([^<\\s]+)\\s*<\\/loc>/g)].map((m) => m[1]);\n\nconst CONTENT = /^\\/(thi-thu-mien-phi$|(huong-dan|tu-vung|blog)\\/[^/]+$)/;\nconst candidates = urls.filter((u) => {\n  try {\n    const path = new URL(u).pathname;\n    return CONTENT.test(path) && !init.SKIP_PATHS.some((s) => path.toLowerCase().includes(s));\n  } catch { return false; }\n});\nif (candidates.length === 0) {\n  throw new Error('Sitemap không có trang nội dung nào – kiểm tra ' + init.SITE_URL + '/sitemap.xml');\n}\n\n// Tránh đăng lại trang vừa dùng gần đây (lưu ở static data, chỉ có tác dụng khi workflow chạy theo lịch).\nconst store = $getWorkflowStaticData('global');\nconst recent = store.recentUrls || [];\nconst fresh = candidates.filter((u) => !recent.includes(u));\nconst pool = fresh.length > 0 ? fresh : candidates;\nconst pageUrl = pool[Math.floor(Math.random() * pool.length)];\n\nreturn [{ json: { ...init, pageUrl } }];"
+      },
+      "id": "pick-page",
+      "name": "🎯 Chọn trang để quảng bá",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "url": "={{ $json.pageUrl }}",
+        "sendHeaders": true,
+        "headerParameters": {
           "parameters": [
             {
               "name": "User-Agent",
-              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+              "value": "ToeicMasteryBot/1.0 (+n8n; https://toeicmastery.click)"
             }
           ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "text"
+            }
+          },
+          "timeout": 20000
         }
       },
-      "continueOnFail": true
-    },
-    {
-      "id": "clean-html-and-make-prompt",
-      "name": "🧹 Làm sạch text & Tạo prompt AI",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        720,
-        100
-      ],
-      "parameters": {
-        "jsCode": "const initData = $('⚙️ Khởi tạo dữ liệu').first().json;\nconst raw = $input.first().json?.data || $input.first().json?.body || '';\n\nlet text = String(raw)\n  .replace(/<script[\\s\\S]*?<\\/script>/gi, '')\n  .replace(/<style[\\s\\S]*?<\\/style>/gi, '')\n  .replace(/<[^>]+>/g, ' ')\n  .replace(/&nbsp;/g, ' ')\n  .replace(/\\s{2,}/g, ' ')\n  .trim()\n  .substring(0, 2000);\n\nif (!text || text.length < 50) {\n  text = 'Chia sẻ kiến thức luyện thi TOEIC Listening và Reading bám sát format đề thi.';\n}\n\nconst topic = initData.topic;\nconst websiteUrl = initData.websitePage.publicUrl;\n\nconst prompt = `Bạn là chuyên gia TOEIC người Việt với 5+ năm kinh nghiệm, đang chia sẻ kiến thức trên Threads.\n\nViết 1 bài Threads thu hút về chủ đề: \"${topic}\"\n\nTham khảo nội dung thực tế này:\n---\n${text}\n---\n\nYÊU CẦU QUAN TRỌNG:\n- Tối đa 380 ký tự (ngắn gọn, súc tích)\n- Mở đầu bằng hook mạnh: câu hỏi gây tò mò HOẶC kinh nghiệm thực tế\n- 2-3 gạch đầu dòng có emoji (📌✅⚡💡🎯)\n- Giọng văn: thân thiện, gần gũi như người đi trước chia sẻ lại cho đàn em\n- Dòng áp chót: \"🔗 Luyện miễn phí tại: ${websiteUrl}\"\n- Cuối bài để 3-4 hashtag: #TOEIC #HọcTiếngAnh #TOEICMastery #LuyệnThiTOEIC\n\nChỉ trả về trực tiếp nội dung bài viết.`;\n\nreturn [{\n  json: {\n    ...initData,\n    prompt,\n    scrapedText: text\n  }\n}];"
-      }
-    },
-    {
-      "id": "gemini-ai",
-      "name": "🤖 Gemini – Tạo content",
+      "id": "fetch-page",
+      "name": "🌐 Tải nội dung trang",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        960,
+        880,
         100
-      ],
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $('🎯 Chọn trang để quảng bá').first().json;\nconst html = String($input.first().json.data || '');\n\nconst decode = (s) => s\n  .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '\"')\n  .replace(/&#x27;|&#39;/g, \"'\").replace(/&lt;/g, '<').replace(/&gt;/g, '>');\n\nconst titleMatch = html.match(/<h1[^>]*>([\\s\\S]*?)<\\/h1>/i) || html.match(/<title[^>]*>([\\s\\S]*?)<\\/title>/i);\nconst pageTitle = decode((titleMatch ? titleMatch[1] : '').replace(/<[^>]+>/g, ' ')).replace(/\\s+/g, ' ').trim();\n\n// Chỉ lấy phần nội dung chính, bỏ menu/header/footer.\nconst mainMatch = html.match(/<main[\\s\\S]*?<\\/main>/i) || html.match(/<article[\\s\\S]*?<\\/article>/i);\nconst pageText = decode(String(mainMatch ? mainMatch[0] : html)\n  .replace(/<(script|style|nav|header|footer|svg)[\\s\\S]*?<\\/\\1>/gi, ' ')\n  .replace(/<[^>]+>/g, ' '))\n  .replace(/\\s+/g, ' ')\n  .trim()\n  .substring(0, 3500);\n\nif (pageText.length < 200) {\n  throw new Error('Không đọc được nội dung trang ' + prev.pageUrl + ' (quá ngắn) – không đăng bài.');\n}\n\nconst prompt = [\n  'Bạn viết bài cho tài khoản Threads chính thức của TOEIC Mastery (toeicmastery.click) – nền tảng luyện thi TOEIC Listening & Reading online: đề thi thử sát thực tế, từ vựng theo lộ trình, AI Mentor và phân tích điểm yếu theo từng Part.',\n  '',\n  'NHIỆM VỤ: viết 1 bài Threads bằng tiếng Việt, dựa trên trang \"' + pageTitle + '\" của TOEIC Mastery.',\n  'Kiểu bài: ' + prev.angle,\n  '',\n  'NỘI DUNG TRANG (nguồn duy nhất được dùng):',\n  '\"\"\"',\n  pageText,\n  '\"\"\"',\n  '',\n  'QUY TẮC BẮT BUỘC:',\n  '1. Chỉ dùng thông tin có trong NỘI DUNG TRANG và kiến thức chuẩn về đề TOEIC (200 câu, 120 phút, Listening Part 1-4, Reading Part 5-7, thang điểm 10-990). Không bịa số liệu, tỉ lệ, cam kết tăng điểm hay ưu đãi.',\n  '2. Không nhắc tên bất kỳ website, ứng dụng, trung tâm hay thương hiệu nào khác. Thương hiệu duy nhất được nhắc là TOEIC Mastery.',\n  '3. Không xưng \"tôi\" kể kinh nghiệm cá nhân, không bịa câu chuyện học viên.',\n  '4. Câu tiếng Anh phải đúng ngữ pháp và đúng nghĩa.',\n  '5. Tối đa 450 ký tự, kể cả link và hashtag. Không dùng markdown (không **, không #tiêu đề).',\n  '6. Câu đầu là hook ngắn, cụ thể. Thân bài 2-4 dòng ngắn, có thể dùng emoji 📌✅💡🎯.',\n  '7. Dòng áp chót đúng nguyên văn: 👉 Xem chi tiết: ' + prev.pageUrl,\n  '8. Dòng cuối 2-3 hashtag, trong đó có #TOEIC và #TOEICMastery.',\n  '9. Không thêm link nào khác.',\n  '',\n  'Chỉ trả về nội dung bài viết.',\n].join('\\n');\n\nreturn [{ json: { ...prev, pageTitle, prompt } }];"
+      },
+      "id": "make-prompt",
+      "name": "🧹 Đọc trang & tạo prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        100
+      ]
+    },
+    {
       "parameters": {
         "method": "POST",
-        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=AQ.Ab8RN6Ka4xcuAgCZB6_EVfJ6FplOFIyCxKVxhd5h4GsM0ratQg",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "={\n  \"contents\": [\n    {\n      \"parts\": [\n        {\n          \"text\": {{ JSON.stringify($json.prompt) }}\n        }\n      ]\n    }\n  ]\n}",
+        "jsonBody": "={{ JSON.stringify({ contents: [{ parts: [{ text: $json.prompt }] }], generationConfig: { temperature: 0.7, maxOutputTokens: 1024 } }) }}",
         "options": {
-          "timeout": 30000
+          "timeout": 120000
+        }
+      },
+      "id": "gemini-ai",
+      "name": "🤖 Gemini – Viết bài",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1320,
+        100
+      ],
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "GEMINI_CREDENTIAL_ID",
+          "name": "Gemini API key"
         }
       }
     },
     {
-      "id": "parse-gemini",
-      "name": "📝 Parse response Gemini",
+      "parameters": {
+        "jsCode": "// Kiểm tra bài trước khi đăng. Bài không đạt -> báo lỗi và DỪNG, không đăng gì.\nconst prev = $('🧹 Đọc trang & tạo prompt').first().json;\nconst resp = $input.first().json;\n\nlet post = (resp.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\npost = post.replace(/\\*\\*/g, '').replace(/^[\"“]|[\"”]$/g, '').trim();\n\nconst problems = [];\nif (!post) problems.push('AI không trả về nội dung (finishReason: ' + (resp.candidates?.[0]?.finishReason || 'n/a') + ')');\nif (post.length > 500) problems.push('Dài ' + post.length + ' ký tự (Threads giới hạn 500)');\nif (!post.includes(prev.pageUrl)) problems.push('Thiếu link đúng của trang: ' + prev.pageUrl);\n\nconst lower = post.toLowerCase();\nfor (const brand of prev.BLOCKED_BRANDS) {\n  if (new RegExp(brand, 'i').test(lower)) problems.push('Nhắc thương hiệu bị chặn: ' + brand);\n}\n// Mọi domain khác ngoài toeicmastery.click đều không được phép.\nconst domains = lower.match(/\\b[a-z0-9-]+(\\.[a-z0-9-]+)*\\.(vn|com|net|org|edu|io|app|click|me|co)\\b/g) || [];\nfor (const d of domains) {\n  if (!/(^|\\.)toeicmastery\\.click$/.test(d)) problems.push('Có domain lạ: ' + d);\n}\n\nif (problems.length > 0) {\n  throw new Error('Bài KHÔNG được đăng:\\n- ' + problems.join('\\n- ') + '\\n\\nNội dung AI viết:\\n' + post);\n}\n\nreturn [{ json: { ...prev, generatedContent: post } }];"
+      },
+      "id": "validate-post",
+      "name": "✅ Kiểm tra bài trước khi đăng",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1200,
+        1540,
         100
-      ],
-      "parameters": {
-        "jsCode": "const geminiResp = $input.first().json;\nconst prevData = $('🧹 Làm sạch text & Tạo prompt AI').first().json;\n\nlet content = '';\ntry {\n  content = geminiResp.candidates?.[0]?.content?.parts?.[0]?.text || '';\n} catch(e) {}\n\ncontent = content.trim();\n\nif (!content || content.length < 20) {\n  content = `📚 Học TOEIC thông minh cùng ${prevData.topic}\\n\\n✅ Luyện đúng trọng tâm Part 5 & 7\\n✅ Ghi nhớ từ vựng qua phản xạ ngữ cảnh\\n\\n🔗 Luyện miễn phí: ${prevData.websitePage.publicUrl}\\n\\n#TOEIC #HọcTiếngAnh #TOEICMastery`;\n}\n\nreturn [{\n  json: {\n    ...prevData,\n    generatedContent: content\n  }\n}];"
-      }
+      ]
     },
     {
-      "id": "post-threads-container",
-      "name": "📱 Tạo bài viết Threads",
-      "type": "n8n-nodes-base.httpRequest",
-      "typeVersion": 4.2,
-      "position": [
-        1440,
-        100
-      ],
       "parameters": {
         "method": "POST",
         "url": "https://graph.threads.net/v1.0/me/threads",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
         "sendBody": true,
         "contentType": "form-urlencoded",
         "bodyParameters": {
@@ -151,44 +189,48 @@
             {
               "name": "text",
               "value": "={{ $json.generatedContent }}"
-            },
-            {
-              "name": "access_token",
-              "value": "={{ $json.THREADS_ACCESS_TOKEN }}"
             }
           ]
         },
         "options": {
           "timeout": 30000
         }
-      }
-    },
-    {
-      "id": "wait-for-threads",
-      "name": "⏱ Chờ 5s",
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        1680,
-        100
-      ],
-      "parameters": {
-        "unit": "seconds",
-        "amount": 5
-      }
-    },
-    {
-      "id": "publish-threads-post",
-      "name": "🚀 Publish lên Threads",
+      },
+      "id": "post-threads-container",
+      "name": "📱 Tạo bài viết Threads",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1920,
+        1760,
         100
       ],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "THREADS_CREDENTIAL_ID",
+          "name": "Threads access token"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 10
+      },
+      "id": "wait-for-threads",
+      "name": "⏱ Chờ 10s",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        1980,
+        100
+      ],
+      "webhookId": "toeic-threads-wait"
+    },
+    {
       "parameters": {
         "method": "POST",
         "url": "https://graph.threads.net/v1.0/me/threads_publish",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpQueryAuth",
         "sendBody": true,
         "contentType": "form-urlencoded",
         "bodyParameters": {
@@ -196,30 +238,40 @@
             {
               "name": "creation_id",
               "value": "={{ $('📱 Tạo bài viết Threads').first().json.id }}"
-            },
-            {
-              "name": "access_token",
-              "value": "={{ $('⚙️ Khởi tạo dữ liệu').first().json.THREADS_ACCESS_TOKEN }}"
             }
           ]
         },
         "options": {
-          "timeout": 20000
+          "timeout": 30000
+        }
+      },
+      "id": "publish-threads-post",
+      "name": "🚀 Publish lên Threads",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2200,
+        100
+      ],
+      "credentials": {
+        "httpQueryAuth": {
+          "id": "THREADS_CREDENTIAL_ID",
+          "name": "Threads access token"
         }
       }
     },
     {
+      "parameters": {
+        "jsCode": "const prev = $('✅ Kiểm tra bài trước khi đăng').first().json;\nconst pub = $input.first().json;\n\n// Ghi nhớ trang vừa đăng để lần sau không lặp (giữ 30 trang gần nhất).\nconst store = $getWorkflowStaticData('global');\nstore.recentUrls = [prev.pageUrl, ...(store.recentUrls || []).filter((u) => u !== prev.pageUrl)].slice(0, 30);\n\nreturn [{\n  json: {\n    status: 'ĐÃ ĐĂNG LÊN THREADS',\n    thoiGian: new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' }),\n    trang: prev.pageTitle,\n    link: prev.pageUrl,\n    kieuBai: prev.angle,\n    noiDung: prev.generatedContent,\n    threadsPostId: pub?.id || null,\n  },\n}];"
+      },
       "id": "summary-result",
-      "name": "🎉 Tóm tắt bài đã đăng Threads",
+      "name": "🎉 Tóm tắt bài đã đăng",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        2160,
+        2420,
         100
-      ],
-      "parameters": {
-        "jsCode": "const prev = $('📝 Parse response Gemini').first().json;\nconst pub = $input.first().json;\nconst postId = pub?.id || 'N/A';\n\nconst now = new Date();\nconst vnTime = now.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });\n\nconst summary = {\n  status: '✅ ĐÃ ĐĂNG BÀI LÊN THREADS THÀNH CÔNG!',\n  taiKhoan: '@toeicmasteryy',\n  thoiGian: vnTime,\n  chuDe: prev.topic,\n  noiDung: prev.generatedContent,\n  threadsPostId: postId,\n  threadsPostUrl: postId !== 'N/A' ? `https://www.threads.net/post/${postId}` : 'Xem trên ứng dụng Threads'\n};\n\nconsole.log('=== [THREADS AUTO POST SUCCESS] ===', summary);\nreturn [{ json: summary }];"
-      }
+      ]
     }
   ],
   "connections": {
@@ -227,7 +279,7 @@
       "main": [
         [
           {
-            "node": "⚙️ Khởi tạo dữ liệu",
+            "node": "⚙️ Cấu hình",
             "type": "main",
             "index": 0
           }
@@ -238,58 +290,80 @@
       "main": [
         [
           {
-            "node": "⚙️ Khởi tạo dữ liệu",
+            "node": "⚙️ Cấu hình",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "⚙️ Khởi tạo dữ liệu": {
+    "⚙️ Cấu hình": {
       "main": [
         [
           {
-            "node": "🌐 Scrape web viral TOEIC",
+            "node": "🗺️ Đọc sitemap website",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "🌐 Scrape web viral TOEIC": {
+    "🗺️ Đọc sitemap website": {
       "main": [
         [
           {
-            "node": "🧹 Làm sạch text & Tạo prompt AI",
+            "node": "🎯 Chọn trang để quảng bá",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "🧹 Làm sạch text & Tạo prompt AI": {
+    "🎯 Chọn trang để quảng bá": {
       "main": [
         [
           {
-            "node": "🤖 Gemini – Tạo content",
+            "node": "🌐 Tải nội dung trang",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "🤖 Gemini – Tạo content": {
+    "🌐 Tải nội dung trang": {
       "main": [
         [
           {
-            "node": "📝 Parse response Gemini",
+            "node": "🧹 Đọc trang & tạo prompt",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "📝 Parse response Gemini": {
+    "🧹 Đọc trang & tạo prompt": {
+      "main": [
+        [
+          {
+            "node": "🤖 Gemini – Viết bài",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🤖 Gemini – Viết bài": {
+      "main": [
+        [
+          {
+            "node": "✅ Kiểm tra bài trước khi đăng",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✅ Kiểm tra bài trước khi đăng": {
       "main": [
         [
           {
@@ -304,14 +378,14 @@
       "main": [
         [
           {
-            "node": "⏱ Chờ 5s",
+            "node": "⏱ Chờ 10s",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "⏱ Chờ 5s": {
+    "⏱ Chờ 10s": {
       "main": [
         [
           {
@@ -326,7 +400,7 @@
       "main": [
         [
           {
-            "node": "🎉 Tóm tắt bài đã đăng Threads",
+            "node": "🎉 Tóm tắt bài đã đăng",
             "type": "main",
             "index": 0
           }
@@ -336,14 +410,7 @@
   },
   "settings": {
     "executionOrder": "v1",
-    "saveManualExecutions": true,
-    "callerPolicy": "workflowsFromSameOwner"
+    "timezone": "Asia/Ho_Chi_Minh"
   },
-  "pinData": {},
-  "tags": [
-    "toeic",
-    "threads",
-    "automation",
-    "gemini"
-  ]
+  "pinData": {}
 }
