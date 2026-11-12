@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { requireUser, isPro } from "@/lib/auth";
 import { getMistakeDetails } from "@/lib/bloom/bank";
+import { getLearnerOutcomes } from "@/lib/bloom/outcome-data";
 import { getAnalyticsData } from "@/lib/data/analytics";
 import { buildLearningInsights } from "@/lib/services/insights/engine";
 import { AnalyticsView } from "@/components/analytics/analytics-view";
@@ -33,7 +34,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Pr
 
   const [data, insights, params] = await Promise.all([getAnalyticsData(profile.id), buildLearningInsights(profile.id), searchParams]);
   const notice = Object.keys(NOTICES).find((k) => params[k]);
-  const mistakeDetails = await getMistakeDetails(insights.bloom.mistakes);
+  const [mistakeDetails, outcomes] = await Promise.all([getMistakeDetails(insights.bloom.mistakes), getLearnerOutcomes(profile.id, insights.bloom)]);
 
-  return <AnalyticsView insights={insights} data={data} mistakeDetails={mistakeDetails} notice={notice && NOTICES[notice]} />;
+  return <AnalyticsView insights={insights} data={data} mistakeDetails={mistakeDetails} outcomes={outcomes} notice={notice && NOTICES[notice]} />;
 }

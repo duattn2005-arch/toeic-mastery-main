@@ -6,6 +6,7 @@ import {
   CreditCard,
   LayoutDashboard,
   FileText,
+  Goal,
   Newspaper,
   Headphones,
   Layers,
@@ -28,6 +29,7 @@ const ADMIN_NAV = [
   { label: "Thanh toán", href: "/admin/payments", icon: CreditCard },
   { label: "Rút tiền", href: "/admin/withdrawals", icon: Wallet },
   { label: "Thống kê", href: "/admin/analytics", icon: BarChart3 },
+  { label: "Chuẩn đầu ra", href: "/admin/outcomes", icon: Goal },
   { label: "Viết bài SEO", href: "/admin/seo", icon: Newspaper },
 ];
 

@@ -92,27 +92,22 @@ export default async function LandingPage() {
         {/* HERO: asymmetric split, copy left, real artwork right */}
         <section className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pt-16 pb-24 md:px-6 lg:min-h-[min(calc(100dvh-6rem),52rem)] lg:grid-cols-12 lg:gap-8 lg:pt-8">
           <div className="flex flex-col items-start gap-6 lg:col-span-6">
-            <Reveal>
-              <span className="inline-flex items-center rounded-full border border-primary/20 bg-accent px-3 py-1 text-[11px] font-semibold tracking-[0.14em] text-accent-foreground uppercase">
-                Luyện thi TOEIC toàn diện
-              </span>
-            </Reveal>
-            <Reveal delay={0.08}>
-              <h1 className="text-4xl leading-[1.08] font-extrabold md:text-5xl lg:text-6xl">
-                Chinh phục điểm TOEIC mục tiêu bằng lộ trình của riêng bạn
-              </h1>
-            </Reveal>
-            <Reveal delay={0.16}>
-              <p className="max-w-[48ch] text-base leading-relaxed text-muted-foreground md:text-lg">
-                Đề đủ 7 Part, từ điển ngay trên trang, flashcard ôn đúng lúc và phân tích điểm yếu theo từng Part.
-              </p>
-            </Reveal>
-            <Reveal delay={0.24} className="flex flex-wrap items-center gap-3">
+            {/* No Reveal above the fold: it starts at opacity 0 until JS runs, which held LCP back about 4.5s on phones. */}
+            <span className="inline-flex items-center rounded-full border border-primary/20 bg-accent px-3 py-1 text-[11px] font-semibold tracking-[0.14em] text-accent-foreground uppercase">
+              Luyện thi TOEIC toàn diện
+            </span>
+            <h1 className="text-4xl leading-[1.08] font-extrabold md:text-5xl lg:text-6xl">
+              Chinh phục điểm TOEIC mục tiêu bằng lộ trình của riêng bạn
+            </h1>
+            <p className="max-w-[48ch] text-base leading-relaxed text-muted-foreground md:text-lg">
+              Đề đủ 7 Part, từ điển ngay trên trang, flashcard ôn đúng lúc và phân tích điểm yếu theo từng Part.
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
               <HeroAuthButtons />
-            </Reveal>
+            </div>
           </div>
 
-          <Reveal delay={0.2} className="lg:col-span-6">
+          <div className="lg:col-span-6">
             {/* Double-bezel: outer tray + inner plate with concentric radii */}
             <div className="rounded-[2rem] border border-border/60 bg-card/60 p-2 shadow-lift">
               <div className="relative aspect-[4/3] overflow-hidden rounded-[calc(2rem-0.5rem)] bg-muted">
@@ -126,7 +121,7 @@ export default async function LandingPage() {
                 />
               </div>
             </div>
-          </Reveal>
+          </div>
         </section>
 
         {/* FEATURES: asymmetric bento (7+5 / 5+7), each cell a live preview */}

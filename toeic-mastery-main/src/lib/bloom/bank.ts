@@ -4,6 +4,7 @@ import { PART_META } from "@/lib/constants/toeic";
 import type { ScoredBloomLevel } from "./config";
 import { parseKnowledgeLabel, type KnowledgeLabel } from "./classify";
 import { bloomOfQuestion } from "./from-question";
+import { pacingStats, type PacingStats } from "./domains";
 import { buildBloomProfile, frontierLevel, type BloomProfile, type Frontier } from "./engine";
 import { loadBloomAttempts, loadRememberSignals } from "./evidence";
 import { MISTAKES_OVERALL, MISTAKES_PER_LEVEL, buildMistakeReport, type MistakeReport } from "./mistakes";
@@ -50,7 +51,14 @@ export interface LearnerBloom {
   rows: BloomLabelRow[];
   remember: { lookups30d: number; savedWords: number };
   mistakes: MistakeReport;
+  /** Hồ sơ tính trên dữ liệu đến PAST_WINDOW_DAYS ngày trước — đo tiến bộ rubric 2 → 3 → 4. */
+  pastProfile: BloomProfile | null;
+  /** Nhịp làm bài — miền kỹ năng (domains.ts). */
+  pacing: PacingStats;
 }
+
+/** Mốc so sánh tiến bộ của chuẩn đầu ra. */
+export const PAST_WINDOW_DAYS = 30;
 
 export type MistakeDetail = {
   prompt: string;
@@ -84,7 +92,11 @@ export async function getLearnerBloom(userId: string): Promise<LearnerBloom> {
     db.grammarTopic.findMany({ select: { slug: true, title: true } }),
     db.strategicLabel.findMany({ select: { slug: true, title: true } }),
   ]);
-  const profile = buildBloomProfile(attempts);
+  const now = Date.now();
+  const profile = buildBloomProfile(attempts, now);
+  const pastAt = now - PAST_WINDOW_DAYS * 86_400_000;
+  const past = attempts.filter((a) => a.timestamp <= pastAt);
+  const pastProfile = past.length ? buildBloomProfile(past, pastAt) : null;
   const topicTitle = new Map(topics.map((t) => [t.slug, t.title]));
   const labelTitle = new Map(labels.map((l) => [l.slug, l.title]));
   const titleOf = (label: KnowledgeLabel) => {
@@ -111,5 +123,5 @@ export async function getLearnerBloom(userId: string): Promise<LearnerBloom> {
   });
   // Lowest thinking level first, then the labels with the most evidence.
   rows.sort((a, b) => (a.frontier.level ?? 9) - (b.frontier.level ?? 9) || b.attempts - a.attempts);
-  return { profile, rows, remember, mistakes: buildMistakeReport(attempts) };
+  return { profile, rows, remember, mistakes: buildMistakeReport(attempts), pastProfile, pacing: pacingStats(attempts) };
 }
