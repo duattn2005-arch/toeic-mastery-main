@@ -28,4 +28,8 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 & "$PSScriptRoot\deploy.ps1" $Branch
+if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+# The server can't pull from the private GitHub repo by itself, so hand it the code directly.
+& "$PSScriptRoot\deploy-server.ps1"
 exit $LASTEXITCODE

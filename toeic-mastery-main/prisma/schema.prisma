@@ -1819,3 +1819,15 @@ model SeoSettings {
 
   @@map("seo_settings")
 }
+
+/// Single row (id "default"): admin edits to the program's objectives and
+/// learning outcomes, layered over the defaults in src/lib/bloom/outcomes.ts
+/// (see applyOverrides). Shape: { goal?, objectives?: { PO1: text }, outcomes?: { "CĐR1": { verb, content, … } } }.
+model OutcomeSettings {
+  id        String   @id @default("default")
+  data      Json     @default("{}")
+  updatedBy String?  @map("updated_by") @db.Uuid
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("outcome_settings")
+}

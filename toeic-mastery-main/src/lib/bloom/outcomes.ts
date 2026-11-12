@@ -283,6 +283,83 @@ export function domainLevelInfo(domain: Domain, level: number) {
 }
 
 // ---------------------------------------------------------------------------
+// Bản đang dùng = mặc định trong file này + phần admin sửa trên web
+// ---------------------------------------------------------------------------
+
+export interface OutcomeCatalog {
+  goal: string;
+  objectives: readonly ProgramObjective[];
+  outcomes: readonly LearningOutcome[];
+}
+
+export const DEFAULT_CATALOG: OutcomeCatalog = { goal: PROGRAM_GOAL, objectives: PROGRAM_OBJECTIVES, outcomes: LEARNING_OUTCOMES };
+
+/** Các trường admin được sửa. Chỉ báo (cách đo bằng dữ liệu) vẫn khai báo trong code. */
+export const EDITABLE_OUTCOME_FIELDS = ["audience", "verb", "content", "degree", "timeBound", "objectives"] as const;
+export type OutcomeEdit = Partial<Pick<LearningOutcome, (typeof EDITABLE_OUTCOME_FIELDS)[number]>>;
+
+export interface CatalogOverrides {
+  goal?: string;
+  objectives?: Record<string, string>;
+  outcomes?: Record<string, OutcomeEdit>;
+}
+
+const str = (v: unknown, max = 1000) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : undefined);
+
+/** Đọc JSON đã lưu một cách an toàn: bỏ qua mọi trường lạ / sai kiểu / mã không tồn tại. */
+export function parseOverrides(raw: unknown): CatalogOverrides {
+  const out: CatalogOverrides = {};
+  if (!raw || typeof raw !== "object") return out;
+  const r = raw as Record<string, unknown>;
+  const goal = str(r.goal, 2000);
+  if (goal) out.goal = goal;
+  if (r.objectives && typeof r.objectives === "object") {
+    const objs: Record<string, string> = {};
+    for (const p of PROGRAM_OBJECTIVES) {
+      const v = str((r.objectives as Record<string, unknown>)[p.code]);
+      if (v) objs[p.code] = v;
+    }
+    if (Object.keys(objs).length) out.objectives = objs;
+  }
+  if (r.outcomes && typeof r.outcomes === "object") {
+    const outs: Record<string, OutcomeEdit> = {};
+    for (const o of LEARNING_OUTCOMES) {
+      const e = (r.outcomes as Record<string, unknown>)[o.code];
+      if (!e || typeof e !== "object") continue;
+      const x = e as Record<string, unknown>;
+      const edit: OutcomeEdit = {};
+      for (const f of ["audience", "verb", "content", "degree", "timeBound"] as const) {
+        const v = str(x[f]);
+        if (v) edit[f] = v;
+      }
+      if (Array.isArray(x.objectives)) {
+        const codes = x.objectives.filter((c): c is string => typeof c === "string" && PROGRAM_OBJECTIVES.some((p) => p.code === c));
+        if (codes.length) edit.objectives = [...new Set(codes)];
+      }
+      if (Object.keys(edit).length) outs[o.code] = edit;
+    }
+    if (Object.keys(outs).length) out.outcomes = outs;
+  }
+  return out;
+}
+
+export function applyOverrides(raw: unknown): OutcomeCatalog {
+  const ov = parseOverrides(raw);
+  return {
+    goal: ov.goal ?? PROGRAM_GOAL,
+    objectives: PROGRAM_OBJECTIVES.map((p) => (ov.objectives?.[p.code] ? { ...p, statement: ov.objectives[p.code] } : p)),
+    outcomes: LEARNING_OUTCOMES.map((o) => (ov.outcomes?.[o.code] ? { ...o, ...ov.outcomes[o.code] } : o)),
+  };
+}
+
+/** Lỗi checklist của một bản sửa (bỏ qua tính khả thi — phụ thuộc ngân hàng câu, không phụ thuộc câu chữ). */
+export function catalogErrors(catalog: OutcomeCatalog): { code: string; errors: string[] }[] {
+  return catalog.outcomes
+    .map((o) => ({ code: o.code, errors: checkOutcome(o, { objectives: catalog.objectives }).filter((c) => !c.met && c.key !== "attainable").map((c) => c.criterion) }))
+    .filter((x) => x.errors.length > 0);
+}
+
+// ---------------------------------------------------------------------------
 // F.2. Checklist kiểm tra chuẩn đầu ra (tự động)
 // ---------------------------------------------------------------------------
 
@@ -309,13 +386,16 @@ export function verbMatchesLevel(verb: string, domain: Domain, level: number): b
 export interface CheckContext {
   /** Số câu đang xuất bản của mỗi chỉ báo dạng "cells" (để xét tính khả thi). Bỏ trống = không xét. */
   questionsPerIndicator?: Map<string, number>;
+  /** Mục tiêu chương trình đang dùng (mặc định: PROGRAM_OBJECTIVES). */
+  objectives?: readonly ProgramObjective[];
 }
 
 export function checkOutcome(o: LearningOutcome, ctx: CheckContext = {}): ChecklistItem[] {
   const words = (s: string) => s.trim().split(/\s+/).filter(Boolean).length;
   const verb = norm(o.verb);
   const singleVerb = !/[,;/]| và | hoặc /.test(o.verb);
-  const objectivesKnown = o.objectives.length > 0 && o.objectives.every((c) => PROGRAM_OBJECTIVES.some((p) => p.code === c));
+  const pos = ctx.objectives ?? PROGRAM_OBJECTIVES;
+  const objectivesKnown = o.objectives.length > 0 && o.objectives.every((c) => pos.some((p) => p.code === c));
   const badIndicatorVerbs = o.indicators.filter((i) => [...VAGUE_VERBS, ...PROCESS_VERBS].includes(norm(i.verb)));
   const cellIndicators = o.indicators.filter((i) => i.measure.kind === "cells");
   const thin = ctx.questionsPerIndicator ? cellIndicators.filter((i) => (ctx.questionsPerIndicator!.get(i.code) ?? 0) < MIN_ATTEMPTS_PER_CELL) : [];
@@ -337,8 +417,8 @@ export function checkOutcome(o: LearningOutcome, ctx: CheckContext = {}): Checkl
 }
 
 /** Ma trận chuẩn đầu ra × mục tiêu chương trình. */
-export function objectiveMatrix(): { outcome: string; objectives: Record<string, boolean> }[] {
-  return LEARNING_OUTCOMES.map((o) => ({ outcome: o.code, objectives: Object.fromEntries(PROGRAM_OBJECTIVES.map((p) => [p.code, o.objectives.includes(p.code)])) }));
+export function objectiveMatrix(catalog: OutcomeCatalog = DEFAULT_CATALOG): { outcome: string; objectives: Record<string, boolean> }[] {
+  return catalog.outcomes.map((o) => ({ outcome: o.code, objectives: Object.fromEntries(catalog.objectives.map((p) => [p.code, o.objectives.includes(p.code)])) }));
 }
 
 // ---------------------------------------------------------------------------
@@ -444,7 +524,7 @@ export function createRubric(criteria: CreateCriterion[]): RubricLevel {
 
 const pct = (x: number) => `${Math.round(x * 100)}%`;
 
-export function assessOutcomes(input: OutcomeInput): LearnerOutcomes {
+export function assessOutcomes(input: OutcomeInput, catalogOutcomes: readonly LearningOutcome[] = LEARNING_OUTCOMES): LearnerOutcomes {
   const psychomotor = psychomotorLadder(input.pacing, input.profile.behavior);
   const answers = input.profile.answers;
   const affective = affectiveLadder(input.affective, {
@@ -496,7 +576,7 @@ export function assessOutcomes(input: OutcomeInput): LearnerOutcomes {
     }
   };
 
-  const outcomes: OutcomeResult[] = LEARNING_OUTCOMES.map((o) => {
+  const outcomes: OutcomeResult[] = catalogOutcomes.map((o) => {
     const indicators = o.indicators.map(assessIndicator);
     const measured = indicators.filter((i) => i.rubric !== null);
     const avg = (xs: RubricLevel[]) => (xs.length ? (Math.floor(xs.reduce((s, x) => s + x, 0) / xs.length) as RubricLevel) : null);
