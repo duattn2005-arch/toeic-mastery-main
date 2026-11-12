@@ -65,3 +65,5 @@ Bằng chứng ngược: ô thiếu dữ liệu mà bậc cao hơn cùng nhãn �
 - Một chuẩn đầu ra **Đạt** khi mọi chỉ báo đã đo và đều ≥ mức 4; mức của chuẩn đầu ra = trung bình (làm tròn xuống) các chỉ báo đã đo.
 - Giao diện: tab **Chuẩn đầu ra** ở `/analytics`, trang **Đề cương** `/syllabus`, trang quản trị `/admin/outcomes` (checklist, ma trận đối chiếu ngân hàng câu, phân bố mức đạt).
 - Chỉnh chuẩn đầu ra: sửa `LEARNING_OUTCOMES` rồi chạy `npm test` — kiểm thử bắt CĐR không đạt checklist.
+- **Admin sửa câu chữ trên web** ở `/admin/outcomes/edit`: mục tiêu chung, PO1–PO4 và phần A-B-C-D + thời gian + mục tiêu đóng góp của từng chuẩn đầu ra. Lưu vào bảng `outcome_settings` (một dòng JSON, chỉ phần khác mặc định), đè lên `outcomes.ts` qua `applyOverrides`; bản sửa không đạt checklist (`catalogErrors`) thì không lưu. Cách đo (chỉ báo, nhãn, bậc) vẫn ở code. Nút “Khôi phục mặc định” xoá dòng này.
+- `src/components/outcomes.render.test.tsx` render thử tab Chuẩn đầu ra, Đề cương và form sửa bằng dữ liệu giả (chạy trong `npm test`).

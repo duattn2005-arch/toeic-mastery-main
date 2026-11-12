@@ -207,3 +207,47 @@ test("bậc Sáng tạo: rubric theo số tiêu chí sản phẩm", () => {
   assert.equal(r.domains.create.rubric, 5);
   assert.ok(r.outcomes.find((o) => o.code === "CĐR14")!.achieved);
 });
+
+// ---------------------------------------------------------------------------
+// Phần admin sửa trên web
+// ---------------------------------------------------------------------------
+
+import { DEFAULT_CATALOG, applyOverrides, catalogErrors, parseOverrides } from "./outcomes";
+
+test("bản sửa: đè đúng trường, giữ chỉ báo; bỏ qua mã lạ và kiểu sai", () => {
+  const cat = applyOverrides({
+    goal: "Mục tiêu mới",
+    objectives: { PO1: "PO1 mới", PO9: "không tồn tại" },
+    outcomes: { "CĐR1": { content: "nghĩa của từ vựng TOEIC trong email công việc", objectives: ["PO1", "PO2", "PO9"], indicators: [] }, "CĐR99": { verb: "x" }, "CĐR2": { verb: 123 } },
+  });
+  assert.equal(cat.goal, "Mục tiêu mới");
+  assert.equal(cat.objectives.find((p) => p.code === "PO1")!.statement, "PO1 mới");
+  assert.equal(cat.objectives.length, PROGRAM_OBJECTIVES.length);
+  const c1 = cat.outcomes.find((o) => o.code === "CĐR1")!;
+  assert.equal(c1.content, "nghĩa của từ vựng TOEIC trong email công việc");
+  assert.deepEqual(c1.objectives, ["PO1", "PO2"]);
+  assert.equal(c1.indicators.length, LEARNING_OUTCOMES[0].indicators.length);
+  assert.equal(cat.outcomes.find((o) => o.code === "CĐR2")!.verb, LEARNING_OUTCOMES[1].verb);
+  assert.equal(cat.outcomes.length, LEARNING_OUTCOMES.length);
+});
+
+test("bản sửa rỗng / hỏng = nội dung mặc định, và mặc định không có lỗi checklist", () => {
+  assert.deepEqual(parseOverrides(null), {});
+  assert.deepEqual(parseOverrides("rác"), {});
+  assert.deepEqual(applyOverrides(undefined), { ...DEFAULT_CATALOG, objectives: [...PROGRAM_OBJECTIVES], outcomes: [...LEARNING_OUTCOMES] });
+  assert.deepEqual(catalogErrors(DEFAULT_CATALOG), []);
+});
+
+test("bản sửa sai checklist bị phát hiện trước khi lưu", () => {
+  const bad = applyOverrides({ outcomes: { "CĐR3": { verb: "hiểu" }, "CĐR6": { degree: "thật tốt", timeBound: "" } } });
+  const errs = catalogErrors(bad);
+  assert.deepEqual(errs.map((e) => e.code).sort(), ["CĐR3", "CĐR6"]);
+  // timeBound rỗng bị bỏ qua (giữ mặc định), chỉ còn lỗi mức độ không có con số.
+  assert.ok(errs.find((e) => e.code === "CĐR6")!.errors.some((x) => x.startsWith("M —")));
+});
+
+test("bảng đánh giá dùng câu chữ đã sửa", () => {
+  const cat = applyOverrides({ outcomes: { "CĐR2": { content: "điểm ngữ pháp trong câu Part 5 về thì động từ" } } });
+  const r = assessOutcomes({ profile: buildBloomProfile([], NOW), pastProfile: null, pacing: pacingStats([]), affective: NO_AFFECT, create: NO_CREATE }, cat.outcomes);
+  assert.match(r.outcomes.find((o) => o.code === "CĐR2")!.statement, /thì động từ/);
+});

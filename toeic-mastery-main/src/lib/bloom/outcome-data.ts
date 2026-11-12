@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { getLearnerBloom, type LearnerBloom } from "./bank";
 import type { AffectiveSignals, CreateSignals } from "./domains";
 import { bloomOfQuestion } from "./from-question";
-import { LEARNING_OUTCOMES, assessOutcomes, checkOutcome, matchesLabel, type ChecklistItem, type LearnerOutcomes } from "./outcomes";
+import { LEARNING_OUTCOMES, applyOverrides, assessOutcomes, checkOutcome, matchesLabel, type ChecklistItem, type LearnerOutcomes, type OutcomeCatalog } from "./outcomes";
 import type { RubricLevel } from "./rubric";
 
 /**
@@ -13,6 +13,28 @@ import type { RubricLevel } from "./rubric";
  */
 
 const DAY = 86_400_000;
+
+// ---------------------------------------------------------------------------
+// Bản chuẩn đầu ra đang áp dụng (mặc định + phần admin sửa)
+// ---------------------------------------------------------------------------
+
+const CATALOG_TTL_MS = 60_000;
+let catalogCache: { at: number; catalog: OutcomeCatalog } | null = null;
+
+export async function getOutcomeCatalog(): Promise<OutcomeCatalog> {
+  if (catalogCache && Date.now() - catalogCache.at < CATALOG_TTL_MS) return catalogCache.catalog;
+  // Before the migration runs (or if the read fails) the site keeps working on the code defaults.
+  const row = await db.outcomeSettings.findUnique({ where: { id: "default" } }).catch(() => null);
+  const catalog = applyOverrides(row?.data);
+  catalogCache = { at: Date.now(), catalog };
+  return catalog;
+}
+
+/** Gọi sau khi admin lưu, để trang hiện ngay bản mới. */
+export function invalidateOutcomeCaches() {
+  catalogCache = null;
+  cohortCache = null;
+}
 
 export async function loadDomainSignals(userId: string): Promise<{ affective: AffectiveSignals; create: CreateSignals }> {
   const since = new Date(Date.now() - 30 * DAY);
@@ -48,9 +70,9 @@ export async function loadDomainSignals(userId: string): Promise<{ affective: Af
 }
 
 /** Chuẩn đầu ra của một người học. Truyền `bloom` khi đã có (trang Phân tích) để không nạp lại bài làm. */
-export async function getLearnerOutcomes(userId: string, bloom?: LearnerBloom): Promise<LearnerOutcomes> {
-  const [b, signals] = await Promise.all([bloom ?? getLearnerBloom(userId), loadDomainSignals(userId)]);
-  return assessOutcomes({ profile: b.profile, pastProfile: b.pastProfile, pacing: b.pacing, affective: signals.affective, create: signals.create });
+export async function getLearnerOutcomes(userId: string, bloom?: LearnerBloom, catalog?: OutcomeCatalog): Promise<LearnerOutcomes> {
+  const [b, signals, cat] = await Promise.all([bloom ?? getLearnerBloom(userId), loadDomainSignals(userId), catalog ?? getOutcomeCatalog()]);
+  return assessOutcomes({ profile: b.profile, pastProfile: b.pastProfile, pacing: b.pacing, affective: signals.affective, create: signals.create }, cat.outcomes);
 }
 
 // ---------------------------------------------------------------------------
@@ -101,11 +123,11 @@ export interface OutcomeAudit {
   bank: { code: string; questions: number | null }[];
 }
 
-export async function auditOutcomes(): Promise<OutcomeAudit[]> {
-  const counts = await getIndicatorBankCounts();
-  return LEARNING_OUTCOMES.map((o) => ({
+export async function auditOutcomes(catalog?: OutcomeCatalog): Promise<OutcomeAudit[]> {
+  const [counts, cat] = await Promise.all([getIndicatorBankCounts(), catalog ?? getOutcomeCatalog()]);
+  return cat.outcomes.map((o) => ({
     code: o.code,
-    checklist: checkOutcome(o, { questionsPerIndicator: counts }),
+    checklist: checkOutcome(o, { questionsPerIndicator: counts, objectives: cat.objectives }),
     bank: o.indicators.map((i) => ({ code: i.code, questions: i.measure.kind === "cells" ? (counts.get(i.code) ?? 0) : null })),
   }));
 }
@@ -146,9 +168,10 @@ export async function getCohortOutcomeReport(): Promise<CohortReport> {
     select: { id: true },
   });
 
+  const catalog = await getOutcomeCatalog();
   const results: LearnerOutcomes[] = [];
   for (let i = 0; i < learners.length; i += COHORT_CONCURRENCY) {
-    const batch = await Promise.all(learners.slice(i, i + COHORT_CONCURRENCY).map((l) => getLearnerOutcomes(l.id)));
+    const batch = await Promise.all(learners.slice(i, i + COHORT_CONCURRENCY).map((l) => getLearnerOutcomes(l.id, undefined, catalog)));
     results.push(...batch);
   }
 

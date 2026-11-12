@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Check, X } from "lucide-react";
 import { MIN_ATTEMPTS_PER_CELL } from "@/lib/bloom/config";
-import { COHORT_MAX_LEARNERS, auditOutcomes, getCohortOutcomeReport } from "@/lib/bloom/outcome-data";
-import { LEARNING_OUTCOMES, OBJECTIVE_CHECKLIST, OUTCOME_BY_CODE, outcomeStatement } from "@/lib/bloom/outcomes";
+import { COHORT_MAX_LEARNERS, auditOutcomes, getCohortOutcomeReport, getOutcomeCatalog } from "@/lib/bloom/outcome-data";
+import { OBJECTIVE_CHECKLIST, outcomeStatement } from "@/lib/bloom/outcomes";
 import { RUBRIC_LEVELS, type RubricLevel } from "@/lib/bloom/rubric";
 import { DOMAIN_CHIP, RUBRIC_CHIP, domainCode } from "@/components/analytics/outcomes-panel";
 import { cn } from "@/lib/utils";
@@ -22,7 +22,10 @@ function Mark({ ok }: { ok: boolean }) {
 }
 
 export default async function AdminOutcomesPage() {
-  const [audits, cohort] = await Promise.all([auditOutcomes(), getCohortOutcomeReport()]);
+  const catalog = await getOutcomeCatalog();
+  const [audits, cohort] = await Promise.all([auditOutcomes(catalog), getCohortOutcomeReport()]);
+  const OUTCOME_BY_CODE = new Map(catalog.outcomes.map((o) => [o.code, o]));
+  const LEARNING_OUTCOMES = catalog.outcomes;
   const failing = audits.filter((a) => a.checklist.some((c) => !c.met));
 
   return (
@@ -30,12 +33,15 @@ export default async function AdminOutcomesPage() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">Chuẩn đầu ra</h1>
         <p className="mt-1 max-w-[80ch] text-sm text-muted-foreground">
-          Kiểm tra sự phù hợp của mục tiêu và chuẩn đầu ra, đối chiếu chuẩn đầu ra với ngân hàng câu hỏi, và đo mức đạt của người học. Nội dung chuẩn đầu ra khai báo ở <code>src/lib/bloom/outcomes.ts</code>; xem bản công bố tại{" "}
+          Kiểm tra sự phù hợp của mục tiêu và chuẩn đầu ra, đối chiếu chuẩn đầu ra với ngân hàng câu hỏi, và đo mức đạt của người học. Câu chữ sửa được ngay trên web; cách đo (chỉ báo) khai báo ở <code>src/lib/bloom/outcomes.ts</code>. Xem bản công bố tại{" "}
           <Link href="/syllabus" className="font-semibold text-primary underline-offset-2 hover:underline">
             Đề cương
           </Link>
           .
         </p>
+        <Link href="/admin/outcomes/edit" className="mt-3 inline-flex rounded-full bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90">
+          Chỉnh sửa mục tiêu và chuẩn đầu ra
+        </Link>
       </div>
 
       <section className={SECTION}>
