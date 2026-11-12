@@ -30,6 +30,7 @@ import {
   type ScoredBloomLevel,
 } from "@/lib/bloom/config";
 import { answerInsights } from "@/lib/bloom/answer-insights";
+import { RUBRIC_BY_LEVEL, rubricLevelOf } from "@/lib/bloom/rubric";
 import type { CellResult, LevelMastery } from "@/lib/bloom/engine";
 import { levelRoadmap, scorePct, type LevelRoadmap, type LevelTask } from "@/lib/bloom/level-roadmap";
 import type { BloomLabelRow, LearnerBloom, MistakeDetail } from "@/lib/bloom/bank";
@@ -71,6 +72,10 @@ function cellFacts(c: CellResult, level: ScoredBloomLevel) {
   const lines = [
     `${c.attempts} câu khác nhau${c.attempts < MIN_ATTEMPTS_PER_CELL ? ` (cần ${MIN_ATTEMPTS_PER_CELL})` : ""} · độ chính xác ${pct(c.accuracy)}`,
   ];
+  if (c.attempts >= MIN_ATTEMPTS_PER_CELL) {
+    const r = rubricLevelOf(c.score);
+    lines.push(`Rubric: mức ${r}/5 — ${RUBRIC_BY_LEVEL.get(r)!.nameVi}`);
+  }
   if (c.speedBonus > 0) lines.push(`Thưởng tốc độ +${pct(c.speedBonus)}`);
   if (c.trapPenalty > 0) lines.push(`Trừ bẫy −${pct(c.trapPenalty)} (${c.trapHits} lần dính bẫy, ${c.flips} lần đổi đúng → sai)`);
   if (c.noiseRemoved) lines.push(`Đã loại ${c.noiseRemoved} câu (đoán ${c.noise.guess}, ngâm ${c.noise.stuck}, xem đáp án trước ${c.noise.revealed})`);

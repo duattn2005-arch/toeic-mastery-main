@@ -1,9 +1,11 @@
-import { CircleAlert, Clock3, Layers, ListChecks, ListTodo, Radar as RadarIcon, TrendingUp } from "lucide-react";
+import { CircleAlert, Clock3, Goal, Layers, ListChecks, ListTodo, Radar as RadarIcon, TrendingUp } from "lucide-react";
 import type { MistakeDetail } from "@/lib/bloom/bank";
 import type { getAnalyticsData } from "@/lib/data/analytics";
+import type { LearnerOutcomes } from "@/lib/bloom/outcomes";
 import type { LearningInsights } from "@/lib/services/insights/engine";
 import { formatStudyDuration } from "@/lib/utils";
 import { AnalyticsHero } from "@/components/analytics/analytics-hero";
+import { OutcomesPanel } from "@/components/analytics/outcomes-panel";
 import { AnswerHabits, BloomPanel, MistakeMap } from "@/components/analytics/bloom-panel";
 import {
   AlertsStrip,
@@ -29,6 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 const TABS = [
   { value: "todo", label: "Việc cần làm", icon: ListTodo },
   { value: "bloom", label: "Thang Bloom", icon: Layers },
+  { value: "outcomes", label: "Chuẩn đầu ra", icon: Goal },
   { value: "mistakes", label: "Lỗi sai", icon: CircleAlert },
   { value: "skills", label: "Kỹ năng", icon: RadarIcon },
   { value: "progress", label: "Tiến độ", icon: TrendingUp },
@@ -40,9 +43,11 @@ export function AnalyticsView({
   insights,
   data,
   mistakeDetails,
+  outcomes,
   notice,
 }: {
   insights: LearningInsights;
+  outcomes: LearnerOutcomes;
   data: Awaited<ReturnType<typeof getAnalyticsData>>;
   mistakeDetails: Map<string, MistakeDetail>;
   notice?: string;
@@ -80,6 +85,10 @@ export function AnalyticsView({
 
         <TabsContent value="bloom" className={TAB_BODY}>
           <BloomPanel bloom={insights.bloom} mistakeDetails={mistakeDetails} />
+        </TabsContent>
+
+        <TabsContent value="outcomes" className={TAB_BODY}>
+          <OutcomesPanel data={outcomes} />
         </TabsContent>
 
         <TabsContent value="mistakes" className={TAB_BODY}>
