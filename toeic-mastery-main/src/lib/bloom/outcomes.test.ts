@@ -11,6 +11,7 @@ import {
   matchesLabel,
   outcomeStatement,
   verbMatchesLevel,
+  weakestIndicators,
   type LearningOutcome,
 } from "./outcomes";
 import { rubricFromLadder, rubricLevelOf, rubricTrend } from "./rubric";
@@ -250,4 +251,15 @@ test("bảng đánh giá dùng câu chữ đã sửa", () => {
   const cat = applyOverrides({ outcomes: { "CĐR2": { content: "điểm ngữ pháp trong câu Part 5 về thì động từ" } } });
   const r = assessOutcomes({ profile: buildBloomProfile([], NOW), pastProfile: null, pacing: pacingStats([]), affective: NO_AFFECT, create: NO_CREATE }, cat.outcomes);
   assert.match(r.outcomes.find((o) => o.code === "CĐR2")!.statement, /thì động từ/);
+});
+
+test("AI Mentor: chỉ báo yếu nhất trước, bỏ chỉ báo đã đạt / chưa đo", () => {
+  const weak = many(20, { knowledgeLabel: "grammar:nouns", bloomLevel: 2 }, 15); // 25% đúng → mức 1
+  const r = assessOutcomes({ profile: buildBloomProfile(weak, NOW), pastProfile: null, pacing: pacingStats(weak), affective: NO_AFFECT, create: NO_CREATE });
+  const lines = weakestIndicators(r);
+  assert.ok(lines.length >= 1 && lines.length <= 3);
+  assert.match(lines[0], /^CĐR2 · .*mức 1\/5$/);
+  const strong = many(20, { knowledgeLabel: "grammar:nouns", bloomLevel: 2 });
+  const ok = assessOutcomes({ profile: buildBloomProfile(strong, NOW), pastProfile: null, pacing: pacingStats(strong), affective: NO_AFFECT, create: NO_CREATE });
+  assert.ok(!weakestIndicators(ok).some((l) => l.startsWith("CĐR2 ")));
 });

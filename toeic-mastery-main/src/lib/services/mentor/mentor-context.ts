@@ -2,6 +2,8 @@ import "server-only";
 import { db } from "@/lib/db";
 import { PART_META, MENTOR_LEVEL_LABEL_VI } from "@/lib/constants/toeic";
 import { getWeakestDimensions } from "./skill-mastery";
+import { getLearnerOutcomes } from "@/lib/bloom/outcome-data";
+import { weakestIndicators } from "@/lib/bloom/outcomes";
 import { questionAccessFilter } from "@/lib/data/question-access";
 import { searchRelevantContent, type RetrievedChunk } from "./mentor-rag";
 import type { MentorChatMessage } from "./llm-client";
@@ -42,7 +44,7 @@ const RAG_TOP_K = 5;
  * come from the client, so both are checked here rather than trusted.
  */
 export async function buildMentorContext(input: MentorContextInput): Promise<MentorContext> {
-  const [profile, weakDimensions, memory, recentMessages, originQuestion, todayDay, ragChunks] = await Promise.all([
+  const [profile, weakDimensions, memory, recentMessages, originQuestion, todayDay, ragChunks, outcomes] = await Promise.all([
     db.profile.findUniqueOrThrow({
       where: { id: input.userId },
       select: { currentScore: true, targetScore: true, examDate: true, mentorLevel: true },
@@ -78,6 +80,8 @@ export async function buildMentorContext(input: MentorContextInput): Promise<Men
       select: { dayNumber: true, focusParts: true, summary: true },
     }),
     searchRelevantContent(input.latestUserMessage, RAG_TOP_K).catch((): RetrievedChunk[] => []),
+    // Best-effort like RAG: a failure here only drops the outcome lines, never the chat turn.
+    input.pro ? getLearnerOutcomes(input.userId).catch(() => null) : null,
   ]);
 
   const selectedAnswer =
@@ -127,6 +131,17 @@ export async function buildMentorContext(input: MentorContextInput): Promise<Men
       })
       .join("; ");
     lines.push(`Điểm yếu hiện tại: ${weakList}`);
+  }
+
+  const weakOutcomes = outcomes ? weakestIndicators(outcomes) : [];
+  if (outcomes) {
+    lines.push(`Chuẩn đầu ra của khóa học: học viên đã đạt ${outcomes.achieved}/${outcomes.total}.`);
+  }
+  if (weakOutcomes.length > 0) {
+    lines.push(
+      `Chỉ báo chuẩn đầu ra chưa đạt (yếu nhất trước, mức đạt là 4/5): ${weakOutcomes.join("; ")}`,
+      "Khi gợi ý học tiếp hoặc học viên hỏi nên cải thiện gì, ưu tiên các chỉ báo này: nói rõ chỉ báo nào chưa đạt và vì sao nên luyện nó trước. Học viên xem chi tiết ở trang Thống kê → tab Chuẩn đầu ra."
+    );
   }
 
   if (originQuestion) {

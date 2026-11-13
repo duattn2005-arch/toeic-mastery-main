@@ -603,3 +603,15 @@ export function assessOutcomes(input: OutcomeInput, catalogOutcomes: readonly Le
 
 /** Tên bậc Bloom nhận thức (dùng cho nhãn nhỏ trên UI). */
 export const cognitiveName = (level: number) => (level === 6 ? COGNITIVE_LEVELS[5].nameVi : BLOOM_BY_ID.get(level as ScoredBloomLevel)?.nameVi ?? "");
+
+/**
+ * Chỉ báo đã đo nhưng chưa đạt (rubric < mức đạt), yếu nhất trước — để AI Mentor
+ * ưu tiên khi gợi ý học tiếp. Mỗi dòng: "CĐR3 · CĐR3.1: <chỉ báo> — mức 2/5".
+ */
+export function weakestIndicators(result: LearnerOutcomes, limit = 3): string[] {
+  return result.outcomes
+    .flatMap((o) => o.indicators.filter((i) => i.rubric !== null && i.rubric < RUBRIC_PASS_LEVEL).map((i) => ({ o, i })))
+    .sort((a, b) => a.i.rubric! - b.i.rubric! || a.o.level - b.o.level)
+    .slice(0, limit)
+    .map(({ o, i }) => `${o.code} · ${i.code}: ${i.statement} — mức ${i.rubric}/5`);
+}
