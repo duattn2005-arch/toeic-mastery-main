@@ -11,6 +11,7 @@ import {
   History,
   BarChart3,
   Bot,
+  ScrollText,
 } from "lucide-react";
 
 export interface NavItem {
@@ -37,6 +38,7 @@ export const MAIN_NAV: NavItem[] = [
   { label: "TOEIC Tips", href: "/tips", icon: Lightbulb },
   { label: "Đã lưu", href: "/bookmarks", icon: Bookmark, also: ["/dictionary"] },
   { label: "Lịch sử", href: "/history", icon: History },
+  { label: "Đề cương", href: "/syllabus", icon: ScrollText },
   { label: "Thống kê", href: "/analytics", icon: BarChart3 },
 ];
 
