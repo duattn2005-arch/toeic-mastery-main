@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { RECENT_EXCLUSION_DAYS, shuffle } from "./mentor-test-generator";
 import { TEST_PARTS } from "@/lib/constants/toeic";
 import { buildAdvancedHandoffNotes } from "./advanced-readiness";
+import { getLearnerOutcomes } from "@/lib/bloom/outcome-data";
 import { questionAccessFilterFor } from "@/lib/data/question-access";
 import type { Prisma } from "@/generated/prisma/client";
 import type { MentorLevel, SkillDimensionType, TestPart } from "@/generated/prisma/enums";
@@ -576,6 +577,17 @@ export async function recordLevelAdvance(params: {
     if (notes.length > 0) {
       handoffLine += `\nLưu ý chiến lược Cấp A: ${notes.join(" | ")}`;
     }
+  }
+
+  // Chuẩn đầu ra của cấp vừa rời mà chưa đạt — để Mentor cấp mới còn nhắc ôn lại.
+  const leftTier = params.fromLevel === "BEGINNER" ? "B" : params.fromLevel === "INTERMEDIATE" ? "I" : null;
+  if (leftTier) {
+    const outcomes = await getLearnerOutcomes(params.userId).catch((err) => {
+      console.error("getLearnerOutcomes failed", err);
+      return null;
+    });
+    const unmet = outcomes?.outcomes.filter((o) => o.tier === leftTier && o.measured > 0 && !o.achieved).map((o) => `${o.code} (mức ${o.rubric}/5)`) ?? [];
+    if (unmet.length > 0) handoffLine += `\nChuẩn đầu ra cấp ${leftTier} chưa đạt, cần ôn lại: ${unmet.join(", ")}.`;
   }
 
   const existing = await db.mentorMemory.findUnique({ where: { userId: params.userId }, select: { summary: true } });

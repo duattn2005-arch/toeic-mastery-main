@@ -32,6 +32,7 @@ import {
   type PacingStats,
 } from "./domains";
 import type { BloomProfile, CellResult } from "./engine";
+import type { TestPart } from "@/generated/prisma/enums";
 import { RUBRIC_PASS_LEVEL, rubricFromLadder, rubricLevelOf, rubricTrend, type RubricLevel, type RubricTrend } from "./rubric";
 
 export type OutcomeTier = Exclude<Tier, "OUTPUT">;
@@ -614,4 +615,28 @@ export function weakestIndicators(result: LearnerOutcomes, limit = 3): string[] 
     .sort((a, b) => a.i.rubric! - b.i.rubric! || a.o.level - b.o.level)
     .slice(0, limit)
     .map(({ o, i }) => `${o.code} · ${i.code}: ${i.statement} — mức ${i.rubric}/5`);
+}
+
+const INDICATOR_BY_CODE = new Map(LEARNING_OUTCOMES.flatMap((o) => o.indicators.map((i) => [i.code, i] as const)));
+
+/**
+ * Lộ trình học: Part gắn với chỉ báo chưa đạt (nhãn "part:PARTn" trong cách đo),
+ * yếu nhất trước, kèm mã CĐR liên quan. `tier` lọc theo cấp của chuẩn đầu ra.
+ */
+export function outcomeFocusParts(result: LearnerOutcomes, tier?: OutcomeTier): { parts: TestPart[]; codes: string[] } {
+  const weak = result.outcomes
+    .filter((o) => !tier || o.tier === tier)
+    .flatMap((o) => o.indicators.filter((i) => i.rubric !== null && i.rubric < RUBRIC_PASS_LEVEL).map((i) => ({ o, i })))
+    .sort((a, b) => a.i.rubric! - b.i.rubric! || a.o.level - b.o.level);
+  const parts: TestPart[] = [];
+  const codes: string[] = [];
+  for (const { o, i } of weak) {
+    const m = INDICATOR_BY_CODE.get(i.code)?.measure;
+    if (m?.kind !== "cells") continue;
+    const ps = m.labels.flatMap((l) => /^part:(PART[1-7])$/.exec(l)?.[1] ?? []) as TestPart[];
+    if (!ps.length) continue;
+    for (const p of ps) if (!parts.includes(p)) parts.push(p);
+    if (!codes.includes(o.code)) codes.push(o.code);
+  }
+  return { parts, codes };
 }

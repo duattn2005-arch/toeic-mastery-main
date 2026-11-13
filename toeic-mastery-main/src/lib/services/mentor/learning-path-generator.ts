@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { LISTENING_PARTS, TEST_PARTS } from "@/lib/constants/toeic";
 import { getWeakestDimensions } from "./skill-mastery";
+import { getOutcomeFocus } from "@/lib/bloom/outcome-data";
 import { pickGrammarLessonIds } from "./grammar-lesson-picker";
 import type { TestPart, LearningItemType, LearningDayStatus } from "@/generated/prisma/enums";
 
@@ -102,11 +103,13 @@ export async function generateLearningPath(params: { userId: string; targetScore
     data: { status: "ABANDONED" },
   });
 
-  const [weakPartDims, weakGrammarDims] = await Promise.all([
+  const [weakPartDims, weakGrammarDims, focus] = await Promise.all([
     getWeakestDimensions(params.userId, 7, "PART"),
     getWeakestDimensions(params.userId, 5, "GRAMMAR_TOPIC"),
+    getOutcomeFocus(params.userId),
   ]);
-  const weakParts = weakPartDims.map((d) => d.dimensionKey as TestPart);
+  // Parts behind unmet learning outcomes (chuẩn đầu ra) go first, then the weakest by SkillMastery.
+  const weakParts = [...new Set([...focus.parts, ...weakPartDims.map((d) => d.dimensionKey as TestPart)])];
   const weakGrammarTopicSlugs = weakGrammarDims.map((d) => d.dimensionKey);
 
   const dayCount = resolvePathLength(params.examDate);
@@ -119,7 +122,7 @@ export async function generateLearningPath(params: { userId: string; targetScore
 
   const rationale =
     weakParts.length > 0
-      ? `Ưu tiên ${weakParts.length} phần đang yếu nhất trước, xen kẽ các phần còn lại; cứ mỗi ${MINI_TEST_EVERY_N_DAYS} ngày có một bài kiểm tra nhanh để xác nhận đã hiểu trước khi mở phần khó hơn.`
+      ? `${focus.codes.length ? `Bám chuẩn đầu ra chưa đạt (${focus.codes.join(", ")}): ` : ""}Ưu tiên ${weakParts.length} phần đang yếu nhất trước, xen kẽ các phần còn lại; cứ mỗi ${MINI_TEST_EVERY_N_DAYS} ngày có một bài kiểm tra nhanh để xác nhận đã hiểu trước khi mở phần khó hơn.`
       : "Chưa có đủ dữ liệu về điểm yếu — lộ trình khởi đầu xoay vòng đều cả 7 Part, sẽ tự điều chỉnh sau khi có kết quả luyện tập đầu tiên.";
 
   const path = await db.learningPath.create({

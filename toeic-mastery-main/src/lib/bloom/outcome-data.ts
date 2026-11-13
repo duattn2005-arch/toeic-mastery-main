@@ -3,7 +3,8 @@ import { db } from "@/lib/db";
 import { getLearnerBloom, type LearnerBloom } from "./bank";
 import type { AffectiveSignals, CreateSignals } from "./domains";
 import { bloomOfQuestion } from "./from-question";
-import { LEARNING_OUTCOMES, applyOverrides, assessOutcomes, checkOutcome, matchesLabel, type ChecklistItem, type LearnerOutcomes, type OutcomeCatalog } from "./outcomes";
+import { LEARNING_OUTCOMES, applyOverrides, assessOutcomes, checkOutcome, matchesLabel, outcomeFocusParts, type ChecklistItem, type LearnerOutcomes, type OutcomeCatalog, type OutcomeTier } from "./outcomes";
+import type { TestPart } from "@/generated/prisma/enums";
 import type { RubricLevel } from "./rubric";
 
 /**
@@ -73,6 +74,16 @@ export async function loadDomainSignals(userId: string): Promise<{ affective: Af
 export async function getLearnerOutcomes(userId: string, bloom?: LearnerBloom, catalog?: OutcomeCatalog): Promise<LearnerOutcomes> {
   const [b, signals, cat] = await Promise.all([bloom ?? getLearnerBloom(userId), loadDomainSignals(userId), catalog ?? getOutcomeCatalog()]);
   return assessOutcomes({ profile: b.profile, pastProfile: b.pastProfile, pacing: b.pacing, affective: signals.affective, create: signals.create }, cat.outcomes);
+}
+
+/** Part ưu tiên cho lộ trình học từ chuẩn đầu ra chưa đạt; lỗi thì trả rỗng (lộ trình vẫn chạy theo điểm yếu cũ). */
+export async function getOutcomeFocus(userId: string, tier?: OutcomeTier): Promise<{ parts: TestPart[]; codes: string[] }> {
+  return getLearnerOutcomes(userId)
+    .then((r) => outcomeFocusParts(r, tier))
+    .catch((err) => {
+      console.error("getOutcomeFocus failed", err);
+      return { parts: [], codes: [] };
+    });
 }
 
 // ---------------------------------------------------------------------------

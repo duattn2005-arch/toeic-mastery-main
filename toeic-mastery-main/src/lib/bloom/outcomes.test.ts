@@ -12,6 +12,7 @@ import {
   outcomeStatement,
   verbMatchesLevel,
   weakestIndicators,
+  outcomeFocusParts,
   type LearningOutcome,
 } from "./outcomes";
 import { rubricFromLadder, rubricLevelOf, rubricTrend } from "./rubric";
@@ -262,4 +263,11 @@ test("AI Mentor: chỉ báo yếu nhất trước, bỏ chỉ báo đã đạt /
   const strong = many(20, { knowledgeLabel: "grammar:nouns", bloomLevel: 2 });
   const ok = assessOutcomes({ profile: buildBloomProfile(strong, NOW), pastProfile: null, pacing: pacingStats(strong), affective: NO_AFFECT, create: NO_CREATE });
   assert.ok(!weakestIndicators(ok).some((l) => l.startsWith("CĐR2 ")));
+});
+
+test("lộ trình: Part của chỉ báo chưa đạt được ưu tiên, lọc theo cấp", () => {
+  const weak = many(20, { knowledgeLabel: "part:PART1", part: "PART1", bloomLevel: 2 }, 15);
+  const r = assessOutcomes({ profile: buildBloomProfile(weak, NOW), pastProfile: null, pacing: pacingStats(weak), affective: NO_AFFECT, create: NO_CREATE });
+  assert.deepEqual(outcomeFocusParts(r, "B"), { parts: ["PART1"], codes: ["CĐR3"] });
+  assert.deepEqual(outcomeFocusParts(r, "A"), { parts: [], codes: [] });
 });

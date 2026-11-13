@@ -2,6 +2,7 @@ import "server-only";
 import { db } from "@/lib/db";
 import { TEST_PARTS } from "@/lib/constants/toeic";
 import { getWeakestDimensions } from "./skill-mastery";
+import { getOutcomeFocus } from "@/lib/bloom/outcome-data";
 import { pickGrammarLessonIds, getUsedGrammarLessonIds } from "./grammar-lesson-picker";
 import { generateLearningPath, buildDayItems, isMiniTestDay, needsGrammarLesson } from "./learning-path-generator";
 import type { TestPart } from "@/generated/prisma/enums";
@@ -37,11 +38,13 @@ export async function replanUpcomingDays(userId: string): Promise<{ pathId: stri
   });
   if (lockedUpcomingDays.length === 0) return { pathId: path.id, daysUpdated: 0 };
 
-  const [weakPartDims, weakGrammarDims] = await Promise.all([
+  const [weakPartDims, weakGrammarDims, focus] = await Promise.all([
     getWeakestDimensions(userId, 7, "PART"),
     getWeakestDimensions(userId, 5, "GRAMMAR_TOPIC"),
+    getOutcomeFocus(userId),
   ]);
-  const weakParts = weakPartDims.map((d) => d.dimensionKey as TestPart);
+  // Same order as generateLearningPath: unmet learning outcomes first.
+  const weakParts = [...new Set([...focus.parts, ...weakPartDims.map((d) => d.dimensionKey as TestPart)])];
   // No real signal yet (still early days / not enough attempts) — leave
   // the original even rotation from generateLearningPath alone rather than
   // "re-planning" toward nothing.
