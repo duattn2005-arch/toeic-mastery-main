@@ -144,7 +144,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   // instead.
   void recordMentorTestOutcomes(profile.id, mentorTestId).catch((err) => console.error("recordMentorTestOutcomes failed", err));
   const UNLOCKABLE_DIMENSIONS = new Set(["VOCAB_TOPIC", "PLACEMENT", "LEVEL_GATE", "REMEDIATION"]);
-  if (passed && !UNLOCKABLE_DIMENSIONS.has(mentorTest.dimensionType)) {
+  // A MIXED test spans several Parts, so there is no single Part to unlock.
+  if (passed && !UNLOCKABLE_DIMENSIONS.has(mentorTest.dimensionType) && mentorTest.dimensionKey !== "MIXED") {
     void unlockNextDifficulty(profile.id, mentorTest.dimensionType, mentorTest.dimensionKey, mentorTest.difficulty).catch((err) =>
       console.error("unlockNextDifficulty failed", err)
     );

@@ -17,6 +17,9 @@ const DEFAULT_QUESTION_COUNT = 8;
  * the learner just answered in normal practice. */
 export const RECENT_EXCLUSION_DAYS = 14;
 
+/** dimensionKey of a PART test drawn from several Parts at once ("luyện chung" requests). */
+export const MIXED_KEY = "MIXED";
+
 export class UnsupportedMentorTestDimensionError extends Error {}
 
 /**
@@ -36,6 +39,8 @@ export async function generateMentorTest(params: {
    * "test what the learner is currently allowed to see" path. */
   difficulty?: Difficulty;
   count?: number;
+  /** With dimensionKey MIXED_KEY: the Parts to mix (defaults to all 7). */
+  parts?: TestPart[];
 }): Promise<{ mentorTestId: string; questionCount: number; difficulty: Difficulty }> {
   if (params.dimensionType === "VOCAB_TOPIC") {
     throw new UnsupportedMentorTestDimensionError(
@@ -56,13 +61,16 @@ export async function generateMentorTest(params: {
   });
   const excludeIds = recentlySeen.map((r) => r.questionId);
 
-  const where: Prisma.QuestionWhereInput = {
+  const mixed = params.dimensionKey === MIXED_KEY;
+  const base: Prisma.QuestionWhereInput = {
     status: "PUBLISHED",
     ...(await questionAccessFilterFor(params.userId)),
     ...(excludeIds.length > 0 ? { id: { notIn: excludeIds } } : {}),
-    ...(params.dimensionType === "PART" ? { part: params.dimensionKey as TestPart } : {}),
     ...(params.dimensionType === "GRAMMAR_TOPIC" ? { grammarTopicSlug: params.dimensionKey } : {}),
   };
+  // A MIXED test spreads the questions evenly over the given Parts (the learner's weakest).
+  const parts = mixed ? (params.parts?.length ? params.parts : TEST_PARTS) : params.dimensionType === "PART" ? [params.dimensionKey as TestPart] : [null];
+  const perGroup = Math.ceil(count / parts.length);
 
   // Oversample then shuffle in JS rather than ORDER BY random() in SQL —
   // cheap at this table size and keeps question selection out of the DB
@@ -70,30 +78,33 @@ export async function generateMentorTest(params: {
   // Nguyên tắc tầng (src/lib/bloom): never above the Bloom frontier of each
   // question's own label; questions right at the frontier first.
   const gate = await bloomGate(params.userId);
-  const gated = async (w: Prisma.QuestionWhereInput) =>
-    shuffle((await db.question.findMany({ where: w, select: BLOOM_SELECT, take: count * 6 })).filter(gate.allow)).sort((a, b) => gate.rank(a) - gate.rank(b));
-  let candidates: Awaited<ReturnType<typeof gated>> = [];
-  if (targetTier) {
-    // Fill from the target's tier first, topping up from the nearest tier when it runs short.
-    for (const tier of TIER_FALLBACK[targetTier]) {
-      if (candidates.length >= count) break;
-      const seen = new Set(candidates.map((q) => q.id));
-      candidates.push(...(await gated({ ...where, AND: [tierWhere(tier)] })).filter((q) => !seen.has(q.id)));
+  const gated = async (w: Prisma.QuestionWhereInput, n: number) =>
+    shuffle((await db.question.findMany({ where: w, select: BLOOM_SELECT, take: n * 6 })).filter(gate.allow)).sort((a, b) => gate.rank(a) - gate.rank(b));
+  const pick = async (where: Prisma.QuestionWhereInput, n: number) => {
+    let candidates: Awaited<ReturnType<typeof gated>> = [];
+    if (targetTier) {
+      // Fill from the target's tier first, topping up from the nearest tier when it runs short.
+      for (const tier of TIER_FALLBACK[targetTier]) {
+        if (candidates.length >= n) break;
+        const seen = new Set(candidates.map((q) => q.id));
+        candidates.push(...(await gated({ ...where, AND: [tierWhere(tier)] }, n)).filter((q) => !seen.has(q.id)));
+      }
+    } else {
+      candidates = await gated({ ...where, difficulty }, n);
     }
-  } else {
-    candidates = await gated({ ...where, difficulty });
-  }
-  if (candidates.length === 0) {
     // Falls back to "any difficulty" rather than failing outright — a
     // brand-new dimension with only a handful of seeded questions at one
     // difficulty shouldn't leave the learner with no mini-test at all.
-    candidates = await gated(where);
-  }
-  if (candidates.length === 0) {
+    if (candidates.length === 0) candidates = await gated(where, n);
+    return candidates.slice(0, n);
+  };
+
+  const selected: { id: string }[] = [];
+  for (const part of parts) selected.push(...(await pick(part ? { ...base, part } : base, perGroup)));
+  if (selected.length === 0) {
     throw new Error(`Không tìm thấy câu hỏi PUBLISHED phù hợp cho ${params.dimensionType}=${params.dimensionKey}.`);
   }
-
-  const selected = candidates.slice(0, Math.min(count, candidates.length));
+  selected.splice(count);
 
   const mentorTest = await db.mentorTest.create({
     data: {
