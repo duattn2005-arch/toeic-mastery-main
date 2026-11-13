@@ -18,6 +18,8 @@ export interface Recommendation {
   description: string;
   href: string;
   priority: number;
+  /** Set on weak-Part recommendations so callers can re-route them (e.g. to that Part's mistakes). */
+  part?: TestPart;
 }
 
 // From the one Bloom config: a Part not yet mastered is worth recommending.
@@ -45,9 +47,10 @@ export function generateRecommendations(input: RecommendationInput): Recommendat
     const meta = PART_META[p.part];
     recs.push({
       title: `Luyện tập ${meta.label}`,
-      description: `Độ chính xác hiện tại ${Math.round(p.accuracy * 100)}% trên ${p.attempted} câu, thấp hơn mức mục tiêu 60%.`,
+      description: `Bạn làm đúng ${Math.round(p.accuracy * 100)}% trên ${p.attempted} câu, chưa đạt mức ${Math.round(WEAK_THRESHOLD * 100)}%.`,
       href: hrefForPart(p.part),
       priority: 1 - p.accuracy,
+      part: p.part,
     });
   }
 

@@ -12,8 +12,17 @@ import { cn } from "@/lib/utils";
 
 const ALL_PARTS: TestPart[] = ["PART1", "PART2", "PART3", "PART4", "PART5", "PART6", "PART7"];
 
-export function MistakeBankClient({ questions, countByPart }: { questions: MistakeQuestion[]; countByPart: Partial<Record<TestPart, number>> }) {
-  const [filter, setFilter] = React.useState<TestPart | "ALL">("ALL");
+export function MistakeBankClient({
+  questions,
+  countByPart,
+  initialPart,
+}: {
+  questions: MistakeQuestion[];
+  countByPart: Partial<Record<TestPart, number>>;
+  /** Pre-selected from ?part= (AI Mentor's "ôn lại câu sai Part X" link). */
+  initialPart?: TestPart;
+}) {
+  const [filter, setFilter] = React.useState<TestPart | "ALL">(initialPart ?? "ALL");
   const [started, setStarted] = React.useState(false);
 
   const filtered = filter === "ALL" ? questions : questions.filter((q) => q.part === filter);
