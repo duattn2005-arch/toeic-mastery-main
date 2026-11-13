@@ -2,7 +2,7 @@ import "server-only";
 import { BLOOM_SELECT, bloomGate } from "@/lib/bloom/gate";
 import { db } from "@/lib/db";
 import { getUnlockedDifficulty } from "./skill-mastery";
-import { difficultyForTarget } from "@/lib/target-difficulty";
+import { TIER_FALLBACK, difficultyForTarget, tierWhere } from "@/lib/target-difficulty";
 import { questionAccessFilterFor } from "@/lib/data/question-access";
 import { TEST_PARTS, PART_META } from "@/lib/constants/toeic";
 import type { Prisma } from "@/generated/prisma/client";
@@ -46,8 +46,8 @@ export async function generateMentorTest(params: {
   const count = params.count ?? DEFAULT_QUESTION_COUNT;
   // Questions match the learner's target score (300+ easy, 900+ hard); the unlock ladder only applies with no target set.
   const target = await db.profile.findUnique({ where: { id: params.userId }, select: { targetScore: true } });
-  const difficulty =
-    params.difficulty ?? difficultyForTarget(target?.targetScore) ?? (await getUnlockedDifficulty(params.userId, params.dimensionType, params.dimensionKey));
+  const targetTier = params.difficulty ? null : difficultyForTarget(target?.targetScore);
+  const difficulty = params.difficulty ?? targetTier ?? (await getUnlockedDifficulty(params.userId, params.dimensionType, params.dimensionKey));
   const recentlySeenCutoff = new Date(Date.now() - RECENT_EXCLUSION_DAYS * 24 * 60 * 60 * 1000);
 
   const recentlySeen = await db.attemptAnswer.findMany({
@@ -59,7 +59,6 @@ export async function generateMentorTest(params: {
   const where: Prisma.QuestionWhereInput = {
     status: "PUBLISHED",
     ...(await questionAccessFilterFor(params.userId)),
-    difficulty,
     ...(excludeIds.length > 0 ? { id: { notIn: excludeIds } } : {}),
     ...(params.dimensionType === "PART" ? { part: params.dimensionKey as TestPart } : {}),
     ...(params.dimensionType === "GRAMMAR_TOPIC" ? { grammarTopicSlug: params.dimensionKey } : {}),
@@ -73,12 +72,22 @@ export async function generateMentorTest(params: {
   const gate = await bloomGate(params.userId);
   const gated = async (w: Prisma.QuestionWhereInput) =>
     shuffle((await db.question.findMany({ where: w, select: BLOOM_SELECT, take: count * 6 })).filter(gate.allow)).sort((a, b) => gate.rank(a) - gate.rank(b));
-  let candidates = await gated(where);
+  let candidates: Awaited<ReturnType<typeof gated>> = [];
+  if (targetTier) {
+    // Fill from the target's tier first, topping up from the nearest tier when it runs short.
+    for (const tier of TIER_FALLBACK[targetTier]) {
+      if (candidates.length >= count) break;
+      const seen = new Set(candidates.map((q) => q.id));
+      candidates.push(...(await gated({ ...where, AND: [tierWhere(tier)] })).filter((q) => !seen.has(q.id)));
+    }
+  } else {
+    candidates = await gated({ ...where, difficulty });
+  }
   if (candidates.length === 0) {
     // Falls back to "any difficulty" rather than failing outright — a
     // brand-new dimension with only a handful of seeded questions at one
     // difficulty shouldn't leave the learner with no mini-test at all.
-    candidates = await gated({ ...where, difficulty: undefined });
+    candidates = await gated(where);
   }
   if (candidates.length === 0) {
     throw new Error(`Không tìm thấy câu hỏi PUBLISHED phù hợp cho ${params.dimensionType}=${params.dimensionKey}.`);
