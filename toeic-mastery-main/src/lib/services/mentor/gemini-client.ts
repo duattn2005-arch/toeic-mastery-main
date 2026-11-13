@@ -261,7 +261,8 @@ async function getGeminiStreamResponse(
   params: { system: string; messages: MentorChatMessage[]; maxTokens?: number },
   primaryModel: string
 ): Promise<Response> {
-  const primary = startStreamAttempt(primaryModel, apiKey, params, true);
+  // FALLBACK_MODEL 400s on thinkingConfig — it is also reached as the primary once the main model is out of quota.
+  const primary = startStreamAttempt(primaryModel, apiKey, params, primaryModel !== FALLBACK_MODEL);
 
   if (primaryModel === FALLBACK_MODEL) {
     const outcome = await primary.settled;
@@ -433,7 +434,7 @@ export async function completeMentorTask(params: { system?: string; messages: Me
       const apiKey = pool.next(currentModel);
       if (!apiKey) break;
 
-      res = await fetchGeminiGenerate(currentModel, apiKey, params, true, timeoutMs);
+      res = await fetchGeminiGenerate(currentModel, apiKey, params, currentModel !== FALLBACK_MODEL, timeoutMs);
 
       if (res.status === 429) {
         pool.markCooldown(apiKey, currentModel, parseRetryDelayMs(await res.text().catch(() => "")));
