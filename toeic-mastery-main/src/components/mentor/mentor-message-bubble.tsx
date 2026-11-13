@@ -3,6 +3,7 @@
 import * as React from "react";
 import { Bot, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { mentorTextSegments } from "@/lib/mentor-text";
 import { MentorNextStepsCard } from "./mentor-next-steps-card";
 import { MentorTestCard } from "./mentor-test-card";
 import { MentorUpgradeNudgeCard } from "./mentor-upgrade-nudge-card";
@@ -35,7 +36,7 @@ function MentorMessageBubbleImpl({ message }: { message: MentorMessage }) {
               isUser ? "rounded-tr-sm bg-primary text-primary-foreground" : "rounded-tl-sm border border-border bg-card text-foreground"
             )}
           >
-            {message.content}
+            {isUser ? message.content : mentorTextSegments(message.content).map((s, i) => (s.bold ? <strong key={i}>{s.text}</strong> : <React.Fragment key={i}>{s.text}</React.Fragment>))}
           </div>
         )}
         {attachments?.type === "next_steps" && <MentorNextStepsCard items={attachments.items} />}

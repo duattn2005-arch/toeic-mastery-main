@@ -49,6 +49,8 @@ function toJsonInput<T>(value: T): Prisma.InputJsonValue {
 const RECOMMEND_TEST_MARKER = /\n?\[\[RECOMMEND_TEST:(\w+):([A-Za-z0-9_-]+)\]\]\s*$/;
 const RECOMMEND_TEST_SUPPORTED_TYPES = new Set<SkillDimensionType>(["PART", "GRAMMAR_TOPIC"]);
 const RECOMMEND_NEXT_STEPS_MARKER = /\n?\[\[RECOMMEND_NEXT_STEPS\]\]\s*$/;
+/** "Tôi muốn luyện 940+" → the model emits this so practice difficulty follows the new target (see target-difficulty.ts). */
+const SET_TARGET_MARKER = /\n?\[\[SET_TARGET:(\d{2,3})\]\]/;
 /** Far above normal chat, low enough to stop a script from probing the prompt
  * or running up the AI bill. */
 const MAX_MESSAGE_LENGTH = 4000;
@@ -131,6 +133,14 @@ export async function POST(request: Request) {
           const { value, done } = await gen.next();
           if (done) {
             const usage = value;
+            const targetMarker = fullText.match(SET_TARGET_MARKER);
+            if (targetMarker) {
+              fullText = fullText.replace(SET_TARGET_MARKER, "");
+              const targetScore = Math.round(Number(targetMarker[1]) / 5) * 5;
+              if (targetScore >= 10 && targetScore <= 990) {
+                await db.profile.update({ where: { id: profile.id }, data: { targetScore } }).catch((err) => console.error("SET_TARGET failed", err));
+              }
+            }
             const testMarker = fullText.match(RECOMMEND_TEST_MARKER);
             const nextStepsMarker = testMarker ? null : fullText.match(RECOMMEND_NEXT_STEPS_MARKER);
             const marker = testMarker ?? nextStepsMarker;

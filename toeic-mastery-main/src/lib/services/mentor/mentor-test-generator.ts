@@ -2,6 +2,7 @@ import "server-only";
 import { BLOOM_SELECT, bloomGate } from "@/lib/bloom/gate";
 import { db } from "@/lib/db";
 import { getUnlockedDifficulty } from "./skill-mastery";
+import { difficultyForTarget } from "@/lib/target-difficulty";
 import { questionAccessFilterFor } from "@/lib/data/question-access";
 import { TEST_PARTS, PART_META } from "@/lib/constants/toeic";
 import type { Prisma } from "@/generated/prisma/client";
@@ -43,7 +44,10 @@ export async function generateMentorTest(params: {
   }
 
   const count = params.count ?? DEFAULT_QUESTION_COUNT;
-  const difficulty = params.difficulty ?? (await getUnlockedDifficulty(params.userId, params.dimensionType, params.dimensionKey));
+  // Questions match the learner's target score (300+ easy, 900+ hard); the unlock ladder only applies with no target set.
+  const target = await db.profile.findUnique({ where: { id: params.userId }, select: { targetScore: true } });
+  const difficulty =
+    params.difficulty ?? difficultyForTarget(target?.targetScore) ?? (await getUnlockedDifficulty(params.userId, params.dimensionType, params.dimensionKey));
   const recentlySeenCutoff = new Date(Date.now() - RECENT_EXCLUSION_DAYS * 24 * 60 * 60 * 1000);
 
   const recentlySeen = await db.attemptAnswer.findMany({

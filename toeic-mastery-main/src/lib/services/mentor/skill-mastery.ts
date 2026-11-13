@@ -96,6 +96,7 @@ export interface WeakDimension {
   dimensionKey: string;
   masteryScore: number;
   attemptedCount: number;
+  correctCount: number;
 }
 
 const MIN_SAMPLE_SIZE = MIN_SAMPLE_FOR_WEAKNESS;
@@ -119,7 +120,7 @@ export async function getWeakestDimensions(userId: string, limit = 5, dimensionT
     },
     orderBy: { masteryScore: "asc" },
     take: limit,
-    select: { dimensionType: true, dimensionKey: true, masteryScore: true, attemptedCount: true },
+    select: { dimensionType: true, dimensionKey: true, masteryScore: true, attemptedCount: true, correctCount: true },
   });
   return rows;
 }

@@ -3,6 +3,8 @@ import { db } from "@/lib/db";
 import { generateRecommendations, type PartAccuracy } from "@/lib/services/recommendation";
 import type { TestPart } from "@/generated/prisma/enums";
 import { srsDueCutoff } from "@/lib/services/spaced-repetition";
+import { getMistakeQuestions } from "@/lib/data/mistakes";
+import { PART_META } from "@/lib/constants/toeic";
 
 export interface NextStepSuggestion {
   title: string;
@@ -25,10 +27,10 @@ export interface NextStepSuggestion {
 export async function getNextStepSuggestions(userId: string, maxItems: number, pro: boolean): Promise<NextStepSuggestion[]> {
   const suggestions: NextStepSuggestion[] = [];
 
-  const [partMastery, dueVocabCount, weakGrammar] = await Promise.all([
+  const [partMastery, dueVocabCount, weakGrammar, mistakes] = await Promise.all([
     db.skillMastery.findMany({
       where: { userId, dimensionType: "PART" },
-      select: { dimensionKey: true, masteryScore: true, attemptedCount: true },
+      select: { dimensionKey: true, attemptedCount: true, correctCount: true },
     }),
     db.userVocabulary.count({
       where: { userId, origin: "AI_DETECTED_WEAKNESS", isLearned: false, nextReviewDate: { lte: srsDueCutoff() } },
@@ -38,16 +40,29 @@ export async function getNextStepSuggestions(userId: string, maxItems: number, p
       orderBy: { masteryScore: "asc" },
       select: { dimensionKey: true, masteryScore: true },
     }),
+    getMistakeQuestions(userId, pro).catch(() => null),
   ]);
 
   const partAccuracies: PartAccuracy[] = partMastery.map((m) => ({
     part: m.dimensionKey as TestPart,
-    accuracy: m.masteryScore,
+    // Real accuracy — masteryScore is a recent-weighted average and read "0%" after a few misses.
+    accuracy: m.attemptedCount ? m.correctCount / m.attemptedCount : 0,
     attempted: m.attemptedCount,
   }));
 
   const ruleBased = generateRecommendations({ partAccuracies, vocabularyMistakeRate: dueVocabCount > 0 ? 1 : 0 });
   for (const rec of ruleBased) {
+    // A weak Part with saved mistakes → redo exactly those, not a generic practice page.
+    const wrong = rec.part ? (mistakes?.countByPart[rec.part] ?? 0) : 0;
+    if (rec.part && wrong > 0) {
+      suggestions.push({
+        title: `Ôn lại câu sai ${PART_META[rec.part].label}`,
+        description: `${rec.description} Làm lại ${wrong} câu bạn đã sai ở phần này.`,
+        href: `/practice/mistakes?part=${rec.part}`,
+        kind: "PART_PRACTICE",
+      });
+      continue;
+    }
     suggestions.push({
       title: rec.title,
       description: rec.description,
