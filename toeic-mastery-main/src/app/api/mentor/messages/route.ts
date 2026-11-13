@@ -6,9 +6,11 @@ import { getMentorAccess, hasReachedNextStepsLimit } from "@/lib/services/mentor
 import { buildMentorContext } from "@/lib/services/mentor/mentor-context";
 import { streamMentorReply, getActiveChatModelId, MentorConfigError } from "@/lib/services/mentor/llm-client";
 import { maybeSummarizeMemory } from "@/lib/services/mentor/memory-summarizer";
-import { generateMentorTest } from "@/lib/services/mentor/mentor-test-generator";
+import { MIXED_KEY, generateMentorTest } from "@/lib/services/mentor/mentor-test-generator";
+import { getWeakestDimensions } from "@/lib/services/mentor/skill-mastery";
+import { getOutcomeFocus } from "@/lib/bloom/outcome-data";
 import { getNextStepSuggestions } from "@/lib/services/mentor/next-steps";
-import type { SkillDimensionType } from "@/generated/prisma/enums";
+import type { SkillDimensionType, TestPart } from "@/generated/prisma/enums";
 import type { Prisma } from "@/generated/prisma/client";
 
 /** Prisma's Json input type requires structural compatibility our narrow
@@ -56,6 +58,14 @@ const SET_TARGET_MARKER = /\n?\[\[SET_TARGET:(\d{2,3})\]\]/;
 const MAX_MESSAGE_LENGTH = 4000;
 const MAX_MESSAGES_PER_MINUTE = 15;
 const MAX_MESSAGES_PER_HOUR = 150;
+
+const MIXED_TEST_COUNT = 12;
+
+/** "Luyện chung" test: the 3 weakest Parts (unmet learning outcomes first), or every Part with no data yet. */
+async function weakestParts(userId: string): Promise<TestPart[]> {
+  const [focus, dims] = await Promise.all([getOutcomeFocus(userId), getWeakestDimensions(userId, 7, "PART")]);
+  return [...new Set([...focus.parts, ...dims.map((d) => d.dimensionKey as TestPart)])].slice(0, 3);
+}
 
 type MentorAttachments =
   | { type: "mentor_test"; mentorTestId: string; questionCount: number }
@@ -157,6 +167,8 @@ export async function POST(request: Request) {
                     dimensionType: dimensionType as SkillDimensionType,
                     dimensionKey,
                     conversationId,
+                    count: dimensionKey === MIXED_KEY ? MIXED_TEST_COUNT : undefined,
+                    parts: dimensionKey === MIXED_KEY ? await weakestParts(profile.id) : undefined,
                   });
                   attachments = { type: "mentor_test", mentorTestId: test.mentorTestId, questionCount: test.questionCount };
                 } catch (err) {
