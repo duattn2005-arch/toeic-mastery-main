@@ -48,11 +48,13 @@ function toJsonInput<T>(value: T): Prisma.InputJsonValue {
  * test offered" instead of leaking `[[RECOMMEND_TEST:...]]` raw text into
  * the chat bubble the way it used to (2026-09-22 bug report).
  */
-const RECOMMEND_TEST_MARKER = /\n?\[\[RECOMMEND_TEST:(\w+):([A-Za-z0-9_-]+)\]\]\s*$/;
+const RECOMMEND_TEST_MARKER = /\n?\[\[RECOMMEND_TEST:(\w+):([A-Za-z0-9_-]+)\]\]\s*$/i;
 const RECOMMEND_TEST_SUPPORTED_TYPES = new Set<SkillDimensionType>(["PART", "GRAMMAR_TOPIC"]);
-const RECOMMEND_NEXT_STEPS_MARKER = /\n?\[\[RECOMMEND_NEXT_STEPS\]\]\s*$/;
+const RECOMMEND_NEXT_STEPS_MARKER = /\n?\[\[RECOMMEND_NEXT_STEPS\]\]\s*$/i;
 /** "Tôi muốn luyện 940+" → the model emits this so practice difficulty follows the new target (see target-difficulty.ts). */
-const SET_TARGET_MARKER = /\n?\[\[SET_TARGET:(\d{2,3})\]\]/;
+const SET_TARGET_MARKER = /\n?\[\[SET_TARGET:(\d{2,3})\]\]/i;
+/** "tôi muốn luyện 940+", "cho tôi ôn Part 5"… — always answered with a practice test, even if the model forgets the marker. */
+const PRACTICE_REQUEST = /(^|\s)(luyện|ôn|làm bài|practice)(\s|$)/i;
 /** Far above normal chat, low enough to stop a script from probing the prompt
  * or running up the AI bill. */
 const MAX_MESSAGE_LENGTH = 4000;
@@ -154,12 +156,16 @@ export async function POST(request: Request) {
             const testMarker = fullText.match(RECOMMEND_TEST_MARKER);
             const nextStepsMarker = testMarker ? null : fullText.match(RECOMMEND_NEXT_STEPS_MARKER);
             const marker = testMarker ?? nextStepsMarker;
-            const visibleText = marker ? fullText.slice(0, marker.index ?? fullText.length).trimEnd() : fullText;
+            const visibleText = (marker ? fullText.slice(0, marker.index ?? fullText.length) : fullText).trim();
+            // No test marker but the learner asked to practise (or set a new target): attach a mixed test of their weak Parts.
+            const autoMixed = !testMarker && !nextStepsMarker && (targetMarker !== null || PRACTICE_REQUEST.test(content));
+            const testRequest = testMarker ? { type: testMarker[1].toUpperCase(), key: testMarker[2] } : autoMixed ? { type: "PART", key: MIXED_KEY } : null;
 
             let attachments: MentorAttachments;
 
-            if (testMarker) {
-              const [, dimensionType, dimensionKey] = testMarker;
+            if (testRequest) {
+              const dimensionType = testRequest.type;
+              const dimensionKey = testRequest.key.toUpperCase() === MIXED_KEY ? MIXED_KEY : testRequest.key;
               if (RECOMMEND_TEST_SUPPORTED_TYPES.has(dimensionType as SkillDimensionType)) {
                 try {
                   const test = await generateMentorTest({
