@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpen, CheckCircle2, Clock3, Layers, Lightbulb, ListChecks, Radar as RadarIcon, Timer } from "lucide-react";
+import { BookOpen, CheckCircle2, Clock3, Layers, Lightbulb, ListChecks, Radar as RadarIcon } from "lucide-react";
 
 import { requireUser, isPro } from "@/lib/auth";
 import { getDashboardData } from "@/lib/data/dashboard";
@@ -16,7 +16,8 @@ import { DueWordList } from "@/components/vocabulary/due-word-list";
 import { DashboardHero, type HeroAction } from "@/components/dashboard/dashboard-hero";
 import { EstimatedScoreCard } from "@/components/dashboard/estimated-score-card";
 import { LevelAvatarCard } from "@/components/dashboard/level-avatar-card";
-import { DailyQuests, type Quest } from "@/components/dashboard/daily-quests";
+import { DailyRoadmap } from "@/components/dashboard/daily-roadmap";
+import { buildDailyRoadmap } from "@/lib/services/daily-roadmap";
 import { DashboardTour } from "@/components/dashboard/dashboard-tour";
 import { AnalysisLink } from "@/components/dashboard/analysis-link";
 import { StudyMascot } from "@/components/mascot/study-mascot";
@@ -63,38 +64,6 @@ function getHeroActions(data: DashboardData, score: number | null | undefined): 
   return { primary: practice, secondary: quickStudy };
 }
 
-function getQuests(data: DashboardData, todayMinutes: number, dailyGoal: number): Quest[] {
-  const due = data.vocabularyReminder.dueTodayCount;
-  const attempt = data.continueAttempt;
-
-  const quests: Quest[] = [
-    due > 0
-      ? { icon: Layers, title: `Ôn ${due} từ đến hạn`, progressLabel: `còn ${due} từ`, progress: 0, done: false, href: "/vocabulary/review" }
-      : { icon: Layers, title: "Ôn từ đến hạn", progressLabel: "Đã xong", progress: 100, done: true, href: "/vocabulary/review" },
-    attempt
-      ? {
-          icon: ListChecks,
-          title: `Làm tiếp: ${attempt.test.title}`,
-          progressLabel: `${attempt.currentQuestionIndex}/${attempt.test.totalQuestions} câu`,
-          progress: (attempt.currentQuestionIndex / attempt.test.totalQuestions) * 100,
-          done: false,
-          href: `/exam/${attempt.id}`,
-        }
-      : { icon: ListChecks, title: "Làm 1 đề luyện tập", progressLabel: "0/1 đề", progress: 0, done: false, href: "/practice" },
-    {
-      icon: Timer,
-      title: `Học đủ ${dailyGoal} phút`,
-      progressLabel: `${Math.min(todayMinutes, dailyGoal)}/${dailyGoal} phút`,
-      progress: dailyGoal > 0 ? (todayMinutes / dailyGoal) * 100 : 0,
-      done: dailyGoal > 0 && todayMinutes >= dailyGoal,
-      href: "/quick-study",
-    },
-  ];
-  // Review first, then the test, then study time; finished quests sink to
-  // the bottom (stable sort keeps that order within each group).
-  return [...quests].sort((a, b) => Number(a.done) - Number(b.done));
-}
-
 /**
  * Staggered fade+slide entrance, pure CSS (tw-animate-css), no client JS.
  * Class strings must stay static/literal so Tailwind's build-time scanner
@@ -127,6 +96,26 @@ export default async function DashboardPage() {
   // moves down next to the vocabulary panel.
   const hasFullTest = data.hasFullTest;
   const compact = !hasFullTest;
+  const roadmap = buildDailyRoadmap({
+    pro,
+    partAccuracies: data.partAccuracies,
+    todayPartAnswers: data.todayPartAnswers,
+    attemptsCompleted: data.overallStats.attemptsCompleted,
+    attemptsToday: data.attemptsToday,
+    dueVocab: due,
+    vocabularyLearned: data.overallStats.vocabularyLearned,
+    continueAttempt: data.continueAttempt
+      ? {
+          id: data.continueAttempt.id,
+          title: data.continueAttempt.test.title,
+          currentQuestionIndex: data.continueAttempt.currentQuestionIndex,
+          totalQuestions: data.continueAttempt.test.totalQuestions,
+        }
+      : null,
+    todayMinutes,
+    dailyGoalMinutes: dailyGoal,
+    streakCount: data.profile.streakCount,
+  });
 
   const scoreCard = (
     <EstimatedScoreCard
@@ -204,17 +193,21 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      <div className={`grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-12 ${REVEAL[1]}`}>
+      <div className={`grid grid-cols-1 gap-5 lg:grid-cols-12 ${REVEAL[1]}`}>
+        <div className="lg:col-span-8">
+          <DailyRoadmap
+            roadmap={roadmap}
+            goal={{ targetScore: data.profile.targetScore, currentScore: score ?? null, streakCount: data.profile.streakCount, showProHint: !pro }}
+          />
+        </div>
         <div className="lg:col-span-4">{hasFullTest ? scoreCard : skillPanel}</div>
-        <div className="lg:col-span-4">
-          <DailyQuests quests={getQuests(data, todayMinutes, dailyGoal)} />
-        </div>
-        <div className="grid grid-cols-2 gap-3 md:col-span-2 lg:col-span-4">
-          <StatCard icon={CheckCircle2} label="Độ chính xác" value={`${Math.round(data.overallStats.accuracy * 100)}%`} accent="success" />
-          <StatCard icon={ListChecks} label="Đề đã làm" value={data.overallStats.attemptsCompleted} accent="info" />
-          <StatCard icon={Layers} label="Từ đã học" value={data.overallStats.vocabularyLearned} accent="warning" />
-          <StatCard icon={Clock3} label="Giờ học" value={formatStudyDuration(data.overallStats.totalStudySeconds)} />
-        </div>
+      </div>
+
+      <div className={`grid grid-cols-2 gap-3 lg:grid-cols-4 ${REVEAL[2]}`}>
+        <StatCard icon={CheckCircle2} label="Độ chính xác" value={`${Math.round(data.overallStats.accuracy * 100)}%`} accent="success" />
+        <StatCard icon={ListChecks} label="Đề đã làm" value={data.overallStats.attemptsCompleted} accent="info" />
+        <StatCard icon={Layers} label="Từ đã học" value={data.overallStats.vocabularyLearned} accent="warning" />
+        <StatCard icon={Clock3} label="Giờ học" value={formatStudyDuration(data.overallStats.totalStudySeconds)} />
       </div>
 
       {data.continueAttempt && (
