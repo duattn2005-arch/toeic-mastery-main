@@ -1125,6 +1125,14 @@ model SavedWord {
   meaningVi  String?  @map("meaning_vi")
   exampleEn  String?  @map("example_en")
   /**
+   * IPA and word type (e.g. "/ˈfeɪ.vɚ/", "n, v") for a learner-added word —
+   * typed/pasted by the learner or filled in by AI on import (see
+   * vocab-import.ts / vocab-ai.ts). Null for dictionary-saved words, which
+   * get theirs from DictionaryEntry / VocabularyWord instead.
+   */
+  ipa          String?
+  partOfSpeech String?  @map("part_of_speech")
+  /**
    * Free-text, learner-named folder (e.g. "OFFICE") — deliberately not a
    * separate relational model: a category only ever exists as a string a
    * handful of SavedWord rows happen to share, so renaming/deleting one is

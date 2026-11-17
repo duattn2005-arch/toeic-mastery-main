@@ -12,10 +12,14 @@ import { AddCustomWordsDialog } from "@/components/vocabulary/add-custom-words-d
 import { setSavedWordCategoryAction } from "@/lib/actions/dictionary";
 import { cn } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics";
+import { PosBadges } from "@/components/vocabulary/pos-badge";
 
 export interface SavedWordRow {
   id: string;
   word: string;
+  ipa?: string | null;
+  partOfSpeech?: string | null;
+  meaningVi?: string | null;
   isFavorite: boolean;
   category: string | null;
   createdAt: string;
@@ -246,8 +250,15 @@ export function SavedWordsManager({
                       className="size-4 shrink-0 accent-primary"
                       aria-label={`Chọn ${w.word}`}
                     />
-                    <Link href={`/dictionary/${encodeURIComponent(w.word)}`} className="min-w-0 flex-1 truncate hover:text-primary">
-                      {w.word}
+                    <Link href={`/dictionary/${encodeURIComponent(w.word)}`} className="group/word min-w-0 flex-1">
+                      <span className="block truncate font-medium group-hover/word:text-primary">{w.word}</span>
+                      {(w.partOfSpeech || w.ipa || w.meaningVi) && (
+                        <span className="mt-0.5 flex min-w-0 items-center gap-1.5 overflow-hidden text-[11px] text-muted-foreground">
+                          <PosBadges pos={w.partOfSpeech} />
+                          {w.ipa && <span className="truncate">{w.ipa}</span>}
+                          {w.meaningVi && <span className="truncate">{w.meaningVi}</span>}
+                        </span>
+                      )}
                     </Link>
                     {w.isFavorite && <Star className="size-3.5 shrink-0 fill-current text-warning" />}
                     <select

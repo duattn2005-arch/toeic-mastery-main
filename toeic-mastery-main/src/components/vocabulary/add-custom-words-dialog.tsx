@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -24,6 +25,7 @@ export function AddCustomWordsDialog({ existingCategories = [] }: { existingCate
   async function handleSubmit(rows: WordRow[]) {
     const result = await bulkAddCustomWordsAction(rows, category);
     if (result.error) return { error: result.error };
+    if (result.aiFailed) toast.info("Đã lưu — riêng phiên âm/loại từ của vài từ AI chưa điền được, bạn có thể sửa sau.");
     setOpen(false);
     setCategory("");
     router.refresh();
@@ -34,10 +36,12 @@ export function AddCustomWordsDialog({ existingCategories = [] }: { existingCate
       <Button type="button" data-tour="bookmarks-add-word" variant="outline" size="sm" className="w-fit" onClick={() => setOpen(true)}>
         <Plus className="size-4" /> Thêm từ mới
       </Button>
-      <DialogContent className="max-h-[85vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Thêm từ của riêng bạn</DialogTitle>
-          <DialogDescription>Tự định nghĩa từ mới — kể cả từ điển chưa có (tên riêng, thuật ngữ TOEIC, cụm từ...).</DialogDescription>
+          <DialogDescription>
+            Gõ từ + nghĩa là đủ — phiên âm và loại từ web tự điền khi lưu. Có sẵn bảng Excel/Sheets thì bấm “Nhập nhiều thẻ cùng lúc”.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-1.5">
@@ -56,7 +60,7 @@ export function AddCustomWordsDialog({ existingCategories = [] }: { existingCate
           </datalist>
         </div>
 
-        <WordListEditor onSubmit={handleSubmit} submitLabel="Lưu vào Đã lưu" termLabel="Từ" definitionLabel="Nghĩa của bạn" />
+        <WordListEditor onSubmit={handleSubmit} submitLabel="Lưu vào Đã lưu" termLabel="Từ" definitionLabel="Nghĩa của bạn" details />
       </DialogContent>
     </Dialog>
   );
