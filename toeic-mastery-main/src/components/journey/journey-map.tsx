@@ -93,15 +93,16 @@ function Turn({ side, kind, travelled, fade }: { side: Side; kind: "entry" | "ex
   );
 }
 
-function KindIcon({ kind }: { kind: JourneyKind }) {
-  if (kind === "grammar") return <span className="text-[19px] font-extrabold tracking-tight sm:text-[26px]">Aa</span>;
+function KindIcon({ kind, compact }: { kind: JourneyKind; compact: boolean }) {
+  if (kind === "grammar")
+    return <span className={cn("text-[19px] font-extrabold tracking-tight", compact ? "sm:text-xl" : "sm:text-[26px]")}>Aa</span>;
   const Icon = kind === "reading" ? BookOpen : Headphones;
-  return <Icon className="size-6 sm:size-8" strokeWidth={2} />;
+  return <Icon className={cn("size-6", compact ? "sm:size-6" : "sm:size-8")} strokeWidth={2} />;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-function Stop({ day, col, href }: { day: JourneyDay; col: number; href: string | null }) {
+function Stop({ day, col, href, compact }: { day: JourneyDay; col: number; href: string | null; compact: boolean }) {
   const locked = day.state === "locked";
   const done = day.state === "done";
   const current = day.state === "current";
@@ -166,7 +167,7 @@ function Stop({ day, col, href }: { day: JourneyDay; col: number; href: string |
             )}
             style={discStyle}
           >
-            <KindIcon kind={day.kind} />
+            <KindIcon kind={day.kind} compact={compact} />
           </span>
         )}
         {(locked || done) && (
@@ -183,7 +184,8 @@ function Stop({ day, col, href }: { day: JourneyDay; col: number; href: string |
 
       <span
         className={cn(
-          "mt-2.5 max-w-full truncate rounded-full px-2 py-0.5 text-[11px] font-bold shadow-sm ring-1 sm:px-3 sm:py-1 sm:text-[13px]",
+          "max-w-full truncate rounded-full px-2 py-0.5 text-[11px] font-bold shadow-sm ring-1",
+          compact ? "mt-2 sm:px-2.5 sm:text-xs" : "mt-2.5 sm:px-3 sm:py-1 sm:text-[13px]",
           current ? "bg-primary text-primary-foreground ring-primary" : "bg-card/95 ring-border/60",
           locked && "text-muted-foreground"
         )}
@@ -214,7 +216,7 @@ function Stop({ day, col, href }: { day: JourneyDay; col: number; href: string |
   );
 }
 
-function StageBanner({ stage, href }: { stage: JourneyStage; href: string | null }) {
+function StageBanner({ stage, href, compact }: { stage: JourneyStage; href: string | null; compact: boolean }) {
   const locked = stage.state === "locked";
   const done = stage.state === "done";
   const Icon = locked ? Lock : done ? CheckCircle2 : Compass;
@@ -222,7 +224,8 @@ function StageBanner({ stage, href }: { stage: JourneyStage; href: string | null
     <>
       <span
         className={cn(
-          "absolute -top-3 -right-2 flex size-9 items-center justify-center rounded-full border-4 text-sm font-extrabold tabular-nums shadow-md sm:-right-3 sm:size-11 sm:text-base",
+          "absolute -top-3 -right-2 flex items-center justify-center rounded-full border-4 font-extrabold tabular-nums shadow-md sm:-right-3",
+          compact ? "size-8 text-xs sm:size-9 sm:text-sm" : "size-9 text-sm sm:size-11 sm:text-base",
           done ? "bg-success text-success-foreground" : "bg-warning text-warning-foreground"
         )}
         style={{ borderColor: "var(--jm-ground-1)" }}
@@ -242,20 +245,29 @@ function StageBanner({ stage, href }: { stage: JourneyStage; href: string | null
           className={cn("size-5 shrink-0 sm:size-6", locked ? "text-muted-foreground" : done ? "text-success" : "text-primary")}
           strokeWidth={2}
         />
-        <span className={cn("line-clamp-2 min-w-0 text-[15px] leading-snug font-extrabold tracking-tight sm:truncate sm:text-xl", locked && "text-foreground/70")}>
+        <span
+          className={cn(
+            "line-clamp-2 min-w-0 leading-snug font-extrabold tracking-tight sm:truncate",
+            compact ? "text-sm sm:text-base" : "text-[15px] sm:text-xl",
+            locked && "text-foreground/70"
+          )}
+        >
           {stage.title}
         </span>
         {href && (
           <ChevronRight className="ml-auto size-5 shrink-0 text-muted-foreground transition-transform duration-300 group-hover:translate-x-0.5" />
         )}
       </p>
-      <p className="mt-1 text-xs text-muted-foreground tabular-nums sm:text-sm">
-        {stage.days.length} bước · rương ôn tập đạt {CHEST_PASS_PERCENT}%
-      </p>
+      {!compact && (
+        <p className="mt-1 text-xs text-muted-foreground tabular-nums sm:text-sm">
+          {stage.days.length} bước · rương ôn tập đạt {CHEST_PASS_PERCENT}%
+        </p>
+      )}
     </>
   );
   const cls = cn(
-    "group relative block w-full rounded-[1.6rem] border px-4 py-3 backdrop-blur-sm transition-shadow duration-300 sm:max-w-[74%] sm:px-5 sm:py-4",
+    "group relative block w-full border backdrop-blur-sm transition-shadow duration-300",
+    compact ? "rounded-2xl px-3.5 py-2.5 sm:max-w-[82%]" : "rounded-[1.6rem] px-4 py-3 sm:max-w-[74%] sm:px-5 sm:py-4",
     locked && "border-border/60 bg-card/75 shadow-[0_10px_26px_-16px_rgb(0_0_0/0.35)]",
     done && "border-success/35 bg-card/90 shadow-[0_10px_26px_-16px_rgb(0_0_0/0.3)]",
     !locked && !done && "border-primary/35 bg-card/95 shadow-[0_16px_36px_-18px_var(--primary)] ring-1 ring-primary/15",
@@ -276,7 +288,9 @@ function StageBlock({
   entry,
   exit,
   bannerOnly = false,
+  compact,
 }: {
+  compact: boolean;
   stage: JourneyStage;
   dayHref: (day: JourneyDay) => string | null;
   /** null = the road starts at this stage's first stop. */
@@ -322,14 +336,17 @@ function StageBlock({
         </>
       )}
 
-      <div className={cn("relative z-10 flex pt-6 pb-4 sm:pb-5", entrySide === "right" && "justify-end")} style={{ paddingInline: "var(--g)" }}>
-        <StageBanner stage={stage} href={bannerHref} />
+      <div
+        className={cn("relative z-10 flex", compact ? "pt-5 pb-3" : "pt-6 pb-4 sm:pb-5", entrySide === "right" && "justify-end")}
+        style={{ paddingInline: "var(--g)" }}
+      >
+        <StageBanner stage={stage} href={bannerHref} compact={compact} />
       </div>
 
       {!bannerOnly && (
         <ol className="relative z-10" style={{ height: "var(--row-h)" }} aria-label={`Chặng ${stage.number}: ${stage.title}`}>
           {stage.days.map((day, i) => (
-            <Stop key={day.dayNumber} day={day} col={leftToRight ? i + 1 : COLS - i} href={dayHref(day)} />
+            <Stop key={day.dayNumber} day={day} col={leftToRight ? i + 1 : COLS - i} href={dayHref(day)} compact={compact} />
           ))}
         </ol>
       )}
@@ -345,9 +362,12 @@ export function JourneyMap({
   continuesAbove = false,
   continuesBelow = false,
   peek = null,
+  compact = false,
   className,
   children,
 }: {
+  /** Smaller stops, road and banners — the dashboard card next to the radar. */
+  compact?: boolean;
   stages: JourneyStage[];
   /** Link unlocked days to their day page. Off for the not-yet-created preview. */
   linkDays: boolean;
@@ -367,13 +387,16 @@ export function JourneyMap({
       className={cn(
         "journey-scene relative isolate overflow-hidden rounded-[1.75rem]",
         "[--g:8%] [--node-y:45px] [--node:46px] [--road-w:12px] [--row-h:122px] [--turn-r:24px]",
-        "sm:[--g:8%] sm:[--node-y:60px] sm:[--node:72px] sm:[--road-w:16px] sm:[--row-h:162px] sm:[--turn-r:46px]",
+        compact
+          ? "sm:[--g:7%] sm:[--node-y:50px] sm:[--node:54px] sm:[--road-w:12px] sm:[--row-h:126px] sm:[--turn-r:32px]"
+          : "sm:[--g:8%] sm:[--node-y:60px] sm:[--node:72px] sm:[--road-w:16px] sm:[--row-h:162px] sm:[--turn-r:46px]",
         className
       )}
     >
       {stages.map((stage, i) => (
         <StageBlock
           key={stage.number}
+          compact={compact}
           stage={stage}
           dayHref={dayHref}
           entry={i > 0 ? { travelled: lastDone(stages[i - 1]) } : continuesAbove ? { travelled: stage.days[0]?.state !== "locked", fade: true } : null}
@@ -382,7 +405,7 @@ export function JourneyMap({
       ))}
       {peek && stages.length > 0 && (
         <div className="[mask-image:linear-gradient(to_bottom,#000_45%,transparent)]">
-          <StageBlock stage={peek} dayHref={dayHref} entry={{ travelled: lastDone(stages[last]) }} exit={null} bannerOnly />
+          <StageBlock stage={peek} compact={compact} dayHref={dayHref} entry={{ travelled: lastDone(stages[last]) }} exit={null} bannerOnly />
         </div>
       )}
       {children}
