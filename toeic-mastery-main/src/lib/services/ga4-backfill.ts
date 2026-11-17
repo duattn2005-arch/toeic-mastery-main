@@ -1,73 +1,73 @@
 /**
- * Shared by the CLI script (prisma/backfill-ga4-purchases.ts) and the
- * admin-only route (/api/admin/ga4-backfill) — same one-time backfill,
- * two ways to run it depending on whether whoever needs to run it has a
- * terminal on the server or only a logged-in browser tab. See either
- * caller's own doc comment for the full "why" (what's included, what
- * isn't, and the GA4 72h backdating limit).
+ * One-time GA4 `purchase` backfill, run from /admin/ga4 (or the CLI script
+ * prisma/backfill-ga4-purchases.ts on the server). Counts what the site
+ * owner counts as a purchase, from before the app started firing
+ * `purchase` the moment checkout is reached (pro-card.tsx, since
+ * CLICK_PURCHASE_SINCE):
  *
- * Deliberately not marked "server-only": the CLI script runs under plain
- * tsx/node, which throws immediately on importing that marker (it only
- * works inside Next's own server runtime). Safe either way — nothing here
- * is exported from anywhere a client bundle could reach.
+ *   1. Every bank-transfer/VNPay order created before then, whatever its
+ *      status — under the owner's rule a purchase is counted when the
+ *      learner reaches the QR screen, not when it's confirmed. Real amount.
+ *   2. Every redeemed activation code, and
+ *   3. every currently-PRO account with no order and no code (granted by
+ *      hand on /admin/users for money paid outside the app) — no price is stored
+ *      for these; the owner says they're all the 1-month plan, so they're
+ *      valued at its list price.
+ *
+ * GA4 Measurement Protocol clamps anything older than 72h to "72h ago", so
+ * these all land around one day, not their real dates — accepted by the
+ * owner. Runs live exactly once: a done-marker in app_settings refuses a
+ * second live run, since GA4 doesn't dedupe across runs.
+ *
+ * Deliberately not marked "server-only": the CLI script runs under tsx.
  */
 import { db } from "@/lib/db";
 import { PRO_PLANS } from "@/lib/constants/billing";
-import { GA_MEASUREMENT_ID, GA_LINKED_MEASUREMENT_ID } from "@/lib/ga-config";
+import { getGaTargets, mpUrl, type GaTarget } from "@/lib/services/ga-secrets";
 
-export function planItem(days: number) {
+/** When PR #35 ("tính purchase ngay khi vào trang thanh toán") reached main:
+ * an order created from here on already fired its own `purchase` at
+ * checkout, so it's left out to avoid counting it twice. */
+export const CLICK_PURCHASE_SINCE = new Date("2026-11-17T05:20:00Z");
+export const BACKFILL_DONE_KEY = "ga4_backfill_done_at";
+
+const ONE_MONTH = { item_id: "ONE_MONTH", item_name: `Pro ${PRO_PLANS.ONE_MONTH.label}`, price: PRO_PLANS.ONE_MONTH.amountVnd };
+
+function planItem(days: number) {
   const entry = Object.entries(PRO_PLANS).find(([, p]) => p.durationDays === days);
   if (!entry) return { item_id: `days_${days}`, item_name: `Pro ${days} ngày` };
   const [key, plan] = entry;
   return { item_id: key, item_name: `Pro ${plan.label}` };
 }
 
-/** `value`/`currency`/`items` omitted entirely when `amount` is null — a
- * real VND figure we don't have must never be invented. Returns which
- * configured GA4 properties it reached. */
-async function sendPurchase(userId: string, transactionId: string, days: number, amount: number | null): Promise<string[]> {
-  const params: Record<string, unknown> = { transaction_id: transactionId, engagement_time_msec: 1 };
-  if (amount != null) {
-    params.value = amount;
-    params.currency = "VND";
-    params.items = [{ ...planItem(days), price: amount, quantity: 1 }];
-  }
-  const body = JSON.stringify({ client_id: `server.${userId}`, user_id: userId, events: [{ name: "purchase", params }] });
-
-  const targets = [
-    [GA_MEASUREMENT_ID, process.env.GA4_API_SECRET],
-    [GA_LINKED_MEASUREMENT_ID, process.env.GA4_LINKED_API_SECRET],
-  ].filter((t): t is [string, string] => !!t[1]);
-
-  const reached: string[] = [];
-  for (const [measurementId, secret] of targets) {
-    const res = await fetch(`https://www.google-analytics.com/mp/collect?measurement_id=${measurementId}&api_secret=${encodeURIComponent(secret)}`, {
-      method: "POST",
-      body,
-      signal: AbortSignal.timeout(4000),
-    });
-    if (res.ok) reached.push(measurementId);
-  }
-  return reached;
+export interface BackfillItem {
+  kind: "order" | "code" | "manual";
+  transactionId: string;
+  userId: string;
+  who: string;
+  value: number;
+  itemName: string;
+  /** What the row is in the app, for the preview (status / code length). */
+  detail: string;
+  date: string | null;
 }
 
-export interface BackfillResult {
-  lines: string[];
-  live: boolean;
-  totalCount: number;
-  sentCount: number;
+export interface BackfillPreview {
+  items: BackfillItem[];
+  total: number;
+  totalValue: number;
+  targets: { measurementId: string; source: GaTarget["source"] }[];
+  doneAt: string | null;
 }
 
-/** Runs the whole backfill once. `live: false` only builds the preview
- * lines, sending nothing — the caller decides whether that's enough or
- * whether to call again with `live: true`. */
-export async function runGa4PurchaseBackfill(live: boolean): Promise<BackfillResult> {
-  const lines: string[] = [];
-  const [payments, codes, proProfiles] = await Promise.all([
+const STATUS_VI: Record<string, string> = { PENDING: "chờ duyệt", SUCCESS: "đã duyệt", FAILED: "đã từ chối", REFUNDED: "đã hoàn tiền" };
+
+export async function previewGa4Backfill(): Promise<BackfillPreview> {
+  const [orders, codes, proProfiles, done, targets, buyers] = await Promise.all([
     db.payment.findMany({
-      where: { status: "SUCCESS" },
-      select: { userId: true, orderId: true, amount: true, planDurationDays: true, paidAt: true },
-      orderBy: { paidAt: "asc" },
+      where: { createdAt: { lt: CLICK_PURCHASE_SINCE } },
+      select: { userId: true, orderId: true, amount: true, planDurationDays: true, status: true, createdAt: true, user: { select: { email: true } } },
+      orderBy: { createdAt: "asc" },
     }),
     db.activationCode.findMany({
       where: { usedByUserId: { not: null } },
@@ -75,49 +75,112 @@ export async function runGa4PurchaseBackfill(live: boolean): Promise<BackfillRes
       orderBy: { usedAt: "asc" },
     }),
     db.profile.findMany({ where: { plan: "PRO" }, select: { id: true, email: true } }),
+    db.appSetting.findUnique({ where: { key: BACKFILL_DONE_KEY } }),
+    getGaTargets(),
+    // Anyone with an order of any status or date: their order is (or
+    // already was, at checkout) their purchase, so a manual Pro grant on
+    // top — often how a pending transfer gets honoured — isn't another one.
+    db.payment.findMany({ select: { userId: true }, distinct: ["userId"] }),
   ]);
 
-  const tracedUserIds = new Set([...payments.map((p) => p.userId), ...codes.map((c) => c.usedByUserId!)]);
-  const manualGrants = proProfiles.filter((p) => !tracedUserIds.has(p.id));
-  const totalCount = payments.length + codes.length + manualGrants.length;
+  const codeUsers = new Set(codes.map((c) => c.usedByUserId!));
+  const orderUsers = new Set(buyers.map((b) => b.userId));
+  const emailById = new Map(proProfiles.map((p) => [p.id, p.email]));
+  const codeEmails = await db.profile.findMany({ where: { id: { in: [...codeUsers] } }, select: { id: true, email: true } });
+  for (const p of codeEmails) emailById.set(p.id, p.email);
 
-  lines.push(
-    `${payments.length} SUCCESS payments + ${codes.length} redeemed codes + ${manualGrants.length} manually-granted Pro account(s) found.`,
-    live ? "LIVE — sending to GA4 now." : "DRY RUN — nothing sent (pass --live to actually send).",
-    "",
+  const items: BackfillItem[] = [
+    ...orders.map((o) => ({
+      kind: "order" as const,
+      transactionId: o.orderId,
+      userId: o.userId,
+      who: o.user.email,
+      value: o.amount,
+      itemName: planItem(o.planDurationDays).item_name,
+      detail: STATUS_VI[o.status] ?? o.status,
+      date: o.createdAt.toISOString(),
+    })),
+    ...codes.map((c) => ({
+      kind: "code" as const,
+      transactionId: `code-${c.code}`,
+      userId: c.usedByUserId!,
+      who: emailById.get(c.usedByUserId!) ?? c.usedByUserId!,
+      value: ONE_MONTH.price,
+      itemName: ONE_MONTH.item_name,
+      detail: `mã ${c.code} (${planItem(c.planDurationDays).item_name})`,
+      date: c.usedAt?.toISOString() ?? null,
+    })),
+    ...proProfiles
+      .filter((p) => !orderUsers.has(p.id) && !codeUsers.has(p.id))
+      .map((p) => ({
+        kind: "manual" as const,
+        transactionId: `manual-${p.id}`,
+        userId: p.id,
+        who: p.email,
+        value: ONE_MONTH.price,
+        itemName: ONE_MONTH.item_name,
+        detail: "bật Pro tay",
+        date: null,
+      })),
+  ];
+
+  return {
+    items,
+    total: items.length,
+    totalValue: items.reduce((sum, i) => sum + i.value, 0),
+    targets: targets.map((t) => ({ measurementId: t.measurementId, source: t.source })),
+    doneAt: done?.value ?? null,
+  };
+}
+
+async function send(targets: GaTarget[], item: BackfillItem): Promise<boolean> {
+  const body = JSON.stringify({
+    client_id: `server.${item.userId}`,
+    user_id: item.userId,
+    events: [
+      {
+        name: "purchase",
+        params: {
+          transaction_id: item.transactionId,
+          value: item.value,
+          currency: "VND",
+          items: [{ item_id: item.itemName, item_name: item.itemName, price: item.value, quantity: 1 }],
+          engagement_time_msec: 1,
+        },
+      },
+    ],
+  });
+  const results = await Promise.all(
+    targets.map((t) =>
+      fetch(mpUrl(t), { method: "POST", body, signal: AbortSignal.timeout(6000) })
+        .then((r) => r.ok)
+        .catch(() => false)
+    )
   );
+  return results.every(Boolean);
+}
 
-  const missingSecrets = [!process.env.GA4_API_SECRET && "GA4_API_SECRET", !process.env.GA4_LINKED_API_SECRET && "GA4_LINKED_API_SECRET"].filter(Boolean);
-  if (missingSecrets.length > 0) lines.push(`Note: ${missingSecrets.join(", ")} not set — those propert${missingSecrets.length > 1 ? "ies" : "y"} will be skipped.`, "");
+export type BackfillRunResult = { sent: number; failed: number; totalValue: number } | { error: string };
 
-  let sentCount = 0;
-  for (const p of payments) {
-    lines.push(`[payment] ${p.orderId} · ${p.amount.toLocaleString("vi-VN")}đ · ${planItem(p.planDurationDays).item_name} · ${p.paidAt?.toISOString().slice(0, 10) ?? "?"}`);
-    if (live) {
-      const reached = await sendPurchase(p.userId, p.orderId, p.planDurationDays, p.amount);
-      lines.push(`  -> sent to ${reached.join(", ") || "(no property configured)"}`);
-      sentCount++;
-    }
-  }
-  for (const c of codes) {
-    const txId = `code-${c.code}`;
-    lines.push(`[code]    ${txId} · (no price on file) · ${planItem(c.planDurationDays).item_name} · ${c.usedAt?.toISOString().slice(0, 10) ?? "?"}`);
-    if (live) {
-      const reached = await sendPurchase(c.usedByUserId!, txId, c.planDurationDays, null);
-      lines.push(`  -> sent to ${reached.join(", ") || "(no property configured)"}`);
-      sentCount++;
-    }
-  }
-  for (const m of manualGrants) {
-    const txId = `manual-${m.id}`;
-    lines.push(`[manual]  ${txId} · (no price on file) · ${m.email}`);
-    if (live) {
-      const reached = await sendPurchase(m.id, txId, 30, null);
-      lines.push(`  -> sent to ${reached.join(", ") || "(no property configured)"}`);
-      sentCount++;
-    }
+/** Sends everything previewGa4Backfill lists, once. */
+export async function runGa4Backfill(updatedBy: string | null): Promise<BackfillRunResult> {
+  const preview = await previewGa4Backfill();
+  if (preview.doneAt) return { error: `Đã gửi bù lúc ${new Date(preview.doneAt).toLocaleString("vi-VN")} — không gửi lại để tránh tính trùng.` };
+  const targets = await getGaTargets();
+  if (targets.length === 0) return { error: "Chưa có khoá GA4 nào — lưu khoá ở trên trước." };
+
+  // Claim the run first, so a double click can't send everything twice.
+  try {
+    await db.appSetting.create({ data: { key: BACKFILL_DONE_KEY, value: new Date().toISOString(), updatedBy } });
+  } catch {
+    return { error: "Đang có một lần gửi bù khác chạy hoặc vừa chạy xong." };
   }
 
-  lines.push("", live ? `Sent ${sentCount} purchase events.` : `Would send ${totalCount} purchase events. Re-run with --live to actually send.`);
-  return { lines, live, totalCount, sentCount };
+  let sent = 0;
+  let failed = 0;
+  for (const item of preview.items) {
+    if (await send(targets, item)) sent++;
+    else failed++;
+  }
+  return { sent, failed, totalValue: preview.totalValue };
 }

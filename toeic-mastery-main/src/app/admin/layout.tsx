@@ -1,5 +1,6 @@
 import Link from "next/link";
 import {
+  Activity,
   BarChart3,
   BookOpen,
   ClipboardList,
@@ -35,7 +36,10 @@ const ADMIN_NAV = [
 
 // Chỉ chủ tài khoản (isSuperAdmin) thấy mục này — trang /admin/referrals tự
 // chặn bằng requireSuperAdmin nếu ai đó vào thẳng URL, đây chỉ là ẩn link.
-const SUPER_ADMIN_NAV = [{ label: "Bảng xếp hạng giới thiệu", href: "/admin/referrals", icon: Share2 }];
+const SUPER_ADMIN_NAV = [
+  { label: "Bảng xếp hạng giới thiệu", href: "/admin/referrals", icon: Share2 },
+  { label: "GA4", href: "/admin/ga4", icon: Activity },
+];
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const admin = await requireAdmin();
