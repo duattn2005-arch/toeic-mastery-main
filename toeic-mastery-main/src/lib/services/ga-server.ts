@@ -1,6 +1,5 @@
 import "server-only";
 import { GA_LINKED_MEASUREMENT_ID, GA_MEASUREMENT_ID } from "@/lib/ga-config";
-import { PRO_PLANS } from "@/lib/constants/billing";
 
 type GaParamValue = string | number | Array<Record<string, string | number>>;
 
@@ -45,48 +44,22 @@ export async function sendGaServerEvent(userId: string, name: string, params: Re
   );
 }
 
-/** The sold plan (if any) matching a grant's day count — e.g. "3 tháng" for
- * 90 days — for the item-scoped params GA4's standard e-commerce reports
- * expect. Falls back to a generic item for a day count that isn't one of
- * PRO_PLANS (shouldn't happen here: only real, priced payments reach
- * trackPaymentConfirmed — the admin's free comp/test override never does). */
-function planItem(days: number): { item_id: string; item_name: string; quantity: number } {
-  const entry = Object.entries(PRO_PLANS).find(([, p]) => p.durationDays === days);
-  if (!entry) return { item_id: `days_${days}`, item_name: `Pro ${days} ngày`, quantity: 1 };
-  const [key, plan] = entry;
-  return { item_id: key, item_name: `Pro ${plan.label}`, quantity: 1 };
-}
-
 /** A Pro purchase that has been confirmed on the server — a bank-transfer
  * approved by an admin, or a gateway webhook, long after (or without) the
- * buyer's browser being open. Fires two GA4 events for every one of these:
- *
- * - `payment_confirmed`: a custom event carrying `channel`, for slicing
- *   confirmations by how they arrived (sepay / vnpay / admin_approval).
- * - `purchase`: GA4's own e-commerce event — this is what the Monetization
- *   reports, the Purchases/Revenue cards, and most Ads conversion imports
- *   actually read, so a manually-approved transfer counts as a real
- *   purchase exactly like the browser's own `purchase` event fires for one
- *   auto-confirmed while the buyer is still watching the QR screen (see
- *   pro-card.tsx). Only ever called for a real, priced payment — never for
- *   admin's comp/test override (updateUserPlanAction) or an activation-code
- *   redemption of unknown monetary value (billing.ts's pro_code_redeemed),
- *   so "purchase" revenue in GA4 never includes a free grant. */
+ * buyer's browser being open. A custom event, not GA4's own `purchase`:
+ * every order this fires for was already counted as a `purchase` the
+ * moment the learner reached the QR screen (pro-card.tsx's handleUpgrade —
+ * a deliberate business choice, not firing late on the GA4-recommended
+ * default, see the comment there), so firing `purchase` again here would
+ * double-count the same order. `channel` says how it was confirmed, for
+ * slicing by sepay / vnpay / admin_approval without touching the
+ * `purchase` numbers. */
 export function trackPaymentConfirmed(payment: { userId: string; orderId: string; amount: number; planDurationDays: number }, channel: string) {
-  const item = planItem(payment.planDurationDays);
-  return Promise.all([
-    sendGaServerEvent(payment.userId, "payment_confirmed", {
-      transaction_id: payment.orderId,
-      value: payment.amount,
-      currency: "VND",
-      plan_days: payment.planDurationDays,
-      channel,
-    }),
-    sendGaServerEvent(payment.userId, "purchase", {
-      transaction_id: payment.orderId,
-      value: payment.amount,
-      currency: "VND",
-      items: [{ ...item, price: payment.amount }],
-    }),
-  ]);
+  return sendGaServerEvent(payment.userId, "payment_confirmed", {
+    transaction_id: payment.orderId,
+    value: payment.amount,
+    currency: "VND",
+    plan_days: payment.planDurationDays,
+    channel,
+  });
 }
