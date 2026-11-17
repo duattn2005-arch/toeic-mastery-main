@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireAdmin, isSuperAdmin } from "@/lib/auth";
 import { grantProDays } from "@/lib/services/pro-grant";
+import { trackManualProGrant } from "@/lib/services/ga-server";
 
 export interface ActionResult {
   error?: string;
@@ -29,7 +30,10 @@ export async function setUserRoleAction(userId: string, role: "STUDENT" | "ADMIN
 
 /** Manual override for support/comp accounts/testing — real upgrades go
  * through VNPay (see src/lib/actions/billing.ts), but this stays useful
- * alongside real payment for refunds, comps, and QA. */
+ * alongside real payment for refunds, comps, and QA. Also, in practice,
+ * for real payments sent outside the app entirely — the owner's explicit
+ * call is to count every PRO grant through here as a GA4 purchase
+ * (trackManualProGrant), test/comp accounts included. */
 export async function updateUserPlanAction(userId: string, plan: "FREE" | "PRO"): Promise<ActionResult> {
   await requireAdmin();
 
@@ -37,6 +41,7 @@ export async function updateUserPlanAction(userId: string, plan: "FREE" | "PRO")
     await db.profile.update({ where: { id: userId }, data: { plan: "FREE", proExpiresAt: null } });
   } else {
     await grantProDays(userId, 30);
+    void trackManualProGrant(userId);
   }
 
   revalidatePath("/admin/users");
