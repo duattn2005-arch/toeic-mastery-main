@@ -9,6 +9,7 @@ import { BookOpen, CheckCircle2, ClipboardList, Headphones, Layers, Lightbulb, L
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { PART_META } from "@/lib/constants/toeic";
+import { journeyStep } from "@/lib/services/journey-map";
 import { MentorTestRunnerDialog } from "./mentor-test-runner-dialog";
 import type { LearningPathItemDetail } from "@/lib/data/learning-path";
 import type { TestPart, LearningItemType } from "@/generated/prisma/enums";
@@ -96,7 +97,7 @@ export function LearningPathDayRunner({
     mutationFn: completeItem,
     onSuccess: (data) => {
       if (data.dayCompleted) {
-        toast.success(data.nextDayUnlocked ? "Hoàn thành ngày học! Ngày tiếp theo đã mở khóa 🎉" : "Đã hoàn thành ngày học!");
+        toast.success(data.nextDayUnlocked ? "Xong bước này! Bước tiếp theo đã mở khóa 🎉" : "Đã hoàn thành bước này!");
       }
       router.refresh();
     },
@@ -111,7 +112,9 @@ export function LearningPathDayRunner({
   return (
     <div className="flex flex-col gap-3">
       <div className="mb-1">
-        <h1 className="text-xl font-semibold tracking-tight">Ngày {dayNumber}</h1>
+        <h1 className="text-xl font-semibold tracking-tight">
+          Chặng {journeyStep(dayNumber).stage} · Bước {journeyStep(dayNumber).step}
+        </h1>
         <p className="text-sm text-muted-foreground">Trọng tâm: {focusParts.map((p) => PART_META[p].shortLabel).join(", ") || "—"}</p>
         {summary && <p className="mt-1 text-sm text-foreground/80">{summary}</p>}
       </div>

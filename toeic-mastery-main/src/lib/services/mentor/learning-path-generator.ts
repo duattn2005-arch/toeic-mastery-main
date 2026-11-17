@@ -4,26 +4,22 @@ import { LISTENING_PARTS, TEST_PARTS } from "@/lib/constants/toeic";
 import { getWeakestDimensions } from "./skill-mastery";
 import { getOutcomeFocus } from "@/lib/bloom/outcome-data";
 import { pickGrammarLessonIds } from "./grammar-lesson-picker";
+import { MINI_TEST_EVERY_N_DAYS, isMiniTestDay } from "@/lib/constants/learning-path";
 import type { TestPart, LearningItemType, LearningDayStatus } from "@/generated/prisma/enums";
+
+// Re-exported so learning-path-replanner.ts keeps deriving the exact same
+// day composition from here; the values live in a plain module so the
+// journey map (client-safe) groups stages by the very same constant.
+export { MINI_TEST_EVERY_N_DAYS, isMiniTestDay };
 
 const DEFAULT_PATH_LENGTH_DAYS = 30;
 const MAX_PATH_LENGTH_DAYS = 60;
 const MIN_PATH_LENGTH_DAYS = 7;
-/** Every Nth day is a checkpoint mini-test instead of a second practice
- * item — matches the "vượt qua test mới mở khóa phần khó hơn" requirement
- * without a checkpoint on literally every single day. Exported so
- * learning-path-replanner.ts derives the exact same day composition when
- * it re-plans upcoming days later, instead of duplicating the constant. */
-export const MINI_TEST_EVERY_N_DAYS = 5;
 
 /** TOEIC grammar is concentrated in these two Parts — a day focused on
  * either becomes a specific GRAMMAR_LESSON item (via buildDayItems' third
  * argument) instead of a generic READING_PRACTICE item. */
 const GRAMMAR_FOCUS_PARTS: TestPart[] = ["PART5", "PART6"];
-
-export function isMiniTestDay(dayNumber: number): boolean {
-  return dayNumber % MINI_TEST_EVERY_N_DAYS === 0;
-}
 
 export function needsGrammarLesson(focusParts: TestPart[]): boolean {
   return focusParts.some((p) => GRAMMAR_FOCUS_PARTS.includes(p));
@@ -35,10 +31,20 @@ function resolvePathLength(examDate: Date | null): number {
   return Math.min(MAX_PATH_LENGTH_DAYS, Math.max(MIN_PATH_LENGTH_DAYS, daysUntilExam));
 }
 
+/** The Parts a new path leads with: those behind unmet learning outcomes
+ * (chuẩn đầu ra) first, then the weakest by SkillMastery. Shared with the
+ * dashboard's not-yet-started preview so the 5 days it shows are exactly
+ * the 5 days "Bắt đầu" then creates. */
+export async function getPathWeakParts(userId: string): Promise<TestPart[]> {
+  const [weakPartDims, focus] = await Promise.all([getWeakestDimensions(userId, 7, "PART"), getOutcomeFocus(userId)]);
+  return [...new Set([...focus.parts, ...weakPartDims.map((d) => d.dimensionKey as TestPart)])];
+}
+
 /** One or two focus Parts per day, weakest parts cycled through first and
  * more often. With no weak-part data yet (brand-new learner), this just
- * rotates evenly through all 7 Parts. */
-function buildDayFocusPlan(dayCount: number, weakParts: TestPart[]): TestPart[][] {
+ * rotates evenly through all 7 Parts. Deterministic and cursor-based, so
+ * the first N days of a longer plan equal a plan of length N. */
+export function buildDayFocusPlan(dayCount: number, weakParts: TestPart[]): TestPart[][] {
   const rotation = [...weakParts, ...TEST_PARTS.filter((p) => !weakParts.includes(p))];
   const plan: TestPart[][] = [];
   let cursor = 0;
@@ -103,13 +109,11 @@ export async function generateLearningPath(params: { userId: string; targetScore
     data: { status: "ABANDONED" },
   });
 
-  const [weakPartDims, weakGrammarDims, focus] = await Promise.all([
-    getWeakestDimensions(params.userId, 7, "PART"),
+  const [weakParts, weakGrammarDims, focus] = await Promise.all([
+    getPathWeakParts(params.userId),
     getWeakestDimensions(params.userId, 5, "GRAMMAR_TOPIC"),
     getOutcomeFocus(params.userId),
   ]);
-  // Parts behind unmet learning outcomes (chuẩn đầu ra) go first, then the weakest by SkillMastery.
-  const weakParts = [...new Set([...focus.parts, ...weakPartDims.map((d) => d.dimensionKey as TestPart)])];
   const weakGrammarTopicSlugs = weakGrammarDims.map((d) => d.dimensionKey);
 
   const dayCount = resolvePathLength(params.examDate);
@@ -122,7 +126,7 @@ export async function generateLearningPath(params: { userId: string; targetScore
 
   const rationale =
     weakParts.length > 0
-      ? `${focus.codes.length ? `Bám chuẩn đầu ra chưa đạt (${focus.codes.join(", ")}): ` : ""}Ưu tiên ${weakParts.length} phần đang yếu nhất trước, xen kẽ các phần còn lại; cứ mỗi ${MINI_TEST_EVERY_N_DAYS} ngày có một bài kiểm tra nhanh để xác nhận đã hiểu trước khi mở phần khó hơn.`
+      ? `${focus.codes.length ? `Bám chuẩn đầu ra chưa đạt (${focus.codes.join(", ")}): ` : ""}Ưu tiên ${weakParts.length} phần đang yếu nhất trước, xen kẽ các phần còn lại; mỗi chặng ${MINI_TEST_EVERY_N_DAYS} bước khép lại bằng một bài kiểm tra nhanh để xác nhận đã hiểu trước khi mở phần khó hơn. Học theo nhịp của bạn — xong bước nào mở bước đó.`
       : "Chưa có đủ dữ liệu về điểm yếu — lộ trình khởi đầu xoay vòng đều cả 7 Part, sẽ tự điều chỉnh sau khi có kết quả luyện tập đầu tiên.";
 
   const path = await db.learningPath.create({

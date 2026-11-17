@@ -1,6 +1,8 @@
 import "server-only";
 import { notFound } from "next/navigation";
 import { db } from "@/lib/db";
+import { MINI_TEST_EVERY_N_DAYS, isMiniTestDay } from "@/lib/constants/learning-path";
+import { buildDayFocusPlan, buildDayItems, getPathWeakParts } from "@/lib/services/mentor/learning-path-generator";
 import type { TestPart, LearningDayStatus, LearningItemType, LearningItemStatus } from "@/generated/prisma/enums";
 
 export interface LearningPathDaySummary {
@@ -21,6 +23,8 @@ export interface LearningPathOverview {
   totalDays: number;
   daysCompleted: number;
   currentDay: LearningPathDaySummary | null;
+  /** Every day in order — what the journey map draws. */
+  days: LearningPathDaySummary[];
   weeks: { label: string; days: LearningPathDaySummary[] }[];
 }
 
@@ -71,8 +75,36 @@ export async function getLearningPathOverview(userId: string): Promise<LearningP
     totalDays: days.length,
     daysCompleted,
     currentDay,
+    days,
     weeks,
   };
+}
+
+/**
+ * The first two stages of the path "Bắt đầu" would create right now, for a
+ * learner who doesn't have one yet — computed with the generator's own
+ * getPathWeakParts + buildDayFocusPlan + buildDayItems, so what the
+ * preview shows is exactly what gets created (from the same data, at the
+ * same moment). Nothing is written; day 1 shows as the open one. Two
+ * stages so the dashboard can show the second one locked underneath.
+ */
+export async function getLearningPathPreview(userId: string): Promise<LearningPathDaySummary[]> {
+  const plan = buildDayFocusPlan(MINI_TEST_EVERY_N_DAYS * 2, await getPathWeakParts(userId));
+  const today = new Date();
+  return plan.map((focusParts, index) => {
+    const dayNumber = index + 1;
+    const date = new Date(today);
+    date.setDate(date.getDate() + index);
+    return {
+      dayId: `preview-${dayNumber}`,
+      dayNumber,
+      scheduledDate: date.toISOString().slice(0, 10),
+      focusParts,
+      status: dayNumber === 1 ? "UNLOCKED" : "LOCKED",
+      itemsDone: 0,
+      itemsTotal: buildDayItems(focusParts, isMiniTestDay(dayNumber)).length,
+    };
+  });
 }
 
 export interface LearningPathItemDetail {
