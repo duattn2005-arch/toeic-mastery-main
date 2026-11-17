@@ -5,18 +5,23 @@
  * existed. These are real — the money or the code redemption genuinely
  * happened — they just never reached GA4 as a `purchase`.
  *
- * Covers two sources, every one ever (not just currently-active Pro —
- * a lapsed Pro still really was a purchase):
+ * Covers three sources. The first two are every one ever, not just
+ * currently-active Pro (a lapsed Pro still really was a purchase); the
+ * third is necessarily just a current snapshot (see below):
  *   1. Payment rows with status SUCCESS — real VND amount on file, so sent
  *      with value + currency + items.
  *   2. ActivationCode rows that were redeemed — no price is stored for
- *      these (see schema), so sent as a `purchase` with NO value/currency:
- *      it still counts toward GA4's purchase count, without inventing a
- *      VND figure that isn't on file.
- * Deliberately NOT included: a Pro grant that traces to neither of the
- * above (only possible via the admin's updateUserPlanAction "support/
- * comp/test" override, which moves no money) — the script prints how many
- * of those it found and skipped, so nothing is silently dropped.
+ *      these (see schema), so sent as a `purchase` with NO value/currency.
+ *   3. Currently-PRO profiles that trace to neither of the above — only
+ *      reachable via the admin's updateUserPlanAction Free/Pro toggle
+ *      (written for support/comp/test, no money recorded), which the site
+ *      owner also uses for real payments sent outside the app and wants
+ *      counted too, explicitly, test accounts included (her call, her
+ *      property). Also sent with no value/currency. This group can only be
+ *      today's currently-PRO snapshot — a past grant through this same
+ *      toggle that already expired or was reset to FREE leaves no trace at
+ *      all in the database, so it cannot be found and backfilled.
+ * None of groups 2/3 invents a VND figure that was never on file.
  *
  * Run this ONLY on the server, where DATABASE_URL points at the real
  * database and GA4_API_SECRET / GA4_LINKED_API_SECRET are already set in
@@ -80,7 +85,7 @@ async function sendPurchase(userId: string, transactionId: string, days: number,
 }
 
 async function main() {
-  const [payments, codes, proCount] = await Promise.all([
+  const [payments, codes, proProfiles] = await Promise.all([
     db.payment.findMany({
       where: { status: "SUCCESS" },
       select: { userId: true, orderId: true, amount: true, planDurationDays: true, paidAt: true },
@@ -91,13 +96,16 @@ async function main() {
       select: { usedByUserId: true, code: true, planDurationDays: true, usedAt: true },
       orderBy: { usedAt: "asc" },
     }),
-    db.profile.count({ where: { plan: "PRO" } }),
+    db.profile.findMany({ where: { plan: "PRO" }, select: { id: true, email: true } }),
   ]);
 
   const tracedUserIds = new Set([...payments.map((p) => p.userId), ...codes.map((c) => c.usedByUserId!)]);
-  const untracedCurrentlyPro = Math.max(0, proCount - tracedUserIds.size); // rough — a user can have both a payment and a code
+  const manualGrants = proProfiles.filter((p) => !tracedUserIds.has(p.id));
 
-  console.log(`${payments.length} SUCCESS payments + ${codes.length} redeemed codes found. ${LIVE ? "LIVE — sending to GA4 now." : "DRY RUN — nothing sent (pass --live to actually send)."}\n`);
+  console.log(
+    `${payments.length} SUCCESS payments + ${codes.length} redeemed codes + ${manualGrants.length} manually-granted Pro account(s) found. ` +
+      `${LIVE ? "LIVE — sending to GA4 now." : "DRY RUN — nothing sent (pass --live to actually send)."}\n`,
+  );
 
   const missingSecrets = [!process.env.GA4_API_SECRET && "GA4_API_SECRET", !process.env.GA4_LINKED_API_SECRET && "GA4_LINKED_API_SECRET"].filter(Boolean);
   if (missingSecrets.length > 0) console.log(`Note: ${missingSecrets.join(", ")} not set — those propert${missingSecrets.length > 1 ? "ies" : "y"} will be skipped.\n`);
@@ -121,8 +129,18 @@ async function main() {
     }
   }
 
-  console.log(`\n${untracedCurrentlyPro} currently-Pro account(s) trace to neither a SUCCESS payment nor a redeemed code (almost certainly admin comp/test grants) — NOT sent, on purpose.`);
-  console.log(LIVE ? `Sent ${sent} purchase events.` : `Would send ${payments.length + codes.length} purchase events. Re-run with --live to actually send.`);
+  for (const m of manualGrants) {
+    const txId = `manual-${m.id}`;
+    console.log(`[manual]  ${txId} · (no price on file) · ${m.email}`);
+    if (LIVE) {
+      const targets = await sendPurchase(m.id, txId, 30, null);
+      console.log(`  -> sent to ${targets.join(", ") || "(no property configured)"}`);
+      sent++;
+    }
+  }
+
+  const total = payments.length + codes.length + manualGrants.length;
+  console.log(`\n${LIVE ? `Sent ${sent} purchase events.` : `Would send ${total} purchase events. Re-run with --live to actually send.`}`);
   await db.$disconnect();
 }
 

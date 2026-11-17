@@ -63,3 +63,16 @@ export function trackPaymentConfirmed(payment: { userId: string; orderId: string
     channel,
   });
 }
+
+/** A Pro grant from /admin/users' direct Free↔Pro toggle
+ * (updateUserPlanAction). That code is written for support/comp/test
+ * accounts — no money moves through it — but the site owner also uses it
+ * for real payments sent outside the app's own bank-transfer flow, and
+ * wants every use of it counted as a purchase regardless (her call, made
+ * explicitly, on her own property). No value/currency: unlike a bank
+ * transfer or VNPay order, this path never records a price, so there is
+ * no real VND figure to report — inventing one would be fabricating
+ * revenue, which this never does. */
+export function trackManualProGrant(userId: string) {
+  return sendGaServerEvent(userId, "purchase", { transaction_id: `manual-${userId}-${Date.now()}` });
+}
