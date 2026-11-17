@@ -1831,3 +1831,20 @@ model OutcomeSettings {
 
   @@map("outcome_settings")
 }
+
+/**
+ * Small key/value settings an admin sets from the web instead of the
+ * server's .env — for values the people running the site can't reach the
+ * server to edit (no SSH). Currently: the GA4 Measurement Protocol API
+ * secrets (ga-secrets.ts; .env still wins when set) and the one-time GA4
+ * purchase backfill's done-marker. Not for anything that must stay secret
+ * from the site's own admins.
+ */
+model AppSetting {
+  key       String   @id
+  value     String
+  updatedBy String?  @map("updated_by") @db.Uuid
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("app_settings")
+}
