@@ -4,6 +4,10 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { getCurrentProfile } from "@/lib/auth";
 import { touchStudyStreak } from "@/lib/services/study-streak";
+import { rateLimit } from "@/lib/rate-limit";
+import { normalizeIpa, normalizePartOfSpeech } from "@/lib/vocab-import";
+import { fillMissingVocabDetails } from "@/lib/services/vocab-fill";
+import { MAX_AI_ROWS } from "@/lib/services/vocab-ai";
 
 export interface ActionResult {
   error?: string;
@@ -72,16 +76,45 @@ export async function toggleSaveWordAction(word: string): Promise<ActionResult> 
  * learner can save proper nouns, TOEIC-specific jargon, or phrases the
  * dictionary provider doesn't know. The custom meaningVi takes precedence
  * over the DictionaryEntry cache when both exist (see getSavedWordStudyItems). */
+/**
+ * The learner's "Thêm từ mới" save. Besides word + meaning, a row can carry
+ * IPA, word type and a note (typed, pasted as a table, or AI-filled in the
+ * dialog); any IPA/type still empty is filled by AI here, best-effort — a
+ * failed AI call never blocks the save (`aiFilled`/`aiFailed` just tell the
+ * dialog what to say).
+ */
 export async function bulkAddCustomWordsAction(
-  rows: { term: string; definition: string }[],
-  category?: string | null
-): Promise<ActionResult & { count?: number }> {
+  rows: { term: string; definition: string; ipa?: string; partOfSpeech?: string; note?: string }[],
+  category?: string | null,
+  options: { autoFill?: boolean } = {}
+): Promise<ActionResult & { count?: number; aiFilled?: number; aiFailed?: boolean }> {
   const profile = await getCurrentProfile();
   if (!profile) return { error: "Vui lòng đăng nhập" };
 
-  const clean = rows.map((r) => ({ term: r.term.trim(), definition: r.definition.trim() })).filter((r) => r.term && r.definition);
+  let clean = rows
+    .map((r) => ({
+      term: r.term.trim(),
+      definition: r.definition.trim(),
+      ipa: normalizeIpa(r.ipa ?? ""),
+      partOfSpeech: normalizePartOfSpeech(r.partOfSpeech ?? ""),
+      note: (r.note ?? "").trim().slice(0, 1000),
+    }))
+    .filter((r) => r.term && r.definition);
   if (clean.length === 0) return { error: "Không có từ hợp lệ để thêm" };
   const normalizedCategory = category?.trim() || null;
+
+  let aiFilled = 0;
+  let aiFailed = false;
+  if (options.autoFill !== false && clean.length <= MAX_AI_ROWS && clean.some((r) => !r.ipa || !r.partOfSpeech)) {
+    if (rateLimit(`vocab-ai:${profile.id}`, 30, 60 * 60 * 1000).ok) {
+      const filled = await fillMissingVocabDetails(clean);
+      clean = filled.rows;
+      aiFilled = filled.filled;
+      aiFailed = filled.aiFailed;
+    } else {
+      aiFailed = true;
+    }
+  }
 
   // Run outside a $transaction — each word is an independent upsert, and a
   // large pasted list (Quizlet sets often run 50-100+ terms) can otherwise
@@ -91,10 +124,16 @@ export async function bulkAddCustomWordsAction(
   await Promise.all(
     clean.map((r) => {
       const word = r.term.toLowerCase();
+      const details = {
+        meaningVi: r.definition,
+        ipa: r.ipa || null,
+        partOfSpeech: r.partOfSpeech || null,
+        ...(r.note ? { note: r.note } : {}),
+      };
       return db.savedWord.upsert({
         where: { userId_word: { userId: profile.id, word } },
-        create: { userId: profile.id, word, meaningVi: r.definition, category: normalizedCategory },
-        update: { meaningVi: r.definition, ...(normalizedCategory ? { category: normalizedCategory } : {}) },
+        create: { userId: profile.id, word, category: normalizedCategory, ...details },
+        update: { ...details, ...(normalizedCategory ? { category: normalizedCategory } : {}) },
       });
     })
   );
@@ -107,7 +146,7 @@ export async function bulkAddCustomWordsAction(
 
   revalidatePath("/bookmarks");
   revalidatePath("/dashboard");
-  return { count: clean.length };
+  return { count: clean.length, aiFilled, aiFailed };
 }
 
 export async function setSavedWordCategoryAction(word: string, category: string | null): Promise<ActionResult> {

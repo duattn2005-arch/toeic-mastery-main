@@ -101,8 +101,8 @@ async function resolveSavedWords(saved: SavedWord[]): Promise<ResolvedSavedWord[
       resolved.push({
         savedWordId: s.id,
         term: s.word,
-        ipa: null,
-        partOfSpeech: null,
+        ipa: s.ipa,
+        partOfSpeech: s.partOfSpeech,
         meaningVi: s.meaningVi,
         exampleEn: s.exampleEn,
         audioUrl: null,
@@ -181,8 +181,8 @@ export interface SavedWordExportRow {
 }
 
 /** Rows for the "Xuất PDF từ vựng" feature — same resolution as
- * getSavedWordStudyItems, plus IPA (dictionary/VocabularyWord only —
- * custom-added words never have one) and the learner's own note. */
+ * getSavedWordStudyItems, plus IPA (a custom-added word has one when it
+ * was typed, pasted or AI-filled on import) and the learner's own note. */
 export async function getSavedWordExportRows(userId: string, wordIds?: string[]): Promise<SavedWordExportRow[]> {
   const saved = await db.savedWord.findMany({
     where: { userId, ...(wordIds ? { id: { in: wordIds } } : {}) },

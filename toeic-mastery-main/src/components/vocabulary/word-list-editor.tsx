@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ArrowLeftRight, Loader2, Plus, Trash2, Upload } from "lucide-react";
+import { ArrowLeftRight, Loader2, Plus, Sparkles, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,13 +22,23 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MediaThumbUploader } from "@/components/admin/media-thumb-uploader";
 import { ImportGuideCallout } from "@/components/admin/import-guide-callout";
+import { VocabImportDialog } from "@/components/vocabulary/vocab-import-dialog";
+import { PosBadges } from "@/components/vocabulary/pos-badge";
+import { fillVocabDetailsAction } from "@/lib/actions/vocab-import";
+import type { VocabRow } from "@/lib/vocab-import";
 
 export interface WordRow {
   term: string;
   definition: string;
   imageUrl?: string;
   audioUrl?: string;
+  /** `details` mode only (the learner's own words). */
+  ipa?: string;
+  partOfSpeech?: string;
+  note?: string;
 }
+
+const POS_SUGGESTIONS = ["n", "v", "adj", "adv", "prep", "conj", "pron", "phr v", "phr", "idiom", "n, v", "v, adj"];
 
 type Delimiter = "tab" | "comma" | "custom";
 type CardDelimiter = "newline" | "semicolon" | "custom";
@@ -58,7 +68,7 @@ function parsePaste(text: string, termDefSep: string, cardSep: string): WordRow[
     .filter((r) => r.term);
 }
 
-const emptyRow = (): WordRow => ({ term: "", definition: "", imageUrl: "", audioUrl: "" });
+const emptyRow = (): WordRow => ({ term: "", definition: "", imageUrl: "", audioUrl: "", ipa: "", partOfSpeech: "", note: "" });
 
 /**
  * Quizlet-style card list editor — one numbered card per term, each with an
@@ -73,11 +83,15 @@ export function WordListEditor({
   submitLabel = "Lưu tất cả",
   termLabel = "Thuật ngữ",
   definitionLabel = "Định nghĩa",
+  details = false,
 }: {
   onSubmit: (rows: WordRow[]) => Promise<{ error?: string } | void>;
   submitLabel?: string;
   termLabel?: string;
   definitionLabel?: string;
+  /** Learner mode: IPA / word type / note per card, the multi-column + AI
+   * import, and AI auto-fill of missing IPA/type. */
+  details?: boolean;
 }) {
   const [rows, setRows] = React.useState<WordRow[]>(() => [emptyRow(), emptyRow()]);
   const [importOpen, setImportOpen] = React.useState(false);
@@ -87,6 +101,48 @@ export function WordListEditor({
   const [cardKind, setCardKind] = React.useState<CardDelimiter>("newline");
   const [cardCustom, setCardCustom] = React.useState("");
   const [pending, setPending] = React.useState(false);
+  const [filling, setFilling] = React.useState(false);
+
+  /** Fills only the empty IPA/type cells — never overwrites what's typed. */
+  async function runFill(source: WordRow[]) {
+    const targets = source.filter((r) => r.term.trim() && (!r.ipa?.trim() || !r.partOfSpeech?.trim()));
+    if (targets.length === 0) {
+      toast.info("Các thẻ đã đủ phiên âm và loại từ");
+      return;
+    }
+    setFilling(true);
+    const result = await fillVocabDetailsAction(
+      targets.map((r) => ({ term: r.term, definition: r.definition, ipa: r.ipa ?? "", partOfSpeech: r.partOfSpeech ?? "", note: r.note ?? "" }))
+    );
+    setFilling(false);
+    if (result.error || !result.rows) {
+      toast.error(result.error ?? "Chưa điền được, thử lại sau");
+      return;
+    }
+    const byTerm = new Map(result.rows.map((r) => [r.term.trim().toLowerCase(), r]));
+    setRows((prev) =>
+      prev.map((r) => {
+        const hit = byTerm.get(r.term.trim().toLowerCase());
+        if (!hit) return r;
+        return { ...r, ipa: r.ipa?.trim() ? r.ipa : hit.ipa, partOfSpeech: r.partOfSpeech?.trim() ? r.partOfSpeech : hit.partOfSpeech };
+      })
+    );
+    toast.success(result.filled ? `Đã tự điền cho ${result.filled} từ — xem lại rồi lưu nhé` : "Không có gì cần điền thêm");
+  }
+
+  function importVocab(imported: VocabRow[], options: { autoFill: boolean }) {
+    const next: WordRow[] = imported.map((r) => ({
+      term: r.term,
+      definition: r.definition,
+      ipa: r.ipa,
+      partOfSpeech: r.partOfSpeech,
+      note: r.note,
+      imageUrl: "",
+      audioUrl: "",
+    }));
+    setRows(next);
+    if (options.autoFill) void runFill(next);
+  }
 
   const previewRows = React.useMemo(
     () => parsePaste(pasteText, resolveDelimiter(termDefKind, termDefCustom), resolveCardDelimiter(cardKind, cardCustom)),
@@ -140,9 +196,19 @@ export function WordListEditor({
           <Button type="button" onClick={() => setImportOpen(true)} className="w-fit shadow-sm">
             <Upload className="size-4" /> Nhập nhiều thẻ cùng lúc
           </Button>
-          <p className="text-xs text-muted-foreground">Dán từ Excel/Word thay vì gõ tay từng thẻ — xem thêm hướng dẫn trong popup.</p>
+          <p className="text-xs text-muted-foreground">
+            {details
+              ? "Dán cả bảng Word · Pro · Type · Mean · Note, hoặc để AI nhận diện giúp."
+              : "Dán từ Excel/Word thay vì gõ tay từng thẻ — xem thêm hướng dẫn trong popup."}
+          </p>
         </div>
         <div className="flex items-center gap-1">
+          {details && (
+            <Button type="button" variant="outline" size="sm" onClick={() => void runFill(rows)} disabled={filling} className="gap-1.5">
+              {filling ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4 text-primary" />}
+              <span className="hidden sm:inline">{filling ? "Đang tự điền…" : "Tự điền phiên âm & loại từ"}</span>
+            </Button>
+          )}
           <Button type="button" variant="ghost" size="icon" onClick={swapAll} title={`Đổi chỗ ${termLabel} / ${definitionLabel}`}>
             <ArrowLeftRight className="size-4" />
           </Button>
@@ -194,11 +260,48 @@ export function WordListEditor({
                 <Textarea rows={3} value={row.definition} onChange={(e) => updateRow(i, "definition", e.target.value)} className="bg-muted/40" />
                 <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{definitionLabel}</span>
               </div>
-              <div className="flex items-start gap-2">
-                <MediaThumbUploader kind="image" value={row.imageUrl ?? ""} onChange={(url) => updateRow(i, "imageUrl", url)} label="Ảnh minh họa" />
-                <MediaThumbUploader kind="audio" value={row.audioUrl ?? ""} onChange={(url) => updateRow(i, "audioUrl", url)} label="Audio phát âm" />
-              </div>
+              {!details && (
+                <div className="flex items-start gap-2">
+                  <MediaThumbUploader kind="image" value={row.imageUrl ?? ""} onChange={(url) => updateRow(i, "imageUrl", url)} label="Ảnh minh họa" />
+                  <MediaThumbUploader kind="audio" value={row.audioUrl ?? ""} onChange={(url) => updateRow(i, "audioUrl", url)} label="Audio phát âm" />
+                </div>
+              )}
             </div>
+            {details && (
+              <div className="grid grid-cols-2 gap-4 border-t border-dashed border-border px-4 pt-3 pb-4 sm:grid-cols-[1fr_0.8fr_1.6fr]">
+                <div className="flex flex-col gap-1.5">
+                  <Input
+                    value={row.ipa ?? ""}
+                    onChange={(e) => updateRow(i, "ipa", e.target.value)}
+                    placeholder={filling && row.term && !row.ipa ? "Đang điền…" : "✨ Tự điền khi lưu"}
+                    className="bg-muted/40"
+                  />
+                  <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Phiên âm</span>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <Input
+                    list="word-pos-suggestions"
+                    value={row.partOfSpeech ?? ""}
+                    onChange={(e) => updateRow(i, "partOfSpeech", e.target.value)}
+                    placeholder={filling && row.term && !row.partOfSpeech ? "Đang điền…" : "✨ Tự điền"}
+                    className="bg-muted/40"
+                  />
+                  <span className="flex items-center gap-1.5 text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">
+                    Loại từ <PosBadges pos={row.partOfSpeech} />
+                  </span>
+                </div>
+                <div className="col-span-2 flex flex-col gap-1.5 sm:col-span-1">
+                  <Textarea
+                    rows={1}
+                    value={row.note ?? ""}
+                    onChange={(e) => updateRow(i, "note", e.target.value)}
+                    placeholder="vd: Favorable (adj): thuận lợi"
+                    className="min-h-9 bg-muted/40"
+                  />
+                  <span className="text-[11px] font-semibold tracking-wide text-muted-foreground uppercase">Ghi chú</span>
+                </div>
+              </div>
+            )}
           </div>
         ))}
         <Button type="button" variant="outline" size="sm" onClick={addRow} className="self-start">
@@ -206,11 +309,22 @@ export function WordListEditor({
         </Button>
       </div>
 
-      <Button type="button" onClick={handleSubmit} disabled={pending} className="self-start">
-        {pending && <Loader2 className="size-4 animate-spin" />} {submitLabel}
+      <Button type="button" onClick={handleSubmit} disabled={pending || filling} className="self-start">
+        {pending && <Loader2 className="size-4 animate-spin" />} {pending && details ? "Đang lưu & tự điền…" : submitLabel}
       </Button>
 
-      <Dialog open={importOpen} onOpenChange={setImportOpen}>
+      {details && (
+        <>
+          <datalist id="word-pos-suggestions">
+            {POS_SUGGESTIONS.map((p) => (
+              <option key={p} value={p} />
+            ))}
+          </datalist>
+          <VocabImportDialog open={importOpen} onOpenChange={setImportOpen} onImport={importVocab} />
+        </>
+      )}
+
+      <Dialog open={!details && importOpen} onOpenChange={setImportOpen}>
         <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>Nhập dữ liệu</DialogTitle>

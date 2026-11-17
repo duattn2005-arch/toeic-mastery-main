@@ -144,6 +144,9 @@ export function BookmarksTabs({
             words={savedWords.map((w) => ({
               id: w.id,
               word: w.word,
+              ipa: w.ipa,
+              partOfSpeech: w.partOfSpeech,
+              meaningVi: w.meaningVi,
               isFavorite: w.isFavorite,
               category: w.category,
               createdAt: w.createdAt.toISOString(),
