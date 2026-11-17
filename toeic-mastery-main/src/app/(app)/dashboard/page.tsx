@@ -16,8 +16,8 @@ import { DueWordList } from "@/components/vocabulary/due-word-list";
 import { DashboardHero, type HeroAction } from "@/components/dashboard/dashboard-hero";
 import { EstimatedScoreCard } from "@/components/dashboard/estimated-score-card";
 import { LevelAvatarCard } from "@/components/dashboard/level-avatar-card";
-import { DailyRoadmap } from "@/components/dashboard/daily-roadmap";
-import { buildDailyRoadmap } from "@/lib/services/daily-roadmap";
+import { JourneyCard } from "@/components/journey/journey-card";
+import { getLearningPathOverview, getLearningPathPreview } from "@/lib/data/learning-path";
 import { DashboardTour } from "@/components/dashboard/dashboard-tour";
 import { AnalysisLink } from "@/components/dashboard/analysis-link";
 import { StudyMascot } from "@/components/mascot/study-mascot";
@@ -83,7 +83,13 @@ const PANEL = "rounded-[2rem] border border-border/60 bg-card p-6 shadow-soft";
 export default async function DashboardPage() {
   const profile = await requireUser();
   const pro = isPro(profile);
-  const [data, siteThemeId] = await Promise.all([getDashboardData(profile.id, pro), getSiteThemeId(profile.id)]);
+  const [data, siteThemeId, path] = await Promise.all([
+    getDashboardData(profile.id, pro),
+    getSiteThemeId(profile.id),
+    getLearningPathOverview(profile.id),
+  ]);
+  // No path yet: preview the first stages "Bắt đầu lộ trình" would create.
+  const journeyDays = path ? path.days : await getLearningPathPreview(profile.id);
   const firstName = (data.profile.fullName ?? "bạn").split(" ").pop() ?? "bạn";
   const score = data.predictedScore?.total ?? data.profile.currentScore;
   const todayMinutes = data.activityHeatmap[data.activityHeatmap.length - 1]?.minutes ?? 0;
@@ -96,27 +102,6 @@ export default async function DashboardPage() {
   // moves down next to the vocabulary panel.
   const hasFullTest = data.hasFullTest;
   const compact = !hasFullTest;
-  const roadmap = buildDailyRoadmap({
-    pro,
-    partAccuracies: data.partAccuracies,
-    todayPartAnswers: data.todayPartAnswers,
-    attemptsCompleted: data.overallStats.attemptsCompleted,
-    attemptsToday: data.attemptsToday,
-    dueVocab: due,
-    vocabularyLearned: data.overallStats.vocabularyLearned,
-    continueAttempt: data.continueAttempt
-      ? {
-          id: data.continueAttempt.id,
-          title: data.continueAttempt.test.title,
-          currentQuestionIndex: data.continueAttempt.currentQuestionIndex,
-          totalQuestions: data.continueAttempt.test.totalQuestions,
-        }
-      : null,
-    todayMinutes,
-    dailyGoalMinutes: dailyGoal,
-    streakCount: data.profile.streakCount,
-  });
-
   const scoreCard = (
     <EstimatedScoreCard
       score={score ?? null}
@@ -195,9 +180,12 @@ export default async function DashboardPage() {
 
       <div className={`grid grid-cols-1 gap-5 lg:grid-cols-12 ${REVEAL[1]}`}>
         <div className="lg:col-span-8">
-          <DailyRoadmap
-            roadmap={roadmap}
-            goal={{ targetScore: data.profile.targetScore, currentScore: score ?? null, streakCount: data.profile.streakCount, showProHint: !pro }}
+          <JourneyCard
+            mode={path ? "path" : "preview"}
+            days={journeyDays}
+            targetScore={path?.targetScore ?? data.profile.targetScore}
+            currentScore={score ?? null}
+            streakCount={data.profile.streakCount}
           />
         </div>
         <div className="lg:col-span-4">{hasFullTest ? scoreCard : skillPanel}</div>

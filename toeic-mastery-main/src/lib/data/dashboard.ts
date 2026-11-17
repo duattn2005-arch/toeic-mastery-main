@@ -2,7 +2,6 @@ import "server-only";
 import { addDays, vnDayKey, vnDayStart } from "@/lib/services/study-streak";
 import { REAL_STUDY } from "@/lib/data/real-study";
 import { db } from "@/lib/db";
-import type { TestPart } from "@/generated/prisma/enums";
 import { getOverallStats, getPartAccuracies } from "@/lib/data/skill-stats";
 import { getVocabularyReminder } from "@/lib/data/vocabulary";
 import { generateRecommendations, type Recommendation } from "@/lib/services/recommendation";
@@ -94,18 +93,6 @@ export async function getDashboardData(userId: string, pro: boolean) {
 
   const activityHeatmap = await getActivityHeatmap(userId);
 
-  // Today's work (Vietnam day), for the daily roadmap's per-stop progress.
-  const todayStart = vnDayStart(vnDayKey(new Date()));
-  const [todayAnswers, attemptsToday] = await Promise.all([
-    db.attemptAnswer.findMany({
-      where: { attempt: { userId }, firstAnsweredAt: { gte: todayStart }, selectedLabel: { not: null } },
-      select: { question: { select: { part: true } } },
-    }),
-    db.attempt.count({ where: { userId, status: "SUBMITTED", submittedAt: { gte: todayStart } } }),
-  ]);
-  const todayPartAnswers: Partial<Record<TestPart, number>> = {};
-  for (const a of todayAnswers) todayPartAnswers[a.question.part] = (todayPartAnswers[a.question.part] ?? 0) + 1;
-
   const xp = computeXp(overallStats, profile.streakCount);
   const xpProgress = getXpProgress(xp);
   // Lower-bound proxy for "XP earned today": the day's study minutes, which
@@ -138,8 +125,6 @@ export async function getDashboardData(userId: string, pro: boolean) {
     recommendations,
     weeklyStudyMinutes: Math.round((weeklyStudySeconds._sum.durationSec ?? 0) / 60),
     activityHeatmap,
-    todayPartAnswers,
-    attemptsToday,
   };
 }
 

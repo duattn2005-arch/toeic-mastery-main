@@ -1752,3 +1752,50 @@ details.an-fold[open]::details-content { block-size: auto; }
   .an-lift:hover { transform: none; }
   details.an-fold::details-content { transition: none; }
 }
+
+/* Journey map (dashboard "Lộ trình học" card + /mentor/path): an
+   illustrated meadow in the spirit of a game level map. Every colour is
+   mixed from theme tokens, so it follows light/dark and every site theme:
+   grass and trees from --success (green in every theme), the road from
+   --primary (the theme's own colour), all blended toward --card so dark
+   mode gets a night meadow instead of a neon one. */
+.journey-scene {
+  --jm-ground-1: color-mix(in oklab, var(--success) 13%, var(--card));
+  --jm-ground-2: color-mix(in oklab, var(--success) 24%, var(--card));
+  --jm-speck: color-mix(in oklab, var(--success) 38%, var(--card));
+  --jm-tree: color-mix(in oklab, color-mix(in oklab, var(--success) 80%, #0f3b25) 85%, var(--card));
+  --jm-tree-light: color-mix(in oklab, var(--success) 60%, var(--card));
+  --jm-bush: color-mix(in oklab, var(--success) 46%, var(--card));
+  --jm-trunk: color-mix(in oklab, #8a5a3b 85%, var(--card));
+  --jm-rock: color-mix(in oklab, var(--muted-foreground) 42%, var(--card));
+  --jm-rock-light: color-mix(in oklab, var(--muted-foreground) 22%, var(--card));
+  --jm-roof: color-mix(in oklab, var(--destructive) 70%, var(--warning));
+  --jm-wall: color-mix(in oklab, var(--warning) 16%, var(--card));
+  --jm-flower: color-mix(in oklab, var(--warning) 80%, var(--card));
+  --jm-road: color-mix(in oklab, var(--primary) 42%, var(--card));
+  --jm-road-done: color-mix(in oklab, var(--primary) 82%, var(--card));
+  --jm-dash: #ffffff;
+  --jm-locked: color-mix(in oklab, var(--muted-foreground) 52%, var(--card));
+  --jm-locked-edge: color-mix(in oklab, var(--muted-foreground) 72%, var(--card));
+  --jm-flag: color-mix(in oklab, var(--foreground) 62%, var(--card));
+  background:
+    radial-gradient(circle at 1px 1px, var(--jm-speck) 1px, transparent 1.6px) 0 0 / 26px 26px,
+    radial-gradient(120% 60% at 100% 0%, color-mix(in oklab, var(--primary) 10%, transparent), transparent 60%),
+    linear-gradient(180deg, var(--jm-ground-1), var(--jm-ground-2));
+}
+.dark .journey-scene {
+  --jm-ground-1: color-mix(in oklab, var(--success) 9%, var(--card));
+  --jm-ground-2: color-mix(in oklab, var(--success) 15%, var(--card));
+  --jm-speck: color-mix(in oklab, var(--success) 24%, var(--card));
+  --jm-tree: color-mix(in oklab, var(--success) 42%, var(--card));
+  --jm-tree-light: color-mix(in oklab, var(--success) 28%, var(--card));
+  --jm-bush: color-mix(in oklab, var(--success) 24%, var(--card));
+  --jm-trunk: color-mix(in oklab, #8a5a3b 50%, var(--card));
+  --jm-wall: color-mix(in oklab, var(--warning) 22%, var(--card));
+  --jm-road: color-mix(in oklab, var(--primary) 26%, var(--card));
+  --jm-road-done: color-mix(in oklab, var(--primary) 70%, var(--card));
+  --jm-dash: rgb(255 255 255 / 0.4);
+  --jm-locked: color-mix(in oklab, var(--muted-foreground) 30%, var(--card));
+  --jm-locked-edge: color-mix(in oklab, var(--muted-foreground) 16%, var(--card));
+  --jm-flag: color-mix(in oklab, var(--foreground) 22%, var(--card));
+}

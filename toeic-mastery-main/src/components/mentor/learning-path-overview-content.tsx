@@ -1,15 +1,19 @@
 import Link from "next/link";
-import { ArrowUpRight, Calendar, Check, Lock, RotateCcw, Target } from "lucide-react";
+import { ArrowUpRight, Calendar, Target } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeScene } from "@/components/layout/theme-scene";
 import { DEFAULT_SITE_THEME_ID } from "@/lib/constants/site-themes";
 import { PART_META } from "@/lib/constants/toeic";
-import type { LearningPathOverview, LearningPathDaySummary } from "@/lib/data/learning-path";
+import type { LearningPathOverview } from "@/lib/data/learning-path";
+import { buildJourneyStages, journeyStep } from "@/lib/services/journey-map";
+import { JourneyMap } from "@/components/journey/journey-map";
 
-/** Same visual language as the vocabulary 20-day path (path-overview-content):
- * completed days glow mint with a check, today's day has a thick teal
- * border, locked days are dimmed. */
+/** The whole path: a summary card, today's day, then every stage on the
+ * illustrated journey map (same map as the dashboard card shows one stage
+ * of) — finished days in green, today's glowing, the rest locked until the
+ * day before it is done. */
 export function LearningPathOverviewContent({ data }: { data: LearningPathOverview }) {
+  const stages = buildJourneyStages(data.days);
   const currentDayNumber = data.currentDay && data.currentDay.status !== "COMPLETED" ? data.currentDay.dayNumber : null;
   const pathPercent = data.totalDays > 0 ? Math.round((data.daysCompleted / data.totalDays) * 100) : 0;
 
@@ -23,7 +27,7 @@ export function LearningPathOverviewContent({ data }: { data: LearningPathOvervi
               <span className="font-bold text-foreground tabular-nums">
                 {data.daysCompleted}/{data.totalDays}
               </span>{" "}
-              ngày hoàn thành
+              bước hoàn thành · {stages.filter((s) => s.state === "done").length}/{stages.length} chặng
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -59,9 +63,9 @@ export function LearningPathOverviewContent({ data }: { data: LearningPathOvervi
             />
           </div>
           <div className="relative">
-            <p className="text-xs font-bold tracking-wide uppercase opacity-80">Hôm nay</p>
+            <p className="text-xs font-bold tracking-wide uppercase opacity-80">Bước tiếp theo</p>
             <p className="mt-1 text-2xl font-extrabold tracking-tight">
-              Ngày {currentDayNumber}
+              Chặng {journeyStep(currentDayNumber).stage} · Bước {journeyStep(currentDayNumber).step}
               <span className="ml-2 text-base font-bold opacity-80">
                 {data.currentDay.focusParts.map((p) => PART_META[p].shortLabel).join(", ")}
               </span>
@@ -77,29 +81,15 @@ export function LearningPathOverviewContent({ data }: { data: LearningPathOvervi
         </Link>
       )}
 
-      {data.weeks.map((week) => {
-        const done = week.days.filter((d) => d.status === "COMPLETED").length;
-        return (
-          <section key={week.label} className="flex flex-col gap-3">
-            <div className="flex items-end justify-between gap-4">
-              <h3 className="text-base font-extrabold tracking-tight">{week.label}</h3>
-              <div className="flex items-center gap-2">
-                <div className="hidden h-1.5 w-24 overflow-hidden rounded-full bg-muted sm:block">
-                  <div className="h-full rounded-full bg-primary" style={{ width: `${(done / week.days.length) * 100}%` }} />
-                </div>
-                <span className="text-xs font-bold text-primary tabular-nums">
-                  {done}/{week.days.length}
-                </span>
-              </div>
-            </div>
-            <div className="-mx-1 flex items-stretch gap-4 overflow-x-auto px-1 pt-1 pb-3">
-              {week.days.map((day) => (
-                <DayCard key={day.dayNumber} day={day} isCurrent={day.dayNumber === currentDayNumber} />
-              ))}
-            </div>
-          </section>
-        );
-      })}
+      <section className="flex flex-col gap-3" aria-label="Bản đồ lộ trình">
+        <div className="flex items-end justify-between gap-4">
+          <h2 className="text-base font-extrabold tracking-tight">Bản đồ lộ trình</h2>
+          <span className="text-xs font-bold text-primary tabular-nums">
+            {stages.filter((s) => s.state === "done").length}/{stages.length} chặng
+          </span>
+        </div>
+        <JourneyMap stages={stages} linkDays />
+      </section>
     </div>
   );
 }
@@ -123,94 +113,5 @@ function ItemsBar({
     >
       <div className={cn("h-full rounded-full", tone === "onPrimary" ? "bg-[#04201c]" : "bg-primary")} style={{ width: `${percent}%` }} />
     </div>
-  );
-}
-
-function DayCard({ day, isCurrent }: { day: LearningPathDaySummary; isCurrent: boolean }) {
-  const locked = day.status === "LOCKED";
-  const completed = day.status === "COMPLETED";
-
-  const content = (
-    <div
-      className={cn(
-        "relative flex h-full w-60 shrink-0 flex-col gap-4 overflow-hidden rounded-[1.5rem] border p-4 transition-[transform,box-shadow,border-color] duration-500 ease-[cubic-bezier(0.32,0.72,0,1)]",
-        completed && "border-primary/40 bg-gradient-to-b from-primary/20 via-card to-card shadow-soft hover:-translate-y-1 hover:shadow-lift",
-        isCurrent && "border-2 border-primary bg-card shadow-[0_0_0_4px_rgba(45,212,191,0.15),0_18px_40px_-18px_rgba(45,212,191,0.55)] hover:-translate-y-1",
-        !completed && !isCurrent && !locked && "border-border/70 bg-card shadow-soft hover:-translate-y-1 hover:border-primary/40",
-        locked && "border-border/40 bg-card/50"
-      )}
-    >
-      <div className="flex items-start justify-between gap-2">
-        <div className="flex items-center gap-2.5">
-          <span
-            className={cn(
-              "flex size-10 shrink-0 items-center justify-center rounded-xl text-base font-extrabold tabular-nums",
-              completed && "bg-primary text-primary-foreground shadow-[0_6px_16px_-6px_rgba(45,212,191,0.8)]",
-              isCurrent && "bg-primary/15 text-primary ring-2 ring-primary/50",
-              !completed && !isCurrent && !locked && "bg-muted text-foreground",
-              locked && "bg-muted/60 text-muted-foreground"
-            )}
-          >
-            {completed ? <Check className="size-5" strokeWidth={3} /> : locked ? <Lock className="size-4" /> : day.dayNumber}
-          </span>
-          <div>
-            <p className={cn("text-[15px] leading-tight font-extrabold", locked && "text-muted-foreground")}>Ngày {day.dayNumber}</p>
-            <p className="text-xs text-muted-foreground tabular-nums">{new Date(day.scheduledDate).toLocaleDateString("vi-VN")}</p>
-          </div>
-        </div>
-        {completed ? (
-          <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-bold text-primary ring-1 ring-primary/30">Hoàn thành</span>
-        ) : isCurrent ? (
-          <span className="rounded-full bg-primary px-2 py-0.5 text-[11px] font-bold text-primary-foreground">Hôm nay</span>
-        ) : null}
-      </div>
-
-      <div className="flex flex-wrap gap-1.5">
-        {day.focusParts.map((part) => (
-          <span
-            key={part}
-            className={cn(
-              "rounded-md px-2 py-1 text-[11px] font-semibold ring-1",
-              locked ? "bg-muted/40 text-muted-foreground ring-border/40" : "bg-muted text-foreground/90 ring-border"
-            )}
-          >
-            {PART_META[part].shortLabel}
-          </span>
-        ))}
-      </div>
-
-      <div className="mt-auto flex flex-col gap-3">
-        {!locked && !completed && (
-          <div className="flex items-center gap-2">
-            <ItemsBar done={day.itemsDone} total={day.itemsTotal} className="flex-1" />
-            <span className="text-[11px] font-semibold text-muted-foreground tabular-nums">
-              {day.itemsDone}/{day.itemsTotal}
-            </span>
-          </div>
-        )}
-
-        {locked ? (
-          <span className="flex h-10 items-center justify-center gap-1.5 rounded-full bg-muted/40 text-sm font-medium text-muted-foreground">
-            <Lock className="size-3.5" /> Chưa mở khóa
-          </span>
-        ) : completed ? (
-          <span className="flex h-10 items-center justify-center gap-1.5 rounded-full text-sm font-bold text-primary ring-1 ring-primary/40 transition-colors duration-300 group-hover:bg-primary/10">
-            <RotateCcw className="size-3.5" strokeWidth={2.25} /> Xem lại
-          </span>
-        ) : (
-          <span className="flex h-10 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] transition-colors duration-300 group-hover:bg-[var(--primary-hover)]">
-            {day.itemsDone > 0 ? "Tiếp tục" : "Học ngay"}
-          </span>
-        )}
-      </div>
-    </div>
-  );
-
-  return locked ? (
-    <div aria-disabled>{content}</div>
-  ) : (
-    <Link href={`/mentor/path/day/${day.dayNumber}`} className="group rounded-[1.5rem] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50">
-      {content}
-    </Link>
   );
 }
