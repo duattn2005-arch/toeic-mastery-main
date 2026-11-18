@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { runGa4BackfillAction, saveGaSecretsAction } from "@/lib/actions/admin-ga4";
+import { allowGa4ResendAction, runGa4BackfillAction, saveGaSecretsAction } from "@/lib/actions/admin-ga4";
 
 export function GaSecretsForm({ primaryId, linkedId }: { primaryId: string; linkedId: string }) {
   const router = useRouter();
@@ -57,6 +57,42 @@ export function GaSecretsForm({ primaryId, linkedId }: { primaryId: string; link
         {pending && <Loader2 className="size-4 animate-spin" />} Lưu khoá
       </Button>
     </form>
+  );
+}
+
+export function GaAllowResendButton() {
+  const router = useRouter();
+  const [pending, startTransition] = React.useTransition();
+
+  function run() {
+    startTransition(async () => {
+      await allowGa4ResendAction();
+      toast.success("Đã mở khoá — có thể gửi bù lại.");
+      router.refresh();
+    });
+  }
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline" disabled={pending} className="w-fit">
+          {pending && <Loader2 className="size-4 animate-spin" />} Cho phép gửi lại
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Cho phép gửi bù lại?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Chỉ làm khi chắc chắn GA4 chưa nhận gì (vd khoá sai, đã xem báo cáo Sự kiện sau 48 giờ mà không có purchase). Nếu GA4 đã nhận lần
+            trước, gửi lại sẽ làm doanh thu bị tính gấp đôi.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Hủy</AlertDialogCancel>
+          <AlertDialogAction onClick={run}>Mở khoá gửi lại</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
