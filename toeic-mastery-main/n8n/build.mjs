@@ -17,7 +17,7 @@ const http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 // Waits between steps: a few seconds when run by hand (test), human-like when scheduled.
-const delay = (a, b) => ($execution.mode === 'manual' ? 5 : rand(a, b));
+const delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs
 
