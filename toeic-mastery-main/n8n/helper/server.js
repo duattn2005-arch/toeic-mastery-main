@@ -120,22 +120,28 @@ http
     };
     if (u.pathname === "/health") return send(200, { ok: true });
     if (u.pathname === "/draft" && req.method === "POST") {
-      // Group post draft: always kept in drafts.md, and sent to the Google Doc when its Apps Script URL is set.
+      // Group post draft: kept in drafts.md and published to the `drafts` branch for the Google Doc.
       let raw = "";
       for await (const c of req) raw += c;
       let d;
       try { d = JSON.parse(raw); } catch { return send(400, { error: "JSON không hợp lệ" }); }
       const when = new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
       fs.appendFileSync(__dirname + "/../drafts.md", `\n## ${when} · ${d.kind}\n${d.imageUrl ? "Ảnh: " + d.imageUrl + "\n" : ""}\n**Bài đăng**\n${d.post}\n\n**Comment**\n${d.comment}\n\n---\n`);
-      let doc = "chưa cấu hình GDOC_WEBHOOK_URL (chỉ lưu drafts.md)";
-      if (process.env.GDOC_WEBHOOK_URL) {
-        try {
-          const r = await fetch(process.env.GDOC_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: raw, redirect: "follow" });
-          const t = await r.text();
-          doc = r.ok && t.includes('"ok":true') ? "đã ghi vào Google Docs" : "Google Docs lỗi: " + t.slice(0, 160);
-        } catch (e) {
-          doc = "Google Docs lỗi: " + e.message;
-        }
+      // Also published to the public `drafts` branch: the Google Doc's Apps Script
+      // (time trigger) reads drafts.json from there and appends new entries.
+      let doc = "đã lưu";
+      try {
+        const git = (...a) => require("child_process").execFileSync("git", ["-C", __dirname + "/../drafts-repo", "-c", "user.name=toeic-n8n", "-c", "user.email=n8n@localhost", ...a], { stdio: "pipe" });
+        const file = __dirname + "/../drafts-repo/drafts.json";
+        const list = JSON.parse(fs.readFileSync(file, "utf8"));
+        list.unshift({ id: Date.now(), at: new Date().toISOString(), ...d });
+        fs.writeFileSync(file, JSON.stringify(list.slice(0, 60), null, 1));
+        git("add", "drafts.json");
+        git("commit", "-q", "-m", "draft " + new Date().toISOString());
+        git("push", "-q", "origin", "drafts");
+        doc = "đã đẩy lên nhánh drafts, Google Docs sẽ nhận trong ≤15 phút";
+      } catch (e) {
+        doc = "lỗi đẩy GitHub: " + String(e.stderr || e.message).slice(0, 160);
       }
       return send(200, { saved: true, doc });
     }

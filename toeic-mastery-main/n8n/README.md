@@ -62,4 +62,4 @@ n8n publish:workflow --id=<id>
 
 ## Google Docs cho bài group
 
-`gdoc-script.gs` dán vào doc (Extensions → Apps Script), Deploy → New deployment → Web app (Execute as: Me, Anyone). Dán URL của web app vào `GDOC_WEBHOOK_URL` trong `~/.n8n-run/.env` rồi chạy `start.sh`. Chưa cấu hình thì bài vẫn được lưu ở `~/.n8n-run/drafts.md`.
+Web app của Apps Script không mở được cho truy cập ẩn danh trên tài khoản này, nên chiều dữ liệu được đảo: helper đẩy mỗi bài nháp lên nhánh `drafts` của repo (`drafts.json`, kho riêng ở `~/.n8n-run/drafts-repo`), còn `gdoc-script.gs` gắn vào doc sẽ tự lấy về mỗi 15 phút và chèn vào doc (kèm ảnh). Dán script vào Extensions → Apps Script, chạy `setup` một lần và cấp quyền. Bài nháp cũng nằm ở `~/.n8n-run/drafts.md`.
