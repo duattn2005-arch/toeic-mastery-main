@@ -1,6 +1,6 @@
 # n8n – Threads + Facebook tự động
 
-Tám workflow chạy trên n8n local (http://localhost:5678), giờ theo múi Asia/Ho_Chi_Minh.
+Chín workflow chạy trên n8n local (http://localhost:5678), giờ theo múi Asia/Ho_Chi_Minh.
 
 | Workflow | Lịch | Làm gì |
 |---|---|---|
@@ -10,7 +10,8 @@ Tám workflow chạy trên n8n local (http://localhost:5678), giờ theo múi As
 | Facebook 1 – Bài ảnh tính năng (Page) | tắt | Fanpage đã có người đăng. Bật lại trong n8n nếu cần |
 | Facebook 2 – Bài tương tác (Page) | tắt | Như trên |
 | Facebook 3 – Tự trả lời comment (Page) | Mỗi 15 phút, 7h–24h | Like rồi trả lời comment mới, tối đa 4/lần, 80/ngày |
-| Facebook Group – Soạn bài để đăng | 9:00 (ảnh tính năng) & 19:00 (tương tác) | Soạn sẵn bài kèm ảnh và comment cho group TOEIC Mastery. Mở http://localhost:5678/webhook/group-drafts, bấm copy rồi đăng (Meta không có API đăng vào group) |
+| Facebook Group 1 – Bài ảnh tính năng | 9:00 | Chụp tính năng, Gemini viết bài + comment, ghi vào Google Doc (kèm ảnh) để bạn copy và đăng tay |
+| Facebook Group 2 – Bài tương tác | 19:00 | Như trên, bài tương tác (mẹo, quiz, câu hỏi, confession) |
 | Học mỗi ngày – tài khoản showcase | 18:00 | Tài khoản showcase làm bài thật (full test 3 ngày/lần, ngày khác làm Listening hoặc Reading), để streak và thống kê luôn có dữ liệu mới |
 
 Group Facebook chỉ được soạn bài chứ không tự đăng: Meta đã gỡ Groups API (đăng bài, comment) từ tháng 4/2024, còn bot trình duyệt vi phạm điều khoản và dễ làm tài khoản bị khoá.
@@ -58,3 +59,7 @@ Sửa `build.mjs`, chạy `node n8n/build.mjs`, rồi import lại:
 n8n import:workflow --input=n8n/workflows/<file>.json
 n8n publish:workflow --id=<id>
 ```
+
+## Google Docs cho bài group
+
+`gdoc-script.gs` dán vào doc (Extensions → Apps Script), Deploy → New deployment → Web app (Execute as: Me, Anyone). Dán URL của web app vào `GDOC_WEBHOOK_URL` trong `~/.n8n-run/.env` rồi chạy `start.sh`. Chưa cấu hình thì bài vẫn được lưu ở `~/.n8n-run/drafts.md`.

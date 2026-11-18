@@ -4,7 +4,7 @@
   "active": false,
   "nodes": [
     {
-      "id": "n32-L-ch-18-00",
+      "id": "n30-L-ch-18-00",
       "name": "Lịch 18:00",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -24,7 +24,7 @@
       }
     },
     {
-      "id": "n33-L-m-b-i",
+      "id": "n31-L-m-b-i",
       "name": "Làm bài",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

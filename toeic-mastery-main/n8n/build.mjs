@@ -477,63 +477,30 @@ return done.length ? done.map((d) => ({ json: d })) : [{ json: { replied: 0, wai
 ]);
 
 // ---------------------------------------------------------------------------
-// Facebook group: Meta has no group posting API, so n8n drafts the posts and a
-// local page (GET /webhook/group-drafts) shows them ready to copy and post.
+// Facebook group: Meta has no group posting API, so n8n writes each ready-to-post
+// draft (text, image, first comment) into a Google Doc via the helper; the admin
+// copies from the doc and posts by hand.
 const SAVE_DRAFT = String.raw`
 const p = $input.first().json;
-store.drafts = [{ at: new Date().toISOString(), kind: p.type || p.feature, post: p.post, comment: p.comment, imageUrl: p.imageUrl || null, commentLater: p.type === 'quiz' }, ...(store.drafts || [])].slice(0, 20);
-return [{ json: { saved: true, drafts: store.drafts.length } }];
+const r = await http({
+  method: 'POST',
+  url: (E.HELPER_URL || 'http://127.0.0.1:5690') + '/draft',
+  body: { kind: p.type || p.feature, post: p.post, comment: p.comment, imageUrl: p.imageUrl || null, commentLater: p.type === 'quiz' },
+  timeout: 120000,
+});
+return [{ json: r }];
 `;
-const RENDER_DRAFTS = String.raw`
-const esc = (t) => String(t || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-const fmt = (iso) => new Date(iso).toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh', hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' });
-const cards = (store.drafts || []).map((d, i) => '<article><header><b>' + fmt(d.at) + '</b> · ' + esc(d.kind) + '</header>' +
-  (d.imageUrl ? '<a href="' + d.imageUrl + '" target="_blank" download><img src="' + d.imageUrl + '" alt=""></a><p class="hint">Bấm vào ảnh để mở / tải về rồi đính kèm vào bài</p>' : '') +
-  '<label>Bài đăng</label><textarea id="p' + i + '" readonly>' + esc(d.post) + '</textarea><button onclick="cp(\'p' + i + '\', this)">Copy bài</button>' +
-  '<label>' + (d.commentLater ? 'Comment đáp án (đăng sau 1–3 giờ)' : 'Comment đầu tiên (đăng ngay sau bài)') + '</label><textarea id="c' + i + '" readonly>' + esc(d.comment) + '</textarea><button onclick="cp(\'c' + i + '\', this)">Copy comment</button></article>').join('');
-const html = '<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bài group TOEIC Mastery</title><style>' +
-  ':root{color-scheme:light dark;--bg:#f6f7f6;--card:#fff;--fg:#151a18;--mute:#66706b;--line:#dfe4e1;--acc:#0f9d84}@media(prefers-color-scheme:dark){:root{--bg:#0c1210;--card:#141c19;--fg:#e8eeeb;--mute:#93a19a;--line:#26332e;--acc:#2dd4bf}}' +
-  'body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}main{max-width:640px;margin:0 auto;padding:16px}h1{font-size:20px;margin:8px 0 4px}p.sub{color:var(--mute);margin:0 0 16px}' +
-  'article{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin-bottom:16px}header{color:var(--mute);margin-bottom:8px}img{width:100%;border-radius:10px;display:block}.hint{color:var(--mute);font-size:13px;margin:4px 0 8px}' +
-  'label{display:block;font-weight:600;margin:10px 0 4px}textarea{width:100%;box-sizing:border-box;min-height:140px;border:1px solid var(--line);border-radius:10px;padding:10px;background:transparent;color:inherit;font:inherit}' +
-  'button{margin-top:6px;border:0;border-radius:999px;padding:8px 16px;background:var(--acc);color:#fff;font-weight:600;cursor:pointer}</style></head><body><main>' +
-  '<h1>Bài soạn sẵn cho group TOEIC Mastery</h1><p class="sub">Mỗi ngày 2 bài (9:00 và 19:00). Copy bài, đính ảnh nếu có, đăng vào group, rồi đăng comment.</p>' +
-  (cards || '<p>Chưa có bài nào — bài đầu tiên sẽ có lúc 9:00 hoặc 19:00.</p>') +
-  '<script>function cp(id,b){navigator.clipboard.writeText(document.getElementById(id).value);var t=b.textContent;b.textContent="Đã copy ✓";setTimeout(function(){b.textContent=t},1500)}</script></main></body></html>';
-return [{ json: { html } }];
-`;
-const groupNodes = [
-  schedule("Lịch 9:00 (ảnh tính năng)", "0 9 * * *", 0),
+const fbGroupFeature = workflow("fbGroupFeat001", "Facebook Group 1 – Bài ảnh tính năng (ghi Google Docs)", [
+  schedule("Lịch 9:00", "0 9 * * *"),
   codeNode("Chọn tính năng & chụp ảnh", FEATURE_SHOT, 220),
   codeNode("Viết bài ảnh (Gemini)", featureWrite("group"), 440),
-  schedule("Lịch 19:00 (tương tác)", "0 19 * * *", 0),
-  codeNode("Viết bài tương tác (Gemini)", engageWrite("group"), 440),
-  codeNode("Lưu bản nháp", SAVE_DRAFT, 660),
-  node("Mở trang bài soạn", "n8n-nodes-base.webhook", 2, { httpMethod: "GET", path: "group-drafts", responseMode: "responseNode", options: {} }, 0),
-  codeNode("Dựng trang", RENDER_DRAFTS, 220),
-  node("Trả trang", "n8n-nodes-base.respondToWebhook", 1.1, {
-    respondWith: "text",
-    responseBody: "={{ $json.html }}",
-    options: { responseHeaders: { entries: [{ name: "Content-Type", value: "text/html; charset=utf-8" }] } },
-  }, 440),
-];
-const fbGroupDrafts = workflow("fbGroupDraft01", "Facebook Group – Soạn bài để đăng", groupNodes);
-groupNodes[3].position = [0, 520];
-groupNodes[4].position = [440, 520];
-groupNodes[6].position = [0, 760];
-groupNodes[7].position = [220, 760];
-groupNodes[8].position = [440, 760];
-groupNodes[6].webhookId = "group-drafts-0001";
-const link = (a, b) => ({ main: [[{ node: b, type: "main", index: 0 }]] });
-fbGroupDrafts.connections = {
-  "Lịch 9:00 (ảnh tính năng)": link(0, "Chọn tính năng & chụp ảnh"),
-  "Chọn tính năng & chụp ảnh": link(0, "Viết bài ảnh (Gemini)"),
-  "Viết bài ảnh (Gemini)": link(0, "Lưu bản nháp"),
-  "Lịch 19:00 (tương tác)": link(0, "Viết bài tương tác (Gemini)"),
-  "Viết bài tương tác (Gemini)": link(0, "Lưu bản nháp"),
-  "Mở trang bài soạn": link(0, "Dựng trang"),
-  "Dựng trang": link(0, "Trả trang"),
-};
+  codeNode("Ghi vào Google Docs", SAVE_DRAFT, 660),
+]);
+const fbGroupEngage = workflow("fbGroupEngg001", "Facebook Group 2 – Bài tương tác (ghi Google Docs)", [
+  schedule("Lịch 19:00", "0 19 * * *"),
+  codeNode("Viết bài tương tác (Gemini)", engageWrite("group"), 220),
+  codeNode("Ghi vào Google Docs", SAVE_DRAFT, 440),
+]);
 
 // ---------------------------------------------------------------------------
 // Showcase account studies every day (helper/study.js): keeps a real streak and
@@ -562,7 +529,8 @@ for (const [file, wf] of [
   ["facebook-1-image-post.json", fbImagePost],
   ["facebook-2-engagement-post.json", fbEngagePost],
   ["facebook-3-auto-reply.json", fbAutoReply],
-  ["facebook-4-group-drafts.json", fbGroupDrafts],
+  ["facebook-4-group-feature.json", fbGroupFeature],
+  ["facebook-5-group-engage.json", fbGroupEngage],
   ["study-daily.json", dailyStudy],
 ]) {
   writeFileSync(join(OUT, file), JSON.stringify(wf, null, 2) + "\n");

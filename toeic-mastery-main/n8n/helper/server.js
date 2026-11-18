@@ -119,6 +119,26 @@ http
       res.end(JSON.stringify(body));
     };
     if (u.pathname === "/health") return send(200, { ok: true });
+    if (u.pathname === "/draft" && req.method === "POST") {
+      // Group post draft: always kept in drafts.md, and sent to the Google Doc when its Apps Script URL is set.
+      let raw = "";
+      for await (const c of req) raw += c;
+      let d;
+      try { d = JSON.parse(raw); } catch { return send(400, { error: "JSON không hợp lệ" }); }
+      const when = new Date().toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
+      fs.appendFileSync(__dirname + "/../drafts.md", `\n## ${when} · ${d.kind}\n${d.imageUrl ? "Ảnh: " + d.imageUrl + "\n" : ""}\n**Bài đăng**\n${d.post}\n\n**Comment**\n${d.comment}\n\n---\n`);
+      let doc = "chưa cấu hình GDOC_WEBHOOK_URL (chỉ lưu drafts.md)";
+      if (process.env.GDOC_WEBHOOK_URL) {
+        try {
+          const r = await fetch(process.env.GDOC_WEBHOOK_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: raw, redirect: "follow" });
+          const t = await r.text();
+          doc = r.ok && t.includes('"ok":true') ? "đã ghi vào Google Docs" : "Google Docs lỗi: " + t.slice(0, 160);
+        } catch (e) {
+          doc = "Google Docs lỗi: " + e.message;
+        }
+      }
+      return send(200, { saved: true, doc });
+    }
     if (u.pathname === "/study") {
       // A study session runs for 1-2 hours (paced like a real learner), so it is
       // started in the background and only one runs at a time.
