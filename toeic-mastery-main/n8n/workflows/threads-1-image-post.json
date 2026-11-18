@@ -4,121 +4,603 @@
   "active": false,
   "nodes": [
     {
-      "id": "n1-L-ch-8-30-19-30",
-      "name": "Lịch 8:30 & 19:30",
+      "id": "st--K-CH-HO-T",
+      "name": "① KÍCH HOẠT",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -70,
+        0
+      ],
+      "parameters": {
+        "content": "## ① KÍCH HOẠT\n8:30 (sáng) & 19:30 (tối) hoặc bấm tay",
+        "width": 598,
+        "height": 435,
+        "color": 4
+      }
+    },
+    {
+      "id": "st--CHU-N-B-SONG-SONG",
+      "name": "② CHUẨN BỊ SONG SONG",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        606,
+        -75
+      ],
+      "parameters": {
+        "content": "## ② CHUẨN BỊ (song song)\nChọn tính năng → CHỤP ẢNH ‖ SĂN XU HƯỚNG ‖ ĐỌC BÀI CŨ → gộp → đọc trang",
+        "width": 1326,
+        "height": 525,
+        "color": 5
+      }
+    },
+    {
+      "id": "st--VI-T-V-KI-M-DUY-T",
+      "name": "③ VIẾT VÀ KIỂM DUYỆT",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2088,
+        45
+      ],
+      "parameters": {
+        "content": "## ③ VIẾT & KIỂM DUYỆT\nGemini viết bài + comment nối tiếp, 6 điều kiện chất lượng",
+        "width": 520,
+        "height": 255,
+        "color": 6
+      }
+    },
+    {
+      "id": "st--NG-THREADS",
+      "name": "④ ĐĂNG THREADS",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2634,
+        45
+      ],
+      "parameters": {
+        "content": "## ④ ĐĂNG LÊN THREADS (API chính thức)\nTạo container → chờ Meta → xuất bản · nghỉ vài giây · comment dẫn link cùng 3 bước",
+        "width": 2132,
+        "height": 255,
+        "color": 7
+      }
+    },
+    {
+      "id": "mn--Ch-y-ngay",
+      "name": "▶ Chạy ngay",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        150
+      ],
+      "parameters": {}
+    },
+    {
+      "id": "n10--8-30-19-30",
+      "name": "⏰ 8:30 & 19:30",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
       "position": [
         0,
-        300
+        375
       ],
       "parameters": {
         "rule": {
           "interval": [
             {
               "field": "cronExpression",
-              "expression": "30 8,19 * * *"
+              "expression": "30 8 * * *"
+            },
+            {
+              "field": "cronExpression",
+              "expression": "30 19 * * *"
             }
           ]
         }
       }
     },
     {
-      "id": "n2-Ch-n-t-nh-n-ng-ch-p-nh",
-      "name": "Chọn tính năng & chụp ảnh",
+      "id": "n11--Kh-i-ng-l-t-ch-y",
+      "name": "🚀 Khởi động lượt chạy",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        220,
-        300
+        338,
+        263
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\n// Waits between steps: a few seconds when run by hand (test), human-like when scheduled.\nconst delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));\n// Step log carried along the run so every node's output shows the whole story.\nconst tr = (p, step, detail) => [...((p && p.trace) || []), { step, at: new Date().toISOString(), ...detail }];\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1, thinkingConfig: { thinkingBudget: 0 } } }; // no hidden \"thinking\": 2-3s per call instead of 5-15s\n  if (search) body.tools = [{ google_search: {} }];\n  else if (json) body.generationConfig.responseMimeType = 'application/json';\n  let r;\n  for (let attempt = 1; ; attempt++) {\n    try {\n      r = await http({\n        method: 'POST',\n        url: 'https://generativelanguage.googleapis.com/v1beta/models/' + (E.GEMINI_MODEL || 'gemini-3.1-flash-lite') + ':generateContent',\n        qs: { key: E.GEMINI_API_KEY },\n        body,\n        timeout: 30000, // a stuck call is cut after 30s and retried\n      });\n      break;\n    } catch (e) {\n      // Gemini answers 429/5xx now and then: wait a little and retry (max 3 tries).\n      if (attempt >= 3 || !/status code (429|500|502|503|504)|timeout|ETIMEDOUT|ECONNABORTED|ECONNRESET/i.test(String(e.message))) throw e;\n      await sleep(1500 * attempt);\n    }\n  }\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\n// Facebook Graph API with the Page token (FB_PAGE_TOKEN).\nasync function fbApi(method, path, params = {}) {\n  return http({ method, url: 'https://graph.facebook.com/v23.0' + path, qs: { ...params, access_token: E.FB_PAGE_TOKEN } });\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  if (E.GEMINI_SEARCH !== 'on') return ''; // Google Search grounding needs a paid Gemini plan; set GEMINI_SEARCH=on in .env to use it\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst COMMENT_RULE = [\n  'Comment đầu tiên (do chính chủ bài viết) phải NỐI TIẾP mạch câu chuyện của bài, như đang kể tiếp chứ không phải quảng cáo:',\n  '1) 1-2 câu nối đúng vấn đề đã nêu trong bài (cách t/mình xử lý, mẹo nhỏ có ích thật, hoặc thừa nhận thêm một chi tiết đời thường) — người đọc phải thấy có giá trị ngay cả khi không bấm link.',\n  '2) Rồi mới khéo dẫn sang web theo kiểu bạn bè giới thiệu: nói rõ trên web có đúng thứ giải quyết vấn đề đó (tên tính năng/phần cụ thể), link đặt CUỐI comment.',\n  'Cấm mở đầu bằng \"Link đây\", \"Đây nè\", \"Vào đây\"; cấm câu kêu gọi chung chung như \"truy cập ngay\"; không lặp lại nguyên văn bài; tối đa 3 câu, tối đa 1 emoji.',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nconst FEATURES = [\n  { path: '/dashboard', name: 'Trang tổng quan: streak, mục tiêu điểm, điểm dự đoán, kỹ năng' },\n  { path: '/analytics', name: 'Thống kê điểm yếu theo từng Part và dạng câu' },\n  { path: '/mentor/path', name: 'Lộ trình học cá nhân hoá theo ngày (AI Mentor)' },\n  { path: '/mentor', name: 'AI Mentor phân tích và gợi ý học' },\n  { path: '/vocabulary/path', name: 'Lộ trình từ vựng TOEIC theo ngày, nhắc ôn lặp lại ngắt quãng' },\n  { path: '/vocabulary/topic/{topic}/study', click: 'Bắn nổ thiên thạch', name: 'Game Blast: bắn thiên thạch mang từ đúng nghĩa (từ vựng TOEIC chủ đề {topic})' },\n  { path: '/vocabulary/topic/{topic}/study', click: 'Chạm bong bóng', name: 'Game Bong bóng: chạm bong bóng mang từ đúng (từ vựng TOEIC chủ đề {topic})' },\n  { path: '/vocabulary/topic/{topic}/study', click: 'Đập chú chuột', name: 'Game Đập chuột: đập chú chuột cầm đúng nghĩa của từ (chủ đề {topic})' },\n  { path: '/vocabulary/topic/{topic}/study', click: 'Thả móc kéo', name: 'Game Đào vàng: thả móc kéo cục vàng mang đúng nghĩa (chủ đề {topic})' },\n  { path: '/vocabulary/topic/{topic}/study', click: 'Ghép từ với nghĩa', name: 'Game Nối từ: ghép từ với nghĩa nhanh nhất (chủ đề {topic})' },\n  { path: '/vocabulary/topics', name: 'Từ vựng TOEIC theo chủ đề' },\n  { path: '/grammar/mastery', name: 'Khoá ngữ pháp Part 5-6: bài học + bài tập' },\n  { path: '/grammar/mastery/{lesson}', name: 'Một bài học ngữ pháp TOEIC kèm bài tập' },\n  { path: '/listening/part-{n}', name: 'Luyện nghe TOEIC Part {n}' },\n  { path: '/history', name: 'Lịch sử bài thi, điểm từng lần' },\n  { path: '/practice', name: 'Kho đề thi thử TOEIC' },\n  { path: '/shop', name: 'Shop đổi XP kiếm được khi học' },\n];\nconst TOPICS = ['office', 'meetings', 'marketing', 'finance', 'travel', 'airport', 'hotel', 'restaurant', 'contracts', 'human-resources', 'manufacturing', 'shipping', 'customer-service', 'technology'];\nconst LESSONS = ['nhan-biet-danh-tu', 'danh-tu-so-it-so-nhieu', 'cum-danh-tu', 'dong-tu-vi-ngu', 'phan-tu-lam-tinh-tu', 'danh-dong-tu-to-v', 'vi-tri-tinh-tu-trang-tu'];\nconst used = store.usedFeatures || [];\nconst keyOf = (f) => f.path + (f.click || '');\nlet pool = FEATURES.filter((f) => !used.includes(keyOf(f)));\nif (!pool.length) pool = FEATURES;\nconst f = pick(pool);\nstore.usedFeatures = [...used, keyOf(f)].slice(-(FEATURES.length - 2));\nconst fill = (s, v) => s.replace('{topic}', v.topic).replace('{lesson}', v.lesson).replace('{n}', v.n);\nconst v = { topic: pick(TOPICS), lesson: pick(LESSONS), n: String(rand(1, 4)) };\nconst path = fill(f.path, v);\n\nconst shot = await http({ url: (E.HELPER_URL || 'http://127.0.0.1:5690') + '/shot', qs: f.click ? { path, click: f.click } : { path }, timeout: 150000 });\nif (!shot.url) throw new Error('Helper không chụp được ảnh: ' + JSON.stringify(shot));\nreturn [{ json: { feature: fill(f.name, v), path, text: shot.text || '', imageUrl: shot.url, link: SITE + path } }];\n"
+        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\n// Waits between steps: a few seconds when run by hand (test), human-like when scheduled.\nconst delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));\n// Step log carried along the run so every node's output shows the whole story.\nconst tr = (p, step, detail) => [...((p && p.trace) || []), { step, at: new Date().toISOString(), ...detail }];\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  // Gemini is often \"overloaded\" (503): alternate the main and a fallback model, short waits, 6 tries.\n  const MAIN = E.GEMINI_MODEL || 'gemini-3.1-flash-lite';\n  const MODELS = [MAIN, MAIN, E.GEMINI_FALLBACK || 'gemini-3.5-flash-lite'];\n  let r, lastErr;\n  for (let attempt = 1; attempt <= 6; attempt++) {\n    const model = MODELS[(attempt - 1) % MODELS.length];\n    const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1 } };\n    if (/^gemini-3\\.1/.test(model)) body.generationConfig.thinkingConfig = { thinkingBudget: 0 }; // no hidden \"thinking\": 2-3s per call\n    if (search) body.tools = [{ google_search: {} }];\n    else if (json) body.generationConfig.responseMimeType = 'application/json';\n    try {\n      r = await http({\n        method: 'POST',\n        url: 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent',\n        qs: { key: E.GEMINI_API_KEY },\n        body,\n        timeout: 15000, // a stuck call is cut after 15s and retried\n      });\n      break;\n    } catch (e) {\n      lastErr = e;\n      if (attempt >= 6 || !/status code (429|500|502|503|504)|timeout|ETIMEDOUT|ECONNABORTED|ECONNRESET/i.test(String(e.message))) throw e;\n      await sleep(700 * Math.min(attempt, 3));\n    }\n  }\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\n// Facebook Graph API with the Page token (FB_PAGE_TOKEN).\nasync function fbApi(method, path, params = {}) {\n  return http({ method, url: 'https://graph.facebook.com/v23.0' + path, qs: { ...params, access_token: E.FB_PAGE_TOKEN } });\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  if (E.GEMINI_SEARCH !== 'on') return ''; // Google Search grounding needs a paid Gemini plan; set GEMINI_SEARCH=on in .env to use it\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst COMMENT_RULE = [\n  'Comment đầu tiên (do chính chủ bài viết) phải NỐI TIẾP mạch câu chuyện của bài, như đang kể tiếp chứ không phải quảng cáo:',\n  '1) 1-2 câu nối đúng vấn đề đã nêu trong bài (cách t/mình xử lý, mẹo nhỏ có ích thật, hoặc thừa nhận thêm một chi tiết đời thường) — người đọc phải thấy có giá trị ngay cả khi không bấm link.',\n  '2) Rồi mới khéo dẫn sang web theo kiểu bạn bè giới thiệu: nói rõ trên web có đúng thứ giải quyết vấn đề đó (tên tính năng/phần cụ thể), link đặt CUỐI comment.',\n  'Cấm mở đầu bằng \"Link đây\", \"Đây nè\", \"Vào đây\"; cấm câu kêu gọi chung chung như \"truy cập ngay\"; không lặp lại nguyên văn bài; tối đa 3 câu, tối đa 1 emoji.',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nconst now = new Date();\nreturn [{ json: {\n  runId: 'run-' + Date.now().toString(36),\n  mode: $execution.mode,\n  startedAt: now.toISOString(),\n  kế_hoạch: [\"chọn tính năng của web\",\"chụp ảnh\",\"viết bài + comment\",\"kiểm duyệt\",\"đăng Threads\"],\n  trace: tr(null, 'Khởi động', { chế_độ: $execution.mode, kế_hoạch: [\"chọn tính năng của web\",\"chụp ảnh\",\"viết bài + comment\",\"kiểm duyệt\",\"đăng Threads\"] }),\n} }];\n"
       }
     },
     {
-      "id": "n3-Vi-t-b-i-Gemini-",
-      "name": "Viết bài (Gemini)",
+      "id": "n12--Ch-n-t-nh-n-ng",
+      "name": "🎯 Chọn tính năng",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        440,
-        300
+        676,
+        263
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\n// Waits between steps: a few seconds when run by hand (test), human-like when scheduled.\nconst delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));\n// Step log carried along the run so every node's output shows the whole story.\nconst tr = (p, step, detail) => [...((p && p.trace) || []), { step, at: new Date().toISOString(), ...detail }];\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1, thinkingConfig: { thinkingBudget: 0 } } }; // no hidden \"thinking\": 2-3s per call instead of 5-15s\n  if (search) body.tools = [{ google_search: {} }];\n  else if (json) body.generationConfig.responseMimeType = 'application/json';\n  let r;\n  for (let attempt = 1; ; attempt++) {\n    try {\n      r = await http({\n        method: 'POST',\n        url: 'https://generativelanguage.googleapis.com/v1beta/models/' + (E.GEMINI_MODEL || 'gemini-3.1-flash-lite') + ':generateContent',\n        qs: { key: E.GEMINI_API_KEY },\n        body,\n        timeout: 30000, // a stuck call is cut after 30s and retried\n      });\n      break;\n    } catch (e) {\n      // Gemini answers 429/5xx now and then: wait a little and retry (max 3 tries).\n      if (attempt >= 3 || !/status code (429|500|502|503|504)|timeout|ETIMEDOUT|ECONNABORTED|ECONNRESET/i.test(String(e.message))) throw e;\n      await sleep(1500 * attempt);\n    }\n  }\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\n// Facebook Graph API with the Page token (FB_PAGE_TOKEN).\nasync function fbApi(method, path, params = {}) {\n  return http({ method, url: 'https://graph.facebook.com/v23.0' + path, qs: { ...params, access_token: E.FB_PAGE_TOKEN } });\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  if (E.GEMINI_SEARCH !== 'on') return ''; // Google Search grounding needs a paid Gemini plan; set GEMINI_SEARCH=on in .env to use it\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst COMMENT_RULE = [\n  'Comment đầu tiên (do chính chủ bài viết) phải NỐI TIẾP mạch câu chuyện của bài, như đang kể tiếp chứ không phải quảng cáo:',\n  '1) 1-2 câu nối đúng vấn đề đã nêu trong bài (cách t/mình xử lý, mẹo nhỏ có ích thật, hoặc thừa nhận thêm một chi tiết đời thường) — người đọc phải thấy có giá trị ngay cả khi không bấm link.',\n  '2) Rồi mới khéo dẫn sang web theo kiểu bạn bè giới thiệu: nói rõ trên web có đúng thứ giải quyết vấn đề đó (tên tính năng/phần cụ thể), link đặt CUỐI comment.',\n  'Cấm mở đầu bằng \"Link đây\", \"Đây nè\", \"Vào đây\"; cấm câu kêu gọi chung chung như \"truy cập ngay\"; không lặp lại nguyên văn bài; tối đa 3 câu, tối đa 1 emoji.',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nconst p = $input.first().json;\nconst P = {\"who\":\"trang Threads @toeicmasteryy\",\"len\":\"Bài dài 200-420 ký tự.\",\"comment\":\"câu comment ngắn kiểu người thật\"};\nconst mine = (await myRecentPosts(12)).map((x) => '- ' + x.text.replace(/\\s+/g, ' ').slice(0, 220)).join('\n');\nconst trends = p.trends !== undefined ? p.trends : await research(p.feature);\nconst out = await gemini(\n  [\n    'Bạn là admin ' + P.who + ' (web luyện thi TOEIC ' + SITE + ').',\n    'Viết 1 bài kèm ẢNH CHỤP MÀN HÌNH tính năng của web để khoe web có gì và kéo người đọc vào dùng thử.',\n    'Tính năng trong ảnh: ' + p.feature,\n    'Chữ hiển thị trên màn hình đó (để hiểu tính năng, không chép nguyên): ' + p.text.slice(0, 2500),\n    VOICE,\n    P.len + ' Nói tính năng này giúp gì cho người học (lợi ích cụ thể, đời thường), có thể kể kiểu \"dạo này t học bằng cái này\". Không nói số liệu trong ảnh là kết quả của người thật. Kết bài rủ người đọc xem link ở comment.',\n    VIRAL,\n    trends ? 'Xu hướng/đối thủ đang làm (chỉ lấy cảm hứng):\\n' + trends : '',\n    mine ? 'Các bài cũ của trang (giữ giọng tương tự nhưng KHÔNG lặp hook/ý):\\n' + mine : '',\n    COMMENT_RULE,\n    'Trả về JSON: {\"post\": \"...\", \"comment\": \"comment đầu tiên theo quy tắc trên, có chèn đúng link ' + p.link + ' ở cuối\"}',\n  ].join('\\n\\n'),\n  { json: true }\n);\nif (!out.post || !out.comment || !out.comment.includes(SITE.replace(/^https?:\\/\\//, ''))) throw new Error('Gemini trả sai định dạng: ' + JSON.stringify(out));\nreturn [{ json: { ...p, post: out.post, comment: out.comment } }];\n"
+        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\n// Waits between steps: a few seconds when run by hand (test), human-like when scheduled.\nconst delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));\n// Step log carried along the run so every node's output shows the whole story.\nconst tr = (p, step, detail) => [...((p && p.trace) || []), { step, at: new Date().toISOString(), ...detail }];\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  // Gemini is often \"overloaded\" (503): alternate the main and a fallback model, short waits, 6 tries.\n  const MAIN = E.GEMINI_MODEL || 'gemini-3.1-flash-lite';\n  const MODELS = [MAIN, MAIN, E.GEMINI_FALLBACK || 'gemini-3.5-flash-lite'];\n  let r, lastErr;\n  for (let attempt = 1; attempt <= 6; attempt++) {\n    const model = MODELS[(attempt - 1) % MODELS.length];\n    const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1 } };\n    if (/^gemini-3\\.1/.test(model)) body.generationConfig.thinkingConfig = { thinkingBudget: 0 }; // no hidden \"thinking\": 2-3s per call\n    if (search) body.tools = [{ google_search: {} }];\n    else if (json) body.generationConfig.responseMimeType = 'application/json';\n    try {\n      r = await http({\n        method: 'POST',\n        url: 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent',\n        qs: { key: E.GEMINI_API_KEY },\n        body,\n        timeout: 15000, // a stuck call is cut after 15s and retried\n      });\n      break;\n    } catch (e) {\n      lastErr = e;\n      if (attempt >= 6 || !/status code (429|500|502|503|504)|timeout|ETIMEDOUT|ECONNABORTED|ECONNRESET/i.test(String(e.message))) throw e;\n      await sleep(700 * Math.min(attempt, 3));\n    }\n  }\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\n// Facebook Graph API with the Page token (FB_PAGE_TOKEN).\nasync function fbApi(method, path, params = {}) {\n  return http({ method, url: 'https://graph.facebook.com/v23.0' + path, qs: { ...params, access_token: E.FB_PAGE_TOKEN } });\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  if (E.GEMINI_SEARCH !== 'on') return ''; // Google Search grounding needs a paid Gemini plan; set GEMINI_SEARCH=on in .env to use it\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst COMMENT_RULE = [\n  'Comment đầu tiên (do chính chủ bài viết) phải NỐI TIẾP mạch câu chuyện của bài, như đang kể tiếp chứ không phải quảng cáo:',\n  '1) 1-2 câu nối đúng vấn đề đã nêu trong bài (cách t/mình xử lý, mẹo nhỏ có ích thật, hoặc thừa nhận thêm một chi tiết đời thường) — người đọc phải thấy có giá trị ngay cả khi không bấm link.',\n  '2) Rồi mới khéo dẫn sang web theo kiểu bạn bè giới thiệu: nói rõ trên web có đúng thứ giải quyết vấn đề đó (tên tính năng/phần cụ thể), link đặt CUỐI comment.',\n  'Cấm mở đầu bằng \"Link đây\", \"Đây nè\", \"Vào đây\"; cấm câu kêu gọi chung chung như \"truy cập ngay\"; không lặp lại nguyên văn bài; tối đa 3 câu, tối đa 1 emoji.',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nconst FEATURES = [\n  { path: '/dashboard', name: 'Trang tổng quan: streak, mục tiêu điểm, điểm dự đoán, kỹ năng' },\n  { path: '/analytics', name: 'Thống kê điểm yếu theo từng Part và dạng câu' },\n  { path: '/mentor/path', name: 'Lộ trình học cá nhân hoá theo ngày (AI Mentor)' },\n  { path: '/mentor', name: 'AI Mentor phân tích và gợi ý học' },\n  { path: '/vocabulary/path', name: 'Lộ trình từ vựng TOEIC theo ngày, nhắc ôn lặp lại ngắt quãng' },\n  { path: '/vocabulary/topic/{topic}/study', click: 'Bắn nổ thiên thạch', name: 'Game Blast: bắn thiên thạch mang từ đúng nghĩa (từ vựng TOEIC chủ đề {topic})' },\n  { path: '/vocabulary/topic/{topic}/study', click: 'Chạm bong bóng', name: 'Game Bong bóng: chạm bong bóng mang từ đúng (từ vựng TOEIC chủ đề {topic})' },\n  { path: '/vocabulary/topic/{topic}/study', click: 'Đập chú chuột', name: 'Game Đập chuột: đập chú chuột cầm đúng nghĩa của từ (chủ đề {topic})' },\n  { path: '/vocabulary/topic/{topic}/study', click: 'Thả móc kéo', name: 'Game Đào vàng: thả móc kéo cục vàng mang đúng nghĩa (chủ đề {topic})' },\n  { path: '/vocabulary/topic/{topic}/study', click: 'Ghép từ với nghĩa', name: 'Game Nối từ: ghép từ với nghĩa nhanh nhất (chủ đề {topic})' },\n  { path: '/vocabulary/topics', name: 'Từ vựng TOEIC theo chủ đề' },\n  { path: '/grammar/mastery', name: 'Khoá ngữ pháp Part 5-6: bài học + bài tập' },\n  { path: '/grammar/mastery/{lesson}', name: 'Một bài học ngữ pháp TOEIC kèm bài tập' },\n  { path: '/listening/part-{n}', name: 'Luyện nghe TOEIC Part {n}' },\n  { path: '/history', name: 'Lịch sử bài thi, điểm từng lần' },\n  { path: '/practice', name: 'Kho đề thi thử TOEIC' },\n  { path: '/shop', name: 'Shop đổi XP kiếm được khi học' },\n];\nconst TOPICS = ['office', 'meetings', 'marketing', 'finance', 'travel', 'airport', 'hotel', 'restaurant', 'contracts', 'human-resources', 'manufacturing', 'shipping', 'customer-service', 'technology'];\nconst LESSONS = ['nhan-biet-danh-tu', 'danh-tu-so-it-so-nhieu', 'cum-danh-tu', 'dong-tu-vi-ngu', 'phan-tu-lam-tinh-tu', 'danh-dong-tu-to-v', 'vi-tri-tinh-tu-trang-tu'];\nconst used = store.usedFeatures || [];\nconst keyOf = (f) => f.path + (f.click || '');\nlet pool = FEATURES.filter((f) => !used.includes(keyOf(f)));\nif (!pool.length) pool = FEATURES;\nconst f = pick(pool);\nstore.usedFeatures = [...used, keyOf(f)].slice(-(FEATURES.length - 2));\nconst fill = (s, v) => s.replace('{topic}', v.topic).replace('{lesson}', v.lesson).replace('{n}', v.n);\nconst v = { topic: pick(TOPICS), lesson: pick(LESSONS), n: String(rand(1, 4)) };\nconst path = fill(f.path, v);\n\nconst prev = $input.first().json;\nreturn [{ json: {\n  ...prev, kind: 'feature', feature: fill(f.name, v), path, click: f.click || '', link: SITE + path,\n  kho_tính_năng: FEATURES.length, còn_chưa_đăng: pool.length,\n  trace: tr(prev, 'Chọn tính năng', { tính_năng: fill(f.name, v), trang: path, thao_tác_bấm: f.click || 'không', link_dẫn: SITE + path, còn_chưa_đăng: pool.length + '/' + FEATURES.length }),\n} }];\n"
       }
     },
     {
-      "id": "n4--ng-l-n-Threads",
-      "name": "Đăng lên Threads",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
+      "id": "n13--Ch-p-m-n-h-nh-HTTP-",
+      "name": "📷 Chụp màn hình (HTTP)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
       "position": [
-        660,
-        300
+        1014,
+        135
       ],
       "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\n// Waits between steps: a few seconds when run by hand (test), human-like when scheduled.\nconst delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));\n// Step log carried along the run so every node's output shows the whole story.\nconst tr = (p, step, detail) => [...((p && p.trace) || []), { step, at: new Date().toISOString(), ...detail }];\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1, thinkingConfig: { thinkingBudget: 0 } } }; // no hidden \"thinking\": 2-3s per call instead of 5-15s\n  if (search) body.tools = [{ google_search: {} }];\n  else if (json) body.generationConfig.responseMimeType = 'application/json';\n  let r;\n  for (let attempt = 1; ; attempt++) {\n    try {\n      r = await http({\n        method: 'POST',\n        url: 'https://generativelanguage.googleapis.com/v1beta/models/' + (E.GEMINI_MODEL || 'gemini-3.1-flash-lite') + ':generateContent',\n        qs: { key: E.GEMINI_API_KEY },\n        body,\n        timeout: 30000, // a stuck call is cut after 30s and retried\n      });\n      break;\n    } catch (e) {\n      // Gemini answers 429/5xx now and then: wait a little and retry (max 3 tries).\n      if (attempt >= 3 || !/status code (429|500|502|503|504)|timeout|ETIMEDOUT|ECONNABORTED|ECONNRESET/i.test(String(e.message))) throw e;\n      await sleep(1500 * attempt);\n    }\n  }\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\n// Facebook Graph API with the Page token (FB_PAGE_TOKEN).\nasync function fbApi(method, path, params = {}) {\n  return http({ method, url: 'https://graph.facebook.com/v23.0' + path, qs: { ...params, access_token: E.FB_PAGE_TOKEN } });\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  if (E.GEMINI_SEARCH !== 'on') return ''; // Google Search grounding needs a paid Gemini plan; set GEMINI_SEARCH=on in .env to use it\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst COMMENT_RULE = [\n  'Comment đầu tiên (do chính chủ bài viết) phải NỐI TIẾP mạch câu chuyện của bài, như đang kể tiếp chứ không phải quảng cáo:',\n  '1) 1-2 câu nối đúng vấn đề đã nêu trong bài (cách t/mình xử lý, mẹo nhỏ có ích thật, hoặc thừa nhận thêm một chi tiết đời thường) — người đọc phải thấy có giá trị ngay cả khi không bấm link.',\n  '2) Rồi mới khéo dẫn sang web theo kiểu bạn bè giới thiệu: nói rõ trên web có đúng thứ giải quyết vấn đề đó (tên tính năng/phần cụ thể), link đặt CUỐI comment.',\n  'Cấm mở đầu bằng \"Link đây\", \"Đây nè\", \"Vào đây\"; cấm câu kêu gọi chung chung như \"truy cập ngay\"; không lặp lại nguyên văn bài; tối đa 3 câu, tối đa 1 emoji.',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nconst p = $input.first().json;\nconst postId = await threadsPost({ text: p.post, imageUrl: p.imageUrl });\n// Link comment goes up a few minutes later, like a person replying to themselves.\nreturn [{ json: { ...p, postId } }];\n"
+        "method": "GET",
+        "url": "={{ $env.HELPER_URL || 'http://127.0.0.1:5690' }}/shot",
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={{ JSON.stringify($json.click ? { path: $json.path, click: $json.click } : { path: $json.path }) }}",
+        "options": {
+          "timeout": 150000
+        }
       }
     },
     {
-      "id": "n5-Comment-link",
-      "name": "Comment link",
+      "id": "n14--S-n-xu-h-ng",
+      "name": "📈 Săn xu hướng",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        880,
-        300
+        1014,
+        263
       ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\n// Waits between steps: a few seconds when run by hand (test), human-like when scheduled.\nconst delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));\n// Step log carried along the run so every node's output shows the whole story.\nconst tr = (p, step, detail) => [...((p && p.trace) || []), { step, at: new Date().toISOString(), ...detail }];\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1, thinkingConfig: { thinkingBudget: 0 } } }; // no hidden \"thinking\": 2-3s per call instead of 5-15s\n  if (search) body.tools = [{ google_search: {} }];\n  else if (json) body.generationConfig.responseMimeType = 'application/json';\n  let r;\n  for (let attempt = 1; ; attempt++) {\n    try {\n      r = await http({\n        method: 'POST',\n        url: 'https://generativelanguage.googleapis.com/v1beta/models/' + (E.GEMINI_MODEL || 'gemini-3.1-flash-lite') + ':generateContent',\n        qs: { key: E.GEMINI_API_KEY },\n        body,\n        timeout: 30000, // a stuck call is cut after 30s and retried\n      });\n      break;\n    } catch (e) {\n      // Gemini answers 429/5xx now and then: wait a little and retry (max 3 tries).\n      if (attempt >= 3 || !/status code (429|500|502|503|504)|timeout|ETIMEDOUT|ECONNABORTED|ECONNRESET/i.test(String(e.message))) throw e;\n      await sleep(1500 * attempt);\n    }\n  }\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\n// Facebook Graph API with the Page token (FB_PAGE_TOKEN).\nasync function fbApi(method, path, params = {}) {\n  return http({ method, url: 'https://graph.facebook.com/v23.0' + path, qs: { ...params, access_token: E.FB_PAGE_TOKEN } });\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  if (E.GEMINI_SEARCH !== 'on') return ''; // Google Search grounding needs a paid Gemini plan; set GEMINI_SEARCH=on in .env to use it\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst COMMENT_RULE = [\n  'Comment đầu tiên (do chính chủ bài viết) phải NỐI TIẾP mạch câu chuyện của bài, như đang kể tiếp chứ không phải quảng cáo:',\n  '1) 1-2 câu nối đúng vấn đề đã nêu trong bài (cách t/mình xử lý, mẹo nhỏ có ích thật, hoặc thừa nhận thêm một chi tiết đời thường) — người đọc phải thấy có giá trị ngay cả khi không bấm link.',\n  '2) Rồi mới khéo dẫn sang web theo kiểu bạn bè giới thiệu: nói rõ trên web có đúng thứ giải quyết vấn đề đó (tên tính năng/phần cụ thể), link đặt CUỐI comment.',\n  'Cấm mở đầu bằng \"Link đây\", \"Đây nè\", \"Vào đây\"; cấm câu kêu gọi chung chung như \"truy cập ngay\"; không lặp lại nguyên văn bài; tối đa 3 câu, tối đa 1 emoji.',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nconst p = $input.first().json;\nawait sleep(rand(8, 15) * 1000);\nconst replyId = await threadsPost({ text: p.comment, replyTo: p.postId });\nreturn [{ json: { postId: p.postId, replyId, path: p.path } }];\n"
+        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\n// Waits between steps: a few seconds when run by hand (test), human-like when scheduled.\nconst delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));\n// Step log carried along the run so every node's output shows the whole story.\nconst tr = (p, step, detail) => [...((p && p.trace) || []), { step, at: new Date().toISOString(), ...detail }];\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  // Gemini is often \"overloaded\" (503): alternate the main and a fallback model, short waits, 6 tries.\n  const MAIN = E.GEMINI_MODEL || 'gemini-3.1-flash-lite';\n  const MODELS = [MAIN, MAIN, E.GEMINI_FALLBACK || 'gemini-3.5-flash-lite'];\n  let r, lastErr;\n  for (let attempt = 1; attempt <= 6; attempt++) {\n    const model = MODELS[(attempt - 1) % MODELS.length];\n    const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1 } };\n    if (/^gemini-3\\.1/.test(model)) body.generationConfig.thinkingConfig = { thinkingBudget: 0 }; // no hidden \"thinking\": 2-3s per call\n    if (search) body.tools = [{ google_search: {} }];\n    else if (json) body.generationConfig.responseMimeType = 'application/json';\n    try {\n      r = await http({\n        method: 'POST',\n        url: 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent',\n        qs: { key: E.GEMINI_API_KEY },\n        body,\n        timeout: 15000, // a stuck call is cut after 15s and retried\n      });\n      break;\n    } catch (e) {\n      lastErr = e;\n      if (attempt >= 6 || !/status code (429|500|502|503|504)|timeout|ETIMEDOUT|ECONNABORTED|ECONNRESET/i.test(String(e.message))) throw e;\n      await sleep(700 * Math.min(attempt, 3));\n    }\n  }\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\n// Facebook Graph API with the Page token (FB_PAGE_TOKEN).\nasync function fbApi(method, path, params = {}) {\n  return http({ method, url: 'https://graph.facebook.com/v23.0' + path, qs: { ...params, access_token: E.FB_PAGE_TOKEN } });\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  if (E.GEMINI_SEARCH !== 'on') return ''; // Google Search grounding needs a paid Gemini plan; set GEMINI_SEARCH=on in .env to use it\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst COMMENT_RULE = [\n  'Comment đầu tiên (do chính chủ bài viết) phải NỐI TIẾP mạch câu chuyện của bài, như đang kể tiếp chứ không phải quảng cáo:',\n  '1) 1-2 câu nối đúng vấn đề đã nêu trong bài (cách t/mình xử lý, mẹo nhỏ có ích thật, hoặc thừa nhận thêm một chi tiết đời thường) — người đọc phải thấy có giá trị ngay cả khi không bấm link.',\n  '2) Rồi mới khéo dẫn sang web theo kiểu bạn bè giới thiệu: nói rõ trên web có đúng thứ giải quyết vấn đề đó (tên tính năng/phần cụ thể), link đặt CUỐI comment.',\n  'Cấm mở đầu bằng \"Link đây\", \"Đây nè\", \"Vào đây\"; cấm câu kêu gọi chung chung như \"truy cập ngay\"; không lặp lại nguyên văn bài; tối đa 3 câu, tối đa 1 emoji.',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nconst p = $input.first().json;\nconst t0 = Date.now();\nconst trends = await research($input.first().json.feature);\nreturn [{ json: { trends, trendsMs: Date.now() - t0, trendsNote: trends ? 'có dữ liệu xu hướng đối thủ' : (E.GEMINI_SEARCH === 'on' ? 'Search lỗi → dùng mẫu viral cài sẵn' : 'Search tắt (GEMINI_SEARCH=off, cần gói Gemini trả phí) → dùng mẫu viral cài sẵn') } }];\n"
+      }
+    },
+    {
+      "id": "n15--c-b-i-c-c-a-trang",
+      "name": "📚 Đọc bài cũ của trang",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1014,
+        390
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\n// Waits between steps: a few seconds when run by hand (test), human-like when scheduled.\nconst delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));\n// Step log carried along the run so every node's output shows the whole story.\nconst tr = (p, step, detail) => [...((p && p.trace) || []), { step, at: new Date().toISOString(), ...detail }];\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  // Gemini is often \"overloaded\" (503): alternate the main and a fallback model, short waits, 6 tries.\n  const MAIN = E.GEMINI_MODEL || 'gemini-3.1-flash-lite';\n  const MODELS = [MAIN, MAIN, E.GEMINI_FALLBACK || 'gemini-3.5-flash-lite'];\n  let r, lastErr;\n  for (let attempt = 1; attempt <= 6; attempt++) {\n    const model = MODELS[(attempt - 1) % MODELS.length];\n    const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1 } };\n    if (/^gemini-3\\.1/.test(model)) body.generationConfig.thinkingConfig = { thinkingBudget: 0 }; // no hidden \"thinking\": 2-3s per call\n    if (search) body.tools = [{ google_search: {} }];\n    else if (json) body.generationConfig.responseMimeType = 'application/json';\n    try {\n      r = await http({\n        method: 'POST',\n        url: 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent',\n        qs: { key: E.GEMINI_API_KEY },\n        body,\n        timeout: 15000, // a stuck call is cut after 15s and retried\n      });\n      break;\n    } catch (e) {\n      lastErr = e;\n      if (attempt >= 6 || !/status code (429|500|502|503|504)|timeout|ETIMEDOUT|ECONNABORTED|ECONNRESET/i.test(String(e.message))) throw e;\n      await sleep(700 * Math.min(attempt, 3));\n    }\n  }\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\n// Facebook Graph API with the Page token (FB_PAGE_TOKEN).\nasync function fbApi(method, path, params = {}) {\n  return http({ method, url: 'https://graph.facebook.com/v23.0' + path, qs: { ...params, access_token: E.FB_PAGE_TOKEN } });\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  if (E.GEMINI_SEARCH !== 'on') return ''; // Google Search grounding needs a paid Gemini plan; set GEMINI_SEARCH=on in .env to use it\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst COMMENT_RULE = [\n  'Comment đầu tiên (do chính chủ bài viết) phải NỐI TIẾP mạch câu chuyện của bài, như đang kể tiếp chứ không phải quảng cáo:',\n  '1) 1-2 câu nối đúng vấn đề đã nêu trong bài (cách t/mình xử lý, mẹo nhỏ có ích thật, hoặc thừa nhận thêm một chi tiết đời thường) — người đọc phải thấy có giá trị ngay cả khi không bấm link.',\n  '2) Rồi mới khéo dẫn sang web theo kiểu bạn bè giới thiệu: nói rõ trên web có đúng thứ giải quyết vấn đề đó (tên tính năng/phần cụ thể), link đặt CUỐI comment.',\n  'Cấm mở đầu bằng \"Link đây\", \"Đây nè\", \"Vào đây\"; cấm câu kêu gọi chung chung như \"truy cập ngay\"; không lặp lại nguyên văn bài; tối đa 3 câu, tối đa 1 emoji.',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nconst p = $input.first().json;\nconst posts = await myRecentPosts(12);\nconst mine = posts.map((x) => '- ' + x.text.replace(/\\s+/g, ' ').slice(0, 220)).join('\\n');\nreturn [{ json: { mine, minePosts: posts.length, mineNote: 'đọc ' + posts.length + ' bài gần nhất của trang để không lặp hook/ý' } }];\n"
+      }
+    },
+    {
+      "id": "n16--G-p-nh-xu-h-ng",
+      "name": "🔀 Gộp ảnh + xu hướng",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1300,
+        195
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      }
+    },
+    {
+      "id": "n17--G-p-th-m-b-i-c-",
+      "name": "🔀 Gộp thêm bài cũ",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [
+        1586,
+        263
+      ],
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      }
+    },
+    {
+      "id": "n18--c-n-i-dung-trang",
+      "name": "🔎 Đọc nội dung trang",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1872,
+        263
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\n// Waits between steps: a few seconds when run by hand (test), human-like when scheduled.\nconst delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));\n// Step log carried along the run so every node's output shows the whole story.\nconst tr = (p, step, detail) => [...((p && p.trace) || []), { step, at: new Date().toISOString(), ...detail }];\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  // Gemini is often \"overloaded\" (503): alternate the main and a fallback model, short waits, 6 tries.\n  const MAIN = E.GEMINI_MODEL || 'gemini-3.1-flash-lite';\n  const MODELS = [MAIN, MAIN, E.GEMINI_FALLBACK || 'gemini-3.5-flash-lite'];\n  let r, lastErr;\n  for (let attempt = 1; attempt <= 6; attempt++) {\n    const model = MODELS[(attempt - 1) % MODELS.length];\n    const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1 } };\n    if (/^gemini-3\\.1/.test(model)) body.generationConfig.thinkingConfig = { thinkingBudget: 0 }; // no hidden \"thinking\": 2-3s per call\n    if (search) body.tools = [{ google_search: {} }];\n    else if (json) body.generationConfig.responseMimeType = 'application/json';\n    try {\n      r = await http({\n        method: 'POST',\n        url: 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent',\n        qs: { key: E.GEMINI_API_KEY },\n        body,\n        timeout: 15000, // a stuck call is cut after 15s and retried\n      });\n      break;\n    } catch (e) {\n      lastErr = e;\n      if (attempt >= 6 || !/status code (429|500|502|503|504)|timeout|ETIMEDOUT|ECONNABORTED|ECONNRESET/i.test(String(e.message))) throw e;\n      await sleep(700 * Math.min(attempt, 3));\n    }\n  }\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\n// Facebook Graph API with the Page token (FB_PAGE_TOKEN).\nasync function fbApi(method, path, params = {}) {\n  return http({ method, url: 'https://graph.facebook.com/v23.0' + path, qs: { ...params, access_token: E.FB_PAGE_TOKEN } });\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  if (E.GEMINI_SEARCH !== 'on') return ''; // Google Search grounding needs a paid Gemini plan; set GEMINI_SEARCH=on in .env to use it\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst COMMENT_RULE = [\n  'Comment đầu tiên (do chính chủ bài viết) phải NỐI TIẾP mạch câu chuyện của bài, như đang kể tiếp chứ không phải quảng cáo:',\n  '1) 1-2 câu nối đúng vấn đề đã nêu trong bài (cách t/mình xử lý, mẹo nhỏ có ích thật, hoặc thừa nhận thêm một chi tiết đời thường) — người đọc phải thấy có giá trị ngay cả khi không bấm link.',\n  '2) Rồi mới khéo dẫn sang web theo kiểu bạn bè giới thiệu: nói rõ trên web có đúng thứ giải quyết vấn đề đó (tên tính năng/phần cụ thể), link đặt CUỐI comment.',\n  'Cấm mở đầu bằng \"Link đây\", \"Đây nè\", \"Vào đây\"; cấm câu kêu gọi chung chung như \"truy cập ngay\"; không lặp lại nguyên văn bài; tối đa 3 câu, tối đa 1 emoji.',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nconst p0 = $('🎯 Chọn tính năng').first().json;\nconst m = $input.first().json;\nconst text = m.text || '';\nreturn [{ json: {\n  ...p0, imageUrl: m.url, text, textChars: text.length, trends: m.trends, trendsNote: m.trendsNote, mine: m.mine,\n  trace: tr(p0, 'Chụp & đọc trang', { ảnh: m.url, trang_đã_chụp: m.page, ký_tự_đọc_được: text.length, xu_hướng: m.trendsNote, bài_cũ_đã_đọc: m.minePosts }),\n} }];\n"
+      }
+    },
+    {
+      "id": "n19--Vi-t-b-i-Gemini-",
+      "name": "✍️ Viết bài (Gemini)",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2158,
+        263
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\n// Waits between steps: a few seconds when run by hand (test), human-like when scheduled.\nconst delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));\n// Step log carried along the run so every node's output shows the whole story.\nconst tr = (p, step, detail) => [...((p && p.trace) || []), { step, at: new Date().toISOString(), ...detail }];\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  // Gemini is often \"overloaded\" (503): alternate the main and a fallback model, short waits, 6 tries.\n  const MAIN = E.GEMINI_MODEL || 'gemini-3.1-flash-lite';\n  const MODELS = [MAIN, MAIN, E.GEMINI_FALLBACK || 'gemini-3.5-flash-lite'];\n  let r, lastErr;\n  for (let attempt = 1; attempt <= 6; attempt++) {\n    const model = MODELS[(attempt - 1) % MODELS.length];\n    const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1 } };\n    if (/^gemini-3\\.1/.test(model)) body.generationConfig.thinkingConfig = { thinkingBudget: 0 }; // no hidden \"thinking\": 2-3s per call\n    if (search) body.tools = [{ google_search: {} }];\n    else if (json) body.generationConfig.responseMimeType = 'application/json';\n    try {\n      r = await http({\n        method: 'POST',\n        url: 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent',\n        qs: { key: E.GEMINI_API_KEY },\n        body,\n        timeout: 15000, // a stuck call is cut after 15s and retried\n      });\n      break;\n    } catch (e) {\n      lastErr = e;\n      if (attempt >= 6 || !/status code (429|500|502|503|504)|timeout|ETIMEDOUT|ECONNABORTED|ECONNRESET/i.test(String(e.message))) throw e;\n      await sleep(700 * Math.min(attempt, 3));\n    }\n  }\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\n// Facebook Graph API with the Page token (FB_PAGE_TOKEN).\nasync function fbApi(method, path, params = {}) {\n  return http({ method, url: 'https://graph.facebook.com/v23.0' + path, qs: { ...params, access_token: E.FB_PAGE_TOKEN } });\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  if (E.GEMINI_SEARCH !== 'on') return ''; // Google Search grounding needs a paid Gemini plan; set GEMINI_SEARCH=on in .env to use it\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst COMMENT_RULE = [\n  'Comment đầu tiên (do chính chủ bài viết) phải NỐI TIẾP mạch câu chuyện của bài, như đang kể tiếp chứ không phải quảng cáo:',\n  '1) 1-2 câu nối đúng vấn đề đã nêu trong bài (cách t/mình xử lý, mẹo nhỏ có ích thật, hoặc thừa nhận thêm một chi tiết đời thường) — người đọc phải thấy có giá trị ngay cả khi không bấm link.',\n  '2) Rồi mới khéo dẫn sang web theo kiểu bạn bè giới thiệu: nói rõ trên web có đúng thứ giải quyết vấn đề đó (tên tính năng/phần cụ thể), link đặt CUỐI comment.',\n  'Cấm mở đầu bằng \"Link đây\", \"Đây nè\", \"Vào đây\"; cấm câu kêu gọi chung chung như \"truy cập ngay\"; không lặp lại nguyên văn bài; tối đa 3 câu, tối đa 1 emoji.',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nconst p = $input.first().json;\nconst P = {\"who\":\"trang Threads @toeicmasteryy\",\"len\":\"Bài dài 200-420 ký tự.\",\"comment\":\"câu comment ngắn kiểu người thật\"};\nconst mine = ($input.first().json.mine !== undefined ? $input.first().json.mine : (await myRecentPosts(12)).map((x) => '- ' + x.text.replace(/\\s+/g, ' ').slice(0, 220)).join('\\n'));\nconst trends = p.trends !== undefined ? p.trends : await research(p.feature);\nconst out = await gemini(\n  [\n    'Bạn là admin ' + P.who + ' (web luyện thi TOEIC ' + SITE + ').',\n    'Viết 1 bài kèm ẢNH CHỤP MÀN HÌNH tính năng của web để khoe web có gì và kéo người đọc vào dùng thử.',\n    'Tính năng trong ảnh: ' + p.feature,\n    'Chữ hiển thị trên màn hình đó (để hiểu tính năng, không chép nguyên): ' + p.text.slice(0, 2500),\n    VOICE,\n    P.len + ' Nói tính năng này giúp gì cho người học (lợi ích cụ thể, đời thường), có thể kể kiểu \"dạo này t học bằng cái này\". Không nói số liệu trong ảnh là kết quả của người thật. Kết bài rủ người đọc xem link ở comment.',\n    VIRAL,\n    trends ? 'Xu hướng/đối thủ đang làm (chỉ lấy cảm hứng):\\n' + trends : '',\n    mine ? 'Các bài cũ của trang (giữ giọng tương tự nhưng KHÔNG lặp hook/ý):\\n' + mine : '',\n    COMMENT_RULE,\n    'Trả về JSON: {\"post\": \"...\", \"comment\": \"comment đầu tiên theo quy tắc trên, có chèn đúng link ' + p.link + ' ở cuối\"}',\n  ].join('\\n\\n'),\n  { json: true }\n);\nif (!out.post || !out.comment || !out.comment.includes(SITE.replace(/^https?:\\/\\//, ''))) throw new Error('Gemini trả sai định dạng: ' + JSON.stringify(out));\nreturn [{ json: { ...p, post: out.post, comment: out.comment } }];\n"
+      }
+    },
+    {
+      "id": "n20--Ki-m-duy-t-n-i-dung",
+      "name": "🛡️ Kiểm duyệt nội dung",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2444,
+        263
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\n// Waits between steps: a few seconds when run by hand (test), human-like when scheduled.\nconst delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));\n// Step log carried along the run so every node's output shows the whole story.\nconst tr = (p, step, detail) => [...((p && p.trace) || []), { step, at: new Date().toISOString(), ...detail }];\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  // Gemini is often \"overloaded\" (503): alternate the main and a fallback model, short waits, 6 tries.\n  const MAIN = E.GEMINI_MODEL || 'gemini-3.1-flash-lite';\n  const MODELS = [MAIN, MAIN, E.GEMINI_FALLBACK || 'gemini-3.5-flash-lite'];\n  let r, lastErr;\n  for (let attempt = 1; attempt <= 6; attempt++) {\n    const model = MODELS[(attempt - 1) % MODELS.length];\n    const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1 } };\n    if (/^gemini-3\\.1/.test(model)) body.generationConfig.thinkingConfig = { thinkingBudget: 0 }; // no hidden \"thinking\": 2-3s per call\n    if (search) body.tools = [{ google_search: {} }];\n    else if (json) body.generationConfig.responseMimeType = 'application/json';\n    try {\n      r = await http({\n        method: 'POST',\n        url: 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent',\n        qs: { key: E.GEMINI_API_KEY },\n        body,\n        timeout: 15000, // a stuck call is cut after 15s and retried\n      });\n      break;\n    } catch (e) {\n      lastErr = e;\n      if (attempt >= 6 || !/status code (429|500|502|503|504)|timeout|ETIMEDOUT|ECONNABORTED|ECONNRESET/i.test(String(e.message))) throw e;\n      await sleep(700 * Math.min(attempt, 3));\n    }\n  }\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\n// Facebook Graph API with the Page token (FB_PAGE_TOKEN).\nasync function fbApi(method, path, params = {}) {\n  return http({ method, url: 'https://graph.facebook.com/v23.0' + path, qs: { ...params, access_token: E.FB_PAGE_TOKEN } });\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  if (E.GEMINI_SEARCH !== 'on') return ''; // Google Search grounding needs a paid Gemini plan; set GEMINI_SEARCH=on in .env to use it\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst COMMENT_RULE = [\n  'Comment đầu tiên (do chính chủ bài viết) phải NỐI TIẾP mạch câu chuyện của bài, như đang kể tiếp chứ không phải quảng cáo:',\n  '1) 1-2 câu nối đúng vấn đề đã nêu trong bài (cách t/mình xử lý, mẹo nhỏ có ích thật, hoặc thừa nhận thêm một chi tiết đời thường) — người đọc phải thấy có giá trị ngay cả khi không bấm link.',\n  '2) Rồi mới khéo dẫn sang web theo kiểu bạn bè giới thiệu: nói rõ trên web có đúng thứ giải quyết vấn đề đó (tên tính năng/phần cụ thể), link đặt CUỐI comment.',\n  'Cấm mở đầu bằng \"Link đây\", \"Đây nè\", \"Vào đây\"; cấm câu kêu gọi chung chung như \"truy cập ngay\"; không lặp lại nguyên văn bài; tối đa 3 câu, tối đa 1 emoji.',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nconst p = $input.first().json;\nconst HOST = SITE.replace(/^https?:\\/\\//, '');\nlet post = String(p.post || '').trim();\nconst comment = String(p.comment || '').trim();\nconst checks = [];\nconst add = (name, pass, detail) => checks.push({ name, pass, detail });\nadd('Bài dài 80–490 ký tự', post.length >= 80 && post.length <= 490, post.length + ' ký tự');\nadd('Comment có link web', comment.includes(HOST), comment.includes(HOST) ? 'có ' + HOST : 'thiếu link');\nadd('Link không dẫn vào blog/hướng dẫn', !/\\/(blog|huong-dan)(\\/|$)/.test(comment), 'đã kiểm tra');\nadd('Thân bài không chứa link', !/https?:\\/\\//.test(post), 'đã kiểm tra');\nadd('Không tự nhận là AI/bot', !/(tôi là AI|là một AI|trí tuệ nhân tạo|chatbot)/i.test(post + comment), 'đã kiểm tra');\nconst tags = post.match(/#[^\\s#]+/g) || [];\nlet fixed = '';\nif (tags.length > 1) { post = post.replace(/#[^\\s#]+/g, '').replace(/\\s+$/, '') + ' ' + tags[0]; fixed = 'tự cắt hashtag thừa, giữ ' + tags[0]; }\nadd('Tối đa 1 hashtag', true, tags.length + ' hashtag' + (fixed ? ' → ' + fixed : ''));\nconst failed = checks.filter((c) => !c.pass);\nreturn [{ json: {\n  ...p, post, comment,\n  qc: { đạt: checks.length - failed.length, tổng: checks.length, cảnh_báo: failed.map((f) => f.name), chi_tiết: checks },\n  trace: tr(p, 'Kiểm duyệt', { đạt: checks.length - failed.length + '/' + checks.length, cảnh_báo: failed.map((f) => f.name), độ_dài_bài: post.length, độ_dài_comment: comment.length }),\n} }];\n"
+      }
+    },
+    {
+      "id": "n21--T-o-container-b-i-HTTP-",
+      "name": "📦 Tạo container bài (HTTP)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2730,
+        263
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.threads.net/v1.0/me/threads",
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={{ JSON.stringify({ media_type: 'IMAGE', image_url: $json.imageUrl, text: String($json.post).slice(0, 490), access_token: $env.THREADS_TOKEN }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "n22--Ch-Meta-x-l-b-i",
+      "name": "⏳ Chờ Meta xử lý bài",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3016,
+        263
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\n// Waits between steps: a few seconds when run by hand (test), human-like when scheduled.\nconst delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));\n// Step log carried along the run so every node's output shows the whole story.\nconst tr = (p, step, detail) => [...((p && p.trace) || []), { step, at: new Date().toISOString(), ...detail }];\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  // Gemini is often \"overloaded\" (503): alternate the main and a fallback model, short waits, 6 tries.\n  const MAIN = E.GEMINI_MODEL || 'gemini-3.1-flash-lite';\n  const MODELS = [MAIN, MAIN, E.GEMINI_FALLBACK || 'gemini-3.5-flash-lite'];\n  let r, lastErr;\n  for (let attempt = 1; attempt <= 6; attempt++) {\n    const model = MODELS[(attempt - 1) % MODELS.length];\n    const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1 } };\n    if (/^gemini-3\\.1/.test(model)) body.generationConfig.thinkingConfig = { thinkingBudget: 0 }; // no hidden \"thinking\": 2-3s per call\n    if (search) body.tools = [{ google_search: {} }];\n    else if (json) body.generationConfig.responseMimeType = 'application/json';\n    try {\n      r = await http({\n        method: 'POST',\n        url: 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent',\n        qs: { key: E.GEMINI_API_KEY },\n        body,\n        timeout: 15000, // a stuck call is cut after 15s and retried\n      });\n      break;\n    } catch (e) {\n      lastErr = e;\n      if (attempt >= 6 || !/status code (429|500|502|503|504)|timeout|ETIMEDOUT|ECONNABORTED|ECONNRESET/i.test(String(e.message))) throw e;\n      await sleep(700 * Math.min(attempt, 3));\n    }\n  }\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\n// Facebook Graph API with the Page token (FB_PAGE_TOKEN).\nasync function fbApi(method, path, params = {}) {\n  return http({ method, url: 'https://graph.facebook.com/v23.0' + path, qs: { ...params, access_token: E.FB_PAGE_TOKEN } });\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  if (E.GEMINI_SEARCH !== 'on') return ''; // Google Search grounding needs a paid Gemini plan; set GEMINI_SEARCH=on in .env to use it\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst COMMENT_RULE = [\n  'Comment đầu tiên (do chính chủ bài viết) phải NỐI TIẾP mạch câu chuyện của bài, như đang kể tiếp chứ không phải quảng cáo:',\n  '1) 1-2 câu nối đúng vấn đề đã nêu trong bài (cách t/mình xử lý, mẹo nhỏ có ích thật, hoặc thừa nhận thêm một chi tiết đời thường) — người đọc phải thấy có giá trị ngay cả khi không bấm link.',\n  '2) Rồi mới khéo dẫn sang web theo kiểu bạn bè giới thiệu: nói rõ trên web có đúng thứ giải quyết vấn đề đó (tên tính năng/phần cụ thể), link đặt CUỐI comment.',\n  'Cấm mở đầu bằng \"Link đây\", \"Đây nè\", \"Vào đây\"; cấm câu kêu gọi chung chung như \"truy cập ngay\"; không lặp lại nguyên văn bài; tối đa 3 câu, tối đa 1 emoji.',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nconst id = $input.first().json.id;\nif (!id) throw new Error('Threads không trả container id: ' + JSON.stringify($input.first().json));\nlet status = 'IN_PROGRESS', polls = 0;\nfor (; polls < 15; polls++) {\n  await sleep(3000);\n  const s = await http({ url: TH + '/' + id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n  status = s.status;\n  if (status === 'FINISHED') break;\n  if (status === 'ERROR' || status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || status));\n}\nreturn [{ json: { containerId: id, status, polls: polls + 1 } }];\n"
+      }
+    },
+    {
+      "id": "n23--Xu-t-b-n-b-i-HTTP-",
+      "name": "🚀 Xuất bản bài (HTTP)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3302,
+        263
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.threads.net/v1.0/me/threads_publish",
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={{ JSON.stringify({ creation_id: $json.containerId, access_token: $env.THREADS_TOKEN }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "n24--Ngh-v-i-gi-y-r-i-comment",
+      "name": "⏱ Nghỉ vài giây rồi comment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3588,
+        263
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\n// Waits between steps: a few seconds when run by hand (test), human-like when scheduled.\nconst delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));\n// Step log carried along the run so every node's output shows the whole story.\nconst tr = (p, step, detail) => [...((p && p.trace) || []), { step, at: new Date().toISOString(), ...detail }];\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  // Gemini is often \"overloaded\" (503): alternate the main and a fallback model, short waits, 6 tries.\n  const MAIN = E.GEMINI_MODEL || 'gemini-3.1-flash-lite';\n  const MODELS = [MAIN, MAIN, E.GEMINI_FALLBACK || 'gemini-3.5-flash-lite'];\n  let r, lastErr;\n  for (let attempt = 1; attempt <= 6; attempt++) {\n    const model = MODELS[(attempt - 1) % MODELS.length];\n    const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1 } };\n    if (/^gemini-3\\.1/.test(model)) body.generationConfig.thinkingConfig = { thinkingBudget: 0 }; // no hidden \"thinking\": 2-3s per call\n    if (search) body.tools = [{ google_search: {} }];\n    else if (json) body.generationConfig.responseMimeType = 'application/json';\n    try {\n      r = await http({\n        method: 'POST',\n        url: 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent',\n        qs: { key: E.GEMINI_API_KEY },\n        body,\n        timeout: 15000, // a stuck call is cut after 15s and retried\n      });\n      break;\n    } catch (e) {\n      lastErr = e;\n      if (attempt >= 6 || !/status code (429|500|502|503|504)|timeout|ETIMEDOUT|ECONNABORTED|ECONNRESET/i.test(String(e.message))) throw e;\n      await sleep(700 * Math.min(attempt, 3));\n    }\n  }\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\n// Facebook Graph API with the Page token (FB_PAGE_TOKEN).\nasync function fbApi(method, path, params = {}) {\n  return http({ method, url: 'https://graph.facebook.com/v23.0' + path, qs: { ...params, access_token: E.FB_PAGE_TOKEN } });\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  if (E.GEMINI_SEARCH !== 'on') return ''; // Google Search grounding needs a paid Gemini plan; set GEMINI_SEARCH=on in .env to use it\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst COMMENT_RULE = [\n  'Comment đầu tiên (do chính chủ bài viết) phải NỐI TIẾP mạch câu chuyện của bài, như đang kể tiếp chứ không phải quảng cáo:',\n  '1) 1-2 câu nối đúng vấn đề đã nêu trong bài (cách t/mình xử lý, mẹo nhỏ có ích thật, hoặc thừa nhận thêm một chi tiết đời thường) — người đọc phải thấy có giá trị ngay cả khi không bấm link.',\n  '2) Rồi mới khéo dẫn sang web theo kiểu bạn bè giới thiệu: nói rõ trên web có đúng thứ giải quyết vấn đề đó (tên tính năng/phần cụ thể), link đặt CUỐI comment.',\n  'Cấm mở đầu bằng \"Link đây\", \"Đây nè\", \"Vào đây\"; cấm câu kêu gọi chung chung như \"truy cập ngay\"; không lặp lại nguyên văn bài; tối đa 3 câu, tối đa 1 emoji.',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nconst p = $('🛡️ Kiểm duyệt nội dung').first().json;\nconst postId = $input.first().json.id;\nconst wait = delay(8, 15);\nawait sleep(wait * 1000);\nreturn [{ json: { ...p, postId, trace: tr(p, 'Đăng bài', { postId, nghỉ_trước_comment_giây: wait }) } }];\n"
+      }
+    },
+    {
+      "id": "n25--T-o-container-comment-HTTP-",
+      "name": "📦 Tạo container comment (HTTP)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        3874,
+        263
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.threads.net/v1.0/me/threads",
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={{ JSON.stringify({ media_type: 'TEXT', text: String($json.comment).slice(0, 490), reply_to_id: $json.postId, access_token: $env.THREADS_TOKEN }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "n26--Ch-Meta-x-l-comment",
+      "name": "⏳ Chờ Meta xử lý comment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4160,
+        263
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\n// Waits between steps: a few seconds when run by hand (test), human-like when scheduled.\nconst delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));\n// Step log carried along the run so every node's output shows the whole story.\nconst tr = (p, step, detail) => [...((p && p.trace) || []), { step, at: new Date().toISOString(), ...detail }];\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  // Gemini is often \"overloaded\" (503): alternate the main and a fallback model, short waits, 6 tries.\n  const MAIN = E.GEMINI_MODEL || 'gemini-3.1-flash-lite';\n  const MODELS = [MAIN, MAIN, E.GEMINI_FALLBACK || 'gemini-3.5-flash-lite'];\n  let r, lastErr;\n  for (let attempt = 1; attempt <= 6; attempt++) {\n    const model = MODELS[(attempt - 1) % MODELS.length];\n    const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1 } };\n    if (/^gemini-3\\.1/.test(model)) body.generationConfig.thinkingConfig = { thinkingBudget: 0 }; // no hidden \"thinking\": 2-3s per call\n    if (search) body.tools = [{ google_search: {} }];\n    else if (json) body.generationConfig.responseMimeType = 'application/json';\n    try {\n      r = await http({\n        method: 'POST',\n        url: 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent',\n        qs: { key: E.GEMINI_API_KEY },\n        body,\n        timeout: 15000, // a stuck call is cut after 15s and retried\n      });\n      break;\n    } catch (e) {\n      lastErr = e;\n      if (attempt >= 6 || !/status code (429|500|502|503|504)|timeout|ETIMEDOUT|ECONNABORTED|ECONNRESET/i.test(String(e.message))) throw e;\n      await sleep(700 * Math.min(attempt, 3));\n    }\n  }\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\n// Facebook Graph API with the Page token (FB_PAGE_TOKEN).\nasync function fbApi(method, path, params = {}) {\n  return http({ method, url: 'https://graph.facebook.com/v23.0' + path, qs: { ...params, access_token: E.FB_PAGE_TOKEN } });\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  if (E.GEMINI_SEARCH !== 'on') return ''; // Google Search grounding needs a paid Gemini plan; set GEMINI_SEARCH=on in .env to use it\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst COMMENT_RULE = [\n  'Comment đầu tiên (do chính chủ bài viết) phải NỐI TIẾP mạch câu chuyện của bài, như đang kể tiếp chứ không phải quảng cáo:',\n  '1) 1-2 câu nối đúng vấn đề đã nêu trong bài (cách t/mình xử lý, mẹo nhỏ có ích thật, hoặc thừa nhận thêm một chi tiết đời thường) — người đọc phải thấy có giá trị ngay cả khi không bấm link.',\n  '2) Rồi mới khéo dẫn sang web theo kiểu bạn bè giới thiệu: nói rõ trên web có đúng thứ giải quyết vấn đề đó (tên tính năng/phần cụ thể), link đặt CUỐI comment.',\n  'Cấm mở đầu bằng \"Link đây\", \"Đây nè\", \"Vào đây\"; cấm câu kêu gọi chung chung như \"truy cập ngay\"; không lặp lại nguyên văn bài; tối đa 3 câu, tối đa 1 emoji.',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nconst id = $input.first().json.id;\nif (!id) throw new Error('Threads không trả container id: ' + JSON.stringify($input.first().json));\nlet status = 'IN_PROGRESS', polls = 0;\nfor (; polls < 15; polls++) {\n  await sleep(3000);\n  const s = await http({ url: TH + '/' + id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n  status = s.status;\n  if (status === 'FINISHED') break;\n  if (status === 'ERROR' || status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || status));\n}\nreturn [{ json: { containerId: id, status, polls: polls + 1 } }];\n"
+      }
+    },
+    {
+      "id": "n27--Xu-t-b-n-comment-HTTP-",
+      "name": "🚀 Xuất bản comment (HTTP)",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        4446,
+        263
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.threads.net/v1.0/me/threads_publish",
+        "sendQuery": true,
+        "specifyQuery": "json",
+        "jsonQuery": "={{ JSON.stringify({ creation_id: $json.containerId, access_token: $env.THREADS_TOKEN }) }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "n28--T-ng-k-t-ch-y",
+      "name": "📊 Tổng kết chạy",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        4732,
+        263
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\n// Waits between steps: a few seconds when run by hand (test), human-like when scheduled.\nconst delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));\n// Step log carried along the run so every node's output shows the whole story.\nconst tr = (p, step, detail) => [...((p && p.trace) || []), { step, at: new Date().toISOString(), ...detail }];\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  // Gemini is often \"overloaded\" (503): alternate the main and a fallback model, short waits, 6 tries.\n  const MAIN = E.GEMINI_MODEL || 'gemini-3.1-flash-lite';\n  const MODELS = [MAIN, MAIN, E.GEMINI_FALLBACK || 'gemini-3.5-flash-lite'];\n  let r, lastErr;\n  for (let attempt = 1; attempt <= 6; attempt++) {\n    const model = MODELS[(attempt - 1) % MODELS.length];\n    const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1 } };\n    if (/^gemini-3\\.1/.test(model)) body.generationConfig.thinkingConfig = { thinkingBudget: 0 }; // no hidden \"thinking\": 2-3s per call\n    if (search) body.tools = [{ google_search: {} }];\n    else if (json) body.generationConfig.responseMimeType = 'application/json';\n    try {\n      r = await http({\n        method: 'POST',\n        url: 'https://generativelanguage.googleapis.com/v1beta/models/' + model + ':generateContent',\n        qs: { key: E.GEMINI_API_KEY },\n        body,\n        timeout: 15000, // a stuck call is cut after 15s and retried\n      });\n      break;\n    } catch (e) {\n      lastErr = e;\n      if (attempt >= 6 || !/status code (429|500|502|503|504)|timeout|ETIMEDOUT|ECONNABORTED|ECONNRESET/i.test(String(e.message))) throw e;\n      await sleep(700 * Math.min(attempt, 3));\n    }\n  }\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\n// Facebook Graph API with the Page token (FB_PAGE_TOKEN).\nasync function fbApi(method, path, params = {}) {\n  return http({ method, url: 'https://graph.facebook.com/v23.0' + path, qs: { ...params, access_token: E.FB_PAGE_TOKEN } });\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  if (E.GEMINI_SEARCH !== 'on') return ''; // Google Search grounding needs a paid Gemini plan; set GEMINI_SEARCH=on in .env to use it\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst COMMENT_RULE = [\n  'Comment đầu tiên (do chính chủ bài viết) phải NỐI TIẾP mạch câu chuyện của bài, như đang kể tiếp chứ không phải quảng cáo:',\n  '1) 1-2 câu nối đúng vấn đề đã nêu trong bài (cách t/mình xử lý, mẹo nhỏ có ích thật, hoặc thừa nhận thêm một chi tiết đời thường) — người đọc phải thấy có giá trị ngay cả khi không bấm link.',\n  '2) Rồi mới khéo dẫn sang web theo kiểu bạn bè giới thiệu: nói rõ trên web có đúng thứ giải quyết vấn đề đó (tên tính năng/phần cụ thể), link đặt CUỐI comment.',\n  'Cấm mở đầu bằng \"Link đây\", \"Đây nè\", \"Vào đây\"; cấm câu kêu gọi chung chung như \"truy cập ngay\"; không lặp lại nguyên văn bài; tối đa 3 câu, tối đa 1 emoji.',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nconst p = $('⏱ Nghỉ vài giây rồi comment').first().json;\nconst reply = $input.first().json;\nconst ms = Date.now() - new Date(p.startedAt).getTime();\nconst trace = tr(p, 'Comment', { replyId: reply.id });\nreturn [{ json: {\n  runId: p.runId,\n  trạng_thái: '✅ XONG — bài và comment đã lên Threads',\n  chế_độ_chạy: p.mode,\n  tổng_thời_gian_giây: Math.round(ms / 100) / 10,\n  loại: p.kind === 'feature' ? 'Bài ảnh tính năng' : 'Bài tương tác · ' + p.type,\n  tính_năng: p.feature || null,\n  link_dẫn: p.link || null,\n  ảnh: p.imageUrl || null,\n  postId: p.postId,\n  replyId: reply.id,\n  kiểm_duyệt: p.qc,\n  xem_trước_bài: p.post.slice(0, 240) + (p.post.length > 240 ? '…' : ''),\n  xem_trước_comment: p.comment.slice(0, 240),\n  nhật_ký_từng_bước: trace,\n} }];\n"
       }
     }
   ],
   "connections": {
-    "Lịch 8:30 & 19:30": {
+    "▶ Chạy ngay": {
       "main": [
         [
           {
-            "node": "Chọn tính năng & chụp ảnh",
+            "node": "🚀 Khởi động lượt chạy",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Chọn tính năng & chụp ảnh": {
+    "⏰ 8:30 & 19:30": {
       "main": [
         [
           {
-            "node": "Viết bài (Gemini)",
+            "node": "🚀 Khởi động lượt chạy",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Viết bài (Gemini)": {
+    "🚀 Khởi động lượt chạy": {
       "main": [
         [
           {
-            "node": "Đăng lên Threads",
+            "node": "🎯 Chọn tính năng",
             "type": "main",
             "index": 0
           }
         ]
       ]
     },
-    "Đăng lên Threads": {
+    "🎯 Chọn tính năng": {
       "main": [
         [
           {
-            "node": "Comment link",
+            "node": "📷 Chụp màn hình (HTTP)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "📈 Săn xu hướng",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "📚 Đọc bài cũ của trang",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📷 Chụp màn hình (HTTP)": {
+      "main": [
+        [
+          {
+            "node": "🔀 Gộp ảnh + xu hướng",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📈 Săn xu hướng": {
+      "main": [
+        [
+          {
+            "node": "🔀 Gộp ảnh + xu hướng",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "🔀 Gộp ảnh + xu hướng": {
+      "main": [
+        [
+          {
+            "node": "🔀 Gộp thêm bài cũ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📚 Đọc bài cũ của trang": {
+      "main": [
+        [
+          {
+            "node": "🔀 Gộp thêm bài cũ",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "🔀 Gộp thêm bài cũ": {
+      "main": [
+        [
+          {
+            "node": "🔎 Đọc nội dung trang",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🔎 Đọc nội dung trang": {
+      "main": [
+        [
+          {
+            "node": "✍️ Viết bài (Gemini)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "✍️ Viết bài (Gemini)": {
+      "main": [
+        [
+          {
+            "node": "🛡️ Kiểm duyệt nội dung",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🛡️ Kiểm duyệt nội dung": {
+      "main": [
+        [
+          {
+            "node": "📦 Tạo container bài (HTTP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📦 Tạo container bài (HTTP)": {
+      "main": [
+        [
+          {
+            "node": "⏳ Chờ Meta xử lý bài",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⏳ Chờ Meta xử lý bài": {
+      "main": [
+        [
+          {
+            "node": "🚀 Xuất bản bài (HTTP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🚀 Xuất bản bài (HTTP)": {
+      "main": [
+        [
+          {
+            "node": "⏱ Nghỉ vài giây rồi comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⏱ Nghỉ vài giây rồi comment": {
+      "main": [
+        [
+          {
+            "node": "📦 Tạo container comment (HTTP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "📦 Tạo container comment (HTTP)": {
+      "main": [
+        [
+          {
+            "node": "⏳ Chờ Meta xử lý comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "⏳ Chờ Meta xử lý comment": {
+      "main": [
+        [
+          {
+            "node": "🚀 Xuất bản comment (HTTP)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "🚀 Xuất bản comment (HTTP)": {
+      "main": [
+        [
+          {
+            "node": "📊 Tổng kết chạy",
             "type": "main",
             "index": 0
           }

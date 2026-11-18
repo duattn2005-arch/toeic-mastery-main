@@ -1,17 +1,18 @@
 # n8n – Threads + Facebook tự động
 
-Tám workflow chạy trên n8n local (http://localhost:5678), giờ theo múi Asia/Ho_Chi_Minh.
+Các workflow chạy trên n8n local (http://localhost:5678), giờ theo múi Asia/Ho_Chi_Minh.
 
-| Workflow | Lịch | Làm gì |
+| Workflow | Lịch (trong giờ dùng máy: sáng 8–11:30, tối 19–23) | Làm gì |
 |---|---|---|
-| Threads 1 – Bài ảnh tính năng web | 8:30 & 19:30 | Chọn một tính năng (dashboard, thống kê điểm yếu, lộ trình AI Mentor, game từ vựng, ngữ pháp, luyện nghe, lịch sử thi…), chụp màn hình bằng tài khoản showcase, Gemini viết bài khoe tính năng, ~10 giây sau comment link |
-| Threads 2 – Bài tương tác | 12:15 & 21:45 | Xoay vòng: mẹo, quiz Part 5, câu hỏi mở, từ dễ nhầm, confession. Comment đáp án + link ngay sau bài |
-| Threads 3 – Tự trả lời comment | Mỗi 20 phút, 7h–24h | Tối đa 3/lần, 60/ngày, giãn 15–45 giây; bỏ qua comment chủ trang đã tự trả lời; link khi được hỏi hoặc ~30% số lần |
-| Facebook 1 – Bài ảnh tính năng (Page) | tắt | Fanpage đã có người đăng. Bật lại trong n8n nếu cần |
-| Facebook 2 – Bài tương tác (Page) | tắt | Như trên |
-| Facebook 3 – Tự trả lời comment (Page) | Mỗi 15 phút, 7h–24h | Like rồi trả lời comment mới, tối đa 4/lần, 80/ngày; mỗi bài chỉ gửi link web 1 lần |
-| Facebook Group – Trung tâm nội dung | 9:00 mỗi ngày (hoặc bấm tay) | Một lượt chạy sinh 2 bài chạy song song: bài ảnh tính năng và bài tương tác, kiểm duyệt rồi ghi thẳng vào Google Doc (kèm ảnh và comment). Mỗi bước ghi nhật ký chi tiết, xem ở node "Tổng kết chạy" |
-| Học mỗi ngày – tài khoản showcase | 18:00 | Tài khoản showcase làm bài thật (full test 3 ngày/lần, ngày khác làm Listening hoặc Reading), để streak và thống kê luôn có dữ liệu mới |
+| Threads 1 – Bài ảnh tính năng web | 8:30 & 19:30 | Chọn tính năng, chụp màn hình ‖ săn xu hướng ‖ đọc bài cũ (song song), Gemini viết bài + comment nối tiếp, kiểm duyệt 6 điều kiện, đăng bằng 3 bước API (tạo container → chờ Meta → xuất bản), comment link vào trang đó |
+| Threads 2 – Bài tương tác | 10:30 & 21:30 | Xoay vòng mẹo / quiz / hỏi đáp / từ dễ nhầm / confession, cùng pipeline như trên; link dẫn do Gemini chọn trong 17 trang sản phẩm (không dẫn blog/hướng dẫn) |
+| Threads 3 – Tự trả lời comment | Mỗi 20 phút, 7h–24h | Cổng an toàn → lấy tài khoản ‖ thống kê → lấy bài → quét comment → chọn tối đa 3, quyết định gắn link → Gemini viết song song → kiểm duyệt → đăng cách nhau 15–45 giây; tối đa 60/ngày |
+| Facebook 3 – Tự trả lời comment (Page) | Mỗi 15 phút, 7h–24h | Như trên cho Fanpage: like rồi trả lời, tối đa 4/lần, 80/ngày; mỗi bài chỉ gửi link web 1 lần |
+| Facebook Group – Trung tâm nội dung | 9:00 mỗi ngày | Một lượt chạy sinh 2 bài song song (ảnh tính năng + tương tác), kiểm duyệt, ghi vào Google Doc kèm ảnh và comment |
+| Học mỗi ngày – tài khoản showcase | 19:05 | Tài khoản showcase làm bài thật (full test 3 ngày/lần, ngày khác Listening hoặc Reading) để streak và thống kê luôn có dữ liệu |
+| Facebook 1/2 (Page) | tắt | Fanpage đã có người đăng; bật lại trong n8n nếu cần |
+
+Mọi workflow đều là sơ đồ nhiều node có khung chú thích màu, và mỗi node ghi `trace` (nhật ký từng bước) để node "Tổng kết chạy" hiện đủ chi tiết. Bấm **▶ Chạy ngay** để chạy tay: các khoảng nghỉ ngắn lại, không phải chờ.
 
 Group Facebook chỉ được soạn bài chứ không tự đăng: Meta đã gỡ Groups API (đăng bài, comment) từ tháng 4/2024, còn bot trình duyệt vi phạm điều khoản và dễ làm tài khoản bị khoá.
 
