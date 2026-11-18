@@ -18,19 +18,32 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 // Waits between steps: a few seconds when run by hand (test), human-like when scheduled.
 const delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));
+// Step log carried along the run so every node's output shows the whole story.
+const tr = (p, step, detail) => [...((p && p.trace) || []), { step, at: new Date().toISOString(), ...detail }];
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs
 
 async function gemini(prompt, { search = false, json = false } = {}) {
-  const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1 } };
+  const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1, thinkingConfig: { thinkingBudget: 0 } } }; // no hidden "thinking": 2-3s per call instead of 5-15s
   if (search) body.tools = [{ google_search: {} }];
   else if (json) body.generationConfig.responseMimeType = 'application/json';
-  const r = await http({
-    method: 'POST',
-    url: 'https://generativelanguage.googleapis.com/v1beta/models/' + (E.GEMINI_MODEL || 'gemini-3.1-flash-lite') + ':generateContent',
-    qs: { key: E.GEMINI_API_KEY },
-    body,
-  });
+  let r;
+  for (let attempt = 1; ; attempt++) {
+    try {
+      r = await http({
+        method: 'POST',
+        url: 'https://generativelanguage.googleapis.com/v1beta/models/' + (E.GEMINI_MODEL || 'gemini-3.1-flash-lite') + ':generateContent',
+        qs: { key: E.GEMINI_API_KEY },
+        body,
+        timeout: 30000, // a stuck call is cut after 30s and retried
+      });
+      break;
+    } catch (e) {
+      // Gemini answers 429/5xx now and then: wait a little and retry (max 3 tries).
+      if (attempt >= 3 || !/status code (429|500|502|503|504)|timeout|ETIMEDOUT|ECONNABORTED|ECONNRESET/i.test(String(e.message))) throw e;
+      await sleep(1500 * attempt);
+    }
+  }
   const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();
   if (!t) throw new Error('Gemini trả về rỗng');
   if (!json) return t;
@@ -67,6 +80,7 @@ async function myRecentPosts(limit = 15) {
 // Competitor/trend research: Gemini + Google Search when the key's plan allows it,
 // otherwise an empty string (the writing prompt has built-in viral patterns).
 async function research(topic) {
+  if (E.GEMINI_SEARCH !== 'on') return ''; // Google Search grounding needs a paid Gemini plan; set GEMINI_SEARCH=on in .env to use it
   try {
     return await gemini(
       'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +
@@ -145,7 +159,7 @@ const PLATFORM = {
 
 // Feature pages of the logged-in app (the showcase account has real study data).
 // {topic}/{lesson}/{n} are filled at random so the same screen isn't reposted.
-const FEATURE_SHOT = String.raw`
+const FEATURE_PICK = String.raw`
 const FEATURES = [
   { path: '/dashboard', name: 'Trang tổng quan: streak, mục tiêu điểm, điểm dự đoán, kỹ năng' },
   { path: '/analytics', name: 'Thống kê điểm yếu theo từng Part và dạng câu' },
@@ -176,6 +190,8 @@ store.usedFeatures = [...used, keyOf(f)].slice(-(FEATURES.length - 2));
 const fill = (s, v) => s.replace('{topic}', v.topic).replace('{lesson}', v.lesson).replace('{n}', v.n);
 const v = { topic: pick(TOPICS), lesson: pick(LESSONS), n: String(rand(1, 4)) };
 const path = fill(f.path, v);
+`;
+const FEATURE_SHOT = FEATURE_PICK + String.raw`
 const shot = await http({ url: (E.HELPER_URL || 'http://127.0.0.1:5690') + '/shot', qs: f.click ? { path, click: f.click } : { path }, timeout: 150000 });
 if (!shot.url) throw new Error('Helper không chụp được ảnh: ' + JSON.stringify(shot));
 return [{ json: { feature: fill(f.name, v), path, text: shot.text || '', imageUrl: shot.url, link: SITE + path } }];
@@ -184,8 +200,8 @@ return [{ json: { feature: fill(f.name, v), path, text: shot.text || '', imageUr
 const featureWrite = (platform) => String.raw`
 const p = $input.first().json;
 const P = ${JSON.stringify(PLATFORM[platform])};
-const mine = ${platform === "threads" ? "(await myRecentPosts(12)).map((x) => '- ' + x.text.replace(/\\s+/g, ' ').slice(0, 220)).join('\\n')" : "''"};
-const trends = await research(p.feature);
+const mine = ${platform === "threads" ? "(await myRecentPosts(12)).map((x) => '- ' + x.text.replace(/\\s+/g, ' ').slice(0, 220)).join('\n')" : "''"};
+const trends = p.trends !== undefined ? p.trends : await research(p.feature);
 const out = await gemini(
   [
     'Bạn là admin ' + P.who + ' (web luyện thi TOEIC ' + SITE + ').',
@@ -214,7 +230,7 @@ const TYPES = {
   confusing: 'So sánh 2-3 từ/cấu trúc TOEIC dễ nhầm (vd: affect/effect, despite/although), mỗi cái 1 ví dụ ngắn. Kết bằng 1 câu đố nhỏ. Comment dẫn link.',
   story: 'Kể 1 câu chuyện/confession ngắn kiểu người học (mất gốc, sợ Listening, ôn sát ngày thi...) rồi rút ra 1 bài học có ích. Không bịa điểm số cụ thể. Comment dẫn link.',
 };
-const type = pick(Object.keys(TYPES).filter((k) => k !== store.lastType));
+const type = ($input.first().json && $input.first().json.type) || pick(Object.keys(TYPES).filter((k) => k !== store.lastType));
 store.lastType = type;
 // Every product page except blog/guide articles. Logged-out visitors land on the sign-up popup.
 const LINKS = [
@@ -241,8 +257,8 @@ const LINKS = [
 const engageWrite = (platform) => String.raw`
 ${ENGAGE_TYPES}
 const P = ${JSON.stringify(PLATFORM[platform])};
-const mine = ${platform === "threads" ? "(await myRecentPosts(12)).map((x) => '- ' + x.text.replace(/\\s+/g, ' ').slice(0, 220)).join('\\n')" : "''"};
-const trends = await research(type === 'quiz' ? 'câu hỏi TOEIC Part 5 thử thách' : 'mẹo học TOEIC');
+const mine = ${platform === "threads" ? "(await myRecentPosts(12)).map((x) => '- ' + x.text.replace(/\\s+/g, ' ').slice(0, 220)).join('\n')" : "''"};
+const trends = $input.first().json.trends !== undefined ? $input.first().json.trends : await research(type === 'quiz' ? 'câu hỏi TOEIC Part 5 thử thách' : 'mẹo học TOEIC');
 const out = await gemini(
   [
     'Bạn là admin ' + P.who + ' (web luyện thi TOEIC miễn phí ' + SITE + ').',
@@ -259,7 +275,7 @@ const out = await gemini(
   { json: true }
 );
 if (!out.post || !out.comment || !out.comment.includes(SITE.replace(/^https?:\/\//, ''))) throw new Error('Gemini trả sai định dạng: ' + JSON.stringify(out));
-return [{ json: { type, post: out.post, comment: out.comment } }];
+return [{ json: { ...$input.first().json, type, post: out.post, comment: out.comment } }];
 `;
 
 // Reply rules shared by Threads and Facebook auto-replies.
@@ -495,17 +511,168 @@ const r = await http({
 });
 return [{ json: r }];
 `;
-const fbGroupFeature = workflow("fbGroupFeat001", "Facebook Group 1 – Bài ảnh tính năng (ghi Google Docs)", [
-  schedule("Lịch 9:00", "0 9 * * *"),
-  codeNode("Chọn tính năng & chụp ảnh", FEATURE_SHOT, 220),
-  codeNode("Viết bài ảnh (Gemini)", featureWrite("group"), 440),
-  codeNode("Ghi vào Google Docs", SAVE_DRAFT, 660),
-]);
-const fbGroupEngage = workflow("fbGroupEngg001", "Facebook Group 2 – Bài tương tác (ghi Google Docs)", [
-  schedule("Lịch 19:00", "0 19 * * *"),
-  codeNode("Viết bài tương tác (Gemini)", engageWrite("group"), 220),
-  codeNode("Ghi vào Google Docs", SAVE_DRAFT, 440),
-]);
+// Graph helpers for the group hub: explicit positions and edges.
+const at = (col, row) => [col * 260, row * 150];
+const put = (n, col, row) => ((n.position = at(col, row)), n);
+const sticky = (name, content, x, y, w, h, color) =>
+  ({ id: "st-" + name.replace(/\W+/g, "-"), name, type: "n8n-nodes-base.stickyNote", typeVersion: 1, position: [x, y], parameters: { content, width: w, height: h, color } });
+const manual = (name) => ({ id: "mn-" + name.replace(/\W+/g, "-"), name, type: "n8n-nodes-base.manualTrigger", typeVersion: 1, position: [0, 0], parameters: {} });
+const httpNode = (name, parameters) => node(name, "n8n-nodes-base.httpRequest", 4.2, parameters, 0);
+const mergeNode = (name) => node(name, "n8n-nodes-base.merge", 3, { mode: "combine", combineBy: "combineByPosition", options: {} }, 0);
+const HELPER = "={{ $env.HELPER_URL || 'http://127.0.0.1:5690' }}";
+
+const GN = {
+  man: "▶ Chạy ngay", s9: "⏰ Mỗi ngày 9:00", go: "🚀 Khởi động lượt chạy",
+  pickF: "🎯 Chọn tính năng", shot: "📷 Chụp màn hình (HTTP)", trA: "📈 Săn xu hướng (A)", mgA: "🔀 Gộp ảnh + xu hướng", readP: "🔎 Đọc nội dung trang", wrA: "✍️ Viết bài ảnh (Gemini)",
+  pickE: "🎲 Chọn dạng bài", trB: "📈 Săn xu hướng (B)", mgB: "🔀 Gộp dạng bài + xu hướng", wrB: "✍️ Viết bài tương tác (Gemini)",
+  qc: "🛡️ Kiểm duyệt nội dung", docs: "📄 Ghi vào Google Docs (HTTP)", done: "📊 Tổng kết chạy",
+};
+
+const GO_CODE = String.raw`
+const now = new Date();
+return [{ json: {
+  runId: 'grp-' + Date.now().toString(36),
+  mode: $execution.mode,
+  startedAt: now.toISOString(),
+  kế_hoạch: ['bài ảnh tính năng (nhánh A)', 'bài tương tác (nhánh B)'],
+  trace: tr(null, 'Khởi động', { chế_độ: $execution.mode, kế_hoạch: '2 bài chạy song song: ảnh tính năng + tương tác' }),
+} }];
+`;
+
+const PICK_FEATURE = FEATURE_PICK + String.raw`
+const prev = $input.first().json;
+return [{ json: {
+  ...prev, kind: 'feature', feature: fill(f.name, v), path, click: f.click || '', link: SITE + path,
+  kho_tính_năng: FEATURES.length, còn_chưa_đăng: pool.length,
+  trace: tr(prev, 'Chọn tính năng', { tính_năng: fill(f.name, v), trang: path, thao_tác_bấm: f.click || 'không', link_dẫn: SITE + path, còn_chưa_đăng: pool.length + '/' + FEATURES.length }),
+} }];
+`;
+
+const TREND_NODE = (topicExpr) => String.raw`
+const p = $input.first().json;
+const t0 = Date.now();
+const trends = await research(${topicExpr});
+return [{ json: { trends, trendsMs: Date.now() - t0, trendsNote: trends ? 'có dữ liệu xu hướng đối thủ' : (E.GEMINI_SEARCH === 'on' ? 'Search lỗi → dùng mẫu viral cài sẵn' : 'Search tắt (GEMINI_SEARCH=off, cần gói Gemini trả phí) → dùng mẫu viral cài sẵn') } }];
+`;
+
+const READ_PAGE = String.raw`
+const p0 = $('${GN.pickF}').first().json;
+const m = $input.first().json;
+const text = m.text || '';
+return [{ json: {
+  ...p0, imageUrl: m.url, text, textChars: text.length, trends: m.trends, trendsNote: m.trendsNote,
+  trace: tr(p0, 'Chụp & đọc trang', { ảnh: m.url, trang_đã_chụp: m.page, ký_tự_đọc_được: text.length, xu_hướng: m.trendsNote, ms_săn_xu_hướng: m.trendsMs }),
+} }];
+`;
+
+const PICK_ENGAGE = ENGAGE_TYPES + String.raw`
+const prev = $input.first().json;
+return [{ json: {
+  ...prev, kind: 'engage', type, brief: TYPES[type], link_gợi_ý: LINKS.length,
+  trace: tr(prev, 'Chọn dạng bài', { dạng: type, yêu_cầu: TYPES[type].slice(0, 90) + '…', số_trang_có_thể_dẫn: LINKS.length }),
+} }];
+`;
+
+const QC = String.raw`
+const p = $input.first().json;
+const HOST = SITE.replace(/^https?:\/\//, '');
+let post = String(p.post || '').trim();
+const comment = String(p.comment || '').trim();
+const checks = [];
+const add = (name, pass, detail) => checks.push({ name, pass, detail });
+add('Bài dài 150–1000 ký tự', post.length >= 150 && post.length <= 1000, post.length + ' ký tự');
+add('Comment có link web', comment.includes(HOST), comment.includes(HOST) ? 'có ' + HOST : 'thiếu link');
+add('Link không dẫn vào blog/hướng dẫn', !/\/(blog|huong-dan)(\/|$)/.test(comment), 'đã kiểm tra');
+add('Thân bài không chứa link', !/https?:\/\//.test(post), 'đã kiểm tra');
+add('Không tự nhận là AI/bot', !/(tôi là AI|là một AI|trí tuệ nhân tạo|chatbot)/i.test(post + comment), 'đã kiểm tra');
+const tags = post.match(/#[^\s#]+/g) || [];
+let fixed = '';
+if (tags.length > 1) { post = post.replace(/#[^\s#]+/g, '').replace(/\s+$/, '') + ' ' + tags[0]; fixed = 'tự cắt hashtag thừa, giữ ' + tags[0]; }
+add('Tối đa 1 hashtag', true, tags.length + ' hashtag' + (fixed ? ' → ' + fixed : ''));
+const failed = checks.filter((c) => !c.pass);
+return [{ json: {
+  ...p, post, comment,
+  qc: { đạt: checks.length - failed.length, tổng: checks.length, cảnh_báo: failed.map((f) => f.name), chi_tiết: checks },
+  trace: tr(p, 'Kiểm duyệt', { đạt: checks.length - failed.length + '/' + checks.length, cảnh_báo: failed.map((f) => f.name), độ_dài_bài: post.length, độ_dài_comment: comment.length }),
+} }];
+`;
+
+// Two branches finish separately, so the nodes below run once per branch ($runIndex pairs them).
+const DONE = String.raw`
+const q = $('${GN.qc}').all(0, $runIndex)[0].json;
+const doc = $input.first().json;
+const ms = Date.now() - new Date(q.startedAt).getTime();
+const trace = tr(q, 'Ghi Google Docs', { kết_quả: doc.doc, đã_lưu: doc.saved });
+return [{ json: {
+  runId: q.runId,
+  trạng_thái: doc.saved ? '✅ XONG — bài nằm trong Google Docs' : '⚠️ lưu thất bại',
+  loại: q.kind === 'feature' ? 'Bài ảnh tính năng' : 'Bài tương tác · ' + q.type,
+  chế_độ_chạy: q.mode,
+  thời_gian_đến_lúc_xong_giây: Math.round(ms / 100) / 10,
+  tính_năng: q.feature || null,
+  link_dẫn: q.link || null,
+  ảnh: q.imageUrl || null,
+  kiểm_duyệt: q.qc,
+  google_docs: doc.doc,
+  xem_trước_bài: q.post.slice(0, 240) + (q.post.length > 240 ? '…' : ''),
+  xem_trước_comment: q.comment.slice(0, 240),
+  nhật_ký_từng_bước: trace,
+} }];
+`;
+
+const groupNodes = [
+  manual(GN.man), schedule(GN.s9, "0 9 * * *"),
+  codeNode(GN.go, GO_CODE, 0),
+  codeNode(GN.pickF, PICK_FEATURE, 0),
+  httpNode(GN.shot, {
+    method: "GET", url: HELPER + "/shot", sendQuery: true, specifyQuery: "json",
+    jsonQuery: "={{ JSON.stringify($json.click ? { path: $json.path, click: $json.click } : { path: $json.path }) }}",
+    options: { timeout: 150000 },
+  }),
+  codeNode(GN.trA, TREND_NODE("$input.first().json.feature"), 0),
+  mergeNode(GN.mgA),
+  codeNode(GN.readP, READ_PAGE, 0),
+  codeNode(GN.wrA, featureWrite("group"), 0),
+  codeNode(GN.pickE, PICK_ENGAGE, 0),
+  codeNode(GN.trB, TREND_NODE("'mẹo học TOEIC, câu hỏi TOEIC Part 5 thử thách'"), 0),
+  mergeNode(GN.mgB),
+  codeNode(GN.wrB, engageWrite("group"), 0),
+  codeNode(GN.qc, QC, 0),
+  httpNode(GN.docs, {
+    method: "POST", url: HELPER + "/draft", sendBody: true, specifyBody: "json",
+    jsonBody: "={{ JSON.stringify({ kind: ($json.kind === 'feature' ? 'Ảnh tính năng · ' : 'Tương tác · ') + ($json.feature || $json.type), post: $json.post, comment: $json.comment, imageUrl: $json.imageUrl || null, commentLater: $json.type === 'quiz' }) }}",
+    options: { timeout: 120000 },
+  }),
+  codeNode(GN.done, DONE, 0),
+];
+const pos = {
+  [GN.man]: [0, 1.6], [GN.s9]: [0, 3.4], [GN.go]: [1.2, 2.5],
+  [GN.pickF]: [2.5, 1], [GN.shot]: [3.6, 0.3], [GN.trA]: [3.6, 1.7], [GN.mgA]: [4.7, 1], [GN.readP]: [5.8, 1], [GN.wrA]: [6.9, 1],
+  [GN.pickE]: [2.5, 4], [GN.trB]: [2.5, 5.2], [GN.mgB]: [3.6, 4.6], [GN.wrB]: [4.7, 4.6],
+  [GN.qc]: [8.2, 2.8], [GN.docs]: [9.3, 2.8], [GN.done]: [10.4, 2.8],
+};
+groupNodes.push(
+  sticky("s1", "## ① KÍCH HOẠT\n9:00 mỗi ngày hoặc bấm tay. Một lượt chạy = 2 bài chạy SONG SONG", -60, 150, 330, 520, 4),
+  sticky("s3", "## ② NHÁNH A · BÀI ẢNH TÍNH NĂNG\nChọn tính năng → CHỤP ẢNH ‖ SĂN XU HƯỚNG (song song) → gộp → đọc trang → Gemini viết bài + comment", 560, -90, 1620, 440, 5),
+  sticky("s4", "## ③ NHÁNH B · BÀI TƯƠNG TÁC\nChọn dạng bài ‖ săn xu hướng (song song) → gộp → Gemini viết bài + comment", 560, 560, 1020, 360, 6),
+  sticky("s5", "## ④ KIỂM DUYỆT → GOOGLE DOCS → TỔNG KẾT\n6 điều kiện chất lượng, ghi doc, báo cáo từng bước", 2100, 260, 960, 400, 7),
+);
+const edge = (from, to, out = 0, inp = 0) => ({ from, to, out, inp });
+const edges = [
+  edge(GN.man, GN.go), edge(GN.s9, GN.go),
+  edge(GN.go, GN.pickF), edge(GN.go, GN.pickE), edge(GN.go, GN.trB),
+  edge(GN.pickF, GN.shot), edge(GN.pickF, GN.trA),
+  edge(GN.shot, GN.mgA, 0, 0), edge(GN.trA, GN.mgA, 0, 1), edge(GN.mgA, GN.readP), edge(GN.readP, GN.wrA), edge(GN.wrA, GN.qc),
+  edge(GN.pickE, GN.mgB, 0, 0), edge(GN.trB, GN.mgB, 0, 1), edge(GN.mgB, GN.wrB), edge(GN.wrB, GN.qc),
+  edge(GN.qc, GN.docs), edge(GN.docs, GN.done),
+];
+const fbGroupHub = workflow("fbGroupHub0001", "Facebook Group – Trung tâm nội dung (ghi Google Docs)", groupNodes);
+groupNodes.forEach((n) => pos[n.name] && put(n, pos[n.name][0], pos[n.name][1])); // workflow() lays nodes in a row; restore the graph layout
+fbGroupHub.connections = {};
+for (const e of edges) {
+  const c = (fbGroupHub.connections[e.from] ||= { main: [] });
+  (c.main[e.out] ||= []).push({ node: e.to, type: "main", index: e.inp });
+}
 
 // ---------------------------------------------------------------------------
 // Showcase account studies every day (helper/study.js): keeps a real streak and
@@ -534,8 +701,7 @@ for (const [file, wf] of [
   ["facebook-1-image-post.json", fbImagePost],
   ["facebook-2-engagement-post.json", fbEngagePost],
   ["facebook-3-auto-reply.json", fbAutoReply],
-  ["facebook-4-group-feature.json", fbGroupFeature],
-  ["facebook-5-group-engage.json", fbGroupEngage],
+  ["facebook-4-group-hub.json", fbGroupHub],
   ["study-daily.json", dailyStudy],
 ]) {
   writeFileSync(join(OUT, file), JSON.stringify(wf, null, 2) + "\n");

@@ -1,6 +1,6 @@
 # n8n – Threads + Facebook tự động
 
-Chín workflow chạy trên n8n local (http://localhost:5678), giờ theo múi Asia/Ho_Chi_Minh.
+Tám workflow chạy trên n8n local (http://localhost:5678), giờ theo múi Asia/Ho_Chi_Minh.
 
 | Workflow | Lịch | Làm gì |
 |---|---|---|
@@ -10,8 +10,7 @@ Chín workflow chạy trên n8n local (http://localhost:5678), giờ theo múi A
 | Facebook 1 – Bài ảnh tính năng (Page) | tắt | Fanpage đã có người đăng. Bật lại trong n8n nếu cần |
 | Facebook 2 – Bài tương tác (Page) | tắt | Như trên |
 | Facebook 3 – Tự trả lời comment (Page) | Mỗi 15 phút, 7h–24h | Like rồi trả lời comment mới, tối đa 4/lần, 80/ngày; mỗi bài chỉ gửi link web 1 lần |
-| Facebook Group 1 – Bài ảnh tính năng | 9:00 | Chụp tính năng, Gemini viết bài + comment, ghi vào Google Doc (kèm ảnh) để bạn copy và đăng tay |
-| Facebook Group 2 – Bài tương tác | 19:00 | Như trên, bài tương tác (mẹo, quiz, câu hỏi, confession) |
+| Facebook Group – Trung tâm nội dung | 9:00 mỗi ngày (hoặc bấm tay) | Một lượt chạy sinh 2 bài chạy song song: bài ảnh tính năng và bài tương tác, kiểm duyệt rồi ghi thẳng vào Google Doc (kèm ảnh và comment). Mỗi bước ghi nhật ký chi tiết, xem ở node "Tổng kết chạy" |
 | Học mỗi ngày – tài khoản showcase | 18:00 | Tài khoản showcase làm bài thật (full test 3 ngày/lần, ngày khác làm Listening hoặc Reading), để streak và thống kê luôn có dữ liệu mới |
 
 Group Facebook chỉ được soạn bài chứ không tự đăng: Meta đã gỡ Groups API (đăng bài, comment) từ tháng 4/2024, còn bot trình duyệt vi phạm điều khoản và dễ làm tài khoản bị khoá.
@@ -63,3 +62,7 @@ n8n publish:workflow --id=<id>
 ## Google Docs cho bài group
 
 Web app của Apps Script không mở được cho truy cập ẩn danh trên tài khoản này, nên chiều dữ liệu được đảo: helper đẩy mỗi bài nháp lên nhánh `drafts` của repo (`drafts.json`, kho riêng ở `~/.n8n-run/drafts-repo`), còn `gdoc-script.gs` gắn vào doc sẽ tự lấy về mỗi 15 phút và chèn vào doc (kèm ảnh). Dán script vào Extensions → Apps Script, chạy `setup` một lần và cấp quyền. Bài nháp cũng nằm ở `~/.n8n-run/drafts.md`.
+
+## Tốc độ
+
+`thinkingBudget: 0` cho Gemini (2–3 giây mỗi lần gọi thay vì 5–15), giới hạn 30 giây mỗi lần gọi và tự thử lại khi gặp 429/5xx/timeout. Google Search của Gemini (săn xu hướng) mặc định tắt (`GEMINI_SEARCH=off`) vì gói miễn phí báo 429; đặt `GEMINI_SEARCH=on` trong `.env` nếu nâng cấp gói.
