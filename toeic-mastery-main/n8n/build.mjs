@@ -178,7 +178,7 @@ const v = { topic: pick(TOPICS), lesson: pick(LESSONS), n: String(rand(1, 4)) };
 const path = fill(f.path, v);
 const shot = await http({ url: (E.HELPER_URL || 'http://127.0.0.1:5690') + '/shot', qs: f.click ? { path, click: f.click } : { path }, timeout: 150000 });
 if (!shot.url) throw new Error('Helper không chụp được ảnh: ' + JSON.stringify(shot));
-return [{ json: { feature: fill(f.name, v), path, text: shot.text || '', imageUrl: shot.url, link: /^\/vocabulary/.test(path) ? SITE + '/tu-vung' : /^\/(practice|listening|history|reading)/.test(path) ? SITE + '/practice' : SITE } }];
+return [{ json: { feature: fill(f.name, v), path, text: shot.text || '', imageUrl: shot.url, link: SITE + path } }];
 `;
 
 const featureWrite = (platform) => String.raw`
@@ -216,12 +216,24 @@ const TYPES = {
 };
 const type = pick(Object.keys(TYPES).filter((k) => k !== store.lastType));
 store.lastType = type;
-// Only feature pages that drop the reader into practising — never blog or guide articles.
+// Every product page except blog/guide articles. Logged-out visitors land on the sign-up popup.
 const LINKS = [
-  SITE + '/thi-thu-mien-phi : làm thử 10 câu Part 5 miễn phí, có giải thích từng câu (hợp quiz, ngữ pháp, từ loại)',
-  SITE + '/practice/start : vào thẳng bài thi thử TOEIC đầy đủ như thi thật (hợp áp lực thời gian, Part 7, Listening, muốn biết trình độ)',
+  SITE + '/dashboard : tổng quan học tập, streak, mục tiêu điểm (hợp động lực, theo dõi tiến bộ)',
+  SITE + '/mentor/path : lộ trình học cá nhân hoá theo ngày theo mục tiêu điểm và ngày thi (hợp không biết học gì trước, thiếu kế hoạch)',
+  SITE + '/mentor : AI Mentor hỏi đáp và gợi ý học (hợp thắc mắc cách học, cần người chỉ đường)',
+  SITE + '/analytics : thống kê điểm yếu theo từng Part và dạng câu (hợp sai hoài mà không biết sai ở đâu)',
+  SITE + '/practice/start : vào thẳng bài thi thử TOEIC đầy đủ như thi thật (hợp muốn biết trình độ, áp lực thời gian)',
   SITE + '/practice : kho đề thi thử ETS, luyện từng Part, xem lại câu sai (hợp luyện đề, sai hoài một dạng câu)',
-  SITE + '/tu-vung : học từ vựng TOEIC theo chủ đề, có game (hợp từ vựng, từ dễ nhầm, quên từ nhanh)',
+  SITE + '/thi-thu-mien-phi : làm thử 10 câu Part 5 miễn phí có giải thích (hợp quiz, ngữ pháp, từ loại)',
+  SITE + '/grammar/mastery : khoá ngữ pháp Part 5-6 có bài học và bài tập (hợp mất gốc ngữ pháp, từ loại)',
+  SITE + '/listening : luyện nghe từng Part 1-4 có transcript (hợp sợ Listening, nghe không kịp)',
+  SITE + '/reading : luyện đọc Part 5-6-7 (hợp Part 7 chậm, đọc không kịp giờ)',
+  SITE + '/vocabulary : từ vựng TOEIC theo lộ trình, ôn lặp lại ngắt quãng (hợp quên từ nhanh)',
+  SITE + '/vocabulary/topics : từ vựng theo chủ đề công sở/du lịch/tài chính, có game (hợp học từ chán, muốn chơi mà học)',
+  SITE + '/tu-vung : danh sách từ vựng TOEIC theo chủ đề xem không cần đăng nhập (hợp từ dễ nhầm)',
+  SITE + '/dictionary : từ điển tra nhanh nghĩa và cách dùng (hợp gặp từ lạ)',
+  SITE + '/quick-study : học nhanh vài phút mỗi ngày (hợp bận, lười, ít thời gian)',
+  SITE + '/shop : đổi XP kiếm được khi học lấy vật phẩm (hợp động lực, game hoá việc học)',
   SITE + ' : trang chủ (chỉ dùng khi không trang nào hợp hơn)',
 ];
 `;
@@ -241,7 +253,7 @@ const out = await gemini(
     trends ? 'Xu hướng/đối thủ đang làm (chỉ lấy cảm hứng, không chép):\n' + trends : '',
     mine ? 'Các bài cũ của trang (giữ giọng tương tự nhưng KHÔNG lặp ý):\n' + mine : '',
     type === 'quiz' ? 'Với quiz: comment = đáp án đúng + giải thích 1 câu vì sao, rồi khéo dẫn sang web luyện thêm dạng câu này (link ở cuối); vẫn không mở đầu bằng "Link đây".' : COMMENT_RULE,
-    'Các trang LUYỆN TẬP trên web để dẫn vào (CHỌN 1 trang hợp chủ đề bài nhất, chèn đúng URL đó; TUYỆT ĐỐI không dẫn vào bài viết/blog/hướng dẫn):\n' + LINKS.join('\n'),
+    'Các trang trên web để dẫn vào (CHỌN 1 trang hợp chủ đề bài nhất, chèn đúng URL đó; TUYỆT ĐỐI không dẫn vào blog/bài viết/hướng dẫn):\n' + LINKS.join('\n'),
     'Trả về JSON: {"post": "...", "comment": "comment đầu tiên theo quy tắc trên, link ở cuối"}',
   ].join('\n\n'),
   { json: true }
