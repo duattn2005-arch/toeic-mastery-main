@@ -4,14 +4,14 @@ Tám workflow chạy trên n8n local (http://localhost:5678), giờ theo múi As
 
 | Workflow | Lịch | Làm gì |
 |---|---|---|
-| Threads 1 – Bài ảnh tính năng web | 8:30 & 19:30 (+0–40 phút) | Chọn một tính năng (dashboard, thống kê điểm yếu, lộ trình AI Mentor, game từ vựng, ngữ pháp, luyện nghe, lịch sử thi…), chụp màn hình bằng tài khoản showcase, Gemini viết bài khoe tính năng, 2–7 phút sau comment link |
-| Threads 2 – Bài tương tác | 12:15 & 21:45 (+0–40 phút) | Xoay vòng: mẹo, quiz Part 5, câu hỏi mở, từ dễ nhầm, confession. Quiz: đáp án + link comment sau 1–3 giờ |
+| Threads 1 – Bài ảnh tính năng web | 8:30 & 19:30 | Chọn một tính năng (dashboard, thống kê điểm yếu, lộ trình AI Mentor, game từ vựng, ngữ pháp, luyện nghe, lịch sử thi…), chụp màn hình bằng tài khoản showcase, Gemini viết bài khoe tính năng, ~10 giây sau comment link |
+| Threads 2 – Bài tương tác | 12:15 & 21:45 | Xoay vòng: mẹo, quiz Part 5, câu hỏi mở, từ dễ nhầm, confession. Comment đáp án + link ngay sau bài |
 | Threads 3 – Tự trả lời comment | Mỗi 20 phút, 7h–24h | Tối đa 3/lần, 60/ngày, giãn 15–45 giây; bỏ qua comment chủ trang đã tự trả lời; link khi được hỏi hoặc ~30% số lần |
 | Facebook 1 – Bài ảnh tính năng (Page) | tắt | Fanpage đã có người đăng. Bật lại trong n8n nếu cần |
 | Facebook 2 – Bài tương tác (Page) | tắt | Như trên |
 | Facebook 3 – Tự trả lời comment (Page) | Mỗi 15 phút, 7h–24h | Like rồi trả lời comment mới, tối đa 4/lần, 80/ngày |
 | Facebook Group – Soạn bài để đăng | 9:00 (ảnh tính năng) & 19:00 (tương tác) | Soạn sẵn bài kèm ảnh và comment cho group TOEIC Mastery. Mở http://localhost:5678/webhook/group-drafts, bấm copy rồi đăng (Meta không có API đăng vào group) |
-| Học mỗi ngày – tài khoản showcase | 18:00 (+0–90 phút) | Tài khoản showcase làm bài thật (full test 3 ngày/lần, ngày khác làm Listening hoặc Reading), để streak và thống kê luôn có dữ liệu mới |
+| Học mỗi ngày – tài khoản showcase | 18:00 | Tài khoản showcase làm bài thật (full test 3 ngày/lần, ngày khác làm Listening hoặc Reading), để streak và thống kê luôn có dữ liệu mới |
 
 Group Facebook chỉ được soạn bài chứ không tự đăng: Meta đã gỡ Groups API (đăng bài, comment) từ tháng 4/2024, còn bot trình duyệt vi phạm điều khoản và dễ làm tài khoản bị khoá.
 

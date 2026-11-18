@@ -4,7 +4,7 @@
   "active": false,
   "nodes": [
     {
-      "id": "n44-L-ch-18-00",
+      "id": "n32-L-ch-18-00",
       "name": "Lịch 18:00",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -24,41 +24,12 @@
       }
     },
     {
-      "id": "n45-L-ch-gi-ng-u-nhi-n",
-      "name": "Lệch giờ ngẫu nhiên",
-      "type": "n8n-nodes-base.code",
-      "typeVersion": 2,
-      "position": [
-        220,
-        300
-      ],
-      "parameters": {
-        "mode": "runOnceForAllItems",
-        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\n// Waits between steps: a few seconds when run by hand (test), human-like when scheduled.\nconst delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1 } };\n  if (search) body.tools = [{ google_search: {} }];\n  else if (json) body.generationConfig.responseMimeType = 'application/json';\n  const r = await http({\n    method: 'POST',\n    url: 'https://generativelanguage.googleapis.com/v1beta/models/' + (E.GEMINI_MODEL || 'gemini-3.1-flash-lite') + ':generateContent',\n    qs: { key: E.GEMINI_API_KEY },\n    body,\n  });\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\n// Facebook Graph API with the Page token (FB_PAGE_TOKEN).\nasync function fbApi(method, path, params = {}) {\n  return http({ method, url: 'https://graph.facebook.com/v23.0' + path, qs: { ...params, access_token: E.FB_PAGE_TOKEN } });\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nreturn [{ json: { waitSec: delay(0, 90 * 60) } }];\n"
-      }
-    },
-    {
-      "id": "n46-Ch-",
-      "name": "Chờ",
-      "type": "n8n-nodes-base.wait",
-      "typeVersion": 1.1,
-      "position": [
-        440,
-        300
-      ],
-      "parameters": {
-        "resume": "timeInterval",
-        "amount": "={{ $json.waitSec }}",
-        "unit": "seconds"
-      }
-    },
-    {
-      "id": "n47-L-m-b-i",
+      "id": "n33-L-m-b-i",
       "name": "Làm bài",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        660,
+        220,
         300
       ],
       "parameters": {
@@ -69,28 +40,6 @@
   ],
   "connections": {
     "Lịch 18:00": {
-      "main": [
-        [
-          {
-            "node": "Lệch giờ ngẫu nhiên",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Lệch giờ ngẫu nhiên": {
-      "main": [
-        [
-          {
-            "node": "Chờ",
-            "type": "main",
-            "index": 0
-          }
-        ]
-      ]
-    },
-    "Chờ": {
       "main": [
         [
           {

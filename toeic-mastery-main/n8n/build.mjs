@@ -103,14 +103,13 @@ const schedule = (name, crons, x = 0) =>
     rule: { interval: [].concat(crons).map((expression) => ({ field: "cronExpression", expression })) },
   }, x);
 const codeNode = (name, body, x) => node(name, "n8n-nodes-base.code", 2, { mode: "runOnceForAllItems", jsCode: code(body) }, x);
-const wait = (name, x) =>
-  node(name, "n8n-nodes-base.wait", 1.1, { resume: "timeInterval", amount: "={{ $json.waitSec }}", unit: "seconds" }, x);
 
 function workflow(id, name, nodes) {
   const connections = {};
   for (let i = 0; i < nodes.length - 1; i++) {
     connections[nodes[i].name] = { main: [[{ node: nodes[i + 1].name, type: "main", index: 0 }]] };
   }
+  nodes.forEach((n, i) => (n.position = [220 * i, 300]));
   return {
     id,
     name,
@@ -122,8 +121,6 @@ function workflow(id, name, nodes) {
   };
 }
 
-// Random start offset so posts never land on the exact same minute every day.
-const JITTER = `return [{ json: { waitSec: delay(0, 40 * 60) } }];`;
 
 const PLATFORM = {
   threads: { who: "trang Threads @toeicmasteryy", len: "Bài dài 200-420 ký tự.", comment: "câu comment ngắn kiểu người thật" },
@@ -233,9 +230,7 @@ const out = await gemini(
   { json: true }
 );
 if (!out.post || !out.comment || !out.comment.includes(SITE.replace(/^https?:\/\//, ''))) throw new Error('Gemini trả sai định dạng: ' + JSON.stringify(out));
-// Quiz: answer comes 1-3h later so people have time to guess; others: a few minutes.
-const waitSec = type === 'quiz' ? delay(60 * 60, 180 * 60) : delay(180, 600);
-return [{ json: { type, post: out.post, comment: out.comment, waitSec } }];
+return [{ json: { type, post: out.post, comment: out.comment } }];
 `;
 
 // Reply rules shared by Threads and Facebook auto-replies.
@@ -262,8 +257,6 @@ store.linked = store.linked || [];
 // Threads 1. Feature screenshot post, link in the first comment.
 const imagePost = workflow("thrImagePost01", "Threads 1 – Bài ảnh tính năng web", [
   schedule("Lịch 8:30 & 19:30", "30 8,19 * * *"),
-  codeNode("Lệch giờ ngẫu nhiên", JITTER, 220),
-  wait("Chờ", 440),
   codeNode("Chọn tính năng & chụp ảnh", FEATURE_SHOT, 660),
   codeNode("Viết bài (Gemini)", featureWrite("threads"), 880),
   codeNode(
@@ -272,15 +265,15 @@ const imagePost = workflow("thrImagePost01", "Threads 1 – Bài ảnh tính nă
 const p = $input.first().json;
 const postId = await threadsPost({ text: p.post, imageUrl: p.imageUrl });
 // Link comment goes up a few minutes later, like a person replying to themselves.
-return [{ json: { ...p, postId, waitSec: delay(120, 420) } }];
+return [{ json: { ...p, postId } }];
 `,
     1100
   ),
-  wait("Chờ rồi comment", 1320),
   codeNode(
     "Comment link",
     String.raw`
 const p = $input.first().json;
+await sleep(rand(8, 15) * 1000);
 const replyId = await threadsPost({ text: p.comment, replyTo: p.postId });
 return [{ json: { postId: p.postId, replyId, path: p.path } }];
 `,
@@ -291,8 +284,6 @@ return [{ json: { postId: p.postId, replyId, path: p.path } }];
 // Threads 2. Engagement post: tips / quiz (answer in comment) / question to the audience.
 const engagePost = workflow("thrEngagePost01", "Threads 2 – Bài tương tác (tips, quiz, hỏi đáp)", [
   schedule("Lịch 12:15 & 21:45", ["15 12 * * *", "45 21 * * *"]),
-  codeNode("Lệch giờ ngẫu nhiên", JITTER, 220),
-  wait("Chờ", 440),
   codeNode("Viết bài (Gemini)", engageWrite("threads"), 660),
   codeNode(
     "Đăng lên Threads",
@@ -303,11 +294,11 @@ return [{ json: { ...p, postId } }];
 `,
     880
   ),
-  wait("Chờ rồi comment", 1100),
   codeNode(
     "Comment đáp án / link",
     String.raw`
 const p = $input.first().json;
+await sleep(rand(8, 15) * 1000);
 const replyId = await threadsPost({ text: p.comment, replyTo: p.postId });
 return [{ json: { type: p.type, postId: p.postId, replyId } }];
 `,
@@ -365,8 +356,6 @@ return done.length ? done.map((d) => ({ json: d })) : [{ json: { replied: 0, wai
 // Facebook Page (groups have no posting/commenting API since 2024).
 const fbImagePost = workflow("fbImagePost001", "Facebook 1 – Bài ảnh tính năng web (Page)", [
   schedule("Lịch 10:00", "0 10 * * *"),
-  codeNode("Lệch giờ ngẫu nhiên", JITTER, 220),
-  wait("Chờ", 440),
   codeNode("Chọn tính năng & chụp ảnh", FEATURE_SHOT, 660),
   codeNode("Viết bài (Gemini)", featureWrite("facebook"), 880),
   codeNode(
@@ -374,15 +363,15 @@ const fbImagePost = workflow("fbImagePost001", "Facebook 1 – Bài ảnh tính 
     String.raw`
 const p = $input.first().json;
 const r = await fbApi('POST', '/' + E.FB_PAGE_ID + '/photos', { url: p.imageUrl, caption: p.post });
-return [{ json: { ...p, postId: r.post_id || r.id, waitSec: delay(60, 300) } }];
+return [{ json: { ...p, postId: r.post_id || r.id } }];
 `,
     1100
   ),
-  wait("Chờ rồi comment", 1320),
   codeNode(
     "Comment link",
     String.raw`
 const p = $input.first().json;
+await sleep(rand(8, 15) * 1000);
 const r = await fbApi('POST', '/' + p.postId + '/comments', { message: p.comment });
 return [{ json: { postId: p.postId, commentId: r.id } }];
 `,
@@ -392,8 +381,6 @@ return [{ json: { postId: p.postId, commentId: r.id } }];
 
 const fbEngagePost = workflow("fbEngagePost01", "Facebook 2 – Bài tương tác (Page)", [
   schedule("Lịch 20:30", "30 20 * * *"),
-  codeNode("Lệch giờ ngẫu nhiên", JITTER, 220),
-  wait("Chờ", 440),
   codeNode("Viết bài (Gemini)", engageWrite("facebook"), 660),
   codeNode(
     "Đăng lên Page",
@@ -404,11 +391,11 @@ return [{ json: { ...p, postId: r.id } }];
 `,
     880
   ),
-  wait("Chờ rồi comment", 1100),
   codeNode(
     "Comment đáp án / link",
     String.raw`
 const p = $input.first().json;
+await sleep(rand(8, 15) * 1000);
 const r = await fbApi('POST', '/' + p.postId + '/comments', { message: p.comment });
 return [{ json: { type: p.type, postId: p.postId, commentId: r.id } }];
 `,
@@ -501,13 +488,13 @@ const groupNodes = [
     options: { responseHeaders: { entries: [{ name: "Content-Type", value: "text/html; charset=utf-8" }] } },
   }, 440),
 ];
+const fbGroupDrafts = workflow("fbGroupDraft01", "Facebook Group – Soạn bài để đăng", groupNodes);
 groupNodes[3].position = [0, 520];
 groupNodes[4].position = [440, 520];
 groupNodes[6].position = [0, 760];
 groupNodes[7].position = [220, 760];
 groupNodes[8].position = [440, 760];
 groupNodes[6].webhookId = "group-drafts-0001";
-const fbGroupDrafts = workflow("fbGroupDraft01", "Facebook Group – Soạn bài để đăng", groupNodes);
 const link = (a, b) => ({ main: [[{ node: b, type: "main", index: 0 }]] });
 fbGroupDrafts.connections = {
   "Lịch 9:00 (ảnh tính năng)": link(0, "Chọn tính năng & chụp ảnh"),
@@ -524,8 +511,6 @@ fbGroupDrafts.connections = {
 // fresh stats for the feature screenshots.
 const dailyStudy = workflow("studyDaily0001", "Học mỗi ngày – tài khoản showcase", [
   schedule("Lịch 18:00", "0 18 * * *"),
-  codeNode("Lệch giờ ngẫu nhiên", `return [{ json: { waitSec: delay(0, 90 * 60) } }];`, 220),
-  wait("Chờ", 440),
   codeNode(
     "Làm bài",
     String.raw`

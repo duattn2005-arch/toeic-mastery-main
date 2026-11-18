@@ -4,7 +4,7 @@
   "active": false,
   "nodes": [
     {
-      "id": "n33-M-i-15-ph-t",
+      "id": "n21-M-i-15-ph-t",
       "name": "Mỗi 15 phút",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -24,7 +24,7 @@
       }
     },
     {
-      "id": "n34-Tr-l-i-comment",
+      "id": "n22-Tr-l-i-comment",
       "name": "Trả lời comment",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
