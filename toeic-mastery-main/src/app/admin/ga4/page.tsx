@@ -3,7 +3,7 @@ import { requireSuperAdmin } from "@/lib/auth";
 import { GA_LINKED_MEASUREMENT_ID, GA_MEASUREMENT_ID } from "@/lib/ga-config";
 import { getGaTargets } from "@/lib/services/ga-secrets";
 import { previewGa4Backfill } from "@/lib/services/ga4-backfill";
-import { GaBackfillButton, GaSecretsForm } from "@/components/admin/ga4-settings-forms";
+import { GaAllowResendButton, GaBackfillButton, GaSecretsForm } from "@/components/admin/ga4-settings-forms";
 
 export const metadata: Metadata = { title: "GA4" };
 
@@ -77,9 +77,12 @@ export default async function AdminGa4Page() {
           </span>
         </div>
         {preview.doneAt ? (
-          <p className="rounded-xl bg-success/10 px-3 py-2 text-sm font-medium text-success">
-            Đã gửi bù lúc {new Date(preview.doneAt).toLocaleString("vi-VN")} — không gửi lại để tránh tính trùng.
-          </p>
+          <div className="flex flex-col gap-2">
+            <p className="rounded-xl bg-success/10 px-3 py-2 text-sm font-medium text-success">
+              Đã gửi bù lúc {new Date(preview.doneAt).toLocaleString("vi-VN")} — không gửi lại để tránh tính trùng.
+            </p>
+            <GaAllowResendButton />
+          </div>
         ) : targets.length === 0 ? (
           <p className="rounded-xl bg-warning/10 px-3 py-2 text-sm font-medium text-warning">Lưu khoá ở bước 1 trước rồi mới gửi được.</p>
         ) : null}
