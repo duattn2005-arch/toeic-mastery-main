@@ -21,9 +21,14 @@ Group Facebook chỉ được soạn bài chứ không tự đăng: Meta đã g�
 
 ## Chạy
 
+n8n (cổng 5678) và helper (cổng 5690) chạy dưới dạng LaunchAgent của macOS (`launchd/`, cài vào `~/Library/LaunchAgents/`). Cả hai tự bật khi đăng nhập vào máy và tự chạy lại nếu bị crash. `run.sh` là script khởi chạy của chúng.
+
 ```sh
-~/.n8n-run/start.sh   # bật helper (cổng 5690) + n8n (cổng 5678)
+~/.n8n-run/start.sh   # khởi động lại cả hai (vd sau khi sửa .env)
+launchctl bootout gui/$(id -u)/com.toeicmastery.n8n   # tắt hẳn (tương tự với .helper)
 ```
+
+Khi máy ngủ, các lịch bị bỏ lỡ sẽ không chạy bù.
 
 `~/.n8n-run/.env` (không có trong git):
 

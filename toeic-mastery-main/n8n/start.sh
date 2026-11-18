@@ -1,9 +1,8 @@
 #!/bin/zsh
-# Starts the screenshot helper + n8n with the API keys from .env (kept out of git).
-cd ~/.n8n-run
-set -a; . ./.env; set +a
-export N8N_PORT=5678 N8N_BLOCK_ENV_ACCESS_IN_NODE=false GENERIC_TIMEZONE=Asia/Ho_Chi_Minh TZ=Asia/Ho_Chi_Minh
-pkill -f "helper/server.js" 2>/dev/null; for port in 5678 5690; do lsof -ti tcp:$port -sTCP:LISTEN | xargs kill 2>/dev/null; done; sleep 3; for port in 5678 5690; do lsof -ti tcp:$port -sTCP:LISTEN | xargs kill -9 2>/dev/null; done
-nohup node helper/server.js > helper/helper.log 2>&1 &
-nohup npx -y n8n > n8n.log 2>&1 &
+# n8n + helper run as LaunchAgents (start at login, restart on crash).
+# This restarts both, e.g. after editing ~/.n8n-run/.env.
+for svc in n8n helper; do
+  launchctl kickstart -k gui/$(id -u)/com.toeicmastery.$svc 2>/dev/null ||
+    launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.toeicmastery.$svc.plist
+done
 echo "n8n: http://localhost:5678  (log ~/.n8n-run/n8n.log)"
