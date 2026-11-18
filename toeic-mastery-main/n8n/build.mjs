@@ -85,6 +85,13 @@ const VOICE = [
   'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',
 ].join('\n');
 
+const COMMENT_RULE = [
+  'Comment đầu tiên (do chính chủ bài viết) phải NỐI TIẾP mạch câu chuyện của bài, như đang kể tiếp chứ không phải quảng cáo:',
+  '1) 1-2 câu nối đúng vấn đề đã nêu trong bài (cách t/mình xử lý, mẹo nhỏ có ích thật, hoặc thừa nhận thêm một chi tiết đời thường) — người đọc phải thấy có giá trị ngay cả khi không bấm link.',
+  '2) Rồi mới khéo dẫn sang web theo kiểu bạn bè giới thiệu: nói rõ trên web có đúng thứ giải quyết vấn đề đó (tên tính năng/phần cụ thể), link đặt CUỐI comment.',
+  'Cấm mở đầu bằng "Link đây", "Đây nè", "Vào đây"; cấm câu kêu gọi chung chung như "truy cập ngay"; không lặp lại nguyên văn bài; tối đa 3 câu, tối đa 1 emoji.',
+].join('\n');
+
 const VIRAL = [
   'Các mẫu bài TOEIC hay viral trên Threads: "ae nào ... thì vô đây", confession mất gốc lên 700+, list 3-5 mẹo ngắn, "sai lầm mà 90% người mới mắc",',
   'câu hỏi Part 5 thử thách "ai làm đúng câu này trong 10s", so sánh 2 từ dễ nhầm, hỏi ngược người đọc "bạn kẹt part nào nhất".',
@@ -171,7 +178,7 @@ const v = { topic: pick(TOPICS), lesson: pick(LESSONS), n: String(rand(1, 4)) };
 const path = fill(f.path, v);
 const shot = await http({ url: (E.HELPER_URL || 'http://127.0.0.1:5690') + '/shot', qs: f.click ? { path, click: f.click } : { path }, timeout: 150000 });
 if (!shot.url) throw new Error('Helper không chụp được ảnh: ' + JSON.stringify(shot));
-return [{ json: { feature: fill(f.name, v), path, text: shot.text || '', imageUrl: shot.url, link: SITE } }];
+return [{ json: { feature: fill(f.name, v), path, text: shot.text || '', imageUrl: shot.url, link: /^\/vocabulary/.test(path) ? SITE + '/tu-vung' : /^\/(practice|listening|history|reading)/.test(path) ? SITE + '/practice' : SITE } }];
 `;
 
 const featureWrite = (platform) => String.raw`
@@ -190,7 +197,8 @@ const out = await gemini(
     VIRAL,
     trends ? 'Xu hướng/đối thủ đang làm (chỉ lấy cảm hứng):\n' + trends : '',
     mine ? 'Các bài cũ của trang (giữ giọng tương tự nhưng KHÔNG lặp hook/ý):\n' + mine : '',
-    'Trả về JSON: {"post": "...", "comment": "' + P.comment + ' dẫn link, có chèn đúng link ' + p.link + '"}',
+    COMMENT_RULE,
+    'Trả về JSON: {"post": "...", "comment": "comment đầu tiên theo quy tắc trên, có chèn đúng link ' + p.link + ' ở cuối"}',
   ].join('\n\n'),
   { json: true }
 );
@@ -208,7 +216,14 @@ const TYPES = {
 };
 const type = pick(Object.keys(TYPES).filter((k) => k !== store.lastType));
 store.lastType = type;
-const link = pick([SITE + '/thi-thu-mien-phi', SITE + '/practice', SITE + '/tu-vung', SITE + '/huong-dan', SITE]);
+// Only feature pages that drop the reader into practising — never blog or guide articles.
+const LINKS = [
+  SITE + '/thi-thu-mien-phi : làm thử 10 câu Part 5 miễn phí, có giải thích từng câu (hợp quiz, ngữ pháp, từ loại)',
+  SITE + '/practice/start : vào thẳng bài thi thử TOEIC đầy đủ như thi thật (hợp áp lực thời gian, Part 7, Listening, muốn biết trình độ)',
+  SITE + '/practice : kho đề thi thử ETS, luyện từng Part, xem lại câu sai (hợp luyện đề, sai hoài một dạng câu)',
+  SITE + '/tu-vung : học từ vựng TOEIC theo chủ đề, có game (hợp từ vựng, từ dễ nhầm, quên từ nhanh)',
+  SITE + ' : trang chủ (chỉ dùng khi không trang nào hợp hơn)',
+];
 `;
 
 const engageWrite = (platform) => String.raw`
@@ -225,7 +240,9 @@ const out = await gemini(
     VIRAL,
     trends ? 'Xu hướng/đối thủ đang làm (chỉ lấy cảm hứng, không chép):\n' + trends : '',
     mine ? 'Các bài cũ của trang (giữ giọng tương tự nhưng KHÔNG lặp ý):\n' + mine : '',
-    'Trả về JSON: {"post": "...", "comment": "' + P.comment + ', có chèn đúng link ' + link + '"}',
+    type === 'quiz' ? 'Với quiz: comment = đáp án đúng + giải thích 1 câu vì sao, rồi khéo dẫn sang web luyện thêm dạng câu này (link ở cuối); vẫn không mở đầu bằng "Link đây".' : COMMENT_RULE,
+    'Các trang LUYỆN TẬP trên web để dẫn vào (CHỌN 1 trang hợp chủ đề bài nhất, chèn đúng URL đó; TUYỆT ĐỐI không dẫn vào bài viết/blog/hướng dẫn):\n' + LINKS.join('\n'),
+    'Trả về JSON: {"post": "...", "comment": "comment đầu tiên theo quy tắc trên, link ở cuối"}',
   ].join('\n\n'),
   { json: true }
 );
