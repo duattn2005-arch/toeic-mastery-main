@@ -216,9 +216,14 @@ async function main() {
     }
     result.push(await post("submit", {}));
     log("sync/submit", result.map((r) => r.status).join(","), result[result.length - 1].body.slice(0, 120));
-    await page.goto(SITE + "/history/" + data.attemptId, { waitUntil: "networkidle" });
-    const summary = (await page.locator("main").innerText()).replace(/\s+/g, " ").slice(0, 400);
-    log("kết quả:", summary);
+    // Submit already succeeded; reading the result page back is best-effort.
+    try {
+      await page.goto(SITE + "/history/" + data.attemptId, { waitUntil: "domcontentloaded", timeout: 60000 });
+      await page.waitForTimeout(3000);
+      log("kết quả:", (await page.locator("main").innerText()).replace(/\s+/g, " ").slice(0, 400));
+    } catch (e) {
+      log("không đọc lại được trang kết quả:", e.message.split("\n")[0]);
+    }
     console.log(JSON.stringify({ ok: true, attemptId: data.attemptId, testId, kind, flipped }));
   } finally {
     await ctx.storageState({ path: STATE }).catch(() => {});
