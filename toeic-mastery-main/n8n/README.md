@@ -9,7 +9,7 @@ Chín workflow chạy trên n8n local (http://localhost:5678), giờ theo múi A
 | Threads 3 – Tự trả lời comment | Mỗi 20 phút, 7h–24h | Tối đa 3/lần, 60/ngày, giãn 15–45 giây; bỏ qua comment chủ trang đã tự trả lời; link khi được hỏi hoặc ~30% số lần |
 | Facebook 1 – Bài ảnh tính năng (Page) | tắt | Fanpage đã có người đăng. Bật lại trong n8n nếu cần |
 | Facebook 2 – Bài tương tác (Page) | tắt | Như trên |
-| Facebook 3 – Tự trả lời comment (Page) | Mỗi 15 phút, 7h–24h | Like rồi trả lời comment mới, tối đa 4/lần, 80/ngày |
+| Facebook 3 – Tự trả lời comment (Page) | Mỗi 15 phút, 7h–24h | Like rồi trả lời comment mới, tối đa 4/lần, 80/ngày; mỗi bài chỉ gửi link web 1 lần |
 | Facebook Group 1 – Bài ảnh tính năng | 9:00 | Chụp tính năng, Gemini viết bài + comment, ghi vào Google Doc (kèm ảnh) để bạn copy và đăng tay |
 | Facebook Group 2 – Bài tương tác | 19:00 | Như trên, bài tương tác (mẹo, quiz, câu hỏi, confession) |
 | Học mỗi ngày – tài khoản showcase | 18:00 | Tài khoản showcase làm bài thật (full test 3 ngày/lần, ngày khác làm Listening hoặc Reading), để streak và thống kê luôn có dữ liệu mới |

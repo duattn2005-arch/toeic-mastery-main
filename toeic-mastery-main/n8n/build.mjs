@@ -456,20 +456,25 @@ for (const post of feed.data || []) {
   }
 }
 const done = [];
+store.linkedPosts = store.linkedPosts || [];
 for (const { post, c } of todo.slice(0, MAX_PER_RUN)) {
   const who = c.from?.id || c.id;
-  const withLink = asksLink(c.message) || (!store.linked.includes(who) && Math.random() < LINK_RATE);
-  const reply = await gemini(replyPrompt('Fanpage TOEIC Mastery', post.message, c.from?.name || 'một bạn', c.message, withLink));
+  // The site link goes into at most ONE reply per post; later replies on the same post stay link-free.
+  const alreadyLinked = store.linkedPosts.includes(post.id);
+  const withLink = !alreadyLinked && (asksLink(c.message) || Math.random() < LINK_RATE);
+  let prompt = replyPrompt('Fanpage TOEIC Mastery', post.message, c.from?.name || 'một bạn', c.message, withLink);
+  if (alreadyLinked && asksLink(c.message)) prompt += '\nNgười này hỏi link: nói link web mình đã để ở comment phía trên rồi, bảo họ xem ở đó (không dán lại link).';
+  const reply = await gemini(prompt);
   await sleep(rand(15, 45) * 1000);
   await fbApi('POST', '/' + c.id + '/likes', {}).catch(() => {});
   const r = await fbApi('POST', '/' + c.id + '/comments', { message: reply.replace(/^"|"$/g, '') });
   store.replied.push(c.id);
-  if (withLink) store.linked.push(who);
+  if (withLink) store.linkedPosts.push(post.id);
   store.countToday++;
-  done.push({ comment: c.message, reply, id: r.id });
+  done.push({ comment: c.message, reply, id: r.id, linked: withLink });
 }
 store.replied = store.replied.slice(-2000);
-store.linked = store.linked.slice(-2000);
+store.linkedPosts = store.linkedPosts.slice(-500);
 return done.length ? done.map((d) => ({ json: d })) : [{ json: { replied: 0, waiting: todo.length } }];
 `,
     220
