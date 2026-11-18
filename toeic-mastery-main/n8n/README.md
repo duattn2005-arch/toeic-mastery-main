@@ -1,22 +1,30 @@
-# n8n – Threads tự động
+# n8n – Threads + Facebook tự động
 
-Ba workflow cho tài khoản Threads @toeicmasteryy, chạy trên n8n local (http://localhost:5678).
+Bảy workflow chạy trên n8n local (http://localhost:5678), giờ theo múi Asia/Ho_Chi_Minh.
 
 | Workflow | Lịch | Làm gì |
 |---|---|---|
-| Threads 1 – Bài ảnh từ website | 8:30 & 19:30 (+0–40 phút ngẫu nhiên) | Chọn 1 trang trên sitemap (blog / từ vựng / hướng dẫn / thi thử), chụp màn hình, Gemini viết bài theo nội dung trang, đăng kèm ảnh, 2–7 phút sau tự comment link trang đó |
-| Threads 2 – Bài tương tác | 12:15 & 21:45 (+0–40 phút) | Xoay vòng: mẹo, quiz Part 5, câu hỏi mở, từ dễ nhầm, confession. Quiz: đáp án + link comment sau 1–3 giờ; loại khác: link comment sau 3–10 phút |
-| Threads 3 – Tự trả lời comment | Mỗi 20 phút, 7h–24h | Trả lời comment mới (≤ 2 ngày) trên bài 4 ngày gần nhất, tối đa 3/lần, 60/ngày, giãn 15–45 giây; bỏ qua comment chủ trang đã tự trả lời; chèn link khi người ta hỏi hoặc ~30% số lần (mỗi người tối đa 1 lần) |
+| Threads 1 – Bài ảnh tính năng web | 8:30 & 19:30 (+0–40 phút) | Chọn một tính năng (dashboard, thống kê điểm yếu, lộ trình AI Mentor, game từ vựng, ngữ pháp, luyện nghe, lịch sử thi…), chụp màn hình bằng tài khoản showcase, Gemini viết bài khoe tính năng, 2–7 phút sau comment link |
+| Threads 2 – Bài tương tác | 12:15 & 21:45 (+0–40 phút) | Xoay vòng: mẹo, quiz Part 5, câu hỏi mở, từ dễ nhầm, confession. Quiz: đáp án + link comment sau 1–3 giờ |
+| Threads 3 – Tự trả lời comment | Mỗi 20 phút, 7h–24h | Tối đa 3/lần, 60/ngày, giãn 15–45 giây; bỏ qua comment chủ trang đã tự trả lời; link khi được hỏi hoặc ~30% số lần |
+| Facebook 1 – Bài ảnh tính năng (Page) | 10:00 (+0–40 phút) | Như Threads 1, bài dài hơn, đăng ảnh lên Page TOEIC Mastery |
+| Facebook 2 – Bài tương tác (Page) | 20:30 (+0–40 phút) | Như Threads 2 |
+| Facebook 3 – Tự trả lời comment (Page) | Mỗi 15 phút, 7h–24h | Like rồi trả lời comment mới, tối đa 4/lần, 80/ngày |
+| Học mỗi ngày – tài khoản showcase | 18:00 (+0–90 phút) | Tài khoản showcase làm bài thật (full test 3 ngày/lần, ngày khác làm Listening hoặc Reading), để streak và thống kê luôn có dữ liệu mới |
 
-Chống spam: khoảng 4 bài/ngày (giới hạn của Threads là 250), giờ đăng lệch ngẫu nhiên, không có link trong thân bài, trang đã đăng thì không chọn lại cho tới khi hết vòng.
+Group Facebook không có trong danh sách: Meta đã gỡ API đăng bài và comment vào group từ năm 2024, và tự động hoá bằng trình duyệt sẽ làm tài khoản bị khoá.
+
+## Tài khoản showcase
+
+`threads-showcase@toeicmastery.click` ("Minh Anh"), mật khẩu nằm trong `.env`. `helper/study.js` cho tài khoản này làm bài thật: Gemini đọc đề và nghe audio, sau đó một phần đáp án được cố ý đổi để điểm quanh mức 830 (yếu hơn ở Part 3 và Part 7). Đáp án được gửi rải theo thời gian như người thật làm bài. Tài khoản free chỉ được 1 full test và 3 mini test mỗi ngày. Muốn chụp được Thống kê và Quick Study thì cần nâng tài khoản lên Pro trong admin.
 
 ## Chạy
 
 ```sh
-~/.n8n-run/start.sh   # bật helper chụp ảnh (cổng 5690) + n8n (cổng 5678)
+~/.n8n-run/start.sh   # bật helper (cổng 5690) + n8n (cổng 5678)
 ```
 
-Key nằm ở `~/.n8n-run/.env`, không có trong git:
+`~/.n8n-run/.env` (không có trong git):
 
 ```
 THREADS_TOKEN=...
@@ -24,17 +32,23 @@ GEMINI_API_KEY=...
 GEMINI_MODEL=gemini-3.1-flash-lite
 SITE_URL=https://toeicmastery.click
 HELPER_URL=http://127.0.0.1:5690
+SITE_EMAIL=threads-showcase@toeicmastery.click
+SITE_PASSWORD=...
+FB_PAGE_ID=1385731167947995
+FB_PAGE_TOKEN=...
 ```
 
-`helper/server.js` dùng Playwright chụp trang ở khung 1080×1350. Trước khi tải trang, nó đặt sẵn cờ "đã đóng" cho popup đăng nhập và thông báo cookie, rồi upload ảnh lên catbox.moe, vì Threads chỉ nhận `image_url` công khai. Lần đầu cài: `cd ~/.n8n-run/helper && npm i playwright && npx playwright install chromium`.
+Các file trong `helper/` được copy sang `~/.n8n-run/helper/`, và chạy `npm i playwright && npx playwright install chromium` ở đó:
+
+- `server.js`: `GET /shot?path=…` đăng nhập bằng tài khoản showcase, đánh dấu mọi popup và tour là đã xem, chụp ảnh 1080×1350, upload lên catbox.moe (Threads và Facebook cần URL ảnh công khai), trả về `{url, text}`. `POST /study?kind=full|listening|reading` chạy `study.js` ở nền.
+- `study.js`: buổi học như mô tả ở trên.
+- `register.js`: tạo tài khoản showcase. Chỉ chạy một lần.
 
 ## Sửa workflow
 
 Sửa `build.mjs`, chạy `node n8n/build.mjs`, rồi import lại:
 
 ```sh
-n8n import:workflow --input=n8n/workflows/threads-1-image-post.json
-n8n publish:workflow --id=thrImagePost01
+n8n import:workflow --input=n8n/workflows/<file>.json
+n8n publish:workflow --id=<id>
 ```
-
-Nghiên cứu đối thủ dùng Gemini kèm Google Search. Gói Gemini miễn phí hiện bị lỗi 429 cho tính năng search, nên bước này tự bỏ qua và chỉ viết theo các mẫu viral cài sẵn cùng giọng văn của các bài cũ.

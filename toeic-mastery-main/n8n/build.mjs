@@ -52,6 +52,11 @@ async function threadsPost({ text, imageUrl, replyTo }) {
   return p.id;
 }
 
+// Facebook Graph API with the Page token (FB_PAGE_TOKEN).
+async function fbApi(method, path, params = {}) {
+  return http({ method, url: 'https://graph.facebook.com/v23.0' + path, qs: { ...params, access_token: E.FB_PAGE_TOKEN } });
+}
+
 async function myRecentPosts(limit = 15) {
   const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });
   return (r.data || []).filter((p) => p.text);
@@ -118,67 +123,142 @@ function workflow(id, name, nodes) {
 // Random start offset so posts never land on the exact same minute every day.
 const JITTER = `return [{ json: { waitSec: rand(0, 40 * 60) } }];`;
 
-// ---------------------------------------------------------------------------
-// 1. Image post: screenshot a real page of the site, write a post about it,
-//    link to that page in the first comment.
-const imagePost = workflow("thrImagePost01", "Threads 1 – Bài ảnh từ website", [
-  schedule("Lịch 8:30 & 19:30", "30 8,19 * * *"),
-  codeNode("Lệch giờ ngẫu nhiên", JITTER, 220),
-  wait("Chờ", 440),
-  codeNode(
-    "Chọn trang & chụp ảnh",
-    String.raw`
-// Pages worth showing: free test, vocab lists, guides, blog posts (from the sitemap).
-const xml = await http({ url: SITE + '/sitemap.xml', json: false, headers: { 'User-Agent': 'Mozilla/5.0' } });
-const urls = [...String(xml).matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
-const good = urls.filter((u) => /\/(blog|tu-vung|huong-dan|thi-thu-mien-phi)(\/|$)/.test(u));
-const used = store.usedPages || [];
-let candidates = good.filter((u) => !used.includes(u));
-if (!candidates.length) candidates = good;
-const pageUrl = pick(candidates);
-store.usedPages = [...used, pageUrl].slice(-60);
+const PLATFORM = {
+  threads: { who: "trang Threads @toeicmasteryy", len: "Bài dài 200-420 ký tự.", comment: "câu comment ngắn kiểu người thật" },
+  facebook: {
+    who: "Fanpage Facebook TOEIC Mastery",
+    len: "Bài Facebook dài 400-900 ký tự, xuống dòng thoáng, có thể dùng gạch đầu dòng/emoji đầu dòng.",
+    comment: "comment ghim đầu tiên do page viết, tự nhiên",
+  },
+};
 
-const html = String(await http({ url: pageUrl, json: false, headers: { 'User-Agent': 'Mozilla/5.0' } }));
-const title = (html.match(/<title>([^<]*)<\/title>/) || [])[1] || '';
-const text = html
-  .replace(/<script[\s\S]*?<\/script>|<style[\s\S]*?<\/style>/g, ' ')
-  .replace(/<[^>]+>/g, ' ')
-  .replace(/&nbsp;|&#x27;|&quot;|&amp;/g, ' ')
-  .replace(/\s+/g, ' ')
-  .slice(0, 3500);
-
-const path = pageUrl.replace(/^https?:\/\/[^/]+/, '') || '/';
-const shot = await http({ url: (E.HELPER_URL || 'http://127.0.0.1:5690') + '/shot', qs: { path }, timeout: 120000 });
+// Feature pages of the logged-in app (the showcase account has real study data).
+// {topic}/{lesson}/{n} are filled at random so the same screen isn't reposted.
+const FEATURE_SHOT = String.raw`
+const FEATURES = [
+  { path: '/dashboard', name: 'Trang tổng quan: streak, mục tiêu điểm, điểm dự đoán, kỹ năng' },
+  { path: '/analytics', name: 'Thống kê điểm yếu theo từng Part và dạng câu' },
+  { path: '/mentor/path', name: 'Lộ trình học cá nhân hoá theo ngày (AI Mentor)' },
+  { path: '/mentor', name: 'AI Mentor phân tích và gợi ý học' },
+  { path: '/vocabulary/path', name: 'Lộ trình từ vựng TOEIC theo ngày, nhắc ôn lặp lại ngắt quãng' },
+  { path: '/vocabulary/topic/{topic}/study', click: 'Bắn nổ thiên thạch', name: 'Game Blast: bắn thiên thạch mang từ đúng nghĩa (từ vựng TOEIC chủ đề {topic})' },
+  { path: '/vocabulary/topic/{topic}/study', click: 'Chạm bong bóng', name: 'Game Bong bóng: chạm bong bóng mang từ đúng (từ vựng TOEIC chủ đề {topic})' },
+  { path: '/vocabulary/topic/{topic}/study', click: 'Đập chú chuột', name: 'Game Đập chuột: đập chú chuột cầm đúng nghĩa của từ (chủ đề {topic})' },
+  { path: '/vocabulary/topic/{topic}/study', click: 'Thả móc kéo', name: 'Game Đào vàng: thả móc kéo cục vàng mang đúng nghĩa (chủ đề {topic})' },
+  { path: '/vocabulary/topic/{topic}/study', click: 'Ghép từ với nghĩa', name: 'Game Nối từ: ghép từ với nghĩa nhanh nhất (chủ đề {topic})' },
+  { path: '/vocabulary/topics', name: 'Từ vựng TOEIC theo chủ đề' },
+  { path: '/grammar/mastery', name: 'Khoá ngữ pháp Part 5-6: bài học + bài tập' },
+  { path: '/grammar/mastery/{lesson}', name: 'Một bài học ngữ pháp TOEIC kèm bài tập' },
+  { path: '/listening/part-{n}', name: 'Luyện nghe TOEIC Part {n}' },
+  { path: '/history', name: 'Lịch sử bài thi, điểm từng lần' },
+  { path: '/practice', name: 'Kho đề thi thử TOEIC' },
+  { path: '/shop', name: 'Shop đổi XP kiếm được khi học' },
+];
+const TOPICS = ['office', 'meetings', 'marketing', 'finance', 'travel', 'airport', 'hotel', 'restaurant', 'contracts', 'human-resources', 'manufacturing', 'shipping', 'customer-service', 'technology'];
+const LESSONS = ['nhan-biet-danh-tu', 'danh-tu-so-it-so-nhieu', 'cum-danh-tu', 'dong-tu-vi-ngu', 'phan-tu-lam-tinh-tu', 'danh-dong-tu-to-v', 'vi-tri-tinh-tu-trang-tu'];
+const used = store.usedFeatures || [];
+const keyOf = (f) => f.path + (f.click || '');
+let pool = FEATURES.filter((f) => !used.includes(keyOf(f)));
+if (!pool.length) pool = FEATURES;
+const f = pick(pool);
+store.usedFeatures = [...used, keyOf(f)].slice(-(FEATURES.length - 2));
+const fill = (s, v) => s.replace('{topic}', v.topic).replace('{lesson}', v.lesson).replace('{n}', v.n);
+const v = { topic: pick(TOPICS), lesson: pick(LESSONS), n: String(rand(1, 4)) };
+const path = fill(f.path, v);
+const shot = await http({ url: (E.HELPER_URL || 'http://127.0.0.1:5690') + '/shot', qs: f.click ? { path, click: f.click } : { path }, timeout: 150000 });
 if (!shot.url) throw new Error('Helper không chụp được ảnh: ' + JSON.stringify(shot));
-return [{ json: { pageUrl, title, text, imageUrl: shot.url } }];
-`,
-    660
-  ),
-  codeNode(
-    "Viết bài (Gemini)",
-    String.raw`
+return [{ json: { feature: fill(f.name, v), path, text: shot.text || '', imageUrl: shot.url, link: SITE } }];
+`;
+
+const featureWrite = (platform) => String.raw`
 const p = $input.first().json;
-const mine = (await myRecentPosts(12)).map((x) => '- ' + x.text.replace(/\s+/g, ' ').slice(0, 220)).join('\n');
-const trends = await research(p.title);
+const P = ${JSON.stringify(PLATFORM[platform])};
+const mine = ${platform === "threads" ? "(await myRecentPosts(12)).map((x) => '- ' + x.text.replace(/\\s+/g, ' ').slice(0, 220)).join('\\n')" : "''"};
+const trends = await research(p.feature);
 const out = await gemini(
   [
-    'Bạn là admin trang Threads @toeicmasteryy (web luyện thi TOEIC miễn phí ' + SITE + ').',
-    'Viết 1 bài Threads kèm ẢNH CHỤP trang web này để kéo người đọc vào trang. Tiêu đề trang: ' + p.title,
-    'Nội dung trang (tóm tắt để lấy ý, không chép nguyên): ' + p.text,
+    'Bạn là admin ' + P.who + ' (web luyện thi TOEIC ' + SITE + ').',
+    'Viết 1 bài kèm ẢNH CHỤP MÀN HÌNH tính năng của web để khoe web có gì và kéo người đọc vào dùng thử.',
+    'Tính năng trong ảnh: ' + p.feature,
+    'Chữ hiển thị trên màn hình đó (để hiểu tính năng, không chép nguyên): ' + p.text.slice(0, 2500),
     VOICE,
-    'Bài dài 200-420 ký tự. Lấy 1-3 ý đắt nhất trong trang, kết bài bằng câu kích người đọc comment hoặc xem link ở comment ("link t để ở cmt nha").',
+    P.len + ' Nói tính năng này giúp gì cho người học (lợi ích cụ thể, đời thường), có thể kể kiểu "dạo này t học bằng cái này". Không nói số liệu trong ảnh là kết quả của người thật. Kết bài rủ người đọc xem link ở comment.',
     VIRAL,
     trends ? 'Xu hướng/đối thủ đang làm (chỉ lấy cảm hứng):\n' + trends : '',
     mine ? 'Các bài cũ của trang (giữ giọng tương tự nhưng KHÔNG lặp hook/ý):\n' + mine : '',
-    'Trả về JSON: {"post": "...", "comment": "câu comment ngắn kiểu người thật dẫn link, có chèn đúng link ' + p.pageUrl + '"}',
+    'Trả về JSON: {"post": "...", "comment": "' + P.comment + ' dẫn link, có chèn đúng link ' + p.link + '"}',
   ].join('\n\n'),
   { json: true }
 );
 if (!out.post || !out.comment || !out.comment.includes(SITE.replace(/^https?:\/\//, ''))) throw new Error('Gemini trả sai định dạng: ' + JSON.stringify(out));
 return [{ json: { ...p, post: out.post, comment: out.comment } }];
-`,
-    880
-  ),
+`;
+
+const ENGAGE_TYPES = String.raw`
+const TYPES = {
+  tip: 'Chia sẻ 3-5 mẹo TOEIC cực ngắn, thực tế (Part 5/6/7, Listening, quản lý thời gian, từ vựng). Comment sẽ dẫn link luyện tập.',
+  quiz: 'Đăng 1 câu hỏi Part 5 (1 câu tiếng Anh có chỗ trống + 4 đáp án A/B/C/D, chuẩn format TOEIC, chỉ 1 đáp án đúng). Thách người đọc trả lời trong 10s, KHÔNG nêu đáp án trong bài. Comment sẽ là đáp án + giải thích ngắn + link làm thêm.',
+  question: 'Đặt 1 câu hỏi mở kích comment (vd: bạn kẹt part nào, mục tiêu bao nhiêu điểm, thi lần mấy rồi...), kèm 1-2 câu kể chuyện đồng cảm. Comment dẫn link để luyện đúng chỗ yếu.',
+  confusing: 'So sánh 2-3 từ/cấu trúc TOEIC dễ nhầm (vd: affect/effect, despite/although), mỗi cái 1 ví dụ ngắn. Kết bằng 1 câu đố nhỏ. Comment dẫn link.',
+  story: 'Kể 1 câu chuyện/confession ngắn kiểu người học (mất gốc, sợ Listening, ôn sát ngày thi...) rồi rút ra 1 bài học có ích. Không bịa điểm số cụ thể. Comment dẫn link.',
+};
+const type = pick(Object.keys(TYPES).filter((k) => k !== store.lastType));
+store.lastType = type;
+const link = pick([SITE + '/thi-thu-mien-phi', SITE + '/practice', SITE + '/tu-vung', SITE + '/huong-dan', SITE]);
+`;
+
+const engageWrite = (platform) => String.raw`
+${ENGAGE_TYPES}
+const P = ${JSON.stringify(PLATFORM[platform])};
+const mine = ${platform === "threads" ? "(await myRecentPosts(12)).map((x) => '- ' + x.text.replace(/\\s+/g, ' ').slice(0, 220)).join('\\n')" : "''"};
+const trends = await research(type === 'quiz' ? 'câu hỏi TOEIC Part 5 thử thách' : 'mẹo học TOEIC');
+const out = await gemini(
+  [
+    'Bạn là admin ' + P.who + ' (web luyện thi TOEIC miễn phí ' + SITE + ').',
+    'Nhiệm vụ: ' + TYPES[type],
+    VOICE,
+    P.len,
+    VIRAL,
+    trends ? 'Xu hướng/đối thủ đang làm (chỉ lấy cảm hứng, không chép):\n' + trends : '',
+    mine ? 'Các bài cũ của trang (giữ giọng tương tự nhưng KHÔNG lặp ý):\n' + mine : '',
+    'Trả về JSON: {"post": "...", "comment": "' + P.comment + ', có chèn đúng link ' + link + '"}',
+  ].join('\n\n'),
+  { json: true }
+);
+if (!out.post || !out.comment || !out.comment.includes(SITE.replace(/^https?:\/\//, ''))) throw new Error('Gemini trả sai định dạng: ' + JSON.stringify(out));
+// Quiz: answer comes 1-3h later so people have time to guess; others: a few minutes.
+const waitSec = type === 'quiz' ? rand(60, 180) * 60 : rand(180, 600);
+return [{ json: { type, post: out.post, comment: out.comment, waitSec } }];
+`;
+
+// Reply rules shared by Threads and Facebook auto-replies.
+const REPLY_PROMPT = String.raw`
+const replyPrompt = (who, postText, author, comment, withLink) =>
+  [
+    'Bạn là admin ' + who + ' (web luyện thi TOEIC miễn phí ' + SITE + ').',
+    'Bài gốc: ' + String(postText || '').slice(0, 600),
+    'Comment của ' + author + ': ' + comment,
+    'Viết 1 câu trả lời comment này: Gen Z, vui, ấm áp, như người thật nhắn lại; đúng trọng tâm comment (nếu hỏi kiến thức thì trả lời đúng và ngắn gọn, nếu là đáp án quiz thì khen/sửa nhẹ nhàng).',
+    'Tối đa 220 ký tự, tối đa 1 emoji, không hashtag, không nhận là AI/bot, không văn mẫu.',
+    withLink ? 'Lồng tự nhiên link ' + SITE + ' vào câu trả lời (vd "vô đây luyện thêm nè").' : 'KHÔNG chèn link.',
+    'Chỉ trả về nội dung câu trả lời.',
+  ].join('\n');
+const asksLink = (t) => /link|web|ở đâu|o dau|học ở|xin|cho mình|cho em|cho t|dùng gì|app|trang nào/i.test(t);
+const hourVN = Number(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', hour: 'numeric', hour12: false }));
+const today = new Date().toISOString().slice(0, 10);
+if (store.day !== today) { store.day = today; store.countToday = 0; }
+store.replied = store.replied || [];
+store.linked = store.linked || [];
+`;
+
+// ---------------------------------------------------------------------------
+// Threads 1. Feature screenshot post, link in the first comment.
+const imagePost = workflow("thrImagePost01", "Threads 1 – Bài ảnh tính năng web", [
+  schedule("Lịch 8:30 & 19:30", "30 8,19 * * *"),
+  codeNode("Lệch giờ ngẫu nhiên", JITTER, 220),
+  wait("Chờ", 440),
+  codeNode("Chọn tính năng & chụp ảnh", FEATURE_SHOT, 660),
+  codeNode("Viết bài (Gemini)", featureWrite("threads"), 880),
   codeNode(
     "Đăng lên Threads",
     String.raw`
@@ -195,60 +275,28 @@ return [{ json: { ...p, postId, waitSec: rand(120, 420) } }];
     String.raw`
 const p = $input.first().json;
 const replyId = await threadsPost({ text: p.comment, replyTo: p.postId });
-return [{ json: { postId: p.postId, replyId, pageUrl: p.pageUrl } }];
+return [{ json: { postId: p.postId, replyId, path: p.path } }];
 `,
     1540
   ),
 ]);
 
-// ---------------------------------------------------------------------------
-// 2. Engagement post: tips / quiz (answer in comment) / question to the audience.
+// Threads 2. Engagement post: tips / quiz (answer in comment) / question to the audience.
 const engagePost = workflow("thrEngagePost01", "Threads 2 – Bài tương tác (tips, quiz, hỏi đáp)", [
   schedule("Lịch 12:15 & 21:45", ["15 12 * * *", "45 21 * * *"]),
   codeNode("Lệch giờ ngẫu nhiên", JITTER, 220),
   wait("Chờ", 440),
+  codeNode("Viết bài (Gemini)", engageWrite("threads"), 660),
   codeNode(
-    "Viết & đăng bài",
+    "Đăng lên Threads",
     String.raw`
-const TYPES = {
-  tip: 'Chia sẻ 3-5 mẹo TOEIC cực ngắn, thực tế (Part 5/6/7, Listening, quản lý thời gian, từ vựng). Comment sẽ dẫn link luyện tập.',
-  quiz: 'Đăng 1 câu hỏi Part 5 (1 câu tiếng Anh có chỗ trống + 4 đáp án A/B/C/D, chuẩn format TOEIC, chỉ 1 đáp án đúng). Thách người đọc trả lời trong 10s, KHÔNG nêu đáp án trong bài. Comment sẽ là đáp án + giải thích ngắn + link làm thêm.',
-  question: 'Đặt 1 câu hỏi mở kích comment (vd: bạn kẹt part nào, mục tiêu bao nhiêu điểm, thi lần mấy rồi...), kèm 1-2 câu kể chuyện đồng cảm. Comment dẫn link để luyện đúng chỗ yếu.',
-  confusing: 'So sánh 2-3 từ/cấu trúc TOEIC dễ nhầm (vd: affect/effect, despite/although), mỗi cái 1 ví dụ ngắn. Kết bằng 1 câu đố nhỏ. Comment dẫn link.',
-  story: 'Kể 1 câu chuyện/confession ngắn kiểu người học (mất gốc, sợ Listening, ôn sát ngày thi...) rồi rút ra 1 bài học có ích. Không bịa điểm số cụ thể. Comment dẫn link.',
-};
-const keys = Object.keys(TYPES);
-const last = store.lastType;
-const type = pick(keys.filter((k) => k !== last));
-store.lastType = type;
-
-const mine = (await myRecentPosts(12)).map((x) => '- ' + x.text.replace(/\s+/g, ' ').slice(0, 220)).join('\n');
-const trends = await research(type === 'quiz' ? 'câu hỏi TOEIC Part 5 thử thách' : 'mẹo học TOEIC');
-const linkPages = [SITE + '/thi-thu-mien-phi', SITE + '/practice', SITE + '/tu-vung', SITE + '/huong-dan', SITE];
-const link = pick(linkPages);
-
-const out = await gemini(
-  [
-    'Bạn là admin trang Threads @toeicmasteryy (web luyện thi TOEIC miễn phí ' + SITE + ').',
-    'Nhiệm vụ: ' + TYPES[type],
-    VOICE,
-    'Bài dài 150-450 ký tự.',
-    VIRAL,
-    trends ? 'Xu hướng/đối thủ đang làm (chỉ lấy cảm hứng, không chép):\n' + trends : '',
-    mine ? 'Các bài cũ của trang (giữ giọng tương tự nhưng KHÔNG lặp ý):\n' + mine : '',
-    'Trả về JSON: {"post": "...", "comment": "comment đầu tiên do chính trang viết, tự nhiên như người thật, có chèn đúng link ' + link + '"}',
-  ].join('\n\n'),
-  { json: true }
-);
-if (!out.post || !out.comment || !out.comment.includes(SITE.replace(/^https?:\/\//, ''))) throw new Error('Gemini trả sai định dạng: ' + JSON.stringify(out));
-const postId = await threadsPost({ text: out.post });
-// Quiz: answer comes 1-3h later so people have time to guess; others: a few minutes.
-const waitSec = type === 'quiz' ? rand(60, 180) * 60 : rand(180, 600);
-return [{ json: { type, postId, post: out.post, comment: out.comment, waitSec } }];
+const p = $input.first().json;
+const postId = await threadsPost({ text: p.post });
+return [{ json: { ...p, postId } }];
 `,
-    660
+    880
   ),
-  wait("Chờ rồi comment", 880),
+  wait("Chờ rồi comment", 1100),
   codeNode(
     "Comment đáp án / link",
     String.raw`
@@ -256,27 +304,20 @@ const p = $input.first().json;
 const replyId = await threadsPost({ text: p.comment, replyTo: p.postId });
 return [{ json: { type: p.type, postId: p.postId, replyId } }];
 `,
-    1100
+    1320
   ),
 ]);
 
-// ---------------------------------------------------------------------------
-// 3. Auto-reply to comments on our recent posts, paced to look human and stay
-//    far below Threads' limits.
+// Threads 3. Auto-reply to comments on recent posts, paced to look human.
 const autoReply = workflow("thrAutoReply01", "Threads 3 – Tự trả lời comment", [
   node("Mỗi 20 phút", "n8n-nodes-base.scheduleTrigger", 1.2, { rule: { interval: [{ field: "minutes", minutesInterval: 20 }] } }, 0),
   codeNode(
     "Trả lời comment",
-    String.raw`
+    REPLY_PROMPT +
+      String.raw`
 const MAX_PER_RUN = 3, MAX_PER_DAY = 60, LINK_RATE = 0.3;
-const hour = Number(new Date().toLocaleString('en-US', { timeZone: 'Asia/Ho_Chi_Minh', hour: 'numeric', hour12: false }));
-if (hour < 7) return [{ json: { skipped: 'ngoài giờ (7h-24h)' } }];
-
-const today = new Date().toISOString().slice(0, 10);
-if (store.day !== today) { store.day = today; store.countToday = 0; }
+if (hourVN < 7) return [{ json: { skipped: 'ngoài giờ (7h-24h)' } }];
 if (store.countToday >= MAX_PER_DAY) return [{ json: { skipped: 'đủ giới hạn ngày' } }];
-store.replied = store.replied || [];
-store.linked = store.linked || [];
 
 const me = await http({ url: TH + '/me', qs: { fields: 'id,username', access_token: E.THREADS_TOKEN } });
 const since = Date.now() - 4 * 86400e3;
@@ -296,20 +337,8 @@ for (const { post, c } of todo.slice(0, MAX_PER_RUN)) {
   // Skip comments the owner already answered by hand.
   const sub = await http({ url: TH + '/' + c.id + '/replies', qs: { fields: 'username', access_token: E.THREADS_TOKEN } });
   if ((sub.data || []).some((x) => x.username === me.username)) { store.replied.push(c.id); continue; }
-
-  const asksLink = /link|web|ở đâu|o dau|học ở|xin|cho mình|cho em|cho t|dùng gì|app|trang nào/i.test(c.text);
-  const withLink = asksLink || (!store.linked.includes(c.username) && Math.random() < LINK_RATE);
-  const reply = await gemini(
-    [
-      'Bạn là admin trang Threads @toeicmasteryy (web luyện thi TOEIC miễn phí ' + SITE + ').',
-      'Bài gốc: ' + post.text.slice(0, 600),
-      'Comment của @' + c.username + ': ' + c.text,
-      'Viết 1 câu trả lời comment này: Gen Z, vui, ấm áp, như người thật nhắn lại; đúng trọng tâm comment (nếu hỏi kiến thức thì trả lời đúng và ngắn gọn, nếu là đáp án quiz thì khen/sửa nhẹ nhàng).',
-      'Tối đa 220 ký tự, tối đa 1 emoji, không hashtag, không nhận là AI/bot, không văn mẫu.',
-      withLink ? 'Lồng tự nhiên link ' + SITE + ' vào câu trả lời (vd "vô đây luyện thêm nè").' : 'KHÔNG chèn link.',
-      'Chỉ trả về nội dung câu trả lời.',
-    ].join('\n'),
-  );
+  const withLink = asksLink(c.text) || (!store.linked.includes(c.username) && Math.random() < LINK_RATE);
+  const reply = await gemini(replyPrompt('trang Threads @toeicmasteryy', post.text, '@' + c.username, c.text, withLink));
   await sleep(rand(15, 45) * 1000);
   const id = await threadsPost({ text: reply.replace(/^"|"$/g, ''), replyTo: c.id });
   store.replied.push(c.id);
@@ -325,11 +354,135 @@ return done.length ? done.map((d) => ({ json: d })) : [{ json: { replied: 0, wai
   ),
 ]);
 
+// ---------------------------------------------------------------------------
+// Facebook Page (groups have no posting/commenting API since 2024).
+const fbImagePost = workflow("fbImagePost001", "Facebook 1 – Bài ảnh tính năng web (Page)", [
+  schedule("Lịch 10:00", "0 10 * * *"),
+  codeNode("Lệch giờ ngẫu nhiên", JITTER, 220),
+  wait("Chờ", 440),
+  codeNode("Chọn tính năng & chụp ảnh", FEATURE_SHOT, 660),
+  codeNode("Viết bài (Gemini)", featureWrite("facebook"), 880),
+  codeNode(
+    "Đăng lên Page",
+    String.raw`
+const p = $input.first().json;
+const r = await fbApi('POST', '/' + E.FB_PAGE_ID + '/photos', { url: p.imageUrl, caption: p.post });
+return [{ json: { ...p, postId: r.post_id || r.id, waitSec: rand(60, 300) } }];
+`,
+    1100
+  ),
+  wait("Chờ rồi comment", 1320),
+  codeNode(
+    "Comment link",
+    String.raw`
+const p = $input.first().json;
+const r = await fbApi('POST', '/' + p.postId + '/comments', { message: p.comment });
+return [{ json: { postId: p.postId, commentId: r.id } }];
+`,
+    1540
+  ),
+]);
+
+const fbEngagePost = workflow("fbEngagePost01", "Facebook 2 – Bài tương tác (Page)", [
+  schedule("Lịch 20:30", "30 20 * * *"),
+  codeNode("Lệch giờ ngẫu nhiên", JITTER, 220),
+  wait("Chờ", 440),
+  codeNode("Viết bài (Gemini)", engageWrite("facebook"), 660),
+  codeNode(
+    "Đăng lên Page",
+    String.raw`
+const p = $input.first().json;
+const r = await fbApi('POST', '/' + E.FB_PAGE_ID + '/feed', { message: p.post });
+return [{ json: { ...p, postId: r.id } }];
+`,
+    880
+  ),
+  wait("Chờ rồi comment", 1100),
+  codeNode(
+    "Comment đáp án / link",
+    String.raw`
+const p = $input.first().json;
+const r = await fbApi('POST', '/' + p.postId + '/comments', { message: p.comment });
+return [{ json: { type: p.type, postId: p.postId, commentId: r.id } }];
+`,
+    1320
+  ),
+]);
+
+const fbAutoReply = workflow("fbAutoReply001", "Facebook 3 – Tự trả lời comment (Page)", [
+  node("Mỗi 15 phút", "n8n-nodes-base.scheduleTrigger", 1.2, { rule: { interval: [{ field: "minutes", minutesInterval: 15 }] } }, 0),
+  codeNode(
+    "Trả lời comment",
+    REPLY_PROMPT +
+      String.raw`
+const MAX_PER_RUN = 4, MAX_PER_DAY = 80, LINK_RATE = 0.35;
+if (hourVN < 7) return [{ json: { skipped: 'ngoài giờ (7h-24h)' } }];
+if (store.countToday >= MAX_PER_DAY) return [{ json: { skipped: 'đủ giới hạn ngày' } }];
+const PAGE = E.FB_PAGE_ID;
+const since = Math.floor((Date.now() - 4 * 86400e3) / 1000);
+const feed = await fbApi('GET', '/' + PAGE + '/feed', { fields: 'id,message,created_time', since, limit: 15 });
+const todo = [];
+for (const post of feed.data || []) {
+  const r = await fbApi('GET', '/' + post.id + '/comments', { fields: 'id,message,from,created_time,comments.limit(20){from}', filter: 'toplevel', limit: 50 });
+  for (const c of r.data || []) {
+    if (!c.message || store.replied.includes(c.id)) continue;
+    if (c.from && c.from.id === PAGE) continue;
+    if ((c.comments?.data || []).some((x) => x.from && x.from.id === PAGE)) { store.replied.push(c.id); continue; }
+    if (Date.now() - new Date(c.created_time).getTime() > 2 * 86400e3) continue;
+    todo.push({ post, c });
+  }
+}
+const done = [];
+for (const { post, c } of todo.slice(0, MAX_PER_RUN)) {
+  const who = c.from?.id || c.id;
+  const withLink = asksLink(c.message) || (!store.linked.includes(who) && Math.random() < LINK_RATE);
+  const reply = await gemini(replyPrompt('Fanpage TOEIC Mastery', post.message, c.from?.name || 'một bạn', c.message, withLink));
+  await sleep(rand(15, 45) * 1000);
+  await fbApi('POST', '/' + c.id + '/likes', {}).catch(() => {});
+  const r = await fbApi('POST', '/' + c.id + '/comments', { message: reply.replace(/^"|"$/g, '') });
+  store.replied.push(c.id);
+  if (withLink) store.linked.push(who);
+  store.countToday++;
+  done.push({ comment: c.message, reply, id: r.id });
+}
+store.replied = store.replied.slice(-2000);
+store.linked = store.linked.slice(-2000);
+return done.length ? done.map((d) => ({ json: d })) : [{ json: { replied: 0, waiting: todo.length } }];
+`,
+    220
+  ),
+]);
+
+// ---------------------------------------------------------------------------
+// Showcase account studies every day (helper/study.js): keeps a real streak and
+// fresh stats for the feature screenshots.
+const dailyStudy = workflow("studyDaily0001", "Học mỗi ngày – tài khoản showcase", [
+  schedule("Lịch 18:00", "0 18 * * *"),
+  codeNode("Lệch giờ ngẫu nhiên", `return [{ json: { waitSec: rand(0, 90 * 60) } }];`, 220),
+  wait("Chờ", 440),
+  codeNode(
+    "Làm bài",
+    String.raw`
+// Full test every 3rd day, otherwise a Listening or Reading section (Free: 1 full + 3 mini a day).
+const n = (store.runs || 0) + 1;
+store.runs = n;
+const kind = n % 3 === 1 ? 'full' : pick(['listening', 'reading']);
+const r = await http({ method: 'POST', url: (E.HELPER_URL || 'http://127.0.0.1:5690') + '/study', qs: { kind } });
+return [{ json: { kind, ...r } }];
+`,
+    660
+  ),
+]);
+
 mkdirSync(OUT, { recursive: true });
 for (const [file, wf] of [
   ["threads-1-image-post.json", imagePost],
   ["threads-2-engagement-post.json", engagePost],
   ["threads-3-auto-reply.json", autoReply],
+  ["facebook-1-image-post.json", fbImagePost],
+  ["facebook-2-engagement-post.json", fbEngagePost],
+  ["facebook-3-auto-reply.json", fbAutoReply],
+  ["study-daily.json", dailyStudy],
 ]) {
   writeFileSync(join(OUT, file), JSON.stringify(wf, null, 2) + "\n");
   console.log("wrote", file);
