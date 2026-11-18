@@ -16,6 +16,8 @@ const SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\/$/, '');
 const http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
+// Waits between steps: a few seconds when run by hand (test), human-like when scheduled.
+const delay = (a, b) => ($execution.mode === 'manual' ? 5 : rand(a, b));
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
 const store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs
 
@@ -121,7 +123,7 @@ function workflow(id, name, nodes) {
 }
 
 // Random start offset so posts never land on the exact same minute every day.
-const JITTER = `return [{ json: { waitSec: rand(0, 40 * 60) } }];`;
+const JITTER = `return [{ json: { waitSec: delay(0, 40 * 60) } }];`;
 
 const PLATFORM = {
   threads: { who: "trang Threads @toeicmasteryy", len: "Bài dài 200-420 ký tự.", comment: "câu comment ngắn kiểu người thật" },
@@ -232,7 +234,7 @@ const out = await gemini(
 );
 if (!out.post || !out.comment || !out.comment.includes(SITE.replace(/^https?:\/\//, ''))) throw new Error('Gemini trả sai định dạng: ' + JSON.stringify(out));
 // Quiz: answer comes 1-3h later so people have time to guess; others: a few minutes.
-const waitSec = type === 'quiz' ? rand(60, 180) * 60 : rand(180, 600);
+const waitSec = type === 'quiz' ? delay(60 * 60, 180 * 60) : delay(180, 600);
 return [{ json: { type, post: out.post, comment: out.comment, waitSec } }];
 `;
 
@@ -270,7 +272,7 @@ const imagePost = workflow("thrImagePost01", "Threads 1 – Bài ảnh tính nă
 const p = $input.first().json;
 const postId = await threadsPost({ text: p.post, imageUrl: p.imageUrl });
 // Link comment goes up a few minutes later, like a person replying to themselves.
-return [{ json: { ...p, postId, waitSec: rand(120, 420) } }];
+return [{ json: { ...p, postId, waitSec: delay(120, 420) } }];
 `,
     1100
   ),
@@ -372,7 +374,7 @@ const fbImagePost = workflow("fbImagePost001", "Facebook 1 – Bài ảnh tính 
     String.raw`
 const p = $input.first().json;
 const r = await fbApi('POST', '/' + E.FB_PAGE_ID + '/photos', { url: p.imageUrl, caption: p.post });
-return [{ json: { ...p, postId: r.post_id || r.id, waitSec: rand(60, 300) } }];
+return [{ json: { ...p, postId: r.post_id || r.id, waitSec: delay(60, 300) } }];
 `,
     1100
   ),
@@ -522,7 +524,7 @@ fbGroupDrafts.connections = {
 // fresh stats for the feature screenshots.
 const dailyStudy = workflow("studyDaily0001", "Học mỗi ngày – tài khoản showcase", [
   schedule("Lịch 18:00", "0 18 * * *"),
-  codeNode("Lệch giờ ngẫu nhiên", `return [{ json: { waitSec: rand(0, 90 * 60) } }];`, 220),
+  codeNode("Lệch giờ ngẫu nhiên", `return [{ json: { waitSec: delay(0, 90 * 60) } }];`, 220),
   wait("Chờ", 440),
   codeNode(
     "Làm bài",
