@@ -1,0 +1,166 @@
+{
+  "id": "thrEngagePost01",
+  "name": "Threads 2 – Bài tương tác (tips, quiz, hỏi đáp)",
+  "active": false,
+  "nodes": [
+    {
+      "id": "n9-L-ch-12-15-21-45",
+      "name": "Lịch 12:15 & 21:45",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "15 12 * * *"
+            },
+            {
+              "field": "cronExpression",
+              "expression": "45 21 * * *"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "n10-L-ch-gi-ng-u-nhi-n",
+      "name": "Lệch giờ ngẫu nhiên",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        220,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1 } };\n  if (search) body.tools = [{ google_search: {} }];\n  else if (json) body.generationConfig.responseMimeType = 'application/json';\n  const r = await http({\n    method: 'POST',\n    url: 'https://generativelanguage.googleapis.com/v1beta/models/' + (E.GEMINI_MODEL || 'gemini-3.1-flash-lite') + ':generateContent',\n    qs: { key: E.GEMINI_API_KEY },\n    body,\n  });\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nreturn [{ json: { waitSec: rand(0, 40 * 60) } }];\n"
+      }
+    },
+    {
+      "id": "n11-Ch-",
+      "name": "Chờ",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        440,
+        300
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": "={{ $json.waitSec }}",
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "n12-Vi-t-ng-b-i",
+      "name": "Viết & đăng bài",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        660,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1 } };\n  if (search) body.tools = [{ google_search: {} }];\n  else if (json) body.generationConfig.responseMimeType = 'application/json';\n  const r = await http({\n    method: 'POST',\n    url: 'https://generativelanguage.googleapis.com/v1beta/models/' + (E.GEMINI_MODEL || 'gemini-3.1-flash-lite') + ':generateContent',\n    qs: { key: E.GEMINI_API_KEY },\n    body,\n  });\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nconst TYPES = {\n  tip: 'Chia sẻ 3-5 mẹo TOEIC cực ngắn, thực tế (Part 5/6/7, Listening, quản lý thời gian, từ vựng). Comment sẽ dẫn link luyện tập.',\n  quiz: 'Đăng 1 câu hỏi Part 5 (1 câu tiếng Anh có chỗ trống + 4 đáp án A/B/C/D, chuẩn format TOEIC, chỉ 1 đáp án đúng). Thách người đọc trả lời trong 10s, KHÔNG nêu đáp án trong bài. Comment sẽ là đáp án + giải thích ngắn + link làm thêm.',\n  question: 'Đặt 1 câu hỏi mở kích comment (vd: bạn kẹt part nào, mục tiêu bao nhiêu điểm, thi lần mấy rồi...), kèm 1-2 câu kể chuyện đồng cảm. Comment dẫn link để luyện đúng chỗ yếu.',\n  confusing: 'So sánh 2-3 từ/cấu trúc TOEIC dễ nhầm (vd: affect/effect, despite/although), mỗi cái 1 ví dụ ngắn. Kết bằng 1 câu đố nhỏ. Comment dẫn link.',\n  story: 'Kể 1 câu chuyện/confession ngắn kiểu người học (mất gốc, sợ Listening, ôn sát ngày thi...) rồi rút ra 1 bài học có ích. Không bịa điểm số cụ thể. Comment dẫn link.',\n};\nconst keys = Object.keys(TYPES);\nconst last = store.lastType;\nconst type = pick(keys.filter((k) => k !== last));\nstore.lastType = type;\n\nconst mine = (await myRecentPosts(12)).map((x) => '- ' + x.text.replace(/\\s+/g, ' ').slice(0, 220)).join('\\n');\nconst trends = await research(type === 'quiz' ? 'câu hỏi TOEIC Part 5 thử thách' : 'mẹo học TOEIC');\nconst linkPages = [SITE + '/thi-thu-mien-phi', SITE + '/practice', SITE + '/tu-vung', SITE + '/huong-dan', SITE];\nconst link = pick(linkPages);\n\nconst out = await gemini(\n  [\n    'Bạn là admin trang Threads @toeicmasteryy (web luyện thi TOEIC miễn phí ' + SITE + ').',\n    'Nhiệm vụ: ' + TYPES[type],\n    VOICE,\n    'Bài dài 150-450 ký tự.',\n    VIRAL,\n    trends ? 'Xu hướng/đối thủ đang làm (chỉ lấy cảm hứng, không chép):\\n' + trends : '',\n    mine ? 'Các bài cũ của trang (giữ giọng tương tự nhưng KHÔNG lặp ý):\\n' + mine : '',\n    'Trả về JSON: {\"post\": \"...\", \"comment\": \"comment đầu tiên do chính trang viết, tự nhiên như người thật, có chèn đúng link ' + link + '\"}',\n  ].join('\\n\\n'),\n  { json: true }\n);\nif (!out.post || !out.comment || !out.comment.includes(SITE.replace(/^https?:\\/\\//, ''))) throw new Error('Gemini trả sai định dạng: ' + JSON.stringify(out));\nconst postId = await threadsPost({ text: out.post });\n// Quiz: answer comes 1-3h later so people have time to guess; others: a few minutes.\nconst waitSec = type === 'quiz' ? rand(60, 180) * 60 : rand(180, 600);\nreturn [{ json: { type, postId, post: out.post, comment: out.comment, waitSec } }];\n"
+      }
+    },
+    {
+      "id": "n13-Ch-r-i-comment",
+      "name": "Chờ rồi comment",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        880,
+        300
+      ],
+      "parameters": {
+        "resume": "timeInterval",
+        "amount": "={{ $json.waitSec }}",
+        "unit": "seconds"
+      }
+    },
+    {
+      "id": "n14-Comment-p-n-link",
+      "name": "Comment đáp án / link",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1100,
+        300
+      ],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "\nconst E = $env;\nconst TH = 'https://graph.threads.net/v1.0';\nconst SITE = (E.SITE_URL || 'https://toeicmastery.click').replace(/\\/$/, '');\nconst http = (o) => this.helpers.httpRequest({ json: true, timeout: 90000, ...o });\nconst sleep = (ms) => new Promise((r) => setTimeout(r, ms));\nconst rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));\nconst pick = (arr) => arr[Math.floor(Math.random() * arr.length)];\nconst store = $getWorkflowStaticData('global'); // persists only on scheduled (active) runs\n\nasync function gemini(prompt, { search = false, json = false } = {}) {\n  const body = { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 1 } };\n  if (search) body.tools = [{ google_search: {} }];\n  else if (json) body.generationConfig.responseMimeType = 'application/json';\n  const r = await http({\n    method: 'POST',\n    url: 'https://generativelanguage.googleapis.com/v1beta/models/' + (E.GEMINI_MODEL || 'gemini-3.1-flash-lite') + ':generateContent',\n    qs: { key: E.GEMINI_API_KEY },\n    body,\n  });\n  const t = (r.candidates?.[0]?.content?.parts || []).map((p) => p.text || '').join('').trim();\n  if (!t) throw new Error('Gemini trả về rỗng');\n  if (!json) return t;\n  const m = t.match(/\\{[\\s\\S]*\\}/);\n  return JSON.parse(m ? m[0] : t);\n}\n\n// Threads: create a container, wait until Meta finished processing it, publish.\nasync function threadsPost({ text, imageUrl, replyTo }) {\n  const qs = { access_token: E.THREADS_TOKEN, media_type: imageUrl ? 'IMAGE' : 'TEXT', text: String(text).slice(0, 490) };\n  if (imageUrl) qs.image_url = imageUrl;\n  if (replyTo) qs.reply_to_id = replyTo;\n  const c = await http({ method: 'POST', url: TH + '/me/threads', qs });\n  for (let i = 0; i < 12; i++) {\n    await sleep(5000);\n    const s = await http({ url: TH + '/' + c.id, qs: { fields: 'status,error_message', access_token: E.THREADS_TOKEN } });\n    if (s.status === 'FINISHED') break;\n    if (s.status === 'ERROR' || s.status === 'EXPIRED') throw new Error('Threads container lỗi: ' + (s.error_message || s.status));\n  }\n  const p = await http({ method: 'POST', url: TH + '/me/threads_publish', qs: { access_token: E.THREADS_TOKEN, creation_id: c.id } });\n  return p.id;\n}\n\nasync function myRecentPosts(limit = 15) {\n  const r = await http({ url: TH + '/me/threads', qs: { fields: 'id,text,timestamp,media_type,permalink', limit, access_token: E.THREADS_TOKEN } });\n  return (r.data || []).filter((p) => p.text);\n}\n\n// Competitor/trend research: Gemini + Google Search when the key's plan allows it,\n// otherwise an empty string (the writing prompt has built-in viral patterns).\nasync function research(topic) {\n  try {\n    return await gemini(\n      'Tìm trên Threads/Facebook/TikTok các bài viral gần đây của các trang luyện thi TOEIC tại Việt Nam về chủ đề: ' + topic +\n        '. Liệt kê 3-5 hook mở đầu và format bài (dạng list, confession, quiz, so sánh...) đang ăn tương tác. Mỗi ý 1 dòng, không chép nguyên văn.',\n      { search: true }\n    );\n  } catch (e) {\n    return '';\n  }\n}\n\nconst VOICE = [\n  'Giọng văn: Gen Z Việt, tự nhiên như người thật đang nói chuyện, vui, gần gũi, hơi lầy nhưng có ích. Xưng \"t\"/\"mình\", gọi người đọc \"ae\"/\"mấy bà\"/\"bạn\" tuỳ ngữ cảnh.',\n  'Viết tiếng Việt có dấu đầy đủ. Câu ngắn, xuống dòng nhiều, tối đa 2-3 emoji, tối đa 1 hashtag (hoặc không).',\n  'KHÔNG đặt link trong bài, KHÔNG văn mẫu quảng cáo, KHÔNG bịa số liệu/điểm số/cam kết, KHÔNG nhận mình là AI hay bot.',\n  'Mở đầu bằng 1 hook gây tò mò hoặc chạm nỗi đau người học TOEIC (dòng đầu là quan trọng nhất).',\n].join('\\n');\n\nconst VIRAL = [\n  'Các mẫu bài TOEIC hay viral trên Threads: \"ae nào ... thì vô đây\", confession mất gốc lên 700+, list 3-5 mẹo ngắn, \"sai lầm mà 90% người mới mắc\",',\n  'câu hỏi Part 5 thử thách \"ai làm đúng câu này trong 10s\", so sánh 2 từ dễ nhầm, hỏi ngược người đọc \"bạn kẹt part nào nhất\".',\n].join(' ');\n\nconst p = $input.first().json;\nconst replyId = await threadsPost({ text: p.comment, replyTo: p.postId });\nreturn [{ json: { type: p.type, postId: p.postId, replyId } }];\n"
+      }
+    }
+  ],
+  "connections": {
+    "Lịch 12:15 & 21:45": {
+      "main": [
+        [
+          {
+            "node": "Lệch giờ ngẫu nhiên",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lệch giờ ngẫu nhiên": {
+      "main": [
+        [
+          {
+            "node": "Chờ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chờ": {
+      "main": [
+        [
+          {
+            "node": "Viết & đăng bài",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Viết & đăng bài": {
+      "main": [
+        [
+          {
+            "node": "Chờ rồi comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chờ rồi comment": {
+      "main": [
+        [
+          {
+            "node": "Comment đáp án / link",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Ho_Chi_Minh",
+    "saveManualExecutions": true
+  },
+  "pinData": {}
+}
