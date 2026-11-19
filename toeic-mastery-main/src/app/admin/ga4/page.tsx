@@ -3,7 +3,7 @@ import { requireSuperAdmin } from "@/lib/auth";
 import { GA_LINKED_MEASUREMENT_ID, GA_MEASUREMENT_ID } from "@/lib/ga-config";
 import { getGaTargets } from "@/lib/services/ga-secrets";
 import { previewGa4Backfill } from "@/lib/services/ga4-backfill";
-import { GaAllowResendButton, GaBackfillButton, GaSecretsForm } from "@/components/admin/ga4-settings-forms";
+import { GaAllowResendButton, GaBackfillButton, GaSecretsForm, GaTestEventButton } from "@/components/admin/ga4-settings-forms";
 
 export const metadata: Metadata = { title: "GA4" };
 
@@ -56,6 +56,13 @@ export default async function AdminGa4Page() {
           ))}
         </ul>
         <GaSecretsForm primaryId={GA_MEASUREMENT_ID} linkedId={GA_LINKED_MEASUREMENT_ID} />
+        <div className="flex flex-col gap-2 border-t border-border pt-4">
+          <p className="text-sm text-muted-foreground">
+            Thử thật: bấm nút rồi mở GA4 → Báo cáo → Thời gian thực, trong vài chục giây phải thấy sự kiện <b>server_test</b>. Không thấy = khoá hoặc
+            luồng dữ liệu chưa đúng (GA4 luôn trả &quot;OK&quot; kể cả khi bỏ dữ liệu).
+          </p>
+          <GaTestEventButton />
+        </div>
       </section>
 
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-soft">
