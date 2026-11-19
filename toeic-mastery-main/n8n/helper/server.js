@@ -101,14 +101,35 @@ async function screenshot(path, scroll = 0, retried = false, clicks = []) {
   }
 }
 
+// Image hosting: Threads/Facebook need a public image URL. Try catbox first, then uguu as a fallback.
 async function upload(png) {
-  const form = new FormData();
-  form.append("reqtype", "fileupload");
-  form.append("fileToUpload", new Blob([png], { type: "image/png" }), "toeic.png");
-  const res = await fetch("https://catbox.moe/user/api.php", { method: "POST", body: form });
-  const text = (await res.text()).trim();
-  if (!res.ok || !text.startsWith("https://")) throw new Error("upload failed: " + text.slice(0, 200));
-  return text;
+  const hosts = [
+    async () => {
+      const form = new FormData();
+      form.append("reqtype", "fileupload");
+      form.append("fileToUpload", new Blob([png], { type: "image/png" }), "toeic.png");
+      const res = await fetch("https://catbox.moe/user/api.php", { method: "POST", body: form, headers: { "User-Agent": "curl/8.7.1" } });
+      return (await res.text()).trim();
+    },
+    async () => {
+      const form = new FormData();
+      form.append("files[]", new Blob([png], { type: "image/png" }), "toeic.png");
+      const res = await fetch("https://uguu.se/upload", { method: "POST", body: form, headers: { "User-Agent": "curl/8.7.1" } });
+      const j = await res.json();
+      return (j.files && j.files[0] && j.files[0].url) || "";
+    },
+  ];
+  const errors = [];
+  for (const host of hosts) {
+    try {
+      const url = await host();
+      if (url.startsWith("https://")) return url;
+      errors.push(url.slice(0, 80) || "rỗng");
+    } catch (e) {
+      errors.push(String(e.message).slice(0, 80));
+    }
+  }
+  throw new Error("upload failed: " + errors.join(" | "));
 }
 
 http

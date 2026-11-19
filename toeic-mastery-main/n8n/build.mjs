@@ -126,11 +126,22 @@ const PRO_RULES = [
   '- Nói như người bạn nhắc nhau, không như quảng cáo: mở bằng một tình huống/nỗi đau có thật của người học TOEIC (bị giới hạn, học không biết yếu ở đâu, không có kế hoạch, hết lượt luyện...), rồi nối sang đúng quyền lợi Pro giải quyết nó.',
   '- Cụ thể hơn là khoa trương: nêu 1-2 quyền lợi Pro cụ thể thay vì liệt kê hết. Nói về giá CHỈ bằng so sánh đời thường (chưa bằng ly trà sữa / tô phở / cốc cà phê mỗi ngày, giá học sinh) và nhắc ưu đãi giảm 25% cho thành viên mới trong 72 giờ đầu khi hợp ngữ cảnh. KHÔNG có số tiền; số % duy nhất được dùng là 25%.',
   '- Thành thật để tạo niềm tin: nói rõ ai CHƯA cần Pro (còn dùng free thoải mái, mới tập, chưa hết lượt) và ai NÊN cân nhắc (sát ngày thi, cần phân tích điểm yếu, luyện nhiều mỗi ngày).',
+  '- CẤM bịa bằng chứng xã hội: không viết "nhiều bạn nhắn/hỏi mình", "nhiều ae đang…", "ai cũng dùng". Nói thẳng quan điểm của trang, không giả vờ có người hỏi.',
+  'HOOK LÀ TẤT CẢ (dòng đầu quyết định có ai dừng lại đọc hay không): dòng đầu tối đa 70 ký tự, chọn MỘT kiểu: (a) câu hỏi chạm nỗi đau ("Làm đề xong vẫn không biết mình sai ở đâu?"); (b) sự thật phũ phàng / quan điểm ngược số đông ("Cày thêm đề không làm bạn giỏi hơn."); (c) lỗi ai luyện TOEIC cũng từng mắc, nêu tên cụ thể; (d) so sánh bất ngờ ("Một ly trà sữa nuôi được cả ngày luyện đề."); (e) hứa một điều cụ thể sẽ biết được nếu đọc tiếp. Các câu trong ngoặc chỉ để tham khảo cấu trúc: TUYỆT ĐỐI không chép lại, mỗi bài phải nghĩ ra một hook MỚI, khác các bài cũ.',
+  '- Cấu trúc: dòng 1 hook → dòng 2-3 chỉ MỘT lợi ích Pro cụ thể (không liệt kê) → dòng cuối là câu hỏi hoặc lời rủ kích bình luận ("ae nào bị vậy giơ tay 🙋"). Mỗi dòng dưới 15 từ, xuống dòng giữa các ý, tối đa 2 emoji. Đọc xong trong 5 giây.',
   '- CẤM tuyệt đối: bịa lời chứng thực/đánh giá của học viên, điểm số hay số học viên cụ thể, cam kết/bảo đảm lên điểm, khan hiếm giả ("chỉ còn X suất", "hết hạn hôm nay"), chê bai đối thủ, nói quyền lợi không có trong dữ kiện.',
   '- Kết bài bằng một câu mời nhẹ (không "MUA NGAY"), link ở comment.',
 ].join('\n');
+// Cut at a sentence end (never mid-word) when a text is still too long after rewriting.
+const trimToSentence = (t, max) => {
+  t = String(t).trim();
+  if (t.length <= max) return t;
+  const cut = t.slice(0, max);
+  const m = Math.max(cut.lastIndexOf('. '), cut.lastIndexOf('! '), cut.lastIndexOf('? '), cut.lastIndexOf('\n'), cut.lastIndexOf('…'));
+  return (m > max * 0.5 ? cut.slice(0, m + 1) : cut.slice(0, cut.lastIndexOf(' ')) + '…').trim();
+};
 // Wording that must never reach a published post (checked again in the QC node).
-const BANNED_PRO = /(\d[\d.,]*\s?(k\b|nghìn|ngàn|đ(?![a-zà-ỹ])|đồng|₫|vnđ|vnd)|(?<!\d)(?!25\s?%)\d+\s?%|cam kết|đảm bảo (lên|đạt|điểm)|bảo đảm|chắc chắn (đạt|lên)|\d+\+? ?(học viên|bạn đã|người đã)|chỉ còn \d+ ?(suất|slot|chỗ)|hết (hạn|ưu đãi) (hôm nay|đêm nay|trong hôm nay))/i;
+const BANNED_PRO = /(nhiều (ae|bạn|người|mọi người) (nhắn|hỏi|inbox|ib|thắc mắc)|(ai|mọi người) cũng (đang )?(dùng|mua)|\d[\d.,]*\s?(k\b|nghìn|ngàn|đ(?![a-zà-ỹ])|đồng|₫|vnđ|vnd)|(?<!\d)(?!25\s?%)\d+\s?%|cam kết|đảm bảo (lên|đạt|điểm)|bảo đảm|chắc chắn (đạt|lên)|\d+\+? ?(học viên|bạn đã|người đã)|chỉ còn \d+ ?(suất|slot|chỗ)|hết (hạn|ưu đãi) (hôm nay|đêm nay|trong hôm nay))/i;
 
 const VIRAL = [
   'Các mẫu bài TOEIC hay viral trên Threads: "ae nào ... thì vô đây", confession mất gốc lên 700+, list 3-5 mẹo ngắn, "sai lầm mà 90% người mới mắc",',
@@ -170,15 +181,17 @@ function workflow(id, name, nodes) {
 
 
 const PLATFORM = {
-  threads: { who: "trang Threads @toeicmasteryy", len: "Bài dài 200-420 ký tự.", comment: "câu comment ngắn kiểu người thật" },
+  threads: { who: "trang Threads @toeicmasteryy", max: 300, len: "Bài RẤT NGẮN, tối đa 220 ký tự, 2-3 dòng, dòng đầu là hook. Chỉ 1 ý, 1 lợi ích. Mỗi câu trọn vẹn.", comment: "câu comment ngắn kiểu người thật" },
   group: {
     who: "admin group Facebook TOEIC Mastery (cộng đồng người học TOEIC)",
-    len: "Bài đăng group dài 300-800 ký tự, giọng admin thân thiện nói với thành viên (gọi \"cả nhà\"/\"mọi người\"), kích thành viên comment, xuống dòng thoáng.",
+    max: 600,
+    len: "Bài group NGẮN, tối đa 450 ký tự, 3-5 dòng ngắn, dòng đầu là hook, gọi \"cả nhà\", kết bằng câu hỏi kích thành viên comment. Chỉ 1 ý, 1 lợi ích.",
     comment: "comment đầu tiên của admin",
   },
   facebook: {
     who: "Fanpage Facebook TOEIC Mastery",
-    len: "Bài Facebook dài 400-900 ký tự, xuống dòng thoáng, có thể dùng gạch đầu dòng/emoji đầu dòng.",
+    max: 600,
+    len: "Bài Facebook NGẮN, tối đa 450 ký tự, 3-5 dòng ngắn, dòng đầu là hook. Chỉ 1 ý, 1 lợi ích.",
     comment: "comment ghim đầu tiên do page viết, tự nhiên",
   },
 };
@@ -241,7 +254,7 @@ const buildPrompt = (extra) => [
   VIRAL,
   trends ? 'Xu hướng/đối thủ đang làm (chỉ lấy cảm hứng):\n' + trends : '',
   mine ? 'Các bài cũ của trang (giữ giọng tương tự nhưng KHÔNG lặp hook/ý):\n' + mine : '',
-  'COMMENT ĐẦU TIÊN: nối tiếp mạch bài như người đang nói tiếp (1-2 câu có giá trị thật, hoặc thừa nhận ai chưa cần Pro), rồi dẫn tới trang gói Pro, URL ' + SITE + '/pricing đặt CUỐI comment. Cấm mở đầu bằng "Link đây/Đây nè/Vào đây", tối đa 3 câu, 1 emoji.',
+  'COMMENT ĐẦU TIÊN: nối tiếp mạch bài như người đang nói tiếp (1-2 câu có giá trị thật, hoặc thừa nhận ai chưa cần Pro), rồi dẫn tới trang gói Pro, URL ' + SITE + '/pricing đặt CUỐI comment. Cấm mở đầu bằng "Link đây/Đây nè/Vào đây", tối đa 2 câu NGẮN (dưới 170 ký tự không tính link), 1 emoji.',
   extra || '',
   'Trả về JSON: {"post": "...", "comment": "..."}',
 ].filter(Boolean).join('\n\n');
@@ -251,8 +264,17 @@ if (BANNED_PRO.test(String(out.post) + ' ' + String(out.comment))) {
   retried = true;
   out = await gemini(buildPrompt('LẦN TRƯỚC VI PHẠM: bài có số tiền hoặc số % khác 25%, cam kết điểm, số học viên hoặc khan hiếm giả. Viết lại, bỏ hết những thứ đó, chỉ so sánh giá bằng ly trà sữa / tô phở, chỉ được nêu giảm 25% cho thành viên mới trong 72 giờ đầu, và dùng dữ kiện thật.'), { json: true });
 }
+let shortened = 0;
+const MAX = P.max;
+for (let i = 0; i < 2 && (String(out.post).length > MAX || String(out.comment).length > MAX); i++) {
+  shortened++;
+  out = await gemini(buildPrompt('QUÁ DÀI (bài ' + String(out.post).length + ' ký tự, comment ' + String(out.comment).length + '): viết lại NGẮN GỌN, bài dưới ' + (MAX - 70) + ' ký tự, comment dưới ' + (MAX - 130) + ' ký tự, giữ hook và ý chính, câu nào cũng trọn vẹn.'), { json: true });
+}
+const PRICING = SITE + '/pricing';
+out.post = trimToSentence(out.post, MAX);
+if (String(out.comment).length > MAX) out.comment = trimToSentence(String(out.comment).replace(PRICING, '').trim(), MAX - PRICING.length - 2) + ' ' + PRICING;
 if (!out.post || !out.comment || !out.comment.includes(SITE.replace(/^https?:\/\//, '') + '/pricing')) throw new Error('Gemini trả sai định dạng (thiếu link /pricing): ' + JSON.stringify(out));
-return [{ json: { ...p, post: out.post, comment: out.comment, link: SITE + '/pricing', viết_lại_vì_vi_phạm: retried } }];
+return [{ json: { ...p, post: out.post, comment: out.comment, link: SITE + '/pricing', viết_lại_vì_vi_phạm: retried, rút_gọn_lần: shortened } }];
 `;
 
 const ENGAGE_TYPES = String.raw`
@@ -305,7 +327,7 @@ const buildPrompt = (extra) => [
   VIRAL,
   trends ? 'Xu hướng/đối thủ đang làm (chỉ lấy cảm hứng, không chép):\n' + trends : '',
   mine ? 'Các bài cũ của trang (giữ giọng tương tự nhưng KHÔNG lặp ý, góc, hook):\n' + mine : '',
-  'COMMENT ĐẦU TIÊN: nối tiếp mạch bài như người đang nói tiếp (1-2 câu có giá trị thật: so sánh giá, chọn gói hợp tình huống, hoặc thừa nhận ai chưa cần), rồi dẫn tới trang gói Pro, URL ' + SITE + '/pricing đặt CUỐI comment. Cấm mở đầu bằng "Link đây/Đây nè/Vào đây", tối đa 3 câu, 1 emoji.',
+  'COMMENT ĐẦU TIÊN: nối tiếp mạch bài như người đang nói tiếp (1-2 câu có giá trị thật: so sánh giá, chọn gói hợp tình huống, hoặc thừa nhận ai chưa cần), rồi dẫn tới trang gói Pro, URL ' + SITE + '/pricing đặt CUỐI comment. Cấm mở đầu bằng "Link đây/Đây nè/Vào đây", tối đa 2 câu NGẮN (dưới 170 ký tự không tính link), 1 emoji.',
   extra || '',
   'Trả về JSON: {"post": "...", "comment": "..."}',
 ].filter(Boolean).join('\n\n');
@@ -315,8 +337,17 @@ if (BANNED_PRO.test(String(out.post) + ' ' + String(out.comment))) {
   retried = true;
   out = await gemini(buildPrompt('LẦN TRƯỚC VI PHẠM: bài có số tiền hoặc số % khác 25%, cam kết điểm, số học viên hoặc khan hiếm giả. Viết lại, bỏ hết những thứ đó, chỉ so sánh giá bằng ly trà sữa / tô phở, chỉ được nêu giảm 25% cho thành viên mới trong 72 giờ đầu, và dùng dữ kiện thật.'), { json: true });
 }
+let shortened = 0;
+const MAX = P.max;
+for (let i = 0; i < 2 && (String(out.post).length > MAX || String(out.comment).length > MAX); i++) {
+  shortened++;
+  out = await gemini(buildPrompt('QUÁ DÀI (bài ' + String(out.post).length + ' ký tự, comment ' + String(out.comment).length + '): viết lại NGẮN GỌN, bài dưới ' + (MAX - 70) + ' ký tự, comment dưới ' + (MAX - 130) + ' ký tự, giữ hook và ý chính, câu nào cũng trọn vẹn.'), { json: true });
+}
+const PRICING = SITE + '/pricing';
+out.post = trimToSentence(out.post, MAX);
+if (String(out.comment).length > MAX) out.comment = trimToSentence(String(out.comment).replace(PRICING, '').trim(), MAX - PRICING.length - 2) + ' ' + PRICING;
 if (!out.post || !out.comment || !out.comment.includes(SITE.replace(/^https?:\/\//, '') + '/pricing')) throw new Error('Gemini trả sai định dạng (thiếu link /pricing): ' + JSON.stringify(out));
-return [{ json: { ...$input.first().json, type, post: out.post, comment: out.comment, link: SITE + '/pricing', viết_lại_vì_vi_phạm: retried } }];
+return [{ json: { ...$input.first().json, type, post: out.post, comment: out.comment, link: SITE + '/pricing', viết_lại_vì_vi_phạm: retried, rút_gọn_lần: shortened } }];
 `;
 
 // Reply rules shared by Threads and Facebook auto-replies.
@@ -485,6 +516,7 @@ if (tags.length > 1) { post = post.replace(/#[^\s#]+/g, '').replace(/\s+$/, '') 
 add('Tối đa 1 hashtag', true, tags.length + ' hashtag' + (fixed ? ' → ' + fixed : ''));
 add('Không nêu giá tiền / % khác 25%, cam kết điểm, số liệu bịa, khan hiếm giả', !BANNED_PRO.test(post + ' ' + comment), 'đã kiểm tra');
 const failed = checks.filter((c) => !c.pass);
+if (post.length > ${maxLen} || comment.length > ${maxLen}) throw new Error('Kiểm duyệt chặn bài: bài ' + post.length + ' / comment ' + comment.length + ' ký tự, vượt giới hạn ${maxLen} nên nền tảng sẽ cắt cụt. Bài KHÔNG được đăng.');
 if (!checks[checks.length - 1].pass) throw new Error('Kiểm duyệt chặn bài: có số tiền, % khác 25%, cam kết điểm, số liệu học viên hoặc khan hiếm giả. Bài KHÔNG được đăng.');
 return [{ json: {
   ...p, post, comment,
