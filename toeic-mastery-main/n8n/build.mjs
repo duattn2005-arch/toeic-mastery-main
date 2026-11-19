@@ -327,6 +327,7 @@ const buildPrompt = (extra) => [
   VIRAL,
   trends ? 'Xu hướng/đối thủ đang làm (chỉ lấy cảm hứng, không chép):\n' + trends : '',
   mine ? 'Các bài cũ của trang (giữ giọng tương tự nhưng KHÔNG lặp ý, góc, hook):\n' + mine : '',
+  ($input.first().json.proFeature ? 'ẢNH ĐÍNH KÈM COMMENT: ảnh chụp màn hình tính năng Pro "' + $input.first().json.proFeature + '". Chữ hiển thị trên ảnh (để hiểu, không chép): ' + String($input.first().json.proText || '').slice(0, 700) + '. Comment phải khoe đúng tính năng trong ảnh bằng 1 câu cụ thể (đúng với chữ trên ảnh, không bịa), vd "ảnh dưới là…".' : ''),
   'COMMENT ĐẦU TIÊN: nối tiếp mạch bài như người đang nói tiếp (1-2 câu có giá trị thật: so sánh giá, chọn gói hợp tình huống, hoặc thừa nhận ai chưa cần), rồi dẫn tới trang gói Pro, URL ' + SITE + '/pricing đặt CUỐI comment. Cấm mở đầu bằng "Link đây/Đây nè/Vào đây", tối đa 2 câu NGẮN (dưới 170 ký tự không tính link), 1 emoji.',
   extra || '',
   'Trả về JSON: {"post": "...", "comment": "..."}',
@@ -651,30 +652,71 @@ const imagePost = buildGraph("thrImagePost01", "Threads 1 – Bài ảnh tính n
 
 const B = {
   man: "▶ Chạy ngay", sch: "⏰ 10:30 & 21:30", go: "🚀 Khởi động lượt chạy",
-  pick: "🎲 Chọn góc nâng cấp PRO", tr: "📈 Săn xu hướng", old: "📚 Đọc bài cũ của trang", mg1: "🔀 Gộp dạng bài + xu hướng", mg2: "🔀 Gộp thêm bài cũ",
+  pick: "🎲 Chọn góc nâng cấp PRO", pickPro: "🎯 Chọn tính năng PRO để khoe", shotPro: "📷 Chụp tính năng PRO (HTTP)", joinPro: "🔎 Ghép ảnh PRO",
+  tr: "📈 Săn xu hướng", old: "📚 Đọc bài cũ của trang", mg1: "🔀 Gộp ảnh PRO + xu hướng", mg2: "🔀 Gộp thêm bài cũ",
   wr: "✍️ Viết bài (Gemini)", qc: "🛡️ Kiểm duyệt nội dung",
   c1: "📦 Tạo container bài (HTTP)", w1: "⏳ Chờ Meta xử lý bài", p1: "🚀 Xuất bản bài (HTTP)", pause: "⏱ Nghỉ vài giây rồi comment",
-  c2: "📦 Tạo container comment (HTTP)", w2: "⏳ Chờ Meta xử lý comment", p2: "🚀 Xuất bản comment (HTTP)", done: "📊 Tổng kết chạy",
+  c2: "📦 Tạo container comment + ảnh PRO (HTTP)", w2: "⏳ Chờ Meta xử lý comment", p2: "🚀 Xuất bản comment (HTTP)", done: "📊 Tổng kết chạy",
 };
+// Pro-only screens the (Pro) showcase account can show: picked to match the post's angle. No pricing page (it shows prices).
+const PICK_PRO = String.raw`
+const prev = $input.first().json;
+const SHOTS = {
+  analysis:   { name: 'Radar kỹ năng và phân tích năng lực chi tiết (Pro)', path: '/analytics', scroll: 0 },
+  weak:       { name: 'Phân tích điểm yếu: câu hay sai, thang Bloom, lộ trình AI đề xuất (Pro)', path: '/analytics', scroll: 700 },
+  transcript: { name: 'Transcript ETS 2026: nghe chép chính tả, dịch song ngữ, đáp án (Pro)', path: '/listening/transcripts/ets-2026', scroll: 0 },
+  quick:      { name: 'Ôn nhanh tuỳ chỉnh 5–60 phút (Pro)', path: '/quick-study', scroll: 0 },
+  plan:       { name: 'Lộ trình học cá nhân hoá theo mục tiêu và ngày thi (Pro)', path: '/dashboard', scroll: 900 },
+  practice:   { name: 'Kho đề thi thử, luyện không giới hạn lượt (Pro)', path: '/practice', scroll: 0 },
+};
+const BY_TYPE = {
+  pro_limit: ['practice', 'quick'], pro_analysis: ['analysis', 'weak'], pro_transcript: ['transcript'], pro_roadmap: ['plan'],
+  pro_price: Object.keys(SHOTS), pro_faq: ['weak', 'analysis', 'transcript'], pro_offer: ['analysis', 'transcript', 'plan'], pro_study: ['quick', 'practice'],
+};
+const key = pick(BY_TYPE[prev.type] || Object.keys(SHOTS));
+const s = SHOTS[key];
+return [{ json: { ...prev, proFeature: s.name, proPath: s.path, proScroll: s.scroll,
+  trace: tr(prev, 'Chọn tính năng PRO', { tính_năng: s.name, trang: s.path, hợp_với_góc: prev.type }) } }];
+`;
+const JOIN_PRO = String.raw`
+const p0 = $('${B.pickPro}').first().json;
+const m = $input.first().json;
+return [{ json: { ...p0, proImageUrl: m.url, proText: m.text || '', trace: tr(p0, 'Chụp tính năng PRO', { ảnh: m.url, trang: m.page, ký_tự_đọc_được: (m.text || '').length }) } }];
+`;
+const proShotHttp = (name) =>
+  httpNode(name, {
+    method: "GET", url: HELPER + "/shot", sendQuery: true, specifyQuery: "json",
+    jsonQuery: "={{ JSON.stringify($json.proScroll ? { path: $json.proPath, scroll: $json.proScroll } : { path: $json.proPath }) }}",
+    options: { timeout: 150000 },
+  });
+const threadsCommentImage = (name) =>
+  httpNode(name, {
+    method: "POST", url: TH_URL + "/me/threads", sendQuery: true, specifyQuery: "json",
+    jsonQuery: "={{ JSON.stringify($json.proImageUrl ? { media_type: 'IMAGE', image_url: $json.proImageUrl, text: String($json.comment).slice(0, 490), reply_to_id: $json.postId, access_token: $env.THREADS_TOKEN } : { media_type: 'TEXT', text: String($json.comment).slice(0, 490), reply_to_id: $json.postId, access_token: $env.THREADS_TOKEN }) }}",
+    options: { timeout: 60000 },
+  });
 const engagePost = buildGraph("thrEngagePost01", "Threads 2 – Bài chốt PRO (nâng cấp gói)", [
-  [manual(B.man), 0, 1], [schedule(B.sch, ["30 10 * * *", "30 21 * * *"]), 0, 2.5], [codeNode(B.go, goCode(["chọn dạng bài", "viết bài + comment", "kiểm duyệt", "đăng Threads"]), 0), 1.3, 1.75],
-  [codeNode(B.pick, PICK_ENGAGE_CODE, 0), 2.6, 0.9], [codeNode(B.tr, TREND_CODE("'mẹo học TOEIC, câu hỏi TOEIC Part 5 thử thách'"), 0), 2.6, 1.75], [codeNode(B.old, OLD_POSTS, 0), 2.6, 2.6],
-  [mergeNode(B.mg1), 3.7, 1.3], [mergeNode(B.mg2), 4.8, 1.75],
-  [codeNode(B.wr, engageWrite("threads"), 0), 5.9, 1.75], [codeNode(B.qc, QC_POST(490), 0), 7, 1.75],
-  [threadsCreate(B.c1, "text"), 8.1, 1.75], [codeNode(B.w1, WAIT_CONTAINER, 0), 9.2, 1.75], [threadsPublish(B.p1), 10.3, 1.75],
-  [codeNode(B.pause, PAUSE_CODE(B.qc), 0), 11.4, 1.75],
-  [threadsCreate(B.c2, "comment"), 12.5, 1.75], [codeNode(B.w2, WAIT_CONTAINER, 0), 13.6, 1.75], [threadsPublish(B.p2), 14.7, 1.75],
-  [codeNode(B.done, DONE_POST(B.pause, "Threads"), 0), 15.8, 1.75],
+  [manual(B.man), 0, 1], [schedule(B.sch, ["30 10 * * *", "30 21 * * *"]), 0, 2.6], [codeNode(B.go, goCode(["chọn góc nâng cấp PRO", "chụp 1 tính năng Pro khớp góc bài", "viết bài + comment kèm ảnh", "kiểm duyệt", "đăng Threads"]), 0), 1.3, 1.8],
+  [codeNode(B.pick, PICK_ENGAGE_CODE, 0), 2.6, 0.7], [codeNode(B.pickPro, PICK_PRO, 0), 3.7, 0.7], [proShotHttp(B.shotPro), 4.8, 0.7], [codeNode(B.joinPro, JOIN_PRO, 0), 5.9, 0.7],
+  [codeNode(B.tr, TREND_CODE("'mẹo học TOEIC, câu hỏi TOEIC Part 5 thử thách'"), 0), 5.9, 1.9], [codeNode(B.old, OLD_POSTS, 0), 5.9, 3.0],
+  [mergeNode(B.mg1), 7, 1.3], [mergeNode(B.mg2), 8.1, 1.9],
+  [codeNode(B.wr, engageWrite("threads"), 0), 9.2, 1.9], [codeNode(B.qc, QC_POST(490), 0), 10.3, 1.9],
+  [threadsCreate(B.c1, "text"), 11.4, 1.9], [codeNode(B.w1, WAIT_CONTAINER, 0), 12.5, 1.9], [threadsPublish(B.p1), 13.6, 1.9],
+  [codeNode(B.pause, PAUSE_CODE(B.qc), 0), 14.7, 1.9],
+  [threadsCommentImage(B.c2), 15.8, 1.9], [codeNode(B.w2, WAIT_CONTAINER, 0), 16.9, 1.9], [threadsPublish(B.p2), 18, 1.9],
+  [codeNode(B.done, DONE_POST(B.pause, "Threads"), 0), 19.1, 1.9],
 ], [
   edge(B.man, B.go), edge(B.sch, B.go), edge(B.go, B.pick), edge(B.go, B.tr), edge(B.go, B.old),
-  edge(B.pick, B.mg1, 0, 0), edge(B.tr, B.mg1, 0, 1), edge(B.mg1, B.mg2, 0, 0), edge(B.old, B.mg2, 0, 1), edge(B.mg2, B.wr),
+  edge(B.pick, B.pickPro), edge(B.pickPro, B.shotPro), edge(B.shotPro, B.joinPro),
+  edge(B.joinPro, B.mg1, 0, 0), edge(B.tr, B.mg1, 0, 1), edge(B.mg1, B.mg2, 0, 0), edge(B.old, B.mg2, 0, 1), edge(B.mg2, B.wr),
   edge(B.wr, B.qc), edge(B.qc, B.c1), edge(B.c1, B.w1), edge(B.w1, B.p1), edge(B.p1, B.pause),
   edge(B.pause, B.c2), edge(B.c2, B.w2), edge(B.w2, B.p2), edge(B.p2, B.done),
 ], [
-  sticky("① KÍCH HOẠT", "## ① KÍCH HOẠT\n10:30 (cuối buổi sáng) & 21:30 (tối) hoặc bấm tay", 0, 0.6, 2.3, 2.9, 4),
-  sticky("② CHUẨN BỊ SONG SONG", "## ② CHUẨN BỊ (song song)\nChọn góc nâng cấp PRO (hết lượt / phân tích điểm yếu / transcript / lộ trình / giá ly trà sữa / có đáng mua / ưu đãi người mới / học thông minh) ‖ SĂN XU HƯỚNG ‖ ĐỌC BÀI CŨ → gộp", 2.6, 0.1, 2.9, 3.5, 5),
-  sticky("③ VIẾT VÀ KIỂM DUYỆT", "## ③ VIẾT & KIỂM DUYỆT\nGemini viết bài thuyết phục PRO + comment dẫn /pricing, 7 điều kiện (chặn số tiền, cam kết, số liệu bịa)", 5.7, 0.9, 2.0, 1.7, 6),
-  sticky("④ ĐĂNG THREADS", "## ④ ĐĂNG LÊN THREADS (API chính thức)\nTạo container → chờ Meta → xuất bản · nghỉ vài giây · comment cùng 3 bước", 7.8, 0.9, 8.6, 1.7, 7),
+  sticky("① KÍCH HOẠT", "## ① KÍCH HOẠT\n10:30 (cuối buổi sáng) & 21:30 (tối) hoặc bấm tay", 0, 0.6, 2.3, 3.0, 4),
+  sticky("② GÓC PRO + ẢNH PRO", "## ② GÓC NÂNG CẤP + ẢNH TÍNH NĂNG PRO\nChọn góc (hết lượt / phân tích điểm yếu / transcript / lộ trình…) → CHỤP đúng tính năng Pro khớp góc → ghép", 2.6, 0.1, 4.4, 1.7, 5),
+  sticky("③ SONG SONG", "## ② (tiếp) SĂN XU HƯỚNG ‖ ĐỌC BÀI CŨ\nChạy song song với nhánh chụp ảnh, rồi gộp", 5.8, 1.5, 3.2, 2.0, 5),
+  sticky("④ VIẾT", "## ③ VIẾT & KIỂM DUYỆT\nGemini viết bài thuyết phục PRO ngắn + comment khoe tính năng trong ảnh, 7 điều kiện", 9.1, 1.1, 2.1, 1.7, 6),
+  sticky("⑤ ĐĂNG", "## ④ ĐĂNG LÊN THREADS (API chính thức)\nBài (3 bước) → nghỉ vài giây → comment KÈM ẢNH PRO + link /pricing (3 bước)", 11.3, 1.1, 8.9, 1.7, 7),
 ]);
 
 // ===========================================================================

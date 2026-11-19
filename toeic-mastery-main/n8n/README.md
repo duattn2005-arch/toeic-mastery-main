@@ -5,7 +5,7 @@ Các workflow chạy trên n8n local (http://localhost:5678), giờ theo múi As
 | Workflow | Lịch (trong giờ dùng máy: sáng 8–11:30, tối 19–23) | Làm gì |
 |---|---|---|
 | Threads 1 – Bài ảnh tính năng → chốt PRO | 8:30 & 19:30 | Chọn tính năng, chụp màn hình ‖ săn xu hướng ‖ đọc bài cũ (song song), Gemini viết bài + comment nối tiếp, kiểm duyệt 6 điều kiện, đăng bằng 3 bước API (tạo container → chờ Meta → xuất bản), comment link vào trang đó |
-| Threads 2 – Bài chốt PRO | 10:30 & 21:30 | Xoay vòng mẹo / quiz / hỏi đáp / từ dễ nhầm / confession, cùng pipeline như trên; link dẫn do Gemini chọn trong 17 trang sản phẩm (không dẫn blog/hướng dẫn) |
+| Threads 2 – Bài chốt PRO | 10:30 & 21:30 | Chụp 1 tính năng Pro khớp góc bài (Radar phân tích, Transcript ETS, Ôn nhanh, lộ trình…) và đính vào comment cùng link; xoay vòng mẹo / quiz / hỏi đáp / từ dễ nhầm / confession, cùng pipeline như trên; link dẫn do Gemini chọn trong 17 trang sản phẩm (không dẫn blog/hướng dẫn) |
 | Threads 3 – Tự trả lời comment | Mỗi 20 phút, 7h–24h | Cổng an toàn → lấy tài khoản ‖ thống kê → lấy bài → quét comment → chọn tối đa 3, quyết định gắn link → Gemini viết song song → kiểm duyệt → đăng cách nhau 15–45 giây; tối đa 60/ngày |
 | Facebook 3 – Tự trả lời comment (Page) | Mỗi 15 phút, 7h–24h | Như trên cho Fanpage: like rồi trả lời, tối đa 4/lần, 80/ngày; mỗi bài chỉ gửi link web 1 lần |
 | Facebook Group – Trung tâm nội dung | 9:00 mỗi ngày | Một lượt chạy sinh 2 bài song song (ảnh tính năng + tương tác), kiểm duyệt, ghi vào Google Doc kèm ảnh và comment |

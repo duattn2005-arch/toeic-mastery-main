@@ -63,7 +63,7 @@
       "parameters": {}
     },
     {
-      "id": "n85--19-05-m-i-ng-y",
+      "id": "n88--19-05-m-i-ng-y",
       "name": "⏰ 19:05 mỗi ngày",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -83,7 +83,7 @@
       }
     },
     {
-      "id": "n86--Kh-i-ng-l-t-ch-y",
+      "id": "n89--Kh-i-ng-l-t-ch-y",
       "name": "🚀 Khởi động lượt chạy",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -97,7 +97,7 @@
       }
     },
     {
-      "id": "n87--Ch-n-b-i-h-c-h-m-nay",
+      "id": "n90--Ch-n-b-i-h-c-h-m-nay",
       "name": "📅 Chọn bài học hôm nay",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -111,7 +111,7 @@
       }
     },
     {
-      "id": "n88--Ki-m-tra-helper-HTTP-",
+      "id": "n91--Ki-m-tra-helper-HTTP-",
       "name": "🩺 Kiểm tra helper (HTTP)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -128,7 +128,7 @@
       }
     },
     {
-      "id": "n89--T-nh-nh-p-h-c",
+      "id": "n92--T-nh-nh-p-h-c",
       "name": "🧮 Tính nhịp học",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -142,7 +142,7 @@
       }
     },
     {
-      "id": "n90--G-p-ki-m-tra-nh-p",
+      "id": "n93--G-p-ki-m-tra-nh-p",
       "name": "🔀 Gộp kiểm tra + nhịp",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
@@ -157,7 +157,7 @@
       }
     },
     {
-      "id": "n91--B-t-u-bu-i-h-c-HTTP-",
+      "id": "n94--B-t-u-bu-i-h-c-HTTP-",
       "name": "🎓 Bắt đầu buổi học (HTTP)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -177,7 +177,7 @@
       }
     },
     {
-      "id": "n92--T-ng-k-t-ch-y",
+      "id": "n95--T-ng-k-t-ch-y",
       "name": "📊 Tổng kết chạy",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,

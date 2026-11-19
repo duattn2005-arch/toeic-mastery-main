@@ -79,7 +79,7 @@
       "parameters": {}
     },
     {
-      "id": "n63--M-i-20-ph-t",
+      "id": "n66--M-i-20-ph-t",
       "name": "⏰ Mỗi 20 phút",
       "type": "n8n-nodes-base.scheduleTrigger",
       "typeVersion": 1.2,
@@ -99,7 +99,7 @@
       }
     },
     {
-      "id": "n62--C-ng-an-to-n-gi-gi-i-h-n-ng-y-",
+      "id": "n65--C-ng-an-to-n-gi-gi-i-h-n-ng-y-",
       "name": "🚦 Cổng an toàn (giờ & giới hạn ngày)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -113,7 +113,7 @@
       }
     },
     {
-      "id": "n61--L-y-t-i-kho-n-HTTP-",
+      "id": "n64--L-y-t-i-kho-n-HTTP-",
       "name": "👤 Lấy tài khoản (HTTP)",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
@@ -133,7 +133,7 @@
       }
     },
     {
-      "id": "n64--Th-ng-k-h-m-nay",
+      "id": "n67--Th-ng-k-h-m-nay",
       "name": "📈 Thống kê hôm nay",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -147,7 +147,7 @@
       }
     },
     {
-      "id": "n65--G-p-t-i-kho-n-th-ng-k-",
+      "id": "n68--G-p-t-i-kho-n-th-ng-k-",
       "name": "🔀 Gộp tài khoản + thống kê",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
@@ -162,7 +162,7 @@
       }
     },
     {
-      "id": "n66--L-y-b-i-4-ng-y-g-n-y",
+      "id": "n69--L-y-b-i-4-ng-y-g-n-y",
       "name": "📚 Lấy bài 4 ngày gần đây",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -176,7 +176,7 @@
       }
     },
     {
-      "id": "n67--Qu-t-comment-m-i",
+      "id": "n70--Qu-t-comment-m-i",
       "name": "🔍 Quét comment mới",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -190,7 +190,7 @@
       }
     },
     {
-      "id": "n68--Ch-n-t-i-a-3-quy-t-nh-g-n-link",
+      "id": "n71--Ch-n-t-i-a-3-quy-t-nh-g-n-link",
       "name": "🧠 Chọn tối đa 3 & quyết định gắn link",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -204,7 +204,7 @@
       }
     },
     {
-      "id": "n69--Vi-t-tr-l-i-Gemini-song-song-",
+      "id": "n72--Vi-t-tr-l-i-Gemini-song-song-",
       "name": "✍️ Viết trả lời (Gemini, song song)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -218,7 +218,7 @@
       }
     },
     {
-      "id": "n70--Ki-m-duy-t-tr-l-i",
+      "id": "n73--Ki-m-duy-t-tr-l-i",
       "name": "🛡️ Kiểm duyệt trả lời",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -232,7 +232,7 @@
       }
     },
     {
-      "id": "n71--ng-tr-l-i-c-ch-nhau-15-45s-",
+      "id": "n74--ng-tr-l-i-c-ch-nhau-15-45s-",
       "name": "📤 Đăng trả lời (cách nhau 15–45s)",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
@@ -246,7 +246,7 @@
       }
     },
     {
-      "id": "n72--T-ng-k-t-ch-y",
+      "id": "n75--T-ng-k-t-ch-y",
       "name": "📊 Tổng kết chạy",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
