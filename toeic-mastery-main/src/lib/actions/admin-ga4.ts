@@ -65,9 +65,9 @@ export async function runGa4BackfillSampleAction() {
   return runGa4BackfillSample();
 }
 
-export async function runGa4BackfillBatchAction(count: number) {
+export async function runGa4BackfillBatchAction(count: number, spreadDays = 0) {
   const admin = await requireSuperAdmin();
-  const result = await runGa4BackfillBatch(count, admin.id);
+  const result = await runGa4BackfillBatch(count, admin.id, spreadDays);
   revalidatePath("/admin/ga4");
   return result;
 }

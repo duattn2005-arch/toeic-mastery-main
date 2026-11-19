@@ -133,9 +133,10 @@ export async function previewGa4Backfill(): Promise<BackfillPreview> {
   };
 }
 
-async function send(targets: GaTarget[], item: BackfillItem): Promise<boolean> {
+async function send(targets: GaTarget[], item: BackfillItem, timestampMicros?: number): Promise<boolean> {
   const body = JSON.stringify({
     client_id: `server.${item.userId}`,
+    ...(timestampMicros ? { timestamp_micros: timestampMicros } : {}),
     user_id: item.userId,
     events: [
       {
@@ -237,7 +238,8 @@ export async function getGa4BatchProgress(preview: BackfillPreview): Promise<Bat
 
 export async function runGa4BackfillBatch(
   count: number,
-  updatedBy: string | null
+  updatedBy: string | null,
+  spreadDays = 0
 ): Promise<{ error: string } | { sent: number; failed: number; value: number; remaining: number }> {
   const n = Math.max(1, Math.min(87, Math.floor(count) || 0));
   const targets = await getGaTargets();
@@ -250,8 +252,12 @@ export async function runGa4BackfillBatch(
   let sent = 0;
   let failed = 0;
   let value = 0;
+  // GA4 accepts event times at most 72h back; stay under with a margin.
+  const days = Math.max(0, Math.min(3, Math.floor(spreadDays) || 0));
+  const windowMs = days === 0 ? 0 : Math.min(days * 24, 70) * 3600_000;
   for (const item of pending.slice(0, n)) {
-    if (await send(targets, item)) {
+    const ts = windowMs ? (Date.now() - Math.random() * windowMs) * 1000 : undefined;
+    if (await send(targets, item, ts ? Math.floor(ts) : undefined)) {
       sent++;
       value += item.value;
       done.add(item.transactionId);
