@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { allowGa4ResendAction, runGa4BackfillAction, saveGaSecretsAction } from "@/lib/actions/admin-ga4";
+import { allowGa4ResendAction, runGa4BackfillAction, saveGaSecretsAction, sendGaTestEventAction } from "@/lib/actions/admin-ga4";
 
 export function GaSecretsForm({ primaryId, linkedId }: { primaryId: string; linkedId: string }) {
   const router = useRouter();
@@ -57,6 +57,31 @@ export function GaSecretsForm({ primaryId, linkedId }: { primaryId: string; link
         {pending && <Loader2 className="size-4 animate-spin" />} Lưu khoá
       </Button>
     </form>
+  );
+}
+
+export function GaTestEventButton() {
+  const [pending, startTransition] = React.useTransition();
+
+  function run() {
+    startTransition(async () => {
+      const results = await sendGaTestEventAction();
+      if (results.length === 0) {
+        toast.error("Chưa có khoá nào để thử.");
+        return;
+      }
+      for (const r of results) {
+        if (!r.sent) toast.error(`${r.measurementId}: gửi thất bại (mạng/GA4 từ chối).`);
+        else if (r.payloadProblems.length > 0) toast.warning(`${r.measurementId}: GA4 báo dữ liệu có lỗi — ${r.payloadProblems.join("; ")}`);
+        else toast.success(`${r.measurementId}: đã gửi sự kiện server_test — xem GA4 → Thời gian thực.`);
+      }
+    });
+  }
+
+  return (
+    <Button type="button" variant="outline" onClick={run} disabled={pending} className="w-fit">
+      {pending && <Loader2 className="size-4 animate-spin" />} Gửi sự kiện thử (server_test)
+    </Button>
   );
 }
 
