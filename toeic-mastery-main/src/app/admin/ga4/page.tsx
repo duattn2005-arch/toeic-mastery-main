@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import { requireSuperAdmin } from "@/lib/auth";
 import { GA_LINKED_MEASUREMENT_ID, GA_MEASUREMENT_ID } from "@/lib/ga-config";
 import { getGaTargets } from "@/lib/services/ga-secrets";
-import { previewGa4Backfill } from "@/lib/services/ga4-backfill";
-import { GaAllowResendButton, GaBackfillButton, GaSampleButton, GaSecretsForm, GaTestEventButton } from "@/components/admin/ga4-settings-forms";
+import { getGa4BatchProgress, previewGa4Backfill } from "@/lib/services/ga4-backfill";
+import { GaAllowResendButton, GaBackfillButton, GaBatchSender, GaSampleButton, GaSecretsForm, GaTestEventButton } from "@/components/admin/ga4-settings-forms";
 
 export const metadata: Metadata = { title: "GA4" };
 
@@ -15,6 +15,7 @@ const KIND_LABEL = { order: "Đơn thanh toán", code: "Mã kích hoạt", manua
 export default async function AdminGa4Page() {
   await requireSuperAdmin();
   const [targets, preview] = await Promise.all([getGaTargets(), previewGa4Backfill()]);
+  const batch = await getGa4BatchProgress(preview);
   const status = [
     { id: GA_MEASUREMENT_ID, name: "Property chính" },
     { id: GA_LINKED_MEASUREMENT_ID, name: "Property liên kết" },
@@ -98,6 +99,14 @@ export default async function AdminGa4Page() {
             Thử trước 1 purchase trị giá 1đ (mã giao dịch riêng, không đụng đơn thật): mở GA4 → Thời gian thực, bấm nút, phải thấy sự kiện <b>purchase</b>.
           </p>
           <GaTestEventButton purchase />
+        </div>
+        <div className="flex flex-col gap-2 rounded-xl border border-border p-3">
+          <p className="text-sm font-medium">Gửi rải nhiều ngày (khuyên dùng)</p>
+          <p className="text-sm text-muted-foreground">
+            GA4 chỉ ghi các lượt này vào ngày gửi, nên mỗi ngày bấm 1 lần một ít để biểu đồ không bị dồn một cục. Đã gửi {batch.sent}/{preview.total}, còn{" "}
+            {batch.remaining} đơn ({batch.remainingValue.toLocaleString("vi-VN")}đ). Chạy độc lập với nút &quot;Gửi {preview.total} purchase&quot; bên dưới — đừng dùng cả hai.
+          </p>
+          <GaBatchSender remaining={batch.remaining} disabled={targets.length === 0} />
         </div>
         <GaSampleButton disabled={targets.length === 0 || preview.total === 0} />
         <GaBackfillButton total={preview.total} totalValue={preview.totalValue} disabled={!!preview.doneAt || targets.length === 0} />

@@ -204,3 +204,64 @@ export async function runGa4BackfillSample(): Promise<{ error: string } | { sent
   }
   return { sent, failed, items: sample.map((i) => ({ who: i.who, value: i.value, transactionId: i.transactionId })) };
 }
+
+/** Batch mode: send the backfill a few at a time, over several days, so GA4
+ * doesn't show one giant spike. Which orders already went out is kept as a
+ * JSON list of transaction ids in app_settings. First use is seeded with the
+ * SAMPLE_COUNT orders the trial button already sent, so they aren't sent a
+ * third time. */
+export const BATCH_SENT_KEY = "ga4_backfill_batch_sent";
+
+async function readBatchSent(items: BackfillItem[]): Promise<Set<string>> {
+  const row = await db.appSetting.findUnique({ where: { key: BATCH_SENT_KEY } });
+  if (!row) return new Set(items.slice(0, SAMPLE_COUNT).map((i) => i.transactionId));
+  try {
+    const ids = JSON.parse(row.value) as string[];
+    return new Set(ids);
+  } catch {
+    return new Set();
+  }
+}
+
+export interface BatchProgress {
+  sent: number;
+  remaining: number;
+  remainingValue: number;
+}
+
+export async function getGa4BatchProgress(preview: BackfillPreview): Promise<BatchProgress> {
+  const sent = await readBatchSent(preview.items);
+  const pending = preview.items.filter((i) => !sent.has(i.transactionId));
+  return { sent: preview.total - pending.length, remaining: pending.length, remainingValue: pending.reduce((sum, i) => sum + i.value, 0) };
+}
+
+export async function runGa4BackfillBatch(
+  count: number,
+  updatedBy: string | null
+): Promise<{ error: string } | { sent: number; failed: number; value: number; remaining: number }> {
+  const n = Math.max(1, Math.min(87, Math.floor(count) || 0));
+  const targets = await getGaTargets();
+  if (targets.length === 0) return { error: "Chưa có khoá GA4 nào — lưu khoá ở trên trước." };
+  const preview = await previewGa4Backfill();
+  const done = await readBatchSent(preview.items);
+  const pending = preview.items.filter((i) => !done.has(i.transactionId));
+  if (pending.length === 0) return { error: "Đã gửi hết rồi — không còn đơn nào để gửi." };
+
+  let sent = 0;
+  let failed = 0;
+  let value = 0;
+  for (const item of pending.slice(0, n)) {
+    if (await send(targets, item)) {
+      sent++;
+      value += item.value;
+      done.add(item.transactionId);
+    } else failed++;
+  }
+  const payload = JSON.stringify([...done]);
+  await db.appSetting.upsert({
+    where: { key: BATCH_SENT_KEY },
+    create: { key: BATCH_SENT_KEY, value: payload, updatedBy },
+    update: { value: payload, updatedBy },
+  });
+  return { sent, failed, value, remaining: pending.length - sent };
+}
