@@ -128,11 +128,12 @@ export function GaSampleButton({ disabled }: { disabled: boolean }) {
 export function GaBatchSender({ remaining, disabled }: { remaining: number; disabled: boolean }) {
   const router = useRouter();
   const [count, setCount] = React.useState("15");
+  const [spread, setSpread] = React.useState("0");
   const [pending, startTransition] = React.useTransition();
 
   function run() {
     startTransition(async () => {
-      const result = await runGa4BackfillBatchAction(Number(count));
+      const result = await runGa4BackfillBatchAction(Number(count), Number(spread));
       if ("error" in result) {
         toast.error(result.error);
         return;
@@ -148,6 +149,15 @@ export function GaBatchSender({ remaining, disabled }: { remaining: number; disa
       <div className="flex flex-col gap-1.5">
         <Label htmlFor="ga-batch">Số đơn gửi mỗi lần</Label>
         <Input id="ga-batch" type="number" min={1} max={87} value={count} onChange={(e) => setCount(e.target.value)} className="w-28" />
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="ga-spread">Trải về quá khứ</Label>
+        <select id="ga-spread" value={spread} onChange={(e) => setSpread(e.target.value)} className="h-9 rounded-md border border-input bg-background px-2 text-sm">
+          <option value="0">Không (ghi vào lúc gửi)</option>
+          <option value="1">Trong 1 ngày trước</option>
+          <option value="2">Trong 2 ngày trước</option>
+          <option value="3">Trong ~3 ngày trước (tối đa)</option>
+        </select>
       </div>
       <Button type="button" onClick={run} disabled={disabled || pending || remaining === 0}>
         {pending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />} Gửi {count || 0} đơn tiếp theo
