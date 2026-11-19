@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/auth";
 import { GA_SECRET_KEYS, clearGaSecretCache } from "@/lib/services/ga-secrets";
-import { sendGaTestEvent, type GaTestResult } from "@/lib/services/ga4-test";
+import { sendGaTestEvent, sendGaTestPurchase, type GaTestResult } from "@/lib/services/ga4-test";
 import { BACKFILL_DONE_KEY, runGa4Backfill, type BackfillRunResult } from "@/lib/services/ga4-backfill";
 
 /** Saves the GA4 Measurement Protocol API secrets from /admin/ga4. A blank
@@ -46,6 +46,11 @@ export async function allowGa4ResendAction(): Promise<{ error?: string; ok?: tru
 export async function sendGaTestEventAction(): Promise<GaTestResult[]> {
   await requireSuperAdmin();
   return sendGaTestEvent();
+}
+
+export async function sendGaTestPurchaseAction(): Promise<GaTestResult[]> {
+  await requireSuperAdmin();
+  return sendGaTestPurchase();
 }
 
 export async function runGa4BackfillAction(): Promise<BackfillRunResult> {

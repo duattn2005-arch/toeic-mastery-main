@@ -93,6 +93,12 @@ export default async function AdminGa4Page() {
         ) : targets.length === 0 ? (
           <p className="rounded-xl bg-warning/10 px-3 py-2 text-sm font-medium text-warning">Lưu khoá ở bước 1 trước rồi mới gửi được.</p>
         ) : null}
+        <div className="flex flex-col gap-1.5">
+          <p className="text-sm text-muted-foreground">
+            Thử trước 1 purchase trị giá 1đ (mã giao dịch riêng, không đụng đơn thật): mở GA4 → Thời gian thực, bấm nút, phải thấy sự kiện <b>purchase</b>.
+          </p>
+          <GaTestEventButton purchase />
+        </div>
         <GaBackfillButton total={preview.total} totalValue={preview.totalValue} disabled={!!preview.doneAt || targets.length === 0} />
         <div className="max-h-96 overflow-auto rounded-xl border border-border">
           <table className="w-full min-w-[640px] text-sm">

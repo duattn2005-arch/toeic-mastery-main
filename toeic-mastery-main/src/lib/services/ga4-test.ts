@@ -36,3 +36,40 @@ export async function sendGaTestEvent(): Promise<GaTestResult[]> {
     })
   );
 }
+
+/** Same payload shape as the backfill's real purchases, but a throwaway
+ * transaction id and 1đ, so a missing/present `purchase` in GA4 Realtime
+ * says whether the purchase payload itself is accepted. */
+export async function sendGaTestPurchase(): Promise<GaTestResult[]> {
+  const targets = await getGaTargets();
+  const transactionId = `test-${Date.now()}`;
+  const body = JSON.stringify({
+    client_id: "server.admin-test",
+    user_id: "admin-test",
+    events: [
+      {
+        name: "purchase",
+        params: {
+          transaction_id: transactionId,
+          value: 1,
+          currency: "VND",
+          items: [{ item_id: "TEST", item_name: "Test purchase (admin)", price: 1, quantity: 1 }],
+          engagement_time_msec: 1,
+        },
+      },
+    ],
+  });
+  return Promise.all(
+    targets.map(async (t) => {
+      const debugUrl = mpUrl(t).replace("/mp/collect", "/debug/mp/collect");
+      const payloadProblems = await fetch(debugUrl, { method: "POST", body, signal: AbortSignal.timeout(6000) })
+        .then((r) => r.json())
+        .then((j: { validationMessages?: { description?: string }[] }) => (j.validationMessages ?? []).map((m) => m.description ?? "lỗi không rõ"))
+        .catch(() => ["Không gọi được endpoint kiểm tra"]);
+      const sent = await fetch(mpUrl(t), { method: "POST", body, signal: AbortSignal.timeout(6000) })
+        .then((r) => r.ok)
+        .catch(() => false);
+      return { measurementId: t.measurementId, sent, payloadProblems };
+    })
+  );
+}
