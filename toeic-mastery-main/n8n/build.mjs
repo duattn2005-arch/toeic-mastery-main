@@ -111,6 +111,27 @@ const COMMENT_RULE = [
   'Cấm mở đầu bằng "Link đây", "Đây nè", "Vào đây"; cấm câu kêu gọi chung chung như "truy cập ngay"; không lặp lại nguyên văn bài; tối đa 3 câu, tối đa 1 emoji.',
 ].join('\n');
 
+// Real facts about the PRO plan (src/lib/constants/billing.ts, limits.ts, components/billing/pro-card.tsx). Posts may only use these.
+const PRO_FACTS = [
+  'GÓC NHÌN VỀ GÓI PRO CỦA WEB (chỉ được dùng đúng các dữ kiện này, không thêm bớt):',
+  '- Giá: TUYỆT ĐỐI KHÔNG viết số tiền, không viết phần trăm giảm giá. Chỉ nói theo kiểu so sánh đời thường và đúng sự thật: tính ra mỗi ngày chưa bằng một ly trà sữa, một tô phở hay một cốc cà phê; "giá học sinh", ai cũng chạm tới được; gói dài hạn còn rẻ hơn mua từng tháng.',
+  '- Ưu đãi thật: thành viên mới được giảm giá nếu nâng cấp trong những ngày đầu sau khi đăng ký (nói "ưu đãi giảm cho thành viên mới", không nêu con số).',
+  '- Gói Free bị giới hạn mỗi ngày: 2 lượt bắt đầu luyện ở chế độ practice, 1 full test, tra từ bôi đen 30 lượt, chữa câu tức thì 50 lượt mỗi Part, 4 gợi ý "bước học tiếp theo" của AI Mentor, "học lại" tối đa 20 câu đã lưu.',
+  '- Pro mở khoá: không giới hạn Mock Test, tra từ bôi đen và chữa câu tức thì; Radar kỹ năng và phân tích năng lực chi tiết kèm bài luyện vá điểm yếu; Transcript ETS (nghe chép chính tả, dịch song ngữ, đáp án); lời giải chi tiết và transcript khi xem lại bài / câu sai / câu đã lưu; từ đồng nghĩa và ví dụ chuyên sâu; tuỳ chỉnh Quick Study 5–60 phút; tự tạo đề từ câu sai và từ đã lưu; xuất PDF từ vựng; lộ trình cấp tốc 14–30 ngày và study plan theo ngày thi; theme động và upload hình nền; không quảng cáo; hỗ trợ ưu tiên.',
+  '- Thanh toán bằng chuyển khoản QR ngay trên web, web tự xác nhận khi tiền về.',
+  '- Xem gói và nâng cấp: ' + SITE + '/pricing',
+].join('\n');
+const PRO_RULES = [
+  'CÁCH VIẾT BÀI CHỐT PRO (tự nhiên, thuyết phục, KHÔNG ép):',
+  '- Nói như người bạn nhắc nhau, không như quảng cáo: mở bằng một tình huống/nỗi đau có thật của người học TOEIC (bị giới hạn, học không biết yếu ở đâu, không có kế hoạch, hết lượt luyện...), rồi nối sang đúng quyền lợi Pro giải quyết nó.',
+  '- Cụ thể hơn là khoa trương: nêu 1-2 quyền lợi Pro cụ thể thay vì liệt kê hết. Nói về giá CHỈ bằng so sánh đời thường (chưa bằng ly trà sữa / tô phở / cốc cà phê mỗi ngày, giá học sinh) và nhắc ưu đãi giảm cho thành viên mới khi hợp ngữ cảnh. KHÔNG có số tiền, KHÔNG có số %.',
+  '- Thành thật để tạo niềm tin: nói rõ ai CHƯA cần Pro (còn dùng free thoải mái, mới tập, chưa hết lượt) và ai NÊN cân nhắc (sát ngày thi, cần phân tích điểm yếu, luyện nhiều mỗi ngày).',
+  '- CẤM tuyệt đối: bịa lời chứng thực/đánh giá của học viên, điểm số hay số học viên cụ thể, cam kết/bảo đảm lên điểm, khan hiếm giả ("chỉ còn X suất", "hết hạn hôm nay"), chê bai đối thủ, nói quyền lợi không có trong dữ kiện.',
+  '- Kết bài bằng một câu mời nhẹ (không "MUA NGAY"), link ở comment.',
+].join('\n');
+// Wording that must never reach a published post (checked again in the QC node).
+const BANNED_PRO = /(\d[\d.,]*\s?(k\b|nghìn|ngàn|đ(?![a-zà-ỹ])|đồng|₫|vnđ|vnd)|\d+\s?%|cam kết|đảm bảo (lên|đạt|điểm)|bảo đảm|chắc chắn (đạt|lên)|\d+\+? ?(học viên|bạn đã|người đã)|chỉ còn \d+ ?(suất|slot|chỗ)|hết (hạn|ưu đãi) (hôm nay|đêm nay|trong hôm nay))/i;
+
 const VIRAL = [
   'Các mẫu bài TOEIC hay viral trên Threads: "ae nào ... thì vô đây", confession mất gốc lên 700+, list 3-5 mẹo ngắn, "sai lầm mà 90% người mới mắc",',
   'câu hỏi Part 5 thử thách "ai làm đúng câu này trong 10s", so sánh 2 từ dễ nhầm, hỏi ngược người đọc "bạn kẹt part nào nhất".',
@@ -207,33 +228,43 @@ const p = $input.first().json;
 const P = ${JSON.stringify(PLATFORM[platform])};
 const mine = ${platform === "threads" ? "($input.first().json.mine !== undefined ? $input.first().json.mine : (await myRecentPosts(12)).map((x) => '- ' + x.text.replace(/\\s+/g, ' ').slice(0, 220)).join('\\n'))" : "''"};
 const trends = p.trends !== undefined ? p.trends : await research(p.feature);
-const out = await gemini(
-  [
-    'Bạn là admin ' + P.who + ' (web luyện thi TOEIC ' + SITE + ').',
-    'Viết 1 bài kèm ẢNH CHỤP MÀN HÌNH tính năng của web để khoe web có gì và kéo người đọc vào dùng thử.',
-    'Tính năng trong ảnh: ' + p.feature,
-    'Chữ hiển thị trên màn hình đó (để hiểu tính năng, không chép nguyên): ' + p.text.slice(0, 2500),
-    VOICE,
-    P.len + ' Nói tính năng này giúp gì cho người học (lợi ích cụ thể, đời thường), có thể kể kiểu "dạo này t học bằng cái này". Không nói số liệu trong ảnh là kết quả của người thật. Kết bài rủ người đọc xem link ở comment.',
-    VIRAL,
-    trends ? 'Xu hướng/đối thủ đang làm (chỉ lấy cảm hứng):\n' + trends : '',
-    mine ? 'Các bài cũ của trang (giữ giọng tương tự nhưng KHÔNG lặp hook/ý):\n' + mine : '',
-    COMMENT_RULE,
-    'Trả về JSON: {"post": "...", "comment": "comment đầu tiên theo quy tắc trên, có chèn đúng link ' + p.link + ' ở cuối"}',
-  ].join('\n\n'),
-  { json: true }
-);
-if (!out.post || !out.comment || !out.comment.includes(SITE.replace(/^https?:\/\//, ''))) throw new Error('Gemini trả sai định dạng: ' + JSON.stringify(out));
-return [{ json: { ...p, post: out.post, comment: out.comment } }];
+const buildPrompt = (extra) => [
+  'Bạn là admin ' + P.who + ' (web luyện thi TOEIC ' + SITE + ').',
+  'Viết 1 bài kèm ẢNH CHỤP MÀN HÌNH tính năng của web, vừa khoe tính năng vừa giúp người đọc cân nhắc nâng cấp gói PRO.',
+  'Tính năng trong ảnh: ' + p.feature,
+  'Chữ hiển thị trên màn hình đó (để hiểu tính năng, không chép nguyên): ' + String(p.text || '').slice(0, 2500),
+  'Nối tính năng này với quyền lợi Pro THẬT trong dữ kiện: nếu tính năng bị khoá/giới hạn ở bản free (vd phân tích năng lực, transcript, luyện không giới hạn) thì nói thẳng là của Pro và nó giúp gì; nếu là tính năng free thì nói đúng là free, rồi chỉ ra Pro mở rộng nó thế nào. Không bịa.',
+  PRO_FACTS,
+  PRO_RULES,
+  VOICE.replace('KHÔNG văn mẫu quảng cáo, ', ''),
+  P.len + ' Không nói số liệu trong ảnh là kết quả của người thật.',
+  VIRAL,
+  trends ? 'Xu hướng/đối thủ đang làm (chỉ lấy cảm hứng):\n' + trends : '',
+  mine ? 'Các bài cũ của trang (giữ giọng tương tự nhưng KHÔNG lặp hook/ý):\n' + mine : '',
+  'COMMENT ĐẦU TIÊN: nối tiếp mạch bài như người đang nói tiếp (1-2 câu có giá trị thật, hoặc thừa nhận ai chưa cần Pro), rồi dẫn tới trang gói Pro, URL ' + SITE + '/pricing đặt CUỐI comment. Cấm mở đầu bằng "Link đây/Đây nè/Vào đây", tối đa 3 câu, 1 emoji.',
+  extra || '',
+  'Trả về JSON: {"post": "...", "comment": "..."}',
+].filter(Boolean).join('\n\n');
+let out = await gemini(buildPrompt(''), { json: true });
+let retried = false;
+if (BANNED_PRO.test(String(out.post) + ' ' + String(out.comment))) {
+  retried = true;
+  out = await gemini(buildPrompt('LẦN TRƯỚC VI PHẠM: bài có số tiền / số %, cam kết điểm, số học viên hoặc khan hiếm giả. Viết lại, bỏ hết những thứ đó, chỉ so sánh giá bằng ly trà sữa / tô phở và dùng dữ kiện thật.'), { json: true });
+}
+if (!out.post || !out.comment || !out.comment.includes(SITE.replace(/^https?:\/\//, '') + '/pricing')) throw new Error('Gemini trả sai định dạng (thiếu link /pricing): ' + JSON.stringify(out));
+return [{ json: { ...p, post: out.post, comment: out.comment, link: SITE + '/pricing', viết_lại_vì_vi_phạm: retried } }];
 `;
 
 const ENGAGE_TYPES = String.raw`
 const TYPES = {
-  tip: 'Chia sẻ 3-5 mẹo TOEIC cực ngắn, thực tế (Part 5/6/7, Listening, quản lý thời gian, từ vựng). Comment sẽ dẫn link luyện tập.',
-  quiz: 'Đăng 1 câu hỏi Part 5 (1 câu tiếng Anh có chỗ trống + 4 đáp án A/B/C/D, chuẩn format TOEIC, chỉ 1 đáp án đúng). Thách người đọc trả lời trong 10s, KHÔNG nêu đáp án trong bài. Comment sẽ là đáp án + giải thích ngắn + link làm thêm.',
-  question: 'Đặt 1 câu hỏi mở kích comment (vd: bạn kẹt part nào, mục tiêu bao nhiêu điểm, thi lần mấy rồi...), kèm 1-2 câu kể chuyện đồng cảm. Comment dẫn link để luyện đúng chỗ yếu.',
-  confusing: 'So sánh 2-3 từ/cấu trúc TOEIC dễ nhầm (vd: affect/effect, despite/although), mỗi cái 1 ví dụ ngắn. Kết bằng 1 câu đố nhỏ. Comment dẫn link.',
-  story: 'Kể 1 câu chuyện/confession ngắn kiểu người học (mất gốc, sợ Listening, ôn sát ngày thi...) rồi rút ra 1 bài học có ích. Không bịa điểm số cụ thể. Comment dẫn link.',
+  pro_limit: 'GÓC "HẾT LƯỢT": kể tình huống đang luyện hăng thì bị chặn vì hết lượt miễn phí trong ngày (practice 2 lượt, chữa câu tức thì, tra từ…). Chỉ ra Pro bỏ giới hạn đó và ai thực sự cần. Comment: nói tiếp bằng so sánh mỗi ngày chưa bằng ly trà sữa + mời xem gói.',
+  pro_analysis: 'GÓC "KHÔNG BIẾT MÌNH YẾU Ở ĐÂU": nỗi đau học nhiều mà điểm đứng yên. Giới thiệu Radar kỹ năng + phân tích năng lực chi tiết + bài luyện vá điểm yếu của Pro như cách học có định hướng. Comment: mời xem gói, nhắc ưu đãi cho thành viên mới nếu hợp.',
+  pro_transcript: 'GÓC "NGHE MÃI KHÔNG TIẾN BỘ": nghe xong không biết sai ở đâu. Transcript ETS của Pro (nghe chép chính tả, dịch song ngữ, đáp án) giúp học Listening đúng cách. Comment: nói tiếp tip nghe chép + mời xem gói.',
+  pro_roadmap: 'GÓC "SẮP THI MÀ KHÔNG CÓ KẾ HOẠCH": lộ trình cấp tốc 14–30 ngày và study plan theo ngày thi của Pro. Nhắc nên chọn gói theo thời gian còn lại. Comment: gợi ý chọn gói ngắn hay dài theo số ngày còn lại tới ngày thi + link.',
+  pro_price: 'GÓC "RẺ NHƯ LY TRÀ SỮA": nói gói Pro tính ra mỗi ngày chưa bằng một ly trà sữa / tô phở / cốc cà phê, giá học sinh, gói dài hạn còn rẻ hơn mua từng tháng, rồi nói rõ nhận được gì cho khoản đó. Tuyệt đối KHÔNG nêu số tiền hay %. Thành thật: ai chưa cần thì cứ dùng free. Comment: mời xem bảng gói + link.',
+  pro_faq: 'GÓC "CÓ ĐÁNG MUA KHÔNG?": trả lời thẳng thắn câu người ta hay hỏi: free đã đủ chưa, Pro khác gì, ai nên mua, ai chưa cần. Giọng trung thực, có lý lẽ. Comment: tóm 2 dòng quyền lợi đáng nhất + link.',
+  pro_offer: 'GÓC "ƯU ĐÃI THÀNH VIÊN MỚI": nhắc thành viên mới được ưu đãi giảm giá khi nâng cấp trong những ngày đầu sau đăng ký (đúng sự thật, không giục giã ép buộc), nên thử bản free trước rồi quyết. KHÔNG nêu con số giảm. Comment: nói ưu đãi tự áp dụng khi nâng cấp + link.',
+  pro_study: 'GÓC "HỌC THÔNG MINH HƠN": quick study tuỳ chỉnh 5–60 phút, tự tạo đề từ câu sai và từ đã lưu, xuất PDF từ vựng. Một tình huống đời thường (bận, đi làm, ôn trên điện thoại) rồi nối sang quyền lợi. Comment: mời xem đầy đủ quyền lợi + link.',
 };
 const type = ($input.first().json && $input.first().json.type) || pick(Object.keys(TYPES).filter((k) => k !== store.lastType));
 store.lastType = type;
@@ -263,30 +294,36 @@ const engageWrite = (platform) => String.raw`
 ${ENGAGE_TYPES}
 const P = ${JSON.stringify(PLATFORM[platform])};
 const mine = ${platform === "threads" ? "($input.first().json.mine !== undefined ? $input.first().json.mine : (await myRecentPosts(12)).map((x) => '- ' + x.text.replace(/\\s+/g, ' ').slice(0, 220)).join('\\n'))" : "''"};
-const trends = $input.first().json.trends !== undefined ? $input.first().json.trends : await research(type === 'quiz' ? 'câu hỏi TOEIC Part 5 thử thách' : 'mẹo học TOEIC');
-const out = await gemini(
-  [
-    'Bạn là admin ' + P.who + ' (web luyện thi TOEIC miễn phí ' + SITE + ').',
-    'Nhiệm vụ: ' + TYPES[type],
-    VOICE,
-    P.len,
-    VIRAL,
-    trends ? 'Xu hướng/đối thủ đang làm (chỉ lấy cảm hứng, không chép):\n' + trends : '',
-    mine ? 'Các bài cũ của trang (giữ giọng tương tự nhưng KHÔNG lặp ý):\n' + mine : '',
-    type === 'quiz' ? 'Với quiz: comment = đáp án đúng + giải thích 1 câu vì sao, rồi khéo dẫn sang web luyện thêm dạng câu này (link ở cuối); vẫn không mở đầu bằng "Link đây".' : COMMENT_RULE,
-    'Các trang trên web để dẫn vào (CHỌN 1 trang hợp chủ đề bài nhất, chèn đúng URL đó; TUYỆT ĐỐI không dẫn vào blog/bài viết/hướng dẫn):\n' + LINKS.join('\n'),
-    'Trả về JSON: {"post": "...", "comment": "comment đầu tiên theo quy tắc trên, link ở cuối"}',
-  ].join('\n\n'),
-  { json: true }
-);
-if (!out.post || !out.comment || !out.comment.includes(SITE.replace(/^https?:\/\//, ''))) throw new Error('Gemini trả sai định dạng: ' + JSON.stringify(out));
-return [{ json: { ...$input.first().json, type, post: out.post, comment: out.comment } }];
+const trends = $input.first().json.trends !== undefined ? $input.first().json.trends : await research('cách các trang luyện thi TOEIC kêu gọi nâng cấp gói Pro');
+const buildPrompt = (extra) => [
+  'Bạn là admin ' + P.who + ' (web luyện thi TOEIC ' + SITE + ').',
+  'Nhiệm vụ: viết bài giúp người đọc cân nhắc nâng cấp gói PRO. ' + TYPES[type],
+  PRO_FACTS,
+  PRO_RULES,
+  VOICE.replace('KHÔNG văn mẫu quảng cáo, ', ''),
+  P.len,
+  VIRAL,
+  trends ? 'Xu hướng/đối thủ đang làm (chỉ lấy cảm hứng, không chép):\n' + trends : '',
+  mine ? 'Các bài cũ của trang (giữ giọng tương tự nhưng KHÔNG lặp ý, góc, hook):\n' + mine : '',
+  'COMMENT ĐẦU TIÊN: nối tiếp mạch bài như người đang nói tiếp (1-2 câu có giá trị thật: so sánh giá, chọn gói hợp tình huống, hoặc thừa nhận ai chưa cần), rồi dẫn tới trang gói Pro, URL ' + SITE + '/pricing đặt CUỐI comment. Cấm mở đầu bằng "Link đây/Đây nè/Vào đây", tối đa 3 câu, 1 emoji.',
+  extra || '',
+  'Trả về JSON: {"post": "...", "comment": "..."}',
+].filter(Boolean).join('\n\n');
+let out = await gemini(buildPrompt(''), { json: true });
+let retried = false;
+if (BANNED_PRO.test(String(out.post) + ' ' + String(out.comment))) {
+  retried = true;
+  out = await gemini(buildPrompt('LẦN TRƯỚC VI PHẠM: bài có số tiền / số %, cam kết điểm, số học viên hoặc khan hiếm giả. Viết lại, bỏ hết những thứ đó, chỉ so sánh giá bằng ly trà sữa / tô phở và dùng dữ kiện thật.'), { json: true });
+}
+if (!out.post || !out.comment || !out.comment.includes(SITE.replace(/^https?:\/\//, '') + '/pricing')) throw new Error('Gemini trả sai định dạng (thiếu link /pricing): ' + JSON.stringify(out));
+return [{ json: { ...$input.first().json, type, post: out.post, comment: out.comment, link: SITE + '/pricing', viết_lại_vì_vi_phạm: retried } }];
 `;
 
 // Reply rules shared by Threads and Facebook auto-replies.
 const REPLY_PROMPT = String.raw`
 const replyPrompt = (who, postText, author, comment, withLink) =>
   [
+    /(pro|giá|bao nhiêu|nâng cấp|mua|trả phí|gói|đắt|rẻ|khuyến mãi|giảm giá)/i.test(comment) ? PRO_FACTS + '\nNếu người ta hỏi về Pro/giá: trả lời thẳng thắn bằng đúng dữ kiện trên (không bịa), KHÔNG nêu số tiền: chỉ nói giá học sinh, mỗi ngày chưa bằng ly trà sữa, thành viên mới được ưu đãi, xem chi tiết ở link /pricing; đừng ép mua, ai chưa cần thì nói cứ dùng free.' : '',
     'Bạn là admin ' + who + ' (web luyện thi TOEIC miễn phí ' + SITE + ').',
     'Bài gốc: ' + String(postText || '').slice(0, 600),
     'Comment của ' + author + ': ' + comment,
@@ -446,7 +483,9 @@ const tags = post.match(/#[^\s#]+/g) || [];
 let fixed = '';
 if (tags.length > 1) { post = post.replace(/#[^\s#]+/g, '').replace(/\s+$/, '') + ' ' + tags[0]; fixed = 'tự cắt hashtag thừa, giữ ' + tags[0]; }
 add('Tối đa 1 hashtag', true, tags.length + ' hashtag' + (fixed ? ' → ' + fixed : ''));
+add('Không nêu giá/% , cam kết điểm, số liệu bịa, khan hiếm giả', !BANNED_PRO.test(post + ' ' + comment), 'đã kiểm tra');
 const failed = checks.filter((c) => !c.pass);
+if (!checks[checks.length - 1].pass) throw new Error('Kiểm duyệt chặn bài: có số tiền/%, cam kết điểm, số liệu học viên hoặc khan hiếm giả. Bài KHÔNG được đăng.');
 return [{ json: {
   ...p, post, comment,
   qc: { đạt: checks.length - failed.length, tổng: checks.length, cảnh_báo: failed.map((f) => f.name), chi_tiết: checks },
@@ -503,7 +542,7 @@ return [{ json: {
   trạng_thái: '✅ XONG — bài và comment đã lên ${label}',
   chế_độ_chạy: p.mode,
   tổng_thời_gian_giây: Math.round(ms / 100) / 10,
-  loại: p.kind === 'feature' ? 'Bài ảnh tính năng' : 'Bài tương tác · ' + p.type,
+  loại: p.kind === 'feature' ? 'Bài ảnh tính năng → chốt PRO' : 'Bài chốt PRO · ' + p.type,
   tính_năng: p.feature || null,
   link_dẫn: p.link || null,
   ảnh: p.imageUrl || null,
@@ -556,7 +595,7 @@ const A = {
   c1: "📦 Tạo container bài (HTTP)", w1: "⏳ Chờ Meta xử lý bài", p1: "🚀 Xuất bản bài (HTTP)", pause: "⏱ Nghỉ vài giây rồi comment",
   c2: "📦 Tạo container comment (HTTP)", w2: "⏳ Chờ Meta xử lý comment", p2: "🚀 Xuất bản comment (HTTP)", done: "📊 Tổng kết chạy",
 };
-const imagePost = buildGraph("thrImagePost01", "Threads 1 – Bài ảnh tính năng web", [
+const imagePost = buildGraph("thrImagePost01", "Threads 1 – Bài ảnh tính năng → chốt PRO", [
   [manual(A.man), 0, 1], [schedule(A.sch, ["30 8 * * *", "30 19 * * *"]), 0, 2.5], [codeNode(A.go, goCode(["chọn tính năng của web", "chụp ảnh", "viết bài + comment", "kiểm duyệt", "đăng Threads"]), 0), 1.3, 1.75],
   [codeNode(A.pick, PICK_FEATURE(), 0), 2.6, 1.75],
   [SHOT_HTTP(A.shot), 3.9, 0.9], [codeNode(A.tr, TREND_CODE("$input.first().json.feature"), 0), 3.9, 1.75], [codeNode(A.old, OLD_POSTS, 0), 3.9, 2.6],
@@ -573,19 +612,19 @@ const imagePost = buildGraph("thrImagePost01", "Threads 1 – Bài ảnh tính n
   edge(A.pause, A.c2), edge(A.c2, A.w2), edge(A.w2, A.p2), edge(A.p2, A.done),
 ], [
   sticky("① KÍCH HOẠT", "## ① KÍCH HOẠT\n8:30 (sáng) & 19:30 (tối) hoặc bấm tay", 0, 0.6, 2.3, 2.9, 4),
-  sticky("② CHUẨN BỊ SONG SONG", "## ② CHUẨN BỊ (song song)\nChọn tính năng → CHỤP ẢNH ‖ SĂN XU HƯỚNG ‖ ĐỌC BÀI CŨ → gộp → đọc trang", 2.6, 0.1, 5.1, 3.5, 5),
-  sticky("③ VIẾT VÀ KIỂM DUYỆT", "## ③ VIẾT & KIỂM DUYỆT\nGemini viết bài + comment nối tiếp, 6 điều kiện chất lượng", 8.3, 0.9, 2.0, 1.7, 6),
+  sticky("② CHUẨN BỊ SONG SONG", "## ② CHUẨN BỊ (song song)\nChọn tính năng → CHỤP ẢNH ‖ SĂN XU HƯỚNG ‖ ĐỌC BÀI CŨ → gộp → đọc trang → viết bài nối tính năng với quyền lợi PRO", 2.6, 0.1, 5.1, 3.5, 5),
+  sticky("③ VIẾT VÀ KIỂM DUYỆT", "## ③ VIẾT & KIỂM DUYỆT\nGemini viết bài nối tính năng với quyền lợi PRO + comment dẫn /pricing, 7 điều kiện chất lượng", 8.3, 0.9, 2.0, 1.7, 6),
   sticky("④ ĐĂNG THREADS", "## ④ ĐĂNG LÊN THREADS (API chính thức)\nTạo container → chờ Meta → xuất bản · nghỉ vài giây · comment dẫn link cùng 3 bước", 10.4, 0.9, 8.2, 1.7, 7),
 ]);
 
 const B = {
   man: "▶ Chạy ngay", sch: "⏰ 10:30 & 21:30", go: "🚀 Khởi động lượt chạy",
-  pick: "🎲 Chọn dạng bài", tr: "📈 Săn xu hướng", old: "📚 Đọc bài cũ của trang", mg1: "🔀 Gộp dạng bài + xu hướng", mg2: "🔀 Gộp thêm bài cũ",
+  pick: "🎲 Chọn góc nâng cấp PRO", tr: "📈 Săn xu hướng", old: "📚 Đọc bài cũ của trang", mg1: "🔀 Gộp dạng bài + xu hướng", mg2: "🔀 Gộp thêm bài cũ",
   wr: "✍️ Viết bài (Gemini)", qc: "🛡️ Kiểm duyệt nội dung",
   c1: "📦 Tạo container bài (HTTP)", w1: "⏳ Chờ Meta xử lý bài", p1: "🚀 Xuất bản bài (HTTP)", pause: "⏱ Nghỉ vài giây rồi comment",
   c2: "📦 Tạo container comment (HTTP)", w2: "⏳ Chờ Meta xử lý comment", p2: "🚀 Xuất bản comment (HTTP)", done: "📊 Tổng kết chạy",
 };
-const engagePost = buildGraph("thrEngagePost01", "Threads 2 – Bài tương tác (tips, quiz, hỏi đáp)", [
+const engagePost = buildGraph("thrEngagePost01", "Threads 2 – Bài chốt PRO (nâng cấp gói)", [
   [manual(B.man), 0, 1], [schedule(B.sch, ["30 10 * * *", "30 21 * * *"]), 0, 2.5], [codeNode(B.go, goCode(["chọn dạng bài", "viết bài + comment", "kiểm duyệt", "đăng Threads"]), 0), 1.3, 1.75],
   [codeNode(B.pick, PICK_ENGAGE_CODE, 0), 2.6, 0.9], [codeNode(B.tr, TREND_CODE("'mẹo học TOEIC, câu hỏi TOEIC Part 5 thử thách'"), 0), 2.6, 1.75], [codeNode(B.old, OLD_POSTS, 0), 2.6, 2.6],
   [mergeNode(B.mg1), 3.7, 1.3], [mergeNode(B.mg2), 4.8, 1.75],
@@ -601,8 +640,8 @@ const engagePost = buildGraph("thrEngagePost01", "Threads 2 – Bài tương tá
   edge(B.pause, B.c2), edge(B.c2, B.w2), edge(B.w2, B.p2), edge(B.p2, B.done),
 ], [
   sticky("① KÍCH HOẠT", "## ① KÍCH HOẠT\n10:30 (cuối buổi sáng) & 21:30 (tối) hoặc bấm tay", 0, 0.6, 2.3, 2.9, 4),
-  sticky("② CHUẨN BỊ SONG SONG", "## ② CHUẨN BỊ (song song)\nChọn dạng bài (mẹo/quiz/hỏi đáp/từ dễ nhầm/confession) ‖ SĂN XU HƯỚNG ‖ ĐỌC BÀI CŨ → gộp", 2.6, 0.1, 2.9, 3.5, 5),
-  sticky("③ VIẾT VÀ KIỂM DUYỆT", "## ③ VIẾT & KIỂM DUYỆT\nGemini viết bài + comment (quiz: comment = đáp án), 6 điều kiện chất lượng", 5.7, 0.9, 2.0, 1.7, 6),
+  sticky("② CHUẨN BỊ SONG SONG", "## ② CHUẨN BỊ (song song)\nChọn góc nâng cấp PRO (hết lượt / phân tích điểm yếu / transcript / lộ trình / giá ly trà sữa / có đáng mua / ưu đãi người mới / học thông minh) ‖ SĂN XU HƯỚNG ‖ ĐỌC BÀI CŨ → gộp", 2.6, 0.1, 2.9, 3.5, 5),
+  sticky("③ VIẾT VÀ KIỂM DUYỆT", "## ③ VIẾT & KIỂM DUYỆT\nGemini viết bài thuyết phục PRO + comment dẫn /pricing, 7 điều kiện (chặn số tiền, cam kết, số liệu bịa)", 5.7, 0.9, 2.0, 1.7, 6),
   sticky("④ ĐĂNG THREADS", "## ④ ĐĂNG LÊN THREADS (API chính thức)\nTạo container → chờ Meta → xuất bản · nghỉ vài giây · comment cùng 3 bước", 7.8, 0.9, 8.6, 1.7, 7),
 ]);
 
@@ -611,7 +650,7 @@ const engagePost = buildGraph("thrEngagePost01", "Threads 2 – Bài tương tá
 const G = {
   man: "▶ Chạy ngay", sch: "⏰ Mỗi ngày 9:00", go: "🚀 Khởi động lượt chạy",
   pickF: "🎯 Chọn tính năng", shot: "📷 Chụp màn hình (HTTP)", trA: "📈 Săn xu hướng (A)", oldA: "🗂 Đọc nhật ký bài đã soạn", mgA: "🔀 Gộp ảnh + xu hướng", readP: "🔎 Đọc nội dung trang", wrA: "✍️ Viết bài ảnh (Gemini)",
-  pickE: "🎲 Chọn dạng bài", trB: "📈 Săn xu hướng (B)", mgB: "🔀 Gộp dạng bài + xu hướng", wrB: "✍️ Viết bài tương tác (Gemini)",
+  pickE: "🎲 Chọn góc nâng cấp PRO", trB: "📈 Săn xu hướng (B)", mgB: "🔀 Gộp dạng bài + xu hướng", wrB: "✍️ Viết bài tương tác (Gemini)",
   qc: "🛡️ Kiểm duyệt nội dung", docs: "📄 Ghi vào Google Docs (HTTP)", done: "📊 Tổng kết chạy",
 };
 const DONE_GROUP = String.raw`
@@ -622,7 +661,7 @@ const trace = tr(q, 'Ghi Google Docs', { kết_quả: doc.doc, đã_lưu: doc.sa
 return [{ json: {
   runId: q.runId,
   trạng_thái: doc.saved ? '✅ XONG — bài nằm trong Google Docs' : '⚠️ lưu thất bại',
-  loại: q.kind === 'feature' ? 'Bài ảnh tính năng' : 'Bài tương tác · ' + q.type,
+  loại: q.kind === 'feature' ? 'Bài ảnh tính năng → chốt PRO' : 'Bài chốt PRO · ' + q.type,
   chế_độ_chạy: q.mode,
   thời_gian_đến_lúc_xong_giây: Math.round(ms / 100) / 10,
   tính_năng: q.feature || null,
@@ -641,14 +680,14 @@ const drafts = [];
 return [{ json: { mine: '', minePosts: 0, mineNote: 'nhật ký bài group do bạn đăng tay nên không có sẵn → bỏ qua' } }];
 `;
 const fbGroupHub = buildGraph("fbGroupHub0001", "Facebook Group – Trung tâm nội dung (ghi Google Docs)", [
-  [manual(G.man), 0, 1.6], [schedule(G.sch, "0 9 * * *"), 0, 3.4], [codeNode(G.go, goCode(["bài ảnh tính năng (nhánh A)", "bài tương tác (nhánh B)", "kiểm duyệt", "ghi Google Docs"]), 0), 1.2, 2.5],
+  [manual(G.man), 0, 1.6], [schedule(G.sch, "0 9 * * *"), 0, 3.4], [codeNode(G.go, goCode(["bài ảnh tính năng (nhánh A)", "bài chốt PRO (nhánh B)", "kiểm duyệt", "ghi Google Docs"]), 0), 1.2, 2.5],
   [codeNode(G.pickF, PICK_FEATURE(), 0), 2.5, 1], [SHOT_HTTP(G.shot), 3.6, 0.3], [codeNode(G.trA, TREND_CODE("$input.first().json.feature"), 0), 3.6, 1.7],
   [mergeNode(G.mgA), 4.7, 1], [codeNode(G.readP, READ_PAGE(G.pickF), 0), 5.8, 1], [codeNode(G.wrA, featureWrite("group"), 0), 6.9, 1],
   [codeNode(G.pickE, PICK_ENGAGE_CODE, 0), 2.5, 4], [codeNode(G.trB, TREND_CODE("'mẹo học TOEIC, câu hỏi TOEIC Part 5 thử thách'"), 0), 2.5, 5.2],
   [mergeNode(G.mgB), 3.6, 4.6], [codeNode(G.wrB, engageWrite("group"), 0), 4.7, 4.6],
   [codeNode(G.qc, QC_POST(1000), 0), 8.2, 2.8], [httpNode(G.docs, {
     method: "POST", url: HELPER + "/draft", sendBody: true, specifyBody: "json",
-    jsonBody: "={{ JSON.stringify({ kind: ($json.kind === 'feature' ? 'Ảnh tính năng · ' : 'Tương tác · ') + ($json.feature || $json.type), post: $json.post, comment: $json.comment, imageUrl: $json.imageUrl || null, commentLater: $json.type === 'quiz' }) }}",
+    jsonBody: "={{ JSON.stringify({ kind: ($json.kind === 'feature' ? 'Ảnh tính năng → PRO · ' : 'Chốt PRO · ') + ($json.feature || $json.type), post: $json.post, comment: $json.comment, imageUrl: $json.imageUrl || null, commentLater: $json.type === 'quiz' }) }}",
     options: { timeout: 120000 },
   }), 9.3, 2.8],
   [codeNode(G.done, DONE_GROUP, 0), 10.4, 2.8],
@@ -662,7 +701,7 @@ const fbGroupHub = buildGraph("fbGroupHub0001", "Facebook Group – Trung tâm n
 ], [
   sticky("① KÍCH HOẠT", "## ① KÍCH HOẠT\n9:00 mỗi ngày hoặc bấm tay. Một lượt chạy = 2 bài", 0, 0.6, 2.3, 3.2, 4),
   sticky("② NHÁNH A", "## ② NHÁNH A · BÀI ẢNH TÍNH NĂNG\nChọn tính năng → CHỤP ẢNH ‖ SĂN XU HƯỚNG → gộp → đọc trang → Gemini viết bài + comment", 2.5, 0.1, 5.2, 2.6, 5),
-  sticky("③ NHÁNH B", "## ③ NHÁNH B · BÀI TƯƠNG TÁC\nChọn dạng bài ‖ săn xu hướng → gộp → Gemini viết bài + comment", 2.5, 3.3, 3.4, 2.7, 6),
+  sticky("③ NHÁNH B", "## ③ NHÁNH B · BÀI CHỐT PRO\nChọn dạng bài ‖ săn xu hướng → gộp → Gemini viết bài + comment", 2.5, 3.3, 3.4, 2.7, 6),
   sticky("④ XUẤT", "## ④ KIỂM DUYỆT → GOOGLE DOCS → TỔNG KẾT\n6 điều kiện chất lượng, ghi doc, báo cáo từng bước", 8.0, 1.8, 3.6, 2.2, 7),
 ]);
 

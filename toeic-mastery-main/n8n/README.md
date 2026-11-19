@@ -4,8 +4,8 @@ Các workflow chạy trên n8n local (http://localhost:5678), giờ theo múi As
 
 | Workflow | Lịch (trong giờ dùng máy: sáng 8–11:30, tối 19–23) | Làm gì |
 |---|---|---|
-| Threads 1 – Bài ảnh tính năng web | 8:30 & 19:30 | Chọn tính năng, chụp màn hình ‖ săn xu hướng ‖ đọc bài cũ (song song), Gemini viết bài + comment nối tiếp, kiểm duyệt 6 điều kiện, đăng bằng 3 bước API (tạo container → chờ Meta → xuất bản), comment link vào trang đó |
-| Threads 2 – Bài tương tác | 10:30 & 21:30 | Xoay vòng mẹo / quiz / hỏi đáp / từ dễ nhầm / confession, cùng pipeline như trên; link dẫn do Gemini chọn trong 17 trang sản phẩm (không dẫn blog/hướng dẫn) |
+| Threads 1 – Bài ảnh tính năng → chốt PRO | 8:30 & 19:30 | Chọn tính năng, chụp màn hình ‖ săn xu hướng ‖ đọc bài cũ (song song), Gemini viết bài + comment nối tiếp, kiểm duyệt 6 điều kiện, đăng bằng 3 bước API (tạo container → chờ Meta → xuất bản), comment link vào trang đó |
+| Threads 2 – Bài chốt PRO | 10:30 & 21:30 | Xoay vòng mẹo / quiz / hỏi đáp / từ dễ nhầm / confession, cùng pipeline như trên; link dẫn do Gemini chọn trong 17 trang sản phẩm (không dẫn blog/hướng dẫn) |
 | Threads 3 – Tự trả lời comment | Mỗi 20 phút, 7h–24h | Cổng an toàn → lấy tài khoản ‖ thống kê → lấy bài → quét comment → chọn tối đa 3, quyết định gắn link → Gemini viết song song → kiểm duyệt → đăng cách nhau 15–45 giây; tối đa 60/ngày |
 | Facebook 3 – Tự trả lời comment (Page) | Mỗi 15 phút, 7h–24h | Như trên cho Fanpage: like rồi trả lời, tối đa 4/lần, 80/ngày; mỗi bài chỉ gửi link web 1 lần |
 | Facebook Group – Trung tâm nội dung | 9:00 mỗi ngày | Một lượt chạy sinh 2 bài song song (ảnh tính năng + tương tác), kiểm duyệt, ghi vào Google Doc kèm ảnh và comment |
@@ -67,3 +67,9 @@ Web app của Apps Script không mở được cho truy cập ẩn danh trên t�
 ## Tốc độ
 
 `thinkingBudget: 0` cho Gemini (2–3 giây mỗi lần gọi thay vì 5–15), giới hạn 30 giây mỗi lần gọi và tự thử lại khi gặp 429/5xx/timeout. Google Search của Gemini (săn xu hướng) mặc định tắt (`GEMINI_SEARCH=off`) vì gói miễn phí báo 429; đặt `GEMINI_SEARCH=on` trong `.env` nếu nâng cấp gói.
+
+## Tuyến nội dung: chốt gói PRO
+
+Mọi bài đăng (Threads 1 và 2, hai nhánh của Facebook Group) đều nhắm tới việc người đọc cân nhắc nâng cấp PRO. Nội dung tự nhiên, thuyết phục, dựa đúng dữ kiện thật của web (`PRO_FACTS` trong `build.mjs`: giới hạn gói free, 11 quyền lợi Pro, ưu đãi thành viên mới). 8 góc: hết lượt, phân tích điểm yếu, transcript ETS, lộ trình theo ngày thi, "rẻ như ly trà sữa", có đáng mua không, ưu đãi thành viên mới, học thông minh hơn. Comment đầu tiên nối tiếp mạch bài rồi dẫn vào `/pricing`.
+
+Quy tắc cứng: không nêu số tiền hay %, chỉ so sánh với ly trà sữa / tô phở / cốc cà phê và nhắc ưu đãi cho thành viên mới; không bịa lời chứng thực, số học viên, điểm số; không cam kết lên điểm; không khan hiếm giả; thành thật nói ai chưa cần Pro. Node kiểm duyệt chặn bài vi phạm (bài không được đăng), và Gemini được viết lại một lần trước khi tới bước đó. Khi người ta hỏi về Pro/giá ở comment, bot trả lời theo cùng quy tắc và dẫn `/pricing`.
