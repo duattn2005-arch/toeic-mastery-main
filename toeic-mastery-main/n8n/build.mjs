@@ -114,8 +114,8 @@ const COMMENT_RULE = [
 // Real facts about the PRO plan (src/lib/constants/billing.ts, limits.ts, components/billing/pro-card.tsx). Posts may only use these.
 const PRO_FACTS = [
   'GÓC NHÌN VỀ GÓI PRO CỦA WEB (chỉ được dùng đúng các dữ kiện này, không thêm bớt):',
-  '- Giá: TUYỆT ĐỐI KHÔNG viết số tiền, không viết phần trăm giảm giá. Chỉ nói theo kiểu so sánh đời thường và đúng sự thật: tính ra mỗi ngày chưa bằng một ly trà sữa, một tô phở hay một cốc cà phê; "giá học sinh", ai cũng chạm tới được; gói dài hạn còn rẻ hơn mua từng tháng.',
-  '- Ưu đãi thật: thành viên mới được giảm giá nếu nâng cấp trong những ngày đầu sau khi đăng ký (nói "ưu đãi giảm cho thành viên mới", không nêu con số).',
+  '- Giá: TUYỆT ĐỐI KHÔNG viết số tiền. Con số % duy nhất được viết là ưu đãi 25% cho thành viên mới (xem dòng dưới). Chỉ nói giá theo kiểu so sánh đời thường và đúng sự thật: tính ra mỗi ngày chưa bằng một ly trà sữa, một tô phở hay một cốc cà phê; "giá học sinh", ai cũng chạm tới được; gói dài hạn còn rẻ hơn mua từng tháng.',
+  '- Ưu đãi thật: thành viên mới được GIẢM 25% khi nâng cấp trong 72 giờ đầu sau khi đăng ký (ưu đãi tự áp dụng lúc thanh toán). Được nêu "giảm 25%" nhưng không được nêu giá tiền sau giảm, và không được nói sai thời hạn 72 giờ.',
   '- Gói Free bị giới hạn mỗi ngày: 2 lượt bắt đầu luyện ở chế độ practice, 1 full test, tra từ bôi đen 30 lượt, chữa câu tức thì 50 lượt mỗi Part, 4 gợi ý "bước học tiếp theo" của AI Mentor, "học lại" tối đa 20 câu đã lưu.',
   '- Pro mở khoá: không giới hạn Mock Test, tra từ bôi đen và chữa câu tức thì; Radar kỹ năng và phân tích năng lực chi tiết kèm bài luyện vá điểm yếu; Transcript ETS (nghe chép chính tả, dịch song ngữ, đáp án); lời giải chi tiết và transcript khi xem lại bài / câu sai / câu đã lưu; từ đồng nghĩa và ví dụ chuyên sâu; tuỳ chỉnh Quick Study 5–60 phút; tự tạo đề từ câu sai và từ đã lưu; xuất PDF từ vựng; lộ trình cấp tốc 14–30 ngày và study plan theo ngày thi; theme động và upload hình nền; không quảng cáo; hỗ trợ ưu tiên.',
   '- Thanh toán bằng chuyển khoản QR ngay trên web, web tự xác nhận khi tiền về.',
@@ -124,13 +124,13 @@ const PRO_FACTS = [
 const PRO_RULES = [
   'CÁCH VIẾT BÀI CHỐT PRO (tự nhiên, thuyết phục, KHÔNG ép):',
   '- Nói như người bạn nhắc nhau, không như quảng cáo: mở bằng một tình huống/nỗi đau có thật của người học TOEIC (bị giới hạn, học không biết yếu ở đâu, không có kế hoạch, hết lượt luyện...), rồi nối sang đúng quyền lợi Pro giải quyết nó.',
-  '- Cụ thể hơn là khoa trương: nêu 1-2 quyền lợi Pro cụ thể thay vì liệt kê hết. Nói về giá CHỈ bằng so sánh đời thường (chưa bằng ly trà sữa / tô phở / cốc cà phê mỗi ngày, giá học sinh) và nhắc ưu đãi giảm cho thành viên mới khi hợp ngữ cảnh. KHÔNG có số tiền, KHÔNG có số %.',
+  '- Cụ thể hơn là khoa trương: nêu 1-2 quyền lợi Pro cụ thể thay vì liệt kê hết. Nói về giá CHỈ bằng so sánh đời thường (chưa bằng ly trà sữa / tô phở / cốc cà phê mỗi ngày, giá học sinh) và nhắc ưu đãi giảm 25% cho thành viên mới trong 72 giờ đầu khi hợp ngữ cảnh. KHÔNG có số tiền; số % duy nhất được dùng là 25%.',
   '- Thành thật để tạo niềm tin: nói rõ ai CHƯA cần Pro (còn dùng free thoải mái, mới tập, chưa hết lượt) và ai NÊN cân nhắc (sát ngày thi, cần phân tích điểm yếu, luyện nhiều mỗi ngày).',
   '- CẤM tuyệt đối: bịa lời chứng thực/đánh giá của học viên, điểm số hay số học viên cụ thể, cam kết/bảo đảm lên điểm, khan hiếm giả ("chỉ còn X suất", "hết hạn hôm nay"), chê bai đối thủ, nói quyền lợi không có trong dữ kiện.',
   '- Kết bài bằng một câu mời nhẹ (không "MUA NGAY"), link ở comment.',
 ].join('\n');
 // Wording that must never reach a published post (checked again in the QC node).
-const BANNED_PRO = /(\d[\d.,]*\s?(k\b|nghìn|ngàn|đ(?![a-zà-ỹ])|đồng|₫|vnđ|vnd)|\d+\s?%|cam kết|đảm bảo (lên|đạt|điểm)|bảo đảm|chắc chắn (đạt|lên)|\d+\+? ?(học viên|bạn đã|người đã)|chỉ còn \d+ ?(suất|slot|chỗ)|hết (hạn|ưu đãi) (hôm nay|đêm nay|trong hôm nay))/i;
+const BANNED_PRO = /(\d[\d.,]*\s?(k\b|nghìn|ngàn|đ(?![a-zà-ỹ])|đồng|₫|vnđ|vnd)|(?<!\d)(?!25\s?%)\d+\s?%|cam kết|đảm bảo (lên|đạt|điểm)|bảo đảm|chắc chắn (đạt|lên)|\d+\+? ?(học viên|bạn đã|người đã)|chỉ còn \d+ ?(suất|slot|chỗ)|hết (hạn|ưu đãi) (hôm nay|đêm nay|trong hôm nay))/i;
 
 const VIRAL = [
   'Các mẫu bài TOEIC hay viral trên Threads: "ae nào ... thì vô đây", confession mất gốc lên 700+, list 3-5 mẹo ngắn, "sai lầm mà 90% người mới mắc",',
@@ -249,7 +249,7 @@ let out = await gemini(buildPrompt(''), { json: true });
 let retried = false;
 if (BANNED_PRO.test(String(out.post) + ' ' + String(out.comment))) {
   retried = true;
-  out = await gemini(buildPrompt('LẦN TRƯỚC VI PHẠM: bài có số tiền / số %, cam kết điểm, số học viên hoặc khan hiếm giả. Viết lại, bỏ hết những thứ đó, chỉ so sánh giá bằng ly trà sữa / tô phở và dùng dữ kiện thật.'), { json: true });
+  out = await gemini(buildPrompt('LẦN TRƯỚC VI PHẠM: bài có số tiền hoặc số % khác 25%, cam kết điểm, số học viên hoặc khan hiếm giả. Viết lại, bỏ hết những thứ đó, chỉ so sánh giá bằng ly trà sữa / tô phở, chỉ được nêu giảm 25% cho thành viên mới trong 72 giờ đầu, và dùng dữ kiện thật.'), { json: true });
 }
 if (!out.post || !out.comment || !out.comment.includes(SITE.replace(/^https?:\/\//, '') + '/pricing')) throw new Error('Gemini trả sai định dạng (thiếu link /pricing): ' + JSON.stringify(out));
 return [{ json: { ...p, post: out.post, comment: out.comment, link: SITE + '/pricing', viết_lại_vì_vi_phạm: retried } }];
@@ -263,7 +263,7 @@ const TYPES = {
   pro_roadmap: 'GÓC "SẮP THI MÀ KHÔNG CÓ KẾ HOẠCH": lộ trình cấp tốc 14–30 ngày và study plan theo ngày thi của Pro. Nhắc nên chọn gói theo thời gian còn lại. Comment: gợi ý chọn gói ngắn hay dài theo số ngày còn lại tới ngày thi + link.',
   pro_price: 'GÓC "RẺ NHƯ LY TRÀ SỮA": nói gói Pro tính ra mỗi ngày chưa bằng một ly trà sữa / tô phở / cốc cà phê, giá học sinh, gói dài hạn còn rẻ hơn mua từng tháng, rồi nói rõ nhận được gì cho khoản đó. Tuyệt đối KHÔNG nêu số tiền hay %. Thành thật: ai chưa cần thì cứ dùng free. Comment: mời xem bảng gói + link.',
   pro_faq: 'GÓC "CÓ ĐÁNG MUA KHÔNG?": trả lời thẳng thắn câu người ta hay hỏi: free đã đủ chưa, Pro khác gì, ai nên mua, ai chưa cần. Giọng trung thực, có lý lẽ. Comment: tóm 2 dòng quyền lợi đáng nhất + link.',
-  pro_offer: 'GÓC "ƯU ĐÃI THÀNH VIÊN MỚI": nhắc thành viên mới được ưu đãi giảm giá khi nâng cấp trong những ngày đầu sau đăng ký (đúng sự thật, không giục giã ép buộc), nên thử bản free trước rồi quyết. KHÔNG nêu con số giảm. Comment: nói ưu đãi tự áp dụng khi nâng cấp + link.',
+  pro_offer: 'GÓC "ƯU ĐÃI THÀNH VIÊN MỚI": nhắc thành viên mới được GIẢM 25% khi nâng cấp trong 72 giờ đầu sau đăng ký (đúng sự thật, không giục giã ép buộc), nên thử bản free trước rồi quyết. KHÔNG nêu giá tiền. Comment: nói ưu đãi tự áp dụng lúc thanh toán + link.',
   pro_study: 'GÓC "HỌC THÔNG MINH HƠN": quick study tuỳ chỉnh 5–60 phút, tự tạo đề từ câu sai và từ đã lưu, xuất PDF từ vựng. Một tình huống đời thường (bận, đi làm, ôn trên điện thoại) rồi nối sang quyền lợi. Comment: mời xem đầy đủ quyền lợi + link.',
 };
 const type = ($input.first().json && $input.first().json.type) || pick(Object.keys(TYPES).filter((k) => k !== store.lastType));
@@ -313,7 +313,7 @@ let out = await gemini(buildPrompt(''), { json: true });
 let retried = false;
 if (BANNED_PRO.test(String(out.post) + ' ' + String(out.comment))) {
   retried = true;
-  out = await gemini(buildPrompt('LẦN TRƯỚC VI PHẠM: bài có số tiền / số %, cam kết điểm, số học viên hoặc khan hiếm giả. Viết lại, bỏ hết những thứ đó, chỉ so sánh giá bằng ly trà sữa / tô phở và dùng dữ kiện thật.'), { json: true });
+  out = await gemini(buildPrompt('LẦN TRƯỚC VI PHẠM: bài có số tiền hoặc số % khác 25%, cam kết điểm, số học viên hoặc khan hiếm giả. Viết lại, bỏ hết những thứ đó, chỉ so sánh giá bằng ly trà sữa / tô phở, chỉ được nêu giảm 25% cho thành viên mới trong 72 giờ đầu, và dùng dữ kiện thật.'), { json: true });
 }
 if (!out.post || !out.comment || !out.comment.includes(SITE.replace(/^https?:\/\//, '') + '/pricing')) throw new Error('Gemini trả sai định dạng (thiếu link /pricing): ' + JSON.stringify(out));
 return [{ json: { ...$input.first().json, type, post: out.post, comment: out.comment, link: SITE + '/pricing', viết_lại_vì_vi_phạm: retried } }];
@@ -323,7 +323,7 @@ return [{ json: { ...$input.first().json, type, post: out.post, comment: out.com
 const REPLY_PROMPT = String.raw`
 const replyPrompt = (who, postText, author, comment, withLink) =>
   [
-    /(pro|giá|bao nhiêu|nâng cấp|mua|trả phí|gói|đắt|rẻ|khuyến mãi|giảm giá)/i.test(comment) ? PRO_FACTS + '\nNếu người ta hỏi về Pro/giá: trả lời thẳng thắn bằng đúng dữ kiện trên (không bịa), KHÔNG nêu số tiền: chỉ nói giá học sinh, mỗi ngày chưa bằng ly trà sữa, thành viên mới được ưu đãi, xem chi tiết ở link /pricing; đừng ép mua, ai chưa cần thì nói cứ dùng free.' : '',
+    /(pro|giá|bao nhiêu|nâng cấp|mua|trả phí|gói|đắt|rẻ|khuyến mãi|giảm giá)/i.test(comment) ? PRO_FACTS + '\nNếu người ta hỏi về Pro/giá: trả lời thẳng thắn bằng đúng dữ kiện trên (không bịa), KHÔNG nêu số tiền: chỉ nói giá học sinh, mỗi ngày chưa bằng ly trà sữa, thành viên mới được giảm 25% trong 72 giờ đầu sau đăng ký, xem chi tiết ở link /pricing; đừng ép mua, ai chưa cần thì nói cứ dùng free.' : '',
     'Bạn là admin ' + who + ' (web luyện thi TOEIC miễn phí ' + SITE + ').',
     'Bài gốc: ' + String(postText || '').slice(0, 600),
     'Comment của ' + author + ': ' + comment,
@@ -483,9 +483,9 @@ const tags = post.match(/#[^\s#]+/g) || [];
 let fixed = '';
 if (tags.length > 1) { post = post.replace(/#[^\s#]+/g, '').replace(/\s+$/, '') + ' ' + tags[0]; fixed = 'tự cắt hashtag thừa, giữ ' + tags[0]; }
 add('Tối đa 1 hashtag', true, tags.length + ' hashtag' + (fixed ? ' → ' + fixed : ''));
-add('Không nêu giá/% , cam kết điểm, số liệu bịa, khan hiếm giả', !BANNED_PRO.test(post + ' ' + comment), 'đã kiểm tra');
+add('Không nêu giá tiền / % khác 25%, cam kết điểm, số liệu bịa, khan hiếm giả', !BANNED_PRO.test(post + ' ' + comment), 'đã kiểm tra');
 const failed = checks.filter((c) => !c.pass);
-if (!checks[checks.length - 1].pass) throw new Error('Kiểm duyệt chặn bài: có số tiền/%, cam kết điểm, số liệu học viên hoặc khan hiếm giả. Bài KHÔNG được đăng.');
+if (!checks[checks.length - 1].pass) throw new Error('Kiểm duyệt chặn bài: có số tiền, % khác 25%, cam kết điểm, số liệu học viên hoặc khan hiếm giả. Bài KHÔNG được đăng.');
 return [{ json: {
   ...p, post, comment,
   qc: { đạt: checks.length - failed.length, tổng: checks.length, cảnh_báo: failed.map((f) => f.name), chi_tiết: checks },
