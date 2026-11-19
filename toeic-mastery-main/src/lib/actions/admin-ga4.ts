@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/auth";
 import { GA_SECRET_KEYS, clearGaSecretCache } from "@/lib/services/ga-secrets";
 import { sendGaTestEvent, sendGaTestPurchase, type GaTestResult } from "@/lib/services/ga4-test";
-import { BACKFILL_DONE_KEY, runGa4Backfill, type BackfillRunResult } from "@/lib/services/ga4-backfill";
+import { BACKFILL_DONE_KEY, runGa4Backfill, runGa4BackfillSample, type BackfillRunResult } from "@/lib/services/ga4-backfill";
 
 /** Saves the GA4 Measurement Protocol API secrets from /admin/ga4. A blank
  * field leaves that secret as it was, so re-saving one doesn't wipe the
@@ -58,4 +58,9 @@ export async function runGa4BackfillAction(): Promise<BackfillRunResult> {
   const result = await runGa4Backfill(admin.id);
   revalidatePath("/admin/ga4");
   return result;
+}
+
+export async function runGa4BackfillSampleAction() {
+  await requireSuperAdmin();
+  return runGa4BackfillSample();
 }

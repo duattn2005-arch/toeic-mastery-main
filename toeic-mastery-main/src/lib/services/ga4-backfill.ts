@@ -184,3 +184,23 @@ export async function runGa4Backfill(updatedBy: string | null): Promise<Backfill
   }
   return { sent, failed, totalValue: preview.totalValue };
 }
+
+export const SAMPLE_COUNT = 5;
+
+/** Re-sends the first few backfill items as a trial, ignoring the done
+ * marker and leaving it alone. If the original run already landed in GA4
+ * these may count twice (a handful of orders), which is the price of
+ * proving the real payload gets through. */
+export async function runGa4BackfillSample(): Promise<{ error: string } | { sent: number; failed: number; items: { who: string; value: number; transactionId: string }[] }> {
+  const targets = await getGaTargets();
+  if (targets.length === 0) return { error: "Chưa có khoá GA4 nào — lưu khoá ở trên trước." };
+  const preview = await previewGa4Backfill();
+  const sample = preview.items.slice(0, SAMPLE_COUNT);
+  let sent = 0;
+  let failed = 0;
+  for (const item of sample) {
+    if (await send(targets, item)) sent++;
+    else failed++;
+  }
+  return { sent, failed, items: sample.map((i) => ({ who: i.who, value: i.value, transactionId: i.transactionId })) };
+}
