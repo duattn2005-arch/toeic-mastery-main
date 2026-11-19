@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { allowGa4ResendAction, runGa4BackfillAction, saveGaSecretsAction, sendGaTestEventAction } from "@/lib/actions/admin-ga4";
+import { allowGa4ResendAction, runGa4BackfillAction, saveGaSecretsAction, sendGaTestEventAction, sendGaTestPurchaseAction } from "@/lib/actions/admin-ga4";
 
 export function GaSecretsForm({ primaryId, linkedId }: { primaryId: string; linkedId: string }) {
   const router = useRouter();
@@ -60,12 +60,12 @@ export function GaSecretsForm({ primaryId, linkedId }: { primaryId: string; link
   );
 }
 
-export function GaTestEventButton() {
+export function GaTestEventButton({ purchase = false }: { purchase?: boolean }) {
   const [pending, startTransition] = React.useTransition();
 
   function run() {
     startTransition(async () => {
-      const results = await sendGaTestEventAction();
+      const results = await (purchase ? sendGaTestPurchaseAction() : sendGaTestEventAction());
       if (results.length === 0) {
         toast.error("Chưa có khoá nào để thử.");
         return;
@@ -73,14 +73,14 @@ export function GaTestEventButton() {
       for (const r of results) {
         if (!r.sent) toast.error(`${r.measurementId}: gửi thất bại (mạng/GA4 từ chối).`);
         else if (r.payloadProblems.length > 0) toast.warning(`${r.measurementId}: GA4 báo dữ liệu có lỗi — ${r.payloadProblems.join("; ")}`);
-        else toast.success(`${r.measurementId}: đã gửi sự kiện server_test — xem GA4 → Thời gian thực.`);
+        else toast.success(`${r.measurementId}: đã gửi ${purchase ? "purchase thử 1đ" : "sự kiện server_test"} — xem GA4 → Thời gian thực.`);
       }
     });
   }
 
   return (
     <Button type="button" variant="outline" onClick={run} disabled={pending} className="w-fit">
-      {pending && <Loader2 className="size-4 animate-spin" />} Gửi sự kiện thử (server_test)
+      {pending && <Loader2 className="size-4 animate-spin" />} {purchase ? "Gửi thử 1 purchase (1đ)" : "Gửi sự kiện thử (server_test)"}
     </Button>
   );
 }
