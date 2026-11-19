@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { allowGa4ResendAction, runGa4BackfillAction, saveGaSecretsAction, sendGaTestEventAction, sendGaTestPurchaseAction } from "@/lib/actions/admin-ga4";
+import { allowGa4ResendAction, runGa4BackfillSampleAction, runGa4BackfillAction, saveGaSecretsAction, sendGaTestEventAction, sendGaTestPurchaseAction } from "@/lib/actions/admin-ga4";
 
 export function GaSecretsForm({ primaryId, linkedId }: { primaryId: string; linkedId: string }) {
   const router = useRouter();
@@ -82,6 +82,46 @@ export function GaTestEventButton({ purchase = false }: { purchase?: boolean }) 
     <Button type="button" variant="outline" onClick={run} disabled={pending} className="w-fit">
       {pending && <Loader2 className="size-4 animate-spin" />} {purchase ? "Gửi thử 1 purchase (1đ)" : "Gửi sự kiện thử (server_test)"}
     </Button>
+  );
+}
+
+export function GaSampleButton({ disabled }: { disabled: boolean }) {
+  const [pending, startTransition] = React.useTransition();
+
+  function run() {
+    startTransition(async () => {
+      const result = await runGa4BackfillSampleAction();
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      const list = result.items.map((i) => `${i.who} ${i.value.toLocaleString("vi-VN")}đ`).join(" · ");
+      if (result.failed > 0) toast.warning(`Đã gửi ${result.sent}, lỗi ${result.failed}. ${list}`);
+      else toast.success(`Đã gửi thử ${result.sent} purchase: ${list}`);
+    });
+  }
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="outline" disabled={disabled || pending} className="w-fit">
+          {pending && <Loader2 className="size-4 animate-spin" />} Gửi thử 5 purchase thật
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Gửi thử 5 purchase thật?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Gửi lại 5 đơn đầu tiên trong danh sách bên dưới, không đụng dấu &quot;đã gửi bù&quot;. Nếu lần gửi trước đã vào GA4 thì 5 đơn này bị tính hai
+            lần (chỉ vài trăm nghìn đồng). Mở GA4 → Thời gian thực trước khi bấm.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Hủy</AlertDialogCancel>
+          <AlertDialogAction onClick={run}>Gửi 5 cái</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 

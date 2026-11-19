@@ -3,7 +3,7 @@ import { requireSuperAdmin } from "@/lib/auth";
 import { GA_LINKED_MEASUREMENT_ID, GA_MEASUREMENT_ID } from "@/lib/ga-config";
 import { getGaTargets } from "@/lib/services/ga-secrets";
 import { previewGa4Backfill } from "@/lib/services/ga4-backfill";
-import { GaAllowResendButton, GaBackfillButton, GaSecretsForm, GaTestEventButton } from "@/components/admin/ga4-settings-forms";
+import { GaAllowResendButton, GaBackfillButton, GaSampleButton, GaSecretsForm, GaTestEventButton } from "@/components/admin/ga4-settings-forms";
 
 export const metadata: Metadata = { title: "GA4" };
 
@@ -99,6 +99,7 @@ export default async function AdminGa4Page() {
           </p>
           <GaTestEventButton purchase />
         </div>
+        <GaSampleButton disabled={targets.length === 0 || preview.total === 0} />
         <GaBackfillButton total={preview.total} totalValue={preview.totalValue} disabled={!!preview.doneAt || targets.length === 0} />
         <div className="max-h-96 overflow-auto rounded-xl border border-border">
           <table className="w-full min-w-[640px] text-sm">
