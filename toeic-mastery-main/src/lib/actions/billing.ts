@@ -11,7 +11,8 @@ import { grantProDays } from "@/lib/services/pro-grant";
 import { getNewMemberOfferState } from "@/lib/services/new-member-offer";
 import { sendGaServerEvent } from "@/lib/services/ga-server";
 import { getReferralDiscountState } from "@/lib/services/referral-discount";
-import { PRO_PLANS, discountedPriceVnd, referralDiscountedPriceVnd, type ProPlanKey } from "@/lib/constants/billing";
+import { getProTrialState } from "@/lib/services/pro-trial";
+import { PRO_PLANS, PRO_TRIAL_DAYS, proTrialCode, discountedPriceVnd, referralDiscountedPriceVnd, type ProPlanKey } from "@/lib/constants/billing";
 
 export interface ActionResult {
   error?: string;
@@ -48,6 +49,36 @@ export async function redeemActivationCodeAction(rawCode: string): Promise<Actio
   void sendGaServerEvent(profile.id, "pro_code_redeemed", { plan_days: record.planDurationDays });
   revalidatePath("/pricing");
   return {};
+}
+
+/** One-click free Pro trial (see pro-trial.ts) for accounts that have never
+ * had Pro. Eligibility is re-checked here, never trusted from the UI, and
+ * the trial is recorded as a pre-redeemed ActivationCode `TRIAL-<userId>`:
+ * its unique `code` makes a second trial for the same account impossible
+ * even if two requests race past the eligibility check together. */
+export async function startProTrialAction(): Promise<ActionResult & { endsAt?: string }> {
+  const profile = await requireUser();
+  if (!rateLimit(`pro-trial:${profile.id}`, 5, 15 * 60 * 1000).ok) return { error: "Bạn thao tác quá nhanh, vui lòng thử lại sau ít phút." };
+
+  const trial = await getProTrialState(profile);
+  if (!trial.eligible) {
+    return { error: trial.used ? "Bạn đã sử dụng lượt dùng thử PRO rồi." : "Tài khoản của bạn không còn đủ điều kiện dùng thử PRO." };
+  }
+
+  const now = new Date();
+  try {
+    await db.activationCode.create({
+      data: { code: proTrialCode(profile.id), planDurationDays: PRO_TRIAL_DAYS, usedByUserId: profile.id, usedAt: now },
+    });
+  } catch {
+    // Unique violation — a parallel request already started it.
+    return { error: "Bạn đã sử dụng lượt dùng thử PRO rồi." };
+  }
+
+  await grantProDays(profile.id, PRO_TRIAL_DAYS, `Dùng thử PRO miễn phí ${PRO_TRIAL_DAYS} ngày`);
+  void sendGaServerEvent(profile.id, "pro_trial_start", { plan_days: PRO_TRIAL_DAYS });
+  revalidatePath("/", "layout");
+  return { endsAt: new Date(now.getTime() + PRO_TRIAL_DAYS * 24 * 60 * 60 * 1000).toISOString() };
 }
 
 /**

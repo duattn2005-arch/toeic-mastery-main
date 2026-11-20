@@ -27,6 +27,8 @@ import type { VocabularyReminder } from "@/lib/data/vocabulary";
 import { EquippableLogoMark } from "@/components/shared/logo-mark";
 import { AccountAvatar } from "@/components/shared/account-avatar";
 import { FACEBOOK_URL } from "@/lib/constants/contact";
+import { TrialHeaderCta } from "@/components/billing/trial-header-cta";
+import type { ProTrialState } from "@/lib/services/pro-trial"; // type-only: erased at build time
 
 function ReminderBell({ reminder }: { reminder: VocabularyReminder }) {
   const total = reminder.dueTodayCount + reminder.dueTomorrowCount;
@@ -77,11 +79,13 @@ export function TopHeader({
   profile,
   vocabularyReminder,
   siteThemeId,
+  proTrial,
   onOpenSearch,
 }: {
   profile: SidebarProfile;
   vocabularyReminder: VocabularyReminder;
   siteThemeId: string;
+  proTrial: ProTrialState;
   onOpenSearch: () => void;
 }) {
   // Trivial re-check of the same rule as src/lib/auth.ts's isPro() — that
@@ -170,12 +174,16 @@ export function TopHeader({
             <Clock className="size-4" /> Quick Study
           </Link>
         </Button>
-        {!isPro && (
-          <Button asChild size="sm" variant="outline" className="hidden rounded-full sm:flex">
-            <Link href="/pricing">
-              <Crown className="size-4 text-warning" /> Nâng cấp
-            </Link>
-          </Button>
+        {proTrial.eligible || (proTrial.active && proTrial.endsAt) ? (
+          <TrialHeaderCta trial={proTrial} />
+        ) : (
+          !isPro && (
+            <Button asChild size="sm" variant="outline" className="hidden rounded-full sm:flex">
+              <Link href="/pricing">
+                <Crown className="size-4 text-warning" /> Nâng cấp
+              </Link>
+            </Button>
+          )
         )}
         <div data-tour="dashboard-icons" className="flex items-center gap-2">
           <ReminderBell reminder={vocabularyReminder} />
