@@ -95,9 +95,9 @@ function Turn({ side, kind, travelled, fade }: { side: Side; kind: "entry" | "ex
 
 function KindIcon({ kind, compact }: { kind: JourneyKind; compact: boolean }) {
   if (kind === "grammar")
-    return <span className={cn("text-[19px] font-extrabold tracking-tight", compact ? "sm:text-xl" : "sm:text-[26px]")}>Aa</span>;
+    return <span className={cn("text-[17px] font-extrabold tracking-tight", compact ? "sm:text-xl" : "sm:text-[26px]")}>Aa</span>;
   const Icon = kind === "reading" ? BookOpen : Headphones;
-  return <Icon className={cn("size-6", compact ? "sm:size-6" : "sm:size-8")} strokeWidth={2} />;
+  return <Icon className={cn("size-5", compact ? "sm:size-6" : "sm:size-8")} strokeWidth={2} />;
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -114,14 +114,14 @@ function Stop({ day, col, href, compact }: { day: JourneyDay; col: number; href:
     ? {
         background: "var(--success)",
         color: "var(--success-foreground)",
-        boxShadow: "0 5px 0 color-mix(in oklab, var(--success) 65%, #000), 0 0 0 4px var(--card)",
+        boxShadow: "0 5px 0 color-mix(in oklab, var(--success) 65%, #000), 0 0 0 var(--ring-w) var(--card)",
       }
     : locked
-      ? { background: "var(--jm-locked)", color: "#fff", boxShadow: "0 5px 0 var(--jm-locked-edge), 0 0 0 4px color-mix(in oklab, var(--card) 85%, transparent)" }
+      ? { background: "var(--jm-locked)", color: "#fff", boxShadow: "0 5px 0 var(--jm-locked-edge), 0 0 0 var(--ring-w) color-mix(in oklab, var(--card) 85%, transparent)" }
       : {
           background: "var(--primary)",
           color: "var(--primary-foreground)",
-          boxShadow: `0 5px 0 color-mix(in oklab, var(--primary) 62%, #000), 0 0 0 4px var(--card)${current ? ", 0 14px 34px -8px var(--primary)" : ""}`,
+          boxShadow: `0 5px 0 color-mix(in oklab, var(--primary) 62%, #000), 0 0 0 var(--ring-w) var(--card)${current ? ", 0 14px 34px -8px var(--primary)" : ""}`,
         };
 
   const body = (
@@ -143,7 +143,7 @@ function Stop({ day, col, href, compact }: { day: JourneyDay; col: number; href:
       <span className="relative mt-1 block" style={{ width: "var(--node)", height: "var(--node)" }}>
         {current && (
           <>
-            <span aria-hidden className="absolute -inset-3 rounded-full bg-primary/15" />
+            <span aria-hidden className="absolute -inset-2 rounded-full bg-primary/15 sm:-inset-3" />
             <span aria-hidden className="absolute -inset-1 rounded-full bg-primary/30 motion-safe:animate-ping" />
           </>
         )}
@@ -184,7 +184,7 @@ function Stop({ day, col, href, compact }: { day: JourneyDay; col: number; href:
 
       <span
         className={cn(
-          "max-w-full truncate rounded-full px-2 py-0.5 text-[11px] font-bold shadow-sm ring-1",
+          "max-w-full rounded-lg px-1.5 py-0.5 text-center text-[10px] leading-tight font-bold text-balance shadow-sm ring-1 sm:truncate sm:rounded-full sm:px-2 sm:text-[11px] sm:leading-normal",
           compact ? "mt-2 sm:px-2.5 sm:text-xs" : "mt-2.5 sm:px-3 sm:py-1 sm:text-[13px]",
           current ? "bg-primary text-primary-foreground ring-primary" : "bg-card/95 ring-border/60",
           locked && "text-muted-foreground"
@@ -200,7 +200,7 @@ function Stop({ day, col, href, compact }: { day: JourneyDay; col: number; href:
   );
 
   const hint = locked ? (chest ? "Học xong các bước trước để mở rương" : "Học xong bước trước để mở khóa") : undefined;
-  const cls = "group flex flex-col items-center rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
+  const cls = "group flex w-full flex-col items-center rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
   return (
     <li className="absolute top-0 flex -translate-x-1/2 justify-center" style={{ left: colX(col), width: CELL_W }}>
       {href ? (
@@ -386,7 +386,7 @@ export function JourneyMap({
     <div
       className={cn(
         "journey-scene relative isolate overflow-hidden rounded-[1.75rem]",
-        "[--g:8%] [--node-y:45px] [--node:46px] [--road-w:12px] [--row-h:122px] [--turn-r:24px]",
+        "[--g:7%] [--node-y:44px] [--node:40px] [--ring-w:3px] [--road-w:10px] [--row-h:122px] [--turn-r:22px] sm:[--ring-w:4px]",
         compact
           ? "sm:[--g:7%] sm:[--node-y:50px] sm:[--node:54px] sm:[--road-w:12px] sm:[--row-h:126px] sm:[--turn-r:32px]"
           : "sm:[--g:8%] sm:[--node-y:60px] sm:[--node:72px] sm:[--road-w:16px] sm:[--row-h:162px] sm:[--turn-r:46px]",

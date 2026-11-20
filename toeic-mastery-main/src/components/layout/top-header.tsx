@@ -98,7 +98,7 @@ export function TopHeader({
     href === "/dashboard" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-white/[0.06] bg-background/45 px-4 backdrop-blur-2xl backdrop-saturate-150 sm:px-6">
+    <header className="sticky top-0 z-30 flex h-16 items-center gap-2 border-b border-white/[0.06] bg-background/45 px-3 backdrop-blur-2xl backdrop-saturate-150 sm:gap-3 sm:px-6">
       <Sheet>
         <SheetTrigger asChild>
           <Button variant="ghost" size="icon" className="lg:hidden" aria-label="Mở menu">
@@ -158,17 +158,17 @@ export function TopHeader({
       <button
         type="button"
         onClick={onOpenSearch}
-        className="flex min-w-0 flex-1 items-center gap-2 rounded-full border border-border/70 bg-card/70 px-4 py-2 text-sm text-muted-foreground transition-colors duration-300 hover:border-primary/30 hover:bg-card sm:max-w-sm"
+        aria-label="Tìm kiếm"
+        className="flex size-9 shrink-0 items-center justify-center rounded-full border border-border/70 bg-card/70 text-sm text-muted-foreground transition-colors duration-300 hover:border-primary/30 hover:bg-card sm:size-auto sm:min-w-0 sm:max-w-sm sm:flex-1 sm:justify-start sm:gap-2 sm:px-4 sm:py-2"
       >
-        <Search className="size-4" />
-        <span className="hidden sm:inline">Tìm đề thi, từ vựng, ngữ pháp...</span>
-        <span className="whitespace-nowrap sm:hidden">Tìm kiếm</span>
+        <Search className="size-4 shrink-0" />
+        <span className="hidden truncate sm:inline">Tìm đề thi, từ vựng, ngữ pháp...</span>
         <kbd className="ml-auto hidden rounded-md border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground sm:inline">
           Ctrl K
         </kbd>
       </button>
 
-      <div className="ml-auto flex items-center gap-2">
+      <div className="ml-auto flex shrink-0 items-center gap-1 sm:gap-2">
         <Button asChild data-tour="dashboard-quick-study" size="sm" className="hidden rounded-full sm:flex">
           <Link href="/quick-study">
             <Clock className="size-4" /> Quick Study
@@ -185,7 +185,7 @@ export function TopHeader({
             </Button>
           )
         )}
-        <div data-tour="dashboard-icons" className="flex items-center gap-2">
+        <div data-tour="dashboard-icons" className="flex items-center gap-0.5 sm:gap-2">
           <ReminderBell reminder={vocabularyReminder} />
           <SoundPlayerPopover accountKey={profile.email} />
           <SiteThemeGallery currentThemeId={siteThemeId} isPro={isPro} />
