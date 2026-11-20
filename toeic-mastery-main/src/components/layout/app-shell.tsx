@@ -8,7 +8,6 @@ import { CommandPalette } from "@/components/layout/command-palette";
 import { SiteThemeBackground } from "@/components/layout/site-theme-background";
 import { WelcomeOfferModal } from "@/components/billing/welcome-offer-modal";
 import { UpgradeNudgeModal } from "@/components/billing/upgrade-nudge-modal";
-import { TrialOfferModal } from "@/components/billing/trial-offer-modal";
 import type { ProTrialState } from "@/lib/services/pro-trial"; // type-only: erased at build time
 import { QuestionMentorDock } from "@/components/mentor/question-mentor-dock";
 import { getSiteTheme } from "@/lib/constants/site-themes";
@@ -64,14 +63,13 @@ export function AppShell({
       <MobileBottomNav />
       <CommandPalette open={searchOpen} onOpenChange={setSearchOpen} />
       <QuestionMentorDock equippedShopItemId={profile.equippedShopItemId} />
-      {/* At most one upsell dialog: the free trial first (if never had Pro),
-          nothing while the trial runs (the header pill counts it down), then
-          the welcome discount (extended past a lapsed trial), then the
-          generic nudge for anyone not on Pro. */}
-      {proTrial.eligible ? (
-        <TrialOfferModal hasWelcomeDiscount={!!newMemberOfferDeadline} />
-      ) : proTrial.active ? null : newMemberOfferDeadline ? (
-        <WelcomeOfferModal deadline={newMemberOfferDeadline} trialEnded={proTrial.used} />
+      {/* At most one upsell dialog, and it is never the free trial: the
+          owner wants the -25% welcome offer to own the popup (the trial is
+          offered in the header and on /pricing instead). The welcome offer
+          also runs during and past a trial (see getNewMemberOfferState),
+          then the generic nudge for anyone not on Pro. */}
+      {newMemberOfferDeadline ? (
+        <WelcomeOfferModal deadline={newMemberOfferDeadline} trialEnded={proTrial.used && !proTrial.active} />
       ) : (
         !isPro && <UpgradeNudgeModal />
       )}
