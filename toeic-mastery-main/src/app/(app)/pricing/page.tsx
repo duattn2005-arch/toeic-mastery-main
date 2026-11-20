@@ -43,7 +43,7 @@ export default async function PricingPage() {
       </div>
 
       {trial.eligible && (
-        <div className="relative mx-auto w-full max-w-3xl overflow-hidden rounded-3xl border-2 border-amber-400/60 bg-gradient-to-br from-amber-400/15 via-orange-500/10 to-transparent p-5 shadow-soft sm:p-6">
+        <div id="dung-thu" className="relative mx-auto w-full max-w-3xl scroll-mt-24 overflow-hidden rounded-3xl border-2 border-amber-400/60 bg-gradient-to-br from-amber-400/15 via-orange-500/10 to-transparent p-5 shadow-soft sm:p-6">
           <div className="pointer-events-none absolute -top-12 -right-10 size-40 rounded-full bg-amber-400/25 blur-3xl" aria-hidden />
           <div className="relative flex flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
             <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-400 to-orange-500 text-white shadow-sm">
