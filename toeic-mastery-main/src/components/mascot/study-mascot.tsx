@@ -150,7 +150,7 @@ function MascotFace({
   return (
     <>
       <div className="fixed bottom-20 right-4 z-40 flex flex-col items-end gap-2 lg:bottom-5 lg:right-5">
-        <div key={cycleKey} className="mascot-bubble-auto max-w-[220px] rounded-2xl rounded-br-sm border border-border bg-card px-3.5 py-2.5 text-xs font-medium leading-relaxed text-foreground shadow-soft">
+        <div key={cycleKey} className="mascot-bubble-auto pointer-events-none max-w-[180px] rounded-2xl sm:max-w-[220px] rounded-br-sm border border-border bg-card px-3 py-2 text-xs font-medium leading-snug text-foreground shadow-soft sm:px-3.5 sm:py-2.5 sm:leading-relaxed">
           {text}
         </div>
 
@@ -159,7 +159,7 @@ function MascotFace({
             type="button"
             onClick={onMinimize}
             aria-label="Ẩn trợ lý học tập"
-            className="absolute -top-1.5 -right-1.5 z-10 flex size-5 items-center justify-center rounded-full border border-border bg-card text-muted-foreground opacity-0 shadow-soft transition-opacity group-hover:opacity-100"
+            className="absolute -top-1.5 -right-1.5 z-10 flex size-5 items-center justify-center rounded-full border border-border bg-card text-muted-foreground opacity-0 shadow-soft transition-opacity group-hover:opacity-100 focus-visible:opacity-100 [@media(hover:none)]:opacity-100"
           >
             <X className="size-3" />
           </button>
@@ -168,9 +168,9 @@ function MascotFace({
             type="button"
             onClick={() => setMentorOpen(true)}
             aria-label="Hỏi AI Mentor"
-            className="mascot-float relative flex size-16 items-center justify-center rounded-full border border-border bg-card shadow-soft"
+            className="mascot-float relative flex size-13 items-center sm:size-16 justify-center rounded-full border border-border bg-card shadow-soft"
           >
-            <MascotAvatar key={cycleKey} state={state} size={48} equippedShopItemId={equippedShopItemId} className="size-12" />
+            <MascotAvatar key={cycleKey} state={state} size={48} equippedShopItemId={equippedShopItemId} className="size-10 sm:size-12" />
             {Badge && (
               <span className="absolute -top-1 -right-1 flex size-5 items-center justify-center rounded-full bg-primary text-primary-foreground">
                 <Badge className="size-3" />

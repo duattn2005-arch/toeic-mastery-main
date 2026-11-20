@@ -58,7 +58,7 @@ export function AppShell({
           proTrial={proTrial}
           onOpenSearch={() => setSearchOpen(true)}
         />
-        <main className="flex-1 px-4 pb-20 pt-6 sm:px-6 lg:px-8 lg:pb-8">{children}</main>
+        <main className="flex-1 px-4 pb-36 pt-6 sm:px-6 lg:px-8 lg:pb-8">{children}</main>
       </div>
       <MobileBottomNav />
       <CommandPalette open={searchOpen} onOpenChange={setSearchOpen} />
