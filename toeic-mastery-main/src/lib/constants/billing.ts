@@ -69,26 +69,23 @@ export function planPricePerDay(planKey: ProPlanKey): number {
  * elsewhere). The VNPay integration in src/lib/services/vnpay.ts is still
  * there, ready to switch back on once a merchant account is set up. */
 export const BANK_TRANSFER_INFO = {
-  bankCode: "MBBank", // vietqr.app bank identifier for MB Bank
+  bankCode: "MB", // VietQR short code for MB Bank
   bankName: "MB Bank (Ngân hàng Quân đội)",
   accountNumber: "6368603082005",
   accountName: "NGUYEN BICH HOA",
 } as const;
 
-/** vietqr.app (SePay-branded) QR image API. `amount` and `des` (the
- * transfer content) are embedded per order, so the SePay webhook can match
- * the incoming transfer's content (TOEIC<orderId>) and amount and activate
- * the upgrade + send the confirmation email automatically. Note the content
- * param is `des` — `note`/`addInfo` are silently ignored by this API. */
+/** Official VietQR image API (img.vietqr.io) — no SePay branding, which the
+ * owner doesn't want shown (vietqr.app adds a SePay logo with no way to turn
+ * it off). The amount and the per-order note (addInfo) are embedded in the
+ * QR itself, so the SePay webhook can still match the incoming transfer's
+ * content (TOEIC<orderId>) and amount and auto-activate + email. Same QR
+ * payload as vietqr.app's, verified by decoding both. */
 export function buildVietQrImageUrl(amountVnd: number, note: string): string {
   const params = new URLSearchParams({
-    bank: BANK_TRANSFER_INFO.bankCode,
-    acc: BANK_TRANSFER_INFO.accountNumber,
-    template: "compact",
-    showinfo: "true",
-    holder: BANK_TRANSFER_INFO.accountName,
     amount: String(amountVnd),
-    des: note,
+    addInfo: note,
+    accountName: BANK_TRANSFER_INFO.accountName,
   });
-  return `https://vietqr.app/img?${params.toString().replace(/\+/g, "%20")}`;
+  return `https://img.vietqr.io/image/${BANK_TRANSFER_INFO.bankCode}-${BANK_TRANSFER_INFO.accountNumber}-compact2.png?${params.toString()}`;
 }
