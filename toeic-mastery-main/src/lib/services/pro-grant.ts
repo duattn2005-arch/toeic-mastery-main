@@ -17,7 +17,7 @@ function planLabelForDays(days: number): string {
  * future, else from now" only lives in one place. Also the single place a
  * Pro confirmation email fires, so every grant path emails the user the
  * same way without each caller remembering to. */
-export async function grantProDays(userId: string, days: number): Promise<void> {
+export async function grantProDays(userId: string, days: number, planLabel?: string): Promise<void> {
   const profile = await db.profile.findUniqueOrThrow({ where: { id: userId } });
   const now = new Date();
   const extendFrom = profile.proExpiresAt && profile.proExpiresAt > now ? profile.proExpiresAt : now;
@@ -29,7 +29,7 @@ export async function grantProDays(userId: string, days: number): Promise<void> 
     await sendProConfirmationEmail({
       toEmail: profile.email,
       toName: profile.fullName ?? profile.email,
-      planName: planLabelForDays(days),
+      planName: planLabel ?? planLabelForDays(days),
       expiresAt: proExpiresAt.toLocaleDateString("vi-VN"),
     });
   } catch (err) {

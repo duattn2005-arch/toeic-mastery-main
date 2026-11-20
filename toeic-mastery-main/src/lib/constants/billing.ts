@@ -19,6 +19,21 @@ export const NEW_MEMBER_OFFER_PERCENT = 25;
  * reloading and not repeating once it lapses (see getNewMemberOfferState). */
 export const NEW_MEMBER_OFFER_WINDOW_HOURS = 72;
 
+/** One-time free Pro trial (see src/lib/services/pro-trial.ts) — for
+ * accounts that have never had Pro in any form. Stored as a pre-redeemed
+ * ActivationCode `TRIAL-<userId>` (no schema change), whose unique `code`
+ * makes "one trial per account" race-proof. */
+export const PRO_TRIAL_DAYS = 3;
+export const PRO_TRIAL_CODE_PREFIX = "TRIAL-";
+/** After a trial lapses, the welcome discount stays open at least this long
+ * (getNewMemberOfferState) — the moment they've just lost Pro is when the
+ * discount converts best. */
+export const POST_TRIAL_OFFER_HOURS = 48;
+
+export function proTrialCode(userId: string): string {
+  return `${PRO_TRIAL_CODE_PREFIX}${userId}`;
+}
+
 export function discountedPriceVnd(planKey: ProPlanKey): number {
   const plan = PRO_PLANS[planKey];
   return Math.round((plan.amountVnd * (100 - NEW_MEMBER_OFFER_PERCENT)) / 100 / 1000) * 1000;

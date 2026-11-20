@@ -1,6 +1,7 @@
 import { getCurrentProfile } from "@/lib/auth";
 import { getVocabularyReminder } from "@/lib/data/vocabulary";
 import { getNewMemberOfferState } from "@/lib/services/new-member-offer";
+import { getProTrialState } from "@/lib/services/pro-trial";
 import { getSiteThemeId } from "@/lib/data/site-theme";
 import { AppShell } from "@/components/layout/app-shell";
 import { PublicAppShell } from "@/components/layout/public-app-shell";
@@ -23,10 +24,11 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     return <PublicAppShell>{children}</PublicAppShell>;
   }
 
-  const [vocabularyReminder, newMemberOffer, siteThemeId] = await Promise.all([
+  const [vocabularyReminder, newMemberOffer, siteThemeId, proTrial] = await Promise.all([
     getVocabularyReminder(profile.id),
     getNewMemberOfferState(profile),
     getSiteThemeId(profile.id),
+    getProTrialState(profile),
   ]);
 
   return (
@@ -45,6 +47,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       }}
       vocabularyReminder={vocabularyReminder}
       newMemberOfferDeadline={newMemberOffer.deadline}
+      proTrial={proTrial}
       siteThemeId={siteThemeId}
     >
       <AnalyticsIdentity userId={profile.id} plan={profile.plan} role={profile.role} />

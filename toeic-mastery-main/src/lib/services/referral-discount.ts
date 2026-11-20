@@ -1,5 +1,6 @@
 import "server-only";
 import { db } from "@/lib/db";
+import { getProTrialEnd } from "@/lib/services/pro-trial";
 import type { Profile } from "@/generated/prisma/client";
 
 export interface ReferralDiscountState {
@@ -16,7 +17,9 @@ export interface ReferralDiscountState {
 export async function getReferralDiscountState(
   profile: Pick<Profile, "id" | "plan" | "referredByProfileId">
 ): Promise<ReferralDiscountState> {
-  if (profile.plan !== "FREE" || !profile.referredByProfileId) return { eligible: false };
+  if (!profile.referredByProfileId) return { eligible: false };
+  // A free-trial user (plan PRO only because of the trial) hasn't bought yet.
+  if (profile.plan !== "FREE" && !(await getProTrialEnd(profile.id))) return { eligible: false };
 
   const existingPayment = await db.payment.findFirst({ where: { userId: profile.id }, select: { id: true } });
   if (existingPayment) return { eligible: false };

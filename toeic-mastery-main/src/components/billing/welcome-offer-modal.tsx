@@ -6,11 +6,12 @@ import { usePathname } from "next/navigation";
 import { Gift, Sparkles, X, Zap } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { NEW_MEMBER_OFFER_PERCENT } from "@/lib/constants/billing";
+import { NEW_MEMBER_OFFER_PERCENT, PRO_TRIAL_DAYS } from "@/lib/constants/billing";
 import { trackEvent } from "@/lib/analytics";
 
 const VIEW_COUNT_KEY = "welcome_offer_view_count_v2";
 const MAX_VIEWS = 5;
+const POST_TRIAL_VIEW_COUNT_KEY = "post_trial_offer_view_count_v1";
 
 /** Signals to UpgradeNudgeModal that this modal has resolved its decision
  * for the session (shown-and-dismissed, or determined it won't show at
@@ -79,7 +80,10 @@ function CountdownBox({ value, label }: { value: number; label: string }) {
  * never buys extra time — only the *number of times it's shown* is tracked
  * client-side, via a view counter rather than the old "dismissed forever"
  * flag. */
-export function WelcomeOfferModal({ deadline }: { deadline: string }) {
+export function WelcomeOfferModal({ deadline, trialEnded = false }: { deadline: string; trialEnded?: boolean }) {
+  // A lapsed free trial gets its own copy and its own view budget — those
+  // users may well have used up the signup-time views already.
+  const viewCountKey = trialEnded ? POST_TRIAL_VIEW_COUNT_KEY : VIEW_COUNT_KEY;
   const pathname = usePathname();
   const deadlineMs = React.useMemo(() => new Date(deadline).getTime(), [deadline]);
   const [open, setOpen] = React.useState(false);
@@ -89,8 +93,8 @@ export function WelcomeOfferModal({ deadline }: { deadline: string }) {
   React.useEffect(() => {
     let count = MAX_VIEWS + 1;
     try {
-      count = Number(localStorage.getItem(VIEW_COUNT_KEY) ?? "0") + 1;
-      localStorage.setItem(VIEW_COUNT_KEY, String(count));
+      count = Number(localStorage.getItem(viewCountKey) ?? "0") + 1;
+      localStorage.setItem(viewCountKey, String(count));
     } catch {
       // localStorage unavailable (private mode, blocked storage) — fail open, just show it once.
       count = 1;
@@ -125,7 +129,7 @@ export function WelcomeOfferModal({ deadline }: { deadline: string }) {
       // pattern as theme-toggle.tsx's mounted flag.
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setViewNumber(count);
-      trackEvent("welcome_offer_view", { view_number: count });
+      trackEvent("welcome_offer_view", { view_number: count, trial_ended: trialEnded });
       setOpen(true);
       return;
     }
@@ -185,7 +189,7 @@ export function WelcomeOfferModal({ deadline }: { deadline: string }) {
           <div className="relative flex flex-col items-center gap-4 text-center">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold backdrop-blur-sm">
               <span className="notify-dot size-1.5 rounded-full bg-emerald-300" />
-              ƯU ĐÃI DÀNH RIÊNG CHO THÀNH VIÊN MỚI
+              {trialEnded ? `BẠN VỪA HẾT ${PRO_TRIAL_DAYS} NGÀY DÙNG THỬ PRO` : "ƯU ĐÃI DÀNH RIÊNG CHO THÀNH VIÊN MỚI"}
             </span>
 
             <div className="relative flex size-32 items-center justify-center">
@@ -205,15 +209,22 @@ export function WelcomeOfferModal({ deadline }: { deadline: string }) {
               </div>
             </div>
 
-            <DialogTitle className="text-xl font-bold leading-snug text-white">Chào mừng bạn đến với TOEIC Mastery! 🎉</DialogTitle>
+            <DialogTitle className="text-xl font-bold leading-snug text-white">{trialEnded ? "Giữ lại PRO với giá ưu đãi 🔓" : "Chào mừng bạn đến với TOEIC Mastery! 🎉"}</DialogTitle>
           </div>
         </div>
 
         <div className="flex flex-col items-center gap-4 px-6 py-6 text-center">
+          {trialEnded ? (
+            <p className="text-sm text-muted-foreground">
+              Mock Test không giới hạn, lời giải chi tiết, transcript ETS… đã tạm khóa lại. Nâng cấp ngay để mở lại toàn bộ — giảm{" "}
+              <span className="font-semibold text-foreground">{NEW_MEMBER_OFFER_PERCENT}%</span> chỉ trong thời gian ngắn.
+            </p>
+          ) : (
           <p className="text-sm text-muted-foreground">
             Cảm ơn bạn đã đăng ký tài khoản! Đây là món quà chào mừng dành riêng cho thành viên mới — giảm ngay{" "}
             <span className="font-semibold text-foreground">{NEW_MEMBER_OFFER_PERCENT}%</span> khi nâng cấp Pro trong những ngày đầu tiên.
           </p>
+          )}
 
           <div className="flex flex-col items-center gap-2">
             <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">

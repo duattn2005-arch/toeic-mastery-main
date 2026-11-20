@@ -22,7 +22,7 @@
  * Deliberately not marked "server-only": the CLI script runs under tsx.
  */
 import { db } from "@/lib/db";
-import { PRO_PLANS } from "@/lib/constants/billing";
+import { PRO_PLANS, PRO_TRIAL_CODE_PREFIX } from "@/lib/constants/billing";
 import { getGaTargets, mpUrl, type GaTarget } from "@/lib/services/ga-secrets";
 
 /** When PR #35 ("tính purchase ngay khi vào trang thanh toán") reached main:
@@ -63,14 +63,15 @@ export interface BackfillPreview {
 const STATUS_VI: Record<string, string> = { PENDING: "chờ duyệt", SUCCESS: "đã duyệt", FAILED: "đã từ chối", REFUNDED: "đã hoàn tiền" };
 
 export async function previewGa4Backfill(): Promise<BackfillPreview> {
-  const [orders, codes, proProfiles, done, targets, buyers] = await Promise.all([
+  const [orders, codes, proProfiles, done, targets, buyers, trials] = await Promise.all([
     db.payment.findMany({
       where: { createdAt: { lt: CLICK_PURCHASE_SINCE } },
       select: { userId: true, orderId: true, amount: true, planDurationDays: true, status: true, createdAt: true, user: { select: { email: true } } },
       orderBy: { createdAt: "asc" },
     }),
     db.activationCode.findMany({
-      where: { usedByUserId: { not: null } },
+      // Free trials (TRIAL-<userId>) aren't purchases.
+      where: { usedByUserId: { not: null }, NOT: { code: { startsWith: PRO_TRIAL_CODE_PREFIX } } },
       select: { usedByUserId: true, code: true, planDurationDays: true, usedAt: true },
       orderBy: { usedAt: "asc" },
     }),
@@ -81,7 +82,13 @@ export async function previewGa4Backfill(): Promise<BackfillPreview> {
     // already was, at checkout) their purchase, so a manual Pro grant on
     // top — often how a pending transfer gets honoured — isn't another one.
     db.payment.findMany({ select: { userId: true }, distinct: ["userId"] }),
+    // PRO only because of the free trial — not "bật Pro tay" for money.
+    db.activationCode.findMany({
+      where: { code: { startsWith: PRO_TRIAL_CODE_PREFIX }, usedByUserId: { not: null } },
+      select: { usedByUserId: true },
+    }),
   ]);
+  const trialUsers = new Set(trials.map((t) => t.usedByUserId!));
 
   const codeUsers = new Set(codes.map((c) => c.usedByUserId!));
   const orderUsers = new Set(buyers.map((b) => b.userId));
@@ -111,7 +118,7 @@ export async function previewGa4Backfill(): Promise<BackfillPreview> {
       date: c.usedAt?.toISOString() ?? null,
     })),
     ...proProfiles
-      .filter((p) => !orderUsers.has(p.id) && !codeUsers.has(p.id))
+      .filter((p) => !orderUsers.has(p.id) && !codeUsers.has(p.id) && !trialUsers.has(p.id))
       .map((p) => ({
         kind: "manual" as const,
         transactionId: `manual-${p.id}`,
