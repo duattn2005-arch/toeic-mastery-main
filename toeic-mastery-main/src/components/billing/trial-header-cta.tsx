@@ -2,8 +2,8 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { Hourglass } from "lucide-react";
-import { StartTrialButton } from "@/components/billing/start-trial-button";
+import { Gift, Hourglass } from "lucide-react";
+import { trackEvent } from "@/lib/analytics";
 import { PRO_TRIAL_DAYS } from "@/lib/constants/billing";
 import { cn } from "@/lib/utils";
 import type { ProTrialState } from "@/lib/services/pro-trial"; // type-only: erased at build time
@@ -18,8 +18,10 @@ function remainingLabel(ms: number): string {
   return `${minutes} phút`;
 }
 
-/** Header slot for the free trial: a one-click "try Pro" button while it's
- * unclaimed, then a live countdown pill while it runs — always in view, so
+/** Header slot for the free trial: a "try Pro" link to the pricing page's
+ * trial banner while it's unclaimed (activating straight from the header felt
+ * too abrupt — the learner should see what PRO includes and choose to start
+ * it there), then a live countdown pill while it runs — always in view, so
  * the end of the trial never comes as a surprise and the way to keep Pro
  * (the pricing page, still at the welcome discount) is one tap away. */
 export function TrialHeaderCta({ trial }: { trial: ProTrialState }) {
@@ -34,12 +36,14 @@ export function TrialHeaderCta({ trial }: { trial: ProTrialState }) {
 
   if (trial.eligible) {
     return (
-      <StartTrialButton
-        source="header"
-        size="sm"
-        label={`Dùng thử PRO ${PRO_TRIAL_DAYS} ngày`}
-        className="rounded-full border-0 bg-gradient-to-r from-amber-400 to-orange-500 px-3 text-white shadow-sm hover:opacity-90 max-sm:text-xs"
-      />
+      <Link
+        href="/pricing#dung-thu"
+        onClick={() => trackEvent("pro_trial_click", { source: "header" })}
+        className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-3 py-1.5 text-xs font-semibold whitespace-nowrap text-white shadow-sm transition-opacity hover:opacity-90 sm:text-sm"
+      >
+        <Gift className="size-4" />
+        Dùng thử PRO {PRO_TRIAL_DAYS} ngày
+      </Link>
     );
   }
 
