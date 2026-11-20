@@ -1,7 +1,7 @@
 import "server-only";
 import { db } from "@/lib/db";
 import { PRO_PLANS } from "@/lib/constants/billing";
-import { sendProConfirmationEmail } from "@/lib/services/emailjs";
+import { sendProConfirmationEmail } from "@/lib/services/email";
 
 /** Matches `days` back to a PRO_PLANS label for the confirmation email —
  * falls back to a plain day count for grants that don't line up with a

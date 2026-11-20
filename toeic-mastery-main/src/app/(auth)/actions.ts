@@ -8,7 +8,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { SESSION_COOKIE, sessionCookieOptions, signSessionToken } from "@/lib/auth/session";
 import { AUTH_EVENT_COOKIE, authEventCookieOptions } from "@/lib/analytics";
 import { hashPassword, verifyPassword, generateResetCode, hashResetCode, verifyResetCode } from "@/lib/auth/password";
-import { sendPasswordResetCodeEmail } from "@/lib/services/emailjs";
+import { sendPasswordResetCodeEmail } from "@/lib/services/email";
 import {
   registerSchema,
   loginSchema,
