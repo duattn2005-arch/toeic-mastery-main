@@ -56,8 +56,8 @@ export function planPricePerDay(planKey: ProPlanKey): number {
 export const BANK_TRANSFER_INFO = {
   bankCode: "MB", // VietQR short code for MB Bank
   bankName: "MB Bank (Ngân hàng Quân đội)",
-  accountNumber: "5333333333334",
-  accountName: "TRAN NHAT DUAT",
+  accountNumber: "6368603082005",
+  accountName: "NGUYEN BICH HOA",
 } as const;
 
 /** VietQR's public, no-auth image API — generates an official, correctly

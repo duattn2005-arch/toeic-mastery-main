@@ -1,4 +1,4 @@
-import { Globe, type LucideIcon } from "lucide-react";
+import { Globe, Mail, type LucideIcon } from "lucide-react";
 
 export interface ContactChannel {
   label: string;
@@ -17,5 +17,12 @@ export const CONTACT_CHANNELS: ContactChannel[] = [
     href: FACEBOOK_URL,
     description: "Nhắn tin để được hỗ trợ tài khoản, thanh toán và góp ý nội dung.",
     icon: Globe,
+  },
+  {
+    label: "Email",
+    value: "toeicmasteryvn@gmail.com",
+    href: "mailto:toeicmasteryvn@gmail.com",
+    description: "Gửi email cho đội ngũ hỗ trợ về tài khoản, thanh toán hoặc góp ý.",
+    icon: Mail,
   },
 ];
