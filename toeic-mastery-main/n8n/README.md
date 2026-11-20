@@ -2,7 +2,7 @@
 
 Các workflow chạy trên n8n local (http://localhost:5678), giờ theo múi Asia/Ho_Chi_Minh.
 
-| Workflow | Lịch (trong giờ dùng máy: sáng 8–11:30, tối 19–23) | Làm gì |
+| Workflow | Khung giờ (n8n hỏi mỗi 15 phút, tới khung mà chưa làm thì chạy, máy ngủ thì làm bù khi thức dậy) | Làm gì |
 |---|---|---|
 | Threads 1 – Bài ảnh tính năng → chốt PRO | 8:30 & 19:30 | Chọn tính năng, chụp màn hình ‖ săn xu hướng ‖ đọc bài cũ (song song), Gemini viết bài + comment nối tiếp, kiểm duyệt 6 điều kiện, đăng bằng 3 bước API (tạo container → chờ Meta → xuất bản), comment link vào trang đó |
 | Threads 2 – Bài chốt PRO | 10:30 & 21:30 | Chụp 1 tính năng Pro khớp góc bài (Radar phân tích, Transcript ETS, Ôn nhanh, lộ trình…) và đính vào comment cùng link; xoay vòng mẹo / quiz / hỏi đáp / từ dễ nhầm / confession, cùng pipeline như trên; link dẫn do Gemini chọn trong 17 trang sản phẩm (không dẫn blog/hướng dẫn) |
@@ -73,3 +73,13 @@ Web app của Apps Script không mở được cho truy cập ẩn danh trên t�
 Mọi bài đăng (Threads 1 và 2, hai nhánh của Facebook Group) đều nhắm tới việc người đọc cân nhắc nâng cấp PRO. Nội dung tự nhiên, thuyết phục, dựa đúng dữ kiện thật của web (`PRO_FACTS` trong `build.mjs`: giới hạn gói free, 11 quyền lợi Pro, ưu đãi thành viên mới). 8 góc: hết lượt, phân tích điểm yếu, transcript ETS, lộ trình theo ngày thi, "rẻ như ly trà sữa", có đáng mua không, ưu đãi thành viên mới, học thông minh hơn. Comment đầu tiên nối tiếp mạch bài rồi dẫn vào `/pricing`.
 
 Quy tắc cứng: không nêu số tiền, chỉ so sánh với ly trà sữa / tô phở / cốc cà phê; số % duy nhất được nêu là ưu đãi giảm 25% cho thành viên mới trong 72 giờ đầu; không bịa lời chứng thực, số học viên, điểm số; không cam kết lên điểm; không khan hiếm giả; thành thật nói ai chưa cần Pro. Node kiểm duyệt chặn bài vi phạm (bài không được đăng), và Gemini được viết lại một lần trước khi tới bước đó. Khi người ta hỏi về Pro/giá ở comment, bot trả lời theo cùng quy tắc và dẫn `/pricing`.
+
+## Chạy khi máy "ngủ"
+
+Mọi thứ chạy trên chính máy Mac này, nên máy tắt hẳn thì không chạy. Nhưng khi ngủ (cắm sạc, Power Nap bật), máy tự thức dậy vài chục giây mỗi 15–20 phút (`pmset -g log` ghi là `DarkWake`) và n8n chạy trong những lần đó. Vì vậy:
+
+- Luồng trả lời comment chạy 15–20 phút một lần nên luôn trúng một lần thức dậy.
+- Các bài hẹn giờ (Threads, group, học mỗi ngày) hỏi lại mỗi 15 phút: node "🗓 Đã tới khung … chưa?" cho chạy khi đã qua giờ hẹn mà chưa làm, trong cửa sổ trễ 3 giờ (group 5 giờ, học 4 giờ). `store.slotDone` đảm bảo mỗi khung chỉ chạy một lần.
+- Khi một lượt chạy bắt đầu, node đó gọi `helper /awake` (caffeinate) để máy không ngủ lại giữa chừng (7 phút cho bài, 10 phút cho group, 2 giờ cho buổi học).
+
+Muốn chắc chắn hơn (tuỳ chọn, cần mật khẩu admin): `sudo pmset repeat wakeorpoweron MTWRFSU 08:25:00` đặt máy tự bật dậy 8:25 mỗi ngày.

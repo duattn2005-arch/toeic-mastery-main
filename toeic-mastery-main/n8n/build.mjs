@@ -18,6 +18,10 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const rand = (a, b) => a + Math.floor(Math.random() * (b - a + 1));
 // Waits between steps: a few seconds when run by hand (test), human-like when scheduled.
 const delay = (a, b) => ($execution.mode !== 'production' ? 5 : rand(a, b));
+// Keeps the Mac from idle-sleeping for N seconds (helper runs caffeinate), so a run that starts in a brief Power-Nap wake can finish.
+const stayAwake = async (sec) => {
+  try { await http({ url: (E.HELPER_URL || 'http://127.0.0.1:5690') + '/awake', qs: { sec }, timeout: 5000 }); } catch (e) { /* best effort */ }
+};
 // Step log carried along the run so every node's output shows the whole story.
 const tr = (p, step, detail) => [...((p && p.trace) || []), { step, at: new Date().toISOString(), ...detail }];
 const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
@@ -456,6 +460,29 @@ const sticky = (title, text, col, row, wCols, hRows, color) => {
   const [x, y] = at(col, row);
   return { id: "st-" + title.replace(/\W+/g, "-"), name: title, type: "n8n-nodes-base.stickyNote", typeVersion: 1, position: [x - 70, y - 90], parameters: { content: text, width: Math.round(wCols * 260), height: Math.round(hRows * 150), color } };
 };
+const intervalNode = (name, minutes) =>
+  node(name, "n8n-nodes-base.scheduleTrigger", 1.2, { rule: { interval: [{ field: "minutes", minutesInterval: minutes }] } }, 0);
+// Poll every 15 min; run when a posting slot is due and not done yet (catch-up after the Mac was asleep), within a lateness window.
+const SLOT_GATE = (slots, windowHours, awakeSec) => String.raw`
+const SLOTS = ${JSON.stringify(slots)};
+const WINDOW_MIN = ${windowHours} * 60;
+const now = new Date();
+const parts = Object.fromEntries(new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Ho_Chi_Minh', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', hour12: false }).formatToParts(now).map((x) => [x.type, x.value]));
+const dateKey = parts.year + '-' + parts.month + '-' + parts.day;
+const mins = Number(parts.hour) % 24 * 60 + Number(parts.minute);
+store.slotDone = store.slotDone || {};
+for (const k of Object.keys(store.slotDone)) if (!k.startsWith(dateKey)) delete store.slotDone[k];
+let due = null, late = 0;
+for (const slot of SLOTS) {
+  const [h, m] = slot.split(':').map(Number);
+  const start = h * 60 + m;
+  if (mins >= start && mins < start + WINDOW_MIN && !store.slotDone[dateKey + ' ' + slot]) { due = slot; late = mins - start; break; }
+}
+if (!due) return [];
+store.slotDone[dateKey + ' ' + due] = now.toISOString();
+await stayAwake(${awakeSec});
+return [{ json: { slot: due, late, trace: tr(null, 'Đến khung giờ', { khung: due, trễ_phút: late, ghi_chú: late > 20 ? 'đăng bù vì máy đang ngủ lúc đúng giờ' : 'đúng giờ', giữ_máy_thức_giây: ${awakeSec} }) } }];
+`;
 const HELPER = "={{ $env.HELPER_URL || 'http://127.0.0.1:5690' }}";
 const TH_URL = "https://graph.threads.net/v1.0";
 const edge = (from, to, out = 0, inp = 0) => ({ from, to, out, inp });
@@ -474,13 +501,16 @@ function buildGraph(id, name, items, edges, stickies = []) {
 }
 
 const goCode = (plan) => String.raw`
+const inp = $input.first().json;
 const now = new Date();
 return [{ json: {
   runId: 'run-' + Date.now().toString(36),
   mode: $execution.mode,
   startedAt: now.toISOString(),
+  khung_giờ: inp.slot || 'chạy tay',
+  trễ_phút: inp.late || 0,
   kế_hoạch: ${JSON.stringify(plan)},
-  trace: tr(null, 'Khởi động', { chế_độ: $execution.mode, kế_hoạch: ${JSON.stringify(plan)} }),
+  trace: tr(inp.trace ? { trace: inp.trace } : null, 'Khởi động', { chế_độ: $execution.mode, khung_giờ: inp.slot || 'chạy tay', kế_hoạch: ${JSON.stringify(plan)} }),
 } }];
 `;
 
@@ -622,14 +652,14 @@ return [{ json: {
 // ===========================================================================
 // Threads posting slots sit inside the hours the computer is in use: morning 8:00-11:30, evening 19:00-23:00.
 const A = {
-  man: "▶ Chạy ngay", sch: "⏰ 8:30 & 19:30", go: "🚀 Khởi động lượt chạy",
+  man: "▶ Chạy ngay", sch: "⏰ Mỗi 15 phút", gate: "🗓 Đã tới khung 8:30 / 19:30 chưa?", go: "🚀 Khởi động lượt chạy",
   pick: "🎯 Chọn tính năng", shot: "📷 Chụp màn hình (HTTP)", tr: "📈 Săn xu hướng", old: "📚 Đọc bài cũ của trang", mg1: "🔀 Gộp ảnh + xu hướng", mg2: "🔀 Gộp thêm bài cũ",
   readP: "🔎 Đọc nội dung trang", wr: "✍️ Viết bài (Gemini)", qc: "🛡️ Kiểm duyệt nội dung",
   c1: "📦 Tạo container bài (HTTP)", w1: "⏳ Chờ Meta xử lý bài", p1: "🚀 Xuất bản bài (HTTP)", pause: "⏱ Nghỉ vài giây rồi comment",
   c2: "📦 Tạo container comment (HTTP)", w2: "⏳ Chờ Meta xử lý comment", p2: "🚀 Xuất bản comment (HTTP)", done: "📊 Tổng kết chạy",
 };
 const imagePost = buildGraph("thrImagePost01", "Threads 1 – Bài ảnh tính năng → chốt PRO", [
-  [manual(A.man), 0, 1], [schedule(A.sch, ["30 8 * * *", "30 19 * * *"]), 0, 2.5], [codeNode(A.go, goCode(["chọn tính năng của web", "chụp ảnh", "viết bài + comment", "kiểm duyệt", "đăng Threads"]), 0), 1.3, 1.75],
+  [manual(A.man), 0, 1], [intervalNode(A.sch, 15), 0, 2.5], [codeNode(A.gate, SLOT_GATE(["08:30", "19:30"], 3, 420), 0), 0.65, 3.4], [codeNode(A.go, goCode(["chọn tính năng của web", "chụp ảnh", "viết bài + comment", "kiểm duyệt", "đăng Threads"]), 0), 1.3, 1.75],
   [codeNode(A.pick, PICK_FEATURE(), 0), 2.6, 1.75],
   [SHOT_HTTP(A.shot), 3.9, 0.9], [codeNode(A.tr, TREND_CODE("$input.first().json.feature"), 0), 3.9, 1.75], [codeNode(A.old, OLD_POSTS, 0), 3.9, 2.6],
   [mergeNode(A.mg1), 5, 1.3], [mergeNode(A.mg2), 6.1, 1.75],
@@ -639,19 +669,19 @@ const imagePost = buildGraph("thrImagePost01", "Threads 1 – Bài ảnh tính n
   [threadsCreate(A.c2, "comment"), 14.9, 1.75], [codeNode(A.w2, WAIT_CONTAINER, 0), 16, 1.75], [threadsPublish(A.p2), 17.1, 1.75],
   [codeNode(A.done, DONE_POST(A.pause, "Threads"), 0), 18.2, 1.75],
 ], [
-  edge(A.man, A.go), edge(A.sch, A.go), edge(A.go, A.pick), edge(A.pick, A.shot), edge(A.pick, A.tr), edge(A.pick, A.old),
+  edge(A.man, A.go), edge(A.sch, A.gate), edge(A.gate, A.go), edge(A.go, A.pick), edge(A.pick, A.shot), edge(A.pick, A.tr), edge(A.pick, A.old),
   edge(A.shot, A.mg1, 0, 0), edge(A.tr, A.mg1, 0, 1), edge(A.mg1, A.mg2, 0, 0), edge(A.old, A.mg2, 0, 1), edge(A.mg2, A.readP),
   edge(A.readP, A.wr), edge(A.wr, A.qc), edge(A.qc, A.c1), edge(A.c1, A.w1), edge(A.w1, A.p1), edge(A.p1, A.pause),
   edge(A.pause, A.c2), edge(A.c2, A.w2), edge(A.w2, A.p2), edge(A.p2, A.done),
 ], [
-  sticky("① KÍCH HOẠT", "## ① KÍCH HOẠT\n8:30 (sáng) & 19:30 (tối) hoặc bấm tay", 0, 0.6, 2.3, 2.9, 4),
+  sticky("① KÍCH HOẠT", "## ① KÍCH HOẠT\nHỏi mỗi 15 phút; tới khung 8:30 / 19:30 mà chưa đăng thì chạy (máy ngủ thì đăng bù khi thức dậy, trong 3 giờ) · hoặc bấm tay", 0, 0.6, 2.3, 2.9, 4),
   sticky("② CHUẨN BỊ SONG SONG", "## ② CHUẨN BỊ (song song)\nChọn tính năng → CHỤP ẢNH ‖ SĂN XU HƯỚNG ‖ ĐỌC BÀI CŨ → gộp → đọc trang → viết bài nối tính năng với quyền lợi PRO", 2.6, 0.1, 5.1, 3.5, 5),
   sticky("③ VIẾT VÀ KIỂM DUYỆT", "## ③ VIẾT & KIỂM DUYỆT\nGemini viết bài nối tính năng với quyền lợi PRO + comment dẫn /pricing, 7 điều kiện chất lượng", 8.3, 0.9, 2.0, 1.7, 6),
   sticky("④ ĐĂNG THREADS", "## ④ ĐĂNG LÊN THREADS (API chính thức)\nTạo container → chờ Meta → xuất bản · nghỉ vài giây · comment dẫn link cùng 3 bước", 10.4, 0.9, 8.2, 1.7, 7),
 ]);
 
 const B = {
-  man: "▶ Chạy ngay", sch: "⏰ 10:30 & 21:30", go: "🚀 Khởi động lượt chạy",
+  man: "▶ Chạy ngay", sch: "⏰ Mỗi 15 phút", gate: "🗓 Đã tới khung 10:30 / 21:30 chưa?", go: "🚀 Khởi động lượt chạy",
   pick: "🎲 Chọn góc nâng cấp PRO", pickPro: "🎯 Chọn tính năng PRO để khoe", shotPro: "📷 Chụp tính năng PRO (HTTP)", joinPro: "🔎 Ghép ảnh PRO",
   tr: "📈 Săn xu hướng", old: "📚 Đọc bài cũ của trang", mg1: "🔀 Gộp ảnh PRO + xu hướng", mg2: "🔀 Gộp thêm bài cũ",
   wr: "✍️ Viết bài (Gemini)", qc: "🛡️ Kiểm duyệt nội dung",
@@ -696,7 +726,7 @@ const threadsCommentImage = (name) =>
     options: { timeout: 60000 },
   });
 const engagePost = buildGraph("thrEngagePost01", "Threads 2 – Bài chốt PRO (nâng cấp gói)", [
-  [manual(B.man), 0, 1], [schedule(B.sch, ["30 10 * * *", "30 21 * * *"]), 0, 2.6], [codeNode(B.go, goCode(["chọn góc nâng cấp PRO", "chụp 1 tính năng Pro khớp góc bài", "viết bài + comment kèm ảnh", "kiểm duyệt", "đăng Threads"]), 0), 1.3, 1.8],
+  [manual(B.man), 0, 1], [intervalNode(B.sch, 15), 0, 2.6], [codeNode(B.gate, SLOT_GATE(["10:30", "21:30"], 3, 420), 0), 0.65, 3.5], [codeNode(B.go, goCode(["chọn góc nâng cấp PRO", "chụp 1 tính năng Pro khớp góc bài", "viết bài + comment kèm ảnh", "kiểm duyệt", "đăng Threads"]), 0), 1.3, 1.8],
   [codeNode(B.pick, PICK_ENGAGE_CODE, 0), 2.6, 0.7], [codeNode(B.pickPro, PICK_PRO, 0), 3.7, 0.7], [proShotHttp(B.shotPro), 4.8, 0.7], [codeNode(B.joinPro, JOIN_PRO, 0), 5.9, 0.7],
   [codeNode(B.tr, TREND_CODE("'mẹo học TOEIC, câu hỏi TOEIC Part 5 thử thách'"), 0), 5.9, 1.9], [codeNode(B.old, OLD_POSTS, 0), 5.9, 3.0],
   [mergeNode(B.mg1), 7, 1.3], [mergeNode(B.mg2), 8.1, 1.9],
@@ -706,13 +736,13 @@ const engagePost = buildGraph("thrEngagePost01", "Threads 2 – Bài chốt PRO 
   [threadsCommentImage(B.c2), 15.8, 1.9], [codeNode(B.w2, WAIT_CONTAINER, 0), 16.9, 1.9], [threadsPublish(B.p2), 18, 1.9],
   [codeNode(B.done, DONE_POST(B.pause, "Threads"), 0), 19.1, 1.9],
 ], [
-  edge(B.man, B.go), edge(B.sch, B.go), edge(B.go, B.pick), edge(B.go, B.tr), edge(B.go, B.old),
+  edge(B.man, B.go), edge(B.sch, B.gate), edge(B.gate, B.go), edge(B.go, B.pick), edge(B.go, B.tr), edge(B.go, B.old),
   edge(B.pick, B.pickPro), edge(B.pickPro, B.shotPro), edge(B.shotPro, B.joinPro),
   edge(B.joinPro, B.mg1, 0, 0), edge(B.tr, B.mg1, 0, 1), edge(B.mg1, B.mg2, 0, 0), edge(B.old, B.mg2, 0, 1), edge(B.mg2, B.wr),
   edge(B.wr, B.qc), edge(B.qc, B.c1), edge(B.c1, B.w1), edge(B.w1, B.p1), edge(B.p1, B.pause),
   edge(B.pause, B.c2), edge(B.c2, B.w2), edge(B.w2, B.p2), edge(B.p2, B.done),
 ], [
-  sticky("① KÍCH HOẠT", "## ① KÍCH HOẠT\n10:30 (cuối buổi sáng) & 21:30 (tối) hoặc bấm tay", 0, 0.6, 2.3, 3.0, 4),
+  sticky("① KÍCH HOẠT", "## ① KÍCH HOẠT\nHỏi mỗi 15 phút; tới khung 10:30 / 21:30 mà chưa đăng thì chạy (máy ngủ thì đăng bù khi thức dậy, trong 3 giờ) · hoặc bấm tay", 0, 0.6, 2.3, 3.0, 4),
   sticky("② GÓC PRO + ẢNH PRO", "## ② GÓC NÂNG CẤP + ẢNH TÍNH NĂNG PRO\nChọn góc (hết lượt / phân tích điểm yếu / transcript / lộ trình…) → CHỤP đúng tính năng Pro khớp góc → ghép", 2.6, 0.1, 4.4, 1.7, 5),
   sticky("③ SONG SONG", "## ② (tiếp) SĂN XU HƯỚNG ‖ ĐỌC BÀI CŨ\nChạy song song với nhánh chụp ảnh, rồi gộp", 5.8, 1.5, 3.2, 2.0, 5),
   sticky("④ VIẾT", "## ③ VIẾT & KIỂM DUYỆT\nGemini viết bài thuyết phục PRO ngắn + comment khoe tính năng trong ảnh, 7 điều kiện", 9.1, 1.1, 2.1, 1.7, 6),
@@ -722,7 +752,7 @@ const engagePost = buildGraph("thrEngagePost01", "Threads 2 – Bài chốt PRO 
 // ===========================================================================
 // Facebook group hub: ONE run writes BOTH posts (feature screenshot + engagement) into the Google Doc.
 const G = {
-  man: "▶ Chạy ngay", sch: "⏰ Mỗi ngày 9:00", go: "🚀 Khởi động lượt chạy",
+  man: "▶ Chạy ngay", sch: "⏰ Mỗi 15 phút", gate: "🗓 Đã tới khung 9:00 chưa?", go: "🚀 Khởi động lượt chạy",
   pickF: "🎯 Chọn tính năng", shot: "📷 Chụp màn hình (HTTP)", trA: "📈 Săn xu hướng (A)", oldA: "🗂 Đọc nhật ký bài đã soạn", mgA: "🔀 Gộp ảnh + xu hướng", readP: "🔎 Đọc nội dung trang", wrA: "✍️ Viết bài ảnh (Gemini)",
   pickE: "🎲 Chọn góc nâng cấp PRO", trB: "📈 Săn xu hướng (B)", mgB: "🔀 Gộp dạng bài + xu hướng", wrB: "✍️ Viết bài tương tác (Gemini)",
   qc: "🛡️ Kiểm duyệt nội dung", docs: "📄 Ghi vào Google Docs (HTTP)", done: "📊 Tổng kết chạy",
@@ -754,7 +784,7 @@ const drafts = [];
 return [{ json: { mine: '', minePosts: 0, mineNote: 'nhật ký bài group do bạn đăng tay nên không có sẵn → bỏ qua' } }];
 `;
 const fbGroupHub = buildGraph("fbGroupHub0001", "Facebook Group – Trung tâm nội dung (ghi Google Docs)", [
-  [manual(G.man), 0, 1.6], [schedule(G.sch, "0 9 * * *"), 0, 3.4], [codeNode(G.go, goCode(["bài ảnh tính năng (nhánh A)", "bài chốt PRO (nhánh B)", "kiểm duyệt", "ghi Google Docs"]), 0), 1.2, 2.5],
+  [manual(G.man), 0, 1.6], [intervalNode(G.sch, 15), 0, 3.4], [codeNode(G.gate, SLOT_GATE(["09:00"], 5, 600), 0), 0.6, 4.2], [codeNode(G.go, goCode(["bài ảnh tính năng (nhánh A)", "bài chốt PRO (nhánh B)", "kiểm duyệt", "ghi Google Docs"]), 0), 1.2, 2.5],
   [codeNode(G.pickF, PICK_FEATURE(), 0), 2.5, 1], [SHOT_HTTP(G.shot), 3.6, 0.3], [codeNode(G.trA, TREND_CODE("$input.first().json.feature"), 0), 3.6, 1.7],
   [mergeNode(G.mgA), 4.7, 1], [codeNode(G.readP, READ_PAGE(G.pickF), 0), 5.8, 1], [codeNode(G.wrA, featureWrite("group"), 0), 6.9, 1],
   [codeNode(G.pickE, PICK_ENGAGE_CODE, 0), 2.5, 4], [codeNode(G.trB, TREND_CODE("'mẹo học TOEIC, câu hỏi TOEIC Part 5 thử thách'"), 0), 2.5, 5.2],
@@ -766,14 +796,14 @@ const fbGroupHub = buildGraph("fbGroupHub0001", "Facebook Group – Trung tâm n
   }), 9.3, 2.8],
   [codeNode(G.done, DONE_GROUP, 0), 10.4, 2.8],
 ], [
-  edge(G.man, G.go), edge(G.sch, G.go),
+  edge(G.man, G.go), edge(G.sch, G.gate), edge(G.gate, G.go),
   edge(G.go, G.pickF), edge(G.go, G.pickE), edge(G.go, G.trB),
   edge(G.pickF, G.shot), edge(G.pickF, G.trA),
   edge(G.shot, G.mgA, 0, 0), edge(G.trA, G.mgA, 0, 1), edge(G.mgA, G.readP), edge(G.readP, G.wrA), edge(G.wrA, G.qc),
   edge(G.pickE, G.mgB, 0, 0), edge(G.trB, G.mgB, 0, 1), edge(G.mgB, G.wrB), edge(G.wrB, G.qc),
   edge(G.qc, G.docs), edge(G.docs, G.done),
 ], [
-  sticky("① KÍCH HOẠT", "## ① KÍCH HOẠT\n9:00 mỗi ngày hoặc bấm tay. Một lượt chạy = 2 bài", 0, 0.6, 2.3, 3.2, 4),
+  sticky("① KÍCH HOẠT", "## ① KÍCH HOẠT\nHỏi mỗi 15 phút; tới 9:00 mà chưa soạn thì chạy (đăng bù tới 14:00 nếu máy ngủ) · hoặc bấm tay. Một lượt = 2 bài", 0, 0.6, 2.3, 3.2, 4),
   sticky("② NHÁNH A", "## ② NHÁNH A · BÀI ẢNH TÍNH NĂNG\nChọn tính năng → CHỤP ẢNH ‖ SĂN XU HƯỚNG → gộp → đọc trang → Gemini viết bài + comment", 2.5, 0.1, 5.2, 2.6, 5),
   sticky("③ NHÁNH B", "## ③ NHÁNH B · BÀI CHỐT PRO\nChọn dạng bài ‖ săn xu hướng → gộp → Gemini viết bài + comment", 2.5, 3.3, 3.4, 2.7, 6),
   sticky("④ XUẤT", "## ④ KIỂM DUYỆT → GOOGLE DOCS → TỔNG KẾT\n6 điều kiện chất lượng, ghi doc, báo cáo từng bước", 8.0, 1.8, 3.6, 2.2, 7),
@@ -792,6 +822,7 @@ const replyFlow = ({ id, title, sch, schName, platform, accountHttp, postsCode, 
 const MAX_PER_DAY = ${maxDay};
 if ($execution.mode === 'production' && hourVN < 7) return [];
 if (store.countToday >= MAX_PER_DAY) return [];
+await stayAwake(240);
 return [{ json: {
   runId: 'run-' + Date.now().toString(36), mode: $execution.mode, startedAt: new Date().toISOString(),
   hourVN, countToday: store.countToday, remainingToday: MAX_PER_DAY - store.countToday,
@@ -1002,10 +1033,10 @@ const fbAutoReply = replyFlow({
 // ===========================================================================
 // Showcase account studies every day.
 const S = {
-  man: "▶ Chạy ngay", sch: "⏰ 19:05 mỗi ngày", go: "🚀 Khởi động lượt chạy", plan: "📅 Chọn bài học hôm nay", health: "🩺 Kiểm tra helper (HTTP)", tempo: "🧮 Tính nhịp học", mg: "🔀 Gộp kiểm tra + nhịp", start: "🎓 Bắt đầu buổi học (HTTP)", sum: "📊 Tổng kết chạy",
+  man: "▶ Chạy ngay", sch: "⏰ Mỗi 15 phút", gate: "🗓 Đã tới khung 19:05 chưa?", go: "🚀 Khởi động lượt chạy", plan: "📅 Chọn bài học hôm nay", health: "🩺 Kiểm tra helper (HTTP)", tempo: "🧮 Tính nhịp học", mg: "🔀 Gộp kiểm tra + nhịp", start: "🎓 Bắt đầu buổi học (HTTP)", sum: "📊 Tổng kết chạy",
 };
 const dailyStudy = buildGraph("studyDaily0001", "Học mỗi ngày – tài khoản showcase", [
-  [manual(S.man), 0, 1], [schedule(S.sch, "5 19 * * *"), 0, 2.6], [codeNode(S.go, goCode(["chọn bài học", "kiểm tra helper", "học thật bằng Gemini", "ghi streak và thống kê"]), 0), 1.3, 1.8],
+  [manual(S.man), 0, 1], [intervalNode(S.sch, 15), 0, 2.6], [codeNode(S.gate, SLOT_GATE(["19:05"], 4, 7200), 0), 0.65, 3.4], [codeNode(S.go, goCode(["chọn bài học", "kiểm tra helper", "học thật bằng Gemini", "ghi streak và thống kê"]), 0), 1.3, 1.8],
   [codeNode(S.plan, String.raw`
 // Full test every 3rd day, otherwise a Listening or Reading section (Free: 1 full + 3 mini a day).
 const p = $input.first().json;
@@ -1037,10 +1068,10 @@ return [{ json: {
 } }];
 `, 0), 7.8, 1.8],
 ], [
-  edge(S.man, S.go), edge(S.sch, S.go), edge(S.go, S.plan), edge(S.plan, S.health), edge(S.plan, S.tempo),
+  edge(S.man, S.go), edge(S.sch, S.gate), edge(S.gate, S.go), edge(S.go, S.plan), edge(S.plan, S.health), edge(S.plan, S.tempo),
   edge(S.health, S.mg, 0, 0), edge(S.tempo, S.mg, 0, 1), edge(S.mg, S.start), edge(S.start, S.sum),
 ], [
-  sticky("① KÍCH HOẠT", "## ① KÍCH HOẠT\n19:05 mỗi ngày hoặc bấm tay", 0, 0.7, 2.3, 2.6, 4),
+  sticky("① KÍCH HOẠT", "## ① KÍCH HOẠT\nHỏi mỗi 15 phút; tới 19:05 mà chưa học thì chạy (bù tới 23:00) · hoặc bấm tay", 0, 0.7, 2.3, 2.6, 4),
   sticky("② CHUẨN BỊ", "## ② CHUẨN BỊ (song song)\nChọn bài học hôm nay → KIỂM TRA HELPER ‖ TÍNH NHỊP HỌC → gộp", 2.6, 0.2, 3.6, 3.0, 5),
   sticky("③ HỌC", "## ③ HỌC THẬT\nGemini đọc đề/nghe audio, đáp án gửi rải như người thật, nộp bài → streak + thống kê", 6.3, 0.7, 2.5, 2.2, 6),
 ]);

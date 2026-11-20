@@ -166,6 +166,12 @@ http
       }
       return send(200, { saved: true, doc });
     }
+    if (u.pathname === "/awake") {
+      // Keep the Mac from idle-sleeping while a run is in progress (Power Nap wakes are only ~1 minute long).
+      const sec = Math.max(30, Math.min(Number(u.searchParams.get("sec") || 300), 10800));
+      require("child_process").spawn("caffeinate", ["-i", "-t", String(sec)], { stdio: "ignore", detached: true }).unref();
+      return send(200, { awake: sec });
+    }
     if (u.pathname === "/study") {
       // A study session runs for 1-2 hours (paced like a real learner), so it is
       // started in the background and only one runs at a time.
