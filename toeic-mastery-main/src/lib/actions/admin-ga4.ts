@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { requireSuperAdmin } from "@/lib/auth";
 import { GA_SECRET_KEYS, clearGaSecretCache } from "@/lib/services/ga-secrets";
 import { sendGaTestEvent, sendGaTestPurchase, type GaTestResult } from "@/lib/services/ga4-test";
+import { runGa4Refunds } from "@/lib/services/ga4-refund";
 import { BACKFILL_DONE_KEY, runGa4Backfill, runGa4BackfillSample, runGa4BackfillBatch, type BackfillRunResult } from "@/lib/services/ga4-backfill";
 
 /** Saves the GA4 Measurement Protocol API secrets from /admin/ga4. A blank
@@ -68,6 +69,15 @@ export async function runGa4BackfillSampleAction() {
 export async function runGa4BackfillBatchAction(count: number, spreadDays = 0) {
   const admin = await requireSuperAdmin();
   const result = await runGa4BackfillBatch(count, admin.id, spreadDays);
+  revalidatePath("/admin/ga4");
+  return result;
+}
+
+/** Sends a GA4 `refund` for every order counted as a purchase but never
+ * paid (see ga4-refund.ts). Owner-only; each order at most once. */
+export async function runGa4RefundsAction() {
+  const admin = await requireSuperAdmin();
+  const result = await runGa4Refunds(admin.id);
   revalidatePath("/admin/ga4");
   return result;
 }

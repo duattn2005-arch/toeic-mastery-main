@@ -220,7 +220,7 @@ export async function runGa4BackfillSample(): Promise<{ error: string } | { sent
  * third time. */
 export const BATCH_SENT_KEY = "ga4_backfill_batch_sent";
 
-async function readBatchSent(items: BackfillItem[]): Promise<Set<string>> {
+export async function readBatchSent(items: BackfillItem[]): Promise<Set<string>> {
   const row = await db.appSetting.findUnique({ where: { key: BATCH_SENT_KEY } });
   if (!row) return new Set(items.slice(0, SAMPLE_COUNT).map((i) => i.transactionId));
   try {
