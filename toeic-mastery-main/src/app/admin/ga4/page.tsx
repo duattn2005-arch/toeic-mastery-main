@@ -20,6 +20,7 @@ export default async function AdminGa4Page() {
   const dayCounts = new Map<string, number>();
   for (const c of refunds.candidates) dayCounts.set(refundDayKey(c.createdAt), (dayCounts.get(refundDayKey(c.createdAt)) ?? 0) + 1);
   const refundDays = [...dayCounts].map(([day, available]) => ({ day, available }));
+  const refundTotal = refunds.candidates.length;
   const status = [
     { id: GA_MEASUREMENT_ID, name: "Property chính" },
     { id: GA_LINKED_MEASUREMENT_ID, name: "Property liên kết" },
@@ -92,7 +93,7 @@ export default async function AdminGa4Page() {
         </div>
         {targets.length === 0 && <p className="rounded-xl bg-warning/10 px-3 py-2 text-sm font-medium text-warning">Lưu khoá ở bước 1 trước rồi mới rút được.</p>}
         <GaRefundButton count={refunds.candidates.length} value={refunds.totalValue} disabled={targets.length === 0} />
-        <GaRefundByDay days={refundDays} disabled={targets.length === 0} />
+        <GaRefundByDay days={refundDays} total={refundTotal} disabled={targets.length === 0} />
         {refunds.candidates.length > 0 && (
           <div className="max-h-96 overflow-auto rounded-xl border border-border">
             <table className="w-full min-w-[640px] text-sm">

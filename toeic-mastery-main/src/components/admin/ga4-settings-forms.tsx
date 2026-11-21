@@ -287,17 +287,31 @@ export function GaRefundButton({ count, value, disabled }: { count: number; valu
 }
 
 /** Rút một phần: chọn mỗi ngày bao nhiêu đơn (cũ nhất trước) thay vì rút hết. */
-export function GaRefundByDay({ days, disabled }: { days: { day: string; available: number }[]; disabled: boolean }) {
+export function GaRefundByDay({ days, total: all, disabled }: { days: { day: string; available: number }[]; total: number; disabled: boolean }) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
   const [counts, setCounts] = React.useState<Record<string, string>>({});
+  const [quick, setQuick] = React.useState("");
   if (days.length === 0) return null;
 
-  const limits: Record<string, number> = {};
+  // "Rút nhanh": the oldest N of the whole list — spelled out per day so the
+  // confirm dialog shows exactly which days that reaches.
+  const quickN = Math.min(all, Math.max(0, Math.floor(Number(quick)) || 0));
+  const quickLimits: Record<string, number> = {};
+  let left = quickN;
   for (const d of days) {
-    const n = Math.min(d.available, Math.max(0, Math.floor(Number(counts[d.day])) || 0));
-    if (n > 0) limits[d.day] = n;
+    const n = Math.min(d.available, left);
+    if (n > 0) quickLimits[d.day] = n;
+    left -= n;
   }
+
+  const limits: Record<string, number> = {};
+  if (quickN > 0) Object.assign(limits, quickLimits);
+  else
+    for (const d of days) {
+      const n = Math.min(d.available, Math.max(0, Math.floor(Number(counts[d.day])) || 0));
+      if (n > 0) limits[d.day] = n;
+    }
   const total = Object.values(limits).reduce((a, b) => a + b, 0);
   const label = (day: string) => day.split("-").reverse().slice(0, 2).join("/");
 
@@ -311,13 +325,20 @@ export function GaRefundByDay({ days, disabled }: { days: { day: string; availab
       if (result.failed > 0) toast.warning(`Đã rút ${result.sent} đơn (${result.value.toLocaleString("vi-VN")}đ), lỗi ${result.failed} đơn — bấm lại để thử tiếp.`);
       else toast.success(`Đã rút ${result.sent} đơn · ${result.value.toLocaleString("vi-VN")}đ khỏi doanh thu GA4`);
       setCounts({});
+      setQuick("");
       router.refresh();
     });
   }
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border p-3">
-      <p className="text-sm font-medium">Hoặc rút một phần theo ngày (đơn cũ nhất của ngày đó trước)</p>
+      <p className="text-sm font-medium">Hoặc rút một phần</p>
+      <label className="flex flex-wrap items-center gap-2 text-sm">
+        <span>Rút nhanh</span>
+        <Input type="number" min={0} max={all} value={quick} onChange={(e) => setQuick(e.target.value)} className="h-8 w-20" placeholder="0" />
+        <span className="text-xs text-muted-foreground">đơn đầu danh sách (cũ nhất trước) · tối đa {all}</span>
+      </label>
+      <p className="text-xs text-muted-foreground">Hoặc chọn từng ngày (đơn cũ nhất của ngày đó trước) — bỏ qua nếu đã nhập ô trên:</p>
       <div className="flex flex-wrap gap-3">
         {days.map((d) => (
           <label key={d.day} className="flex items-center gap-2 text-sm">
