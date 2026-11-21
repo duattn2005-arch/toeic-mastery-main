@@ -78,8 +78,8 @@ export function ProCard({ offer }: { offer: NewMemberOfferState }) {
       const result = await checkPaymentStatusAction(order.orderId);
       if ("error" in result) return; // transient/unexpected — just try again next tick
       if (result.status === "SUCCESS") {
-        // `purchase` already fired in handleUpgrade, the moment this order was
-        // declared — see the comment there for why. Nothing to send here.
+        // `purchase` is sent server-side by whatever confirmed the payment
+        // (trackPaymentConfirmed), so nothing to send from the browser here.
         setConfirmed(true);
         setPaidAt(result.paidAt);
         toast.success("Thanh toán thành công! Tài khoản của bạn đã được nâng cấp Pro 🎉");
@@ -100,17 +100,9 @@ export function ProCard({ offer }: { offer: NewMemberOfferState }) {
       setOrder({ orderId: result.orderId, planKey, amount: result.amount });
       const items = [{ item_id: planKey, item_name: `Pro ${PRO_PLANS[planKey].label}`, price: result.amount, quantity: 1 }];
       trackEvent("begin_checkout", { value: result.amount, currency: "VND", items });
-      // Business decision (not the GA4-recommended default — that would be
-      // firing `purchase` once the bank transfer is actually confirmed,
-      // which this codebase does too, server-side, for every channel: see
-      // ga-server.ts's trackPaymentConfirmed): every declared order ends up
-      // manually reconciled by an admin against the real bank statement one
-      // way or another, so the owner wants GA4 (and anything reading its
-      // `purchase` event, e.g. Ads conversion import) to count it right
-      // here, the moment the learner reaches the QR screen — not wait on
-      // that manual step. This does over-count the declared-but-never-paid
-      // ones (PENDING → rejected in /admin/payments) as purchases too.
-      trackEvent("purchase", { transaction_id: result.orderId, value: result.amount, currency: "VND", items });
+      // Not `purchase`: the owner counts a purchase only once the money has
+      // arrived, so that fires server-side on confirmation (SePay webhook,
+      // VNPay IPN or admin approval — ga-server.ts's trackPaymentConfirmed).
     });
   }
 

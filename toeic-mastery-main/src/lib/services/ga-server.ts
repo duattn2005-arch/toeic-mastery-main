@@ -37,24 +37,36 @@ export async function sendGaServerEvent(userId: string, name: string, params: Re
   );
 }
 
-/** A Pro purchase that has been confirmed on the server — a bank-transfer
- * approved by an admin, or a gateway webhook, long after (or without) the
- * buyer's browser being open. A custom event, not GA4's own `purchase`:
- * every order this fires for was already counted as a `purchase` the
- * moment the learner reached the QR screen (pro-card.tsx's handleUpgrade —
- * a deliberate business choice, not firing late on the GA4-recommended
- * default, see the comment there), so firing `purchase` again here would
- * double-count the same order. `channel` says how it was confirmed, for
- * slicing by sepay / vnpay / admin_approval without touching the
- * `purchase` numbers. */
+/** A Pro purchase that has been confirmed on the server — a bank transfer
+ * matched by the SePay webhook, a VNPay IPN, or an admin approval — long
+ * after (or without) the buyer's browser being open. This is the only place
+ * an order becomes a GA4 `purchase`: the owner counts a purchase only once
+ * the money has actually arrived, so reaching the QR screen (pro-card.tsx)
+ * fires `begin_checkout` and nothing more. Every caller flips the order
+ * PENDING → SUCCESS first and bails if it already was SUCCESS, so this fires
+ * at most once per order. `payment_confirmed` is still sent alongside, with
+ * `channel` (sepay / vnpay / admin_approval), so existing reports on it keep
+ * working. */
 export function trackPaymentConfirmed(payment: { userId: string; orderId: string; amount: number; planDurationDays: number }, channel: string) {
-  return sendGaServerEvent(payment.userId, "payment_confirmed", {
-    transaction_id: payment.orderId,
-    value: payment.amount,
-    currency: "VND",
-    plan_days: payment.planDurationDays,
-    channel,
-  });
+  const plan = Object.entries(PRO_PLANS).find(([, p]) => p.durationDays === payment.planDurationDays);
+  const item = plan
+    ? { item_id: plan[0], item_name: `Pro ${plan[1].label}` }
+    : { item_id: `days_${payment.planDurationDays}`, item_name: `Pro ${payment.planDurationDays} ngày` };
+  return Promise.all([
+    sendGaServerEvent(payment.userId, "purchase", {
+      transaction_id: payment.orderId,
+      value: payment.amount,
+      currency: "VND",
+      items: [{ ...item, price: payment.amount, quantity: 1 }],
+    }),
+    sendGaServerEvent(payment.userId, "payment_confirmed", {
+      transaction_id: payment.orderId,
+      value: payment.amount,
+      currency: "VND",
+      plan_days: payment.planDurationDays,
+      channel,
+    }),
+  ]);
 }
 
 /** A Pro grant from /admin/users' direct Free↔Pro toggle
