@@ -17,16 +17,19 @@ function formatDate(d: Date | null) {
   return d ? d.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "—";
 }
 
-export default async function AdminUsersPage({ searchParams }: { searchParams: Promise<{ page?: string; q?: string }> }) {
+export default async function AdminUsersPage({ searchParams }: { searchParams: Promise<{ page?: string; q?: string; plan?: string }> }) {
   const admin = await requireAdmin();
   const canEditRole = isSuperAdmin(admin);
   const params = await searchParams;
   const q = (params.q ?? "").trim();
-  const where: Prisma.ProfileWhereInput = q
-    ? { OR: [{ email: { contains: q, mode: "insensitive" } }, { fullName: { contains: q, mode: "insensitive" } }] }
-    : {};
+  const plan = params.plan === "PRO" || params.plan === "FREE" ? params.plan : null;
+  const where: Prisma.ProfileWhereInput = {
+    ...(q ? { OR: [{ email: { contains: q, mode: "insensitive" } }, { fullName: { contains: q, mode: "insensitive" } }] } : {}),
+    ...(plan ? { plan } : {}),
+  };
+  const filtered = q || plan;
 
-  const [total, matching] = await Promise.all([db.profile.count(), q ? db.profile.count({ where }) : Promise.resolve(null)]);
+  const [total, matching] = await Promise.all([db.profile.count(), filtered ? db.profile.count({ where }) : Promise.resolve(null)]);
   const count = matching ?? total;
   const pageCount = Math.max(1, Math.ceil(count / PAGE_SIZE));
   const page = Math.min(pageCount, Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1));
@@ -42,6 +45,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
   const href = (p: number) => {
     const sp = new URLSearchParams();
     if (q) sp.set("q", q);
+    if (plan) sp.set("plan", plan);
     if (p > 1) sp.set("page", String(p));
     const s = sp.toString();
     return s ? `/admin/users?${s}` : "/admin/users";
@@ -56,10 +60,12 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
           <h1 className="text-2xl font-semibold tracking-tight">Quản lý người dùng</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Tổng cộng <span className="font-semibold text-foreground">{total.toLocaleString("vi-VN")}</span> tài khoản đã đăng ký
-            {q && (
+            {filtered && (
               <>
                 {" "}
-                · {count.toLocaleString("vi-VN")} kết quả cho “{q}”
+                · {count.toLocaleString("vi-VN")} kết quả
+                {q && <> cho “{q}”</>}
+                {plan && <> · gói {plan === "PRO" ? "Pro" : "Free"}</>}
               </>
             )}
           </p>
@@ -77,7 +83,26 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
         </Button>
       </div>
 
+      <div className="flex gap-2">
+        {([
+          [null, "Tất cả"],
+          ["PRO", "Pro"],
+          ["FREE", "Free"],
+        ] as const).map(([value, label]) => {
+          const sp = new URLSearchParams();
+          if (q) sp.set("q", q);
+          if (value) sp.set("plan", value);
+          const qs = sp.toString();
+          return (
+            <Button key={label} asChild size="sm" variant={plan === value ? "default" : "outline"}>
+              <Link href={qs ? `/admin/users?${qs}` : "/admin/users"}>{label}</Link>
+            </Button>
+          );
+        })}
+      </div>
+
       <form action="/admin/users" className="flex max-w-md gap-2">
+        {plan && <input type="hidden" name="plan" value={plan} />}
         <div className="relative flex-1">
           <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -92,7 +117,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
         </Button>
         {q && (
           <Button asChild variant="ghost">
-            <Link href="/admin/users">Xoá lọc</Link>
+            <Link href={plan ? `/admin/users?plan=${plan}` : "/admin/users"}>Xoá lọc</Link>
           </Button>
         )}
       </form>
