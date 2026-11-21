@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Send, Undo2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { allowGa4ResendAction, runGa4BackfillSampleAction, runGa4BackfillBatchAction, runGa4BackfillAction, saveGaSecretsAction, sendGaTestEventAction, sendGaTestPurchaseAction } from "@/lib/actions/admin-ga4";
+import { allowGa4ResendAction, runGa4BackfillSampleAction, runGa4BackfillBatchAction, runGa4BackfillAction, runGa4RefundsAction, saveGaSecretsAction, sendGaTestEventAction, sendGaTestPurchaseAction } from "@/lib/actions/admin-ga4";
 
 export function GaSecretsForm({ primaryId, linkedId }: { primaryId: string; linkedId: string }) {
   const router = useRouter();
@@ -238,6 +238,48 @@ export function GaBackfillButton({ total, totalValue, disabled }: { total: numbe
         <AlertDialogFooter>
           <AlertDialogCancel>Hủy</AlertDialogCancel>
           <AlertDialogAction onClick={run}>Gửi ngay</AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+export function GaRefundButton({ count, value, disabled }: { count: number; value: number; disabled: boolean }) {
+  const router = useRouter();
+  const [pending, startTransition] = React.useTransition();
+
+  function run() {
+    startTransition(async () => {
+      const result = await runGa4RefundsAction();
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      if (result.failed > 0) toast.warning(`Đã rút ${result.sent} đơn (${result.value.toLocaleString("vi-VN")}đ), lỗi ${result.failed} đơn — bấm lại để thử tiếp.`);
+      else toast.success(`Đã rút ${result.sent} đơn · ${result.value.toLocaleString("vi-VN")}đ khỏi doanh thu GA4`);
+      router.refresh();
+    });
+  }
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button variant="destructive" disabled={disabled || pending || count === 0} className="w-fit">
+          {pending ? <Loader2 className="size-4 animate-spin" /> : <Undo2 className="size-4" />}
+          Rút {count} đơn · {value.toLocaleString("vi-VN")}đ khỏi GA4
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Rút {value.toLocaleString("vi-VN")}đ khỏi doanh thu GA4?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Gửi sự kiện hoàn tiền (refund) cho {count} đơn chưa thu được tiền. GA4 trừ khoản này vào ngày hôm nay, không sửa lại các ngày cũ. Không
+            hoàn tác được — mỗi đơn chỉ rút 1 lần.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Hủy</AlertDialogCancel>
+          <AlertDialogAction onClick={run}>Rút ngay</AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

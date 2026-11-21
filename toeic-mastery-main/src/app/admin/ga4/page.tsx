@@ -3,7 +3,8 @@ import { requireSuperAdmin } from "@/lib/auth";
 import { GA_LINKED_MEASUREMENT_ID, GA_MEASUREMENT_ID } from "@/lib/ga-config";
 import { getGaTargets } from "@/lib/services/ga-secrets";
 import { getGa4BatchProgress, previewGa4Backfill } from "@/lib/services/ga4-backfill";
-import { GaAllowResendButton, GaBackfillButton, GaBatchSender, GaSampleButton, GaSecretsForm, GaTestEventButton } from "@/components/admin/ga4-settings-forms";
+import { previewGa4Refunds } from "@/lib/services/ga4-refund";
+import { GaAllowResendButton, GaBackfillButton, GaRefundButton, GaBatchSender, GaSampleButton, GaSecretsForm, GaTestEventButton } from "@/components/admin/ga4-settings-forms";
 
 export const metadata: Metadata = { title: "GA4" };
 
@@ -14,7 +15,7 @@ const KIND_LABEL = { order: "Đơn thanh toán", code: "Mã kích hoạt", manua
  * backfill. */
 export default async function AdminGa4Page() {
   await requireSuperAdmin();
-  const [targets, preview] = await Promise.all([getGaTargets(), previewGa4Backfill()]);
+  const [targets, preview, refunds] = await Promise.all([getGaTargets(), previewGa4Backfill(), previewGa4Refunds()]);
   const batch = await getGa4BatchProgress(preview);
   const status = [
     { id: GA_MEASUREMENT_ID, name: "Property chính" },
@@ -64,6 +65,57 @@ export default async function AdminGa4Page() {
           </p>
           <GaTestEventButton />
         </div>
+      </section>
+
+      <section className="flex flex-col gap-4 rounded-2xl border-2 border-destructive/30 bg-card p-5 shadow-soft">
+        <div>
+          <h2 className="text-base font-semibold">Rút doanh thu ảo khỏi GA4</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Trước đây web tính purchase ngay khi khách mở màn hình QR, và lần gửi bù tính cả đơn chưa duyệt — nên các đơn <b>chưa chuyển tiền</b>,{" "}
+            <b>đã từ chối</b> hay <b>đã hoàn tiền</b> vẫn nằm trong doanh thu GA4. Danh sách dưới là các đơn đó (web tự tìm từ những gì đã gửi lên GA4).
+            Bấm rút, web gửi sự kiện hoàn tiền cho từng đơn để GA4 trừ ra. Đơn tạo trong 24 giờ qua chưa được rút vì khách có thể vẫn đang chuyển.
+            Mã kích hoạt và Pro bật tay giữ nguyên.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2 text-sm">
+          <span className="rounded-full bg-destructive/10 px-3 py-1 font-bold text-destructive tabular-nums">
+            Cần rút: {refunds.candidates.length} đơn · {refunds.totalValue.toLocaleString("vi-VN")}đ
+          </span>
+          {refunds.refundedCount > 0 && (
+            <span className="rounded-full bg-success/10 px-3 py-1 font-medium text-success tabular-nums">
+              Đã rút: {refunds.refundedCount} đơn · {refunds.refundedValue.toLocaleString("vi-VN")}đ
+            </span>
+          )}
+        </div>
+        {targets.length === 0 && <p className="rounded-xl bg-warning/10 px-3 py-2 text-sm font-medium text-warning">Lưu khoá ở bước 1 trước rồi mới rút được.</p>}
+        <GaRefundButton count={refunds.candidates.length} value={refunds.totalValue} disabled={targets.length === 0} />
+        {refunds.candidates.length > 0 && (
+          <div className="max-h-96 overflow-auto rounded-xl border border-border">
+            <table className="w-full min-w-[640px] text-sm">
+              <thead className="sticky top-0 bg-muted text-left text-xs text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2 font-medium">Mã đơn</th>
+                  <th className="px-3 py-2 font-medium">Người dùng</th>
+                  <th className="px-3 py-2 font-medium">Trạng thái</th>
+                  <th className="px-3 py-2 text-right font-medium">Giá trị</th>
+                </tr>
+              </thead>
+              <tbody>
+                {refunds.candidates.map((c) => (
+                  <tr key={c.orderId} className="border-t border-border">
+                    <td className="px-3 py-2 font-mono text-xs">{c.orderId}</td>
+                    <td className="px-3 py-2">{c.who}</td>
+                    <td className="px-3 py-2 text-muted-foreground">
+                      {c.status} · {new Date(c.createdAt).toLocaleDateString("vi-VN")}
+                      {c.source === "backfill" ? " · gửi bù" : ""}
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">{c.value.toLocaleString("vi-VN")}đ</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </section>
 
       <section className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-soft">

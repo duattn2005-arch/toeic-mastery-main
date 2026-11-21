@@ -1,6 +1,7 @@
 import "server-only";
 import { getGaTargets, mpUrl } from "@/lib/services/ga-secrets";
 import { PRO_PLANS } from "@/lib/constants/billing";
+import { getRefundedOrderIds } from "@/lib/services/ga4-refund";
 
 type GaParamValue = string | number | Array<Record<string, string | number>>;
 
@@ -47,14 +48,19 @@ export async function sendGaServerEvent(userId: string, name: string, params: Re
  * at most once per order. `payment_confirmed` is still sent alongside, with
  * `channel` (sepay / vnpay / admin_approval), so existing reports on it keep
  * working. */
-export function trackPaymentConfirmed(payment: { userId: string; orderId: string; amount: number; planDurationDays: number }, channel: string) {
+export async function trackPaymentConfirmed(payment: { userId: string; orderId: string; amount: number; planDurationDays: number }, channel: string) {
+  // An old unpaid order whose QR-screen purchase was taken back with a
+  // `refund` (ga4-refund.ts) and then paid after all: GA4 may drop a repeat
+  // of the same transaction id, so the real purchase gets a fresh one.
+  const refunded = await getRefundedOrderIds().catch(() => new Set<string>());
+  const purchaseId = refunded.has(payment.orderId) ? `${payment.orderId}-PAID` : payment.orderId;
   const plan = Object.entries(PRO_PLANS).find(([, p]) => p.durationDays === payment.planDurationDays);
   const item = plan
     ? { item_id: plan[0], item_name: `Pro ${plan[1].label}` }
     : { item_id: `days_${payment.planDurationDays}`, item_name: `Pro ${payment.planDurationDays} ngày` };
   return Promise.all([
     sendGaServerEvent(payment.userId, "purchase", {
-      transaction_id: payment.orderId,
+      transaction_id: purchaseId,
       value: payment.amount,
       currency: "VND",
       items: [{ ...item, price: payment.amount, quantity: 1 }],
