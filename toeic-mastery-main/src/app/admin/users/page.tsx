@@ -13,6 +13,10 @@ export const metadata: Metadata = { title: "Quản lý người dùng" };
 
 const PAGE_SIZE = 50;
 
+/** Demo accounts kept out of this list (and its totals). They still exist. */
+const HIDDEN_EMAILS = ["bichoa05+demo@gmail.com", "bichoa05+demo2@gmail.com"];
+const NOT_HIDDEN: Prisma.ProfileWhereInput = { email: { notIn: HIDDEN_EMAILS } };
+
 function formatDate(d: Date | null) {
   return d ? d.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" }) : "—";
 }
@@ -24,12 +28,13 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
   const q = (params.q ?? "").trim();
   const plan = params.plan === "PRO" || params.plan === "FREE" ? params.plan : null;
   const where: Prisma.ProfileWhereInput = {
+    ...NOT_HIDDEN,
     ...(q ? { OR: [{ email: { contains: q, mode: "insensitive" } }, { fullName: { contains: q, mode: "insensitive" } }] } : {}),
     ...(plan ? { plan } : {}),
   };
   const filtered = q || plan;
 
-  const [total, matching] = await Promise.all([db.profile.count(), filtered ? db.profile.count({ where }) : Promise.resolve(null)]);
+  const [total, matching] = await Promise.all([db.profile.count({ where: NOT_HIDDEN }), filtered ? db.profile.count({ where }) : Promise.resolve(null)]);
   const count = matching ?? total;
   const pageCount = Math.max(1, Math.ceil(count / PAGE_SIZE));
   const page = Math.min(pageCount, Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1));
