@@ -285,3 +285,79 @@ export function GaRefundButton({ count, value, disabled }: { count: number; valu
     </AlertDialog>
   );
 }
+
+/** Rút một phần: chọn mỗi ngày bao nhiêu đơn (cũ nhất trước) thay vì rút hết. */
+export function GaRefundByDay({ days, disabled }: { days: { day: string; available: number }[]; disabled: boolean }) {
+  const router = useRouter();
+  const [pending, startTransition] = React.useTransition();
+  const [counts, setCounts] = React.useState<Record<string, string>>({});
+  if (days.length === 0) return null;
+
+  const limits: Record<string, number> = {};
+  for (const d of days) {
+    const n = Math.min(d.available, Math.max(0, Math.floor(Number(counts[d.day])) || 0));
+    if (n > 0) limits[d.day] = n;
+  }
+  const total = Object.values(limits).reduce((a, b) => a + b, 0);
+  const label = (day: string) => day.split("-").reverse().slice(0, 2).join("/");
+
+  function run() {
+    startTransition(async () => {
+      const result = await runGa4RefundsAction(limits);
+      if ("error" in result) {
+        toast.error(result.error);
+        return;
+      }
+      if (result.failed > 0) toast.warning(`Đã rút ${result.sent} đơn (${result.value.toLocaleString("vi-VN")}đ), lỗi ${result.failed} đơn — bấm lại để thử tiếp.`);
+      else toast.success(`Đã rút ${result.sent} đơn · ${result.value.toLocaleString("vi-VN")}đ khỏi doanh thu GA4`);
+      setCounts({});
+      router.refresh();
+    });
+  }
+
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border border-border p-3">
+      <p className="text-sm font-medium">Hoặc rút một phần theo ngày (đơn cũ nhất của ngày đó trước)</p>
+      <div className="flex flex-wrap gap-3">
+        {days.map((d) => (
+          <label key={d.day} className="flex items-center gap-2 text-sm">
+            <span className="tabular-nums">{label(d.day)}</span>
+            <Input
+              type="number"
+              min={0}
+              max={d.available}
+              value={counts[d.day] ?? ""}
+              onChange={(e) => setCounts((c) => ({ ...c, [d.day]: e.target.value }))}
+              className="h-8 w-16"
+              placeholder="0"
+            />
+            <span className="text-xs text-muted-foreground">/ {d.available}</span>
+          </label>
+        ))}
+      </div>
+      <AlertDialog>
+        <AlertDialogTrigger asChild>
+          <Button variant="destructive" disabled={disabled || pending || total === 0} className="w-fit">
+            {pending ? <Loader2 className="size-4 animate-spin" /> : <Undo2 className="size-4" />}
+            Rút {total} đơn đã chọn
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Rút {total} đơn khỏi doanh thu GA4?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {Object.entries(limits)
+                .map(([day, n]) => `${n} đơn ngày ${label(day)}`)
+                .join(", ")}
+              . Không hoàn tác được — mỗi đơn chỉ rút 1 lần.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Hủy</AlertDialogCancel>
+            <AlertDialogAction onClick={run}>Rút ngay</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}

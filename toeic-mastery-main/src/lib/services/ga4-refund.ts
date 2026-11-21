@@ -143,8 +143,17 @@ async function takeLock(updatedBy: string | null): Promise<boolean> {
   }
 }
 
+/** Calendar day of an order in Vietnam time, "YYYY-MM-DD" — what the admin
+ * sees in the list, and the key of a per-day limit. */
+export function refundDayKey(iso: string): string {
+  return new Date(iso).toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+}
+
+/** `limits` (day key → how many) sends only that many orders per listed day,
+ * oldest first, and skips every other day; without it, everything goes. */
 export async function runGa4Refunds(
-  updatedBy: string | null
+  updatedBy: string | null,
+  limits?: Record<string, number>
 ): Promise<{ error: string } | { sent: number; failed: number; value: number }> {
   const targets = await getGaTargets();
   if (targets.length === 0) return { error: "Chưa có khoá GA4 nào — lưu khoá ở bước 1 trước." };
@@ -152,13 +161,23 @@ export async function runGa4Refunds(
 
   try {
     const preview = await previewGa4Refunds();
-    if (preview.candidates.length === 0) return { error: "Không còn đơn nào cần rút." };
+    const taken: Record<string, number> = {};
+    const chosen = limits
+      ? preview.candidates.filter((c) => {
+          const day = refundDayKey(c.createdAt);
+          const max = Math.max(0, Math.floor(limits[day] ?? 0));
+          if ((taken[day] ?? 0) >= max) return false;
+          taken[day] = (taken[day] ?? 0) + 1;
+          return true;
+        })
+      : preview.candidates;
+    if (chosen.length === 0) return { error: "Không còn đơn nào cần rút." };
 
     const records = await readRefunds();
     let sent = 0;
     let failed = 0;
     let value = 0;
-    for (const c of preview.candidates) {
+    for (const c of chosen) {
       if (await sendRefund(targets, c)) {
         sent++;
         value += c.value;

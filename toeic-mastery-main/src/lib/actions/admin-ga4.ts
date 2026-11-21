@@ -75,9 +75,9 @@ export async function runGa4BackfillBatchAction(count: number, spreadDays = 0) {
 
 /** Sends a GA4 `refund` for every order counted as a purchase but never
  * paid (see ga4-refund.ts). Owner-only; each order at most once. */
-export async function runGa4RefundsAction() {
+export async function runGa4RefundsAction(limits?: Record<string, number>) {
   const admin = await requireSuperAdmin();
-  const result = await runGa4Refunds(admin.id);
+  const result = await runGa4Refunds(admin.id, limits);
   revalidatePath("/admin/ga4");
   return result;
 }
