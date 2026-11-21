@@ -112,9 +112,10 @@ export async function previewGa4Refunds(): Promise<RefundPreview> {
   };
 }
 
-async function sendRefund(targets: GaTarget[], c: RefundCandidate): Promise<boolean> {
+async function sendRefund(targets: GaTarget[], c: RefundCandidate, timestampMicros?: number): Promise<boolean> {
   const body = JSON.stringify({
     client_id: `server.${c.userId}`,
+    ...(timestampMicros ? { timestamp_micros: timestampMicros } : {}),
     user_id: c.userId,
     events: [{ name: "refund", params: { transaction_id: c.orderId, value: c.value, currency: "VND", engagement_time_msec: 1 } }],
   });
@@ -143,17 +144,35 @@ async function takeLock(updatedBy: string | null): Promise<boolean> {
   }
 }
 
-/** Calendar day of an order in Vietnam time, "YYYY-MM-DD" — what the admin
- * sees in the list, and the key of a per-day limit. */
-export function refundDayKey(iso: string): string {
-  return new Date(iso).toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+/** GA4 takes events at most 72h old; stay under with a margin. */
+const BACKDATE_MAX_MS = 70 * 3600_000;
+const VN_OFFSET = "+07:00";
+
+/** Calendar day "YYYY-MM-DD" in Vietnam time. */
+function vnDay(ms: number): string {
+  return new Date(ms).toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
 }
 
-/** `limits` (day key → how many) sends only that many orders per listed day,
- * oldest first, and skips every other day; without it, everything goes. */
+/** The GA4 days a refund can still be dated on (today and back as far as
+ * the 72h rule allows), each with the time window the event can land in. */
+export function getRefundDays(now = Date.now()): { day: string; fromMs: number; toMs: number }[] {
+  const out: { day: string; fromMs: number; toMs: number }[] = [];
+  for (let back = 0; back <= 3; back++) {
+    const day = vnDay(now - back * 86_400_000);
+    const fromMs = Math.max(new Date(`${day}T00:00:00${VN_OFFSET}`).getTime(), now - BACKDATE_MAX_MS);
+    const toMs = Math.min(new Date(`${day}T23:59:59${VN_OFFSET}`).getTime(), now - 60_000);
+    if (toMs > fromMs) out.push({ day, fromMs, toMs });
+  }
+  return out.reverse();
+}
+
+/** `plan` (GA4 day → how many) takes the oldest orders of the list in turn
+ * and dates each one's refund on that day, so the subtraction lands on the
+ * day GA4 shows the inflated number rather than on today. Without it,
+ * everything goes, dated now. */
 export async function runGa4Refunds(
   updatedBy: string | null,
-  limits?: Record<string, number>
+  plan?: Record<string, number>
 ): Promise<{ error: string } | { sent: number; failed: number; value: number }> {
   const targets = await getGaTargets();
   if (targets.length === 0) return { error: "Chưa có khoá GA4 nào — lưu khoá ở bước 1 trước." };
@@ -161,24 +180,27 @@ export async function runGa4Refunds(
 
   try {
     const preview = await previewGa4Refunds();
-    const taken: Record<string, number> = {};
-    const chosen = limits
-      ? preview.candidates.filter((c) => {
-          const day = refundDayKey(c.createdAt);
-          const max = Math.max(0, Math.floor(limits[day] ?? 0));
-          if ((taken[day] ?? 0) >= max) return false;
-          taken[day] = (taken[day] ?? 0) + 1;
-          return true;
-        })
-      : preview.candidates;
+    const chosen: { c: RefundCandidate; ts?: number }[] = [];
+    if (plan) {
+      let next = 0;
+      for (const d of getRefundDays()) {
+        const n = Math.max(0, Math.floor(plan[d.day] ?? 0));
+        for (let i = 0; i < n && next < preview.candidates.length; i++) {
+          const ms = d.fromMs + Math.random() * (d.toMs - d.fromMs);
+          chosen.push({ c: preview.candidates[next++], ts: Math.floor(ms * 1000) });
+        }
+      }
+    } else {
+      for (const c of preview.candidates) chosen.push({ c });
+    }
     if (chosen.length === 0) return { error: "Không còn đơn nào cần rút." };
 
     const records = await readRefunds();
     let sent = 0;
     let failed = 0;
     let value = 0;
-    for (const c of chosen) {
-      if (await sendRefund(targets, c)) {
+    for (const { c, ts } of chosen) {
+      if (await sendRefund(targets, c, ts)) {
         sent++;
         value += c.value;
         records.push({ orderId: c.orderId, value: c.value, at: new Date().toISOString() });

@@ -3,7 +3,7 @@ import { requireSuperAdmin } from "@/lib/auth";
 import { GA_LINKED_MEASUREMENT_ID, GA_MEASUREMENT_ID } from "@/lib/ga-config";
 import { getGaTargets } from "@/lib/services/ga-secrets";
 import { getGa4BatchProgress, previewGa4Backfill } from "@/lib/services/ga4-backfill";
-import { previewGa4Refunds, refundDayKey } from "@/lib/services/ga4-refund";
+import { getRefundDays, previewGa4Refunds } from "@/lib/services/ga4-refund";
 import { GaAllowResendButton, GaBackfillButton, GaRefundButton, GaRefundByDay, GaBatchSender, GaSampleButton, GaSecretsForm, GaTestEventButton } from "@/components/admin/ga4-settings-forms";
 
 export const metadata: Metadata = { title: "GA4" };
@@ -17,9 +17,7 @@ export default async function AdminGa4Page() {
   await requireSuperAdmin();
   const [targets, preview, refunds] = await Promise.all([getGaTargets(), previewGa4Backfill(), previewGa4Refunds()]);
   const batch = await getGa4BatchProgress(preview);
-  const dayCounts = new Map<string, number>();
-  for (const c of refunds.candidates) dayCounts.set(refundDayKey(c.createdAt), (dayCounts.get(refundDayKey(c.createdAt)) ?? 0) + 1);
-  const refundDays = [...dayCounts].map(([day, available]) => ({ day, available }));
+  const refundDays = getRefundDays().map((d) => ({ day: d.day, from: d.fromMs, to: d.toMs }));
   const refundTotal = refunds.candidates.length;
   const status = [
     { id: GA_MEASUREMENT_ID, name: "Property chính" },

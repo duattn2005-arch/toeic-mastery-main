@@ -286,38 +286,27 @@ export function GaRefundButton({ count, value, disabled }: { count: number; valu
   );
 }
 
-/** Rút một phần: chọn mỗi ngày bao nhiêu đơn (cũ nhất trước) thay vì rút hết. */
-export function GaRefundByDay({ days, total: all, disabled }: { days: { day: string; available: number }[]; total: number; disabled: boolean }) {
+/** Rút một phần, ghi khoản trừ vào đúng ngày GA4 đang bị phồng (GA4 nhận lùi tối đa 72 giờ). */
+export function GaRefundByDay({ days, total: all, disabled }: { days: { day: string; from: number; to: number }[]; total: number; disabled: boolean }) {
   const router = useRouter();
   const [pending, startTransition] = React.useTransition();
   const [counts, setCounts] = React.useState<Record<string, string>>({});
-  const [quick, setQuick] = React.useState("");
-  if (days.length === 0) return null;
+  if (days.length === 0 || all === 0) return null;
 
-  // "Rút nhanh": the oldest N of the whole list — spelled out per day so the
-  // confirm dialog shows exactly which days that reaches.
-  const quickN = Math.min(all, Math.max(0, Math.floor(Number(quick)) || 0));
-  const quickLimits: Record<string, number> = {};
-  let left = quickN;
+  const label = (day: string) => day.split("-").reverse().slice(0, 2).join("/");
+  const hhmm = (ms: number) => new Date(ms).toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Ho_Chi_Minh" });
+  const plan: Record<string, number> = {};
+  let left = all;
   for (const d of days) {
-    const n = Math.min(d.available, left);
-    if (n > 0) quickLimits[d.day] = n;
+    const n = Math.min(left, Math.max(0, Math.floor(Number(counts[d.day])) || 0));
+    if (n > 0) plan[d.day] = n;
     left -= n;
   }
-
-  const limits: Record<string, number> = {};
-  if (quickN > 0) Object.assign(limits, quickLimits);
-  else
-    for (const d of days) {
-      const n = Math.min(d.available, Math.max(0, Math.floor(Number(counts[d.day])) || 0));
-      if (n > 0) limits[d.day] = n;
-    }
-  const total = Object.values(limits).reduce((a, b) => a + b, 0);
-  const label = (day: string) => day.split("-").reverse().slice(0, 2).join("/");
+  const total = Object.values(plan).reduce((a, b) => a + b, 0);
 
   function run() {
     startTransition(async () => {
-      const result = await runGa4RefundsAction(limits);
+      const result = await runGa4RefundsAction(plan);
       if ("error" in result) {
         toast.error(result.error);
         return;
@@ -325,34 +314,33 @@ export function GaRefundByDay({ days, total: all, disabled }: { days: { day: str
       if (result.failed > 0) toast.warning(`Đã rút ${result.sent} đơn (${result.value.toLocaleString("vi-VN")}đ), lỗi ${result.failed} đơn — bấm lại để thử tiếp.`);
       else toast.success(`Đã rút ${result.sent} đơn · ${result.value.toLocaleString("vi-VN")}đ khỏi doanh thu GA4`);
       setCounts({});
-      setQuick("");
       router.refresh();
     });
   }
 
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-border p-3">
-      <p className="text-sm font-medium">Hoặc rút một phần</p>
-      <label className="flex flex-wrap items-center gap-2 text-sm">
-        <span>Rút nhanh</span>
-        <Input type="number" min={0} max={all} value={quick} onChange={(e) => setQuick(e.target.value)} className="h-8 w-20" placeholder="0" />
-        <span className="text-xs text-muted-foreground">đơn đầu danh sách (cũ nhất trước) · tối đa {all}</span>
-      </label>
-      <p className="text-xs text-muted-foreground">Hoặc chọn từng ngày (đơn cũ nhất của ngày đó trước) — bỏ qua nếu đã nhập ô trên:</p>
+      <p className="text-sm font-medium">Hoặc rút một phần — trừ đúng vào ngày GA4 đang bị phồng</p>
+      <p className="text-xs text-muted-foreground">
+        Nhập số đơn muốn trừ vào mỗi ngày GA4. Web lấy các đơn cũ nhất của danh sách (còn {all} đơn) và ghi khoản trừ vào ngày bạn chọn thay vì hôm nay.
+        GA4 chỉ nhận lùi tối đa 72 giờ nên ngày xa nhất chỉ trừ được từ giờ ghi bên cạnh.
+      </p>
       <div className="flex flex-wrap gap-3">
         {days.map((d) => (
           <label key={d.day} className="flex items-center gap-2 text-sm">
-            <span className="tabular-nums">{label(d.day)}</span>
+            <span className="tabular-nums">
+              {label(d.day)}
+              <span className="ml-1 text-xs text-muted-foreground">({hhmm(d.from)}–{hhmm(d.to)})</span>
+            </span>
             <Input
               type="number"
               min={0}
-              max={d.available}
+              max={all}
               value={counts[d.day] ?? ""}
               onChange={(e) => setCounts((c) => ({ ...c, [d.day]: e.target.value }))}
               className="h-8 w-16"
               placeholder="0"
             />
-            <span className="text-xs text-muted-foreground">/ {d.available}</span>
           </label>
         ))}
       </div>
@@ -367,10 +355,7 @@ export function GaRefundByDay({ days, total: all, disabled }: { days: { day: str
           <AlertDialogHeader>
             <AlertDialogTitle>Rút {total} đơn khỏi doanh thu GA4?</AlertDialogTitle>
             <AlertDialogDescription>
-              {Object.entries(limits)
-                .map(([day, n]) => `${n} đơn ngày ${label(day)}`)
-                .join(", ")}
-              . Không hoàn tác được — mỗi đơn chỉ rút 1 lần.
+              Trừ vào GA4: {Object.entries(plan).map(([day, n]) => `${n} đơn vào ngày ${label(day)}`).join(", ")}. Không hoàn tác được — mỗi đơn chỉ rút 1 lần.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
