@@ -63,17 +63,6 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Quản lý người dùng</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Tổng cộng <span className="font-semibold text-foreground">{total.toLocaleString("vi-VN")}</span> tài khoản đã đăng ký
-            {filtered && (
-              <>
-                {" "}
-                · {count.toLocaleString("vi-VN")} kết quả
-                {q && <> cho “{q}”</>}
-                {plan && <> · gói {plan === "PRO" ? "Pro" : "Free"}</>}
-              </>
-            )}
-          </p>
           {!canEditRole && (
             <p className="mt-2 text-xs text-muted-foreground">
               Chỉ tài khoản quản trị cấp cao mới có thể thay đổi vai trò (Học viên/Admin) — bạn chỉ có thể xem.
